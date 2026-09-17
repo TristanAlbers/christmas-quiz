@@ -237,8 +237,8 @@ Admins should be able to manually:
 * Reset a puzzle
 * Skip a puzzle
 * Reset team progression where necessary
-* Pause a team
-* Resume a team
+* Freeze a team
+* Remove Freeze from a team
 * Pause the entire game
 * Resume the entire game
 * Trigger an freeze effect
