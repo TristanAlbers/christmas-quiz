@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      target: app
+    restart: unless-stopped
+    init: true
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_DEBUG: "false"
+      DATABASE_PATH: /app/var/quiz.sqlite3
+    ports:
+      - "${QUIZ_BIND_ADDRESS:-127.0.0.1}:${QUIZ_PORT:-8000}:8000"
+    volumes:
+      - ./var:/app/var
+      - ./games:/app/games:ro
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=2).read()"
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+
+  dev:
+    profiles: [dev]
+    build:
+      context: .
+      target: dev
+    environment:
+      DJANGO_SECRET_KEY: development-validation-only
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_DEBUG: "false"
+      DATABASE_PATH: /app/var/quiz.sqlite3
+    volumes:
+      - ./var:/app/var
+      - ./games:/app/games:ro
+    entrypoint: ["python", "manage.py"]

@@ -1,0 +1,16 @@
+.git
+.codex
+.agents
+.env
+.env.*
+!.env.example
+var
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.venv
+staticfiles
+docs
+*.md
+!README.md

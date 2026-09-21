@@ -1,6 +1,6 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture; application implementation has not started.
+Status: approved architecture; application scaffold implemented, gameplay pending.
 
 This document records implementation choices. Game behavior remains governed by
 `christmas-2026-game-rules-state-semantics.md`, followed by `Design.md`, `Views.md`,
@@ -43,9 +43,8 @@ Private puzzle media must never enter the public static directory.
 
 Planned operations include `docker compose up -d --build`, `docker compose ps`,
 `docker compose logs -f app`, and management commands through
-`docker compose exec app python manage.py ...`. Provide a development/test image
-target for linting and browser dependencies. These commands and files do not yet
-exist in this documentation-only repository.
+`docker compose exec app python manage.py ...`. A development/test image target
+provides linting and browser dependencies. See `docs/scaffold.md` for commands.
 
 ## Repository and boundaries
 
@@ -310,10 +309,9 @@ with the designated first transaction reversed. Also test both browsers showing
 the result and next question. Do not substitute sequential mocks or sleep-based
 ordering for the transaction test.
 
-Establish container-based `manage.py check`, `makemigrations --check --dry-run`,
-Ruff, application test, and Playwright commands during scaffolding. No application
-validation commands or suites exist yet. The current documentation change is
-validated by TOML parsing and diff/consistency checks only.
+Container-based `manage.py check`, `makemigrations --check --dry-run`, Ruff,
+application test, and Playwright dependencies are scaffolded. The first-slice
+contracts and exact file ownership are in `docs/contracts-first-slice.md`.
 
 ## Decisions still deferred
 
