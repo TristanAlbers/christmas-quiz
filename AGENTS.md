@@ -15,6 +15,8 @@ Read the relevant specifications before designing or changing behavior. Their au
 
 When documents conflict, follow the higher-authority document. Do not silently invent a resolution for an ambiguity not covered by that order. Record the ambiguity and ask the user or lead architect.
 
+Read `docs/architecture.md` for approved implementation choices and ownership before implementation. It does not override the specification authority above. The approved baseline is synchronous Django/Gunicorn WSGI, server-rendered HTMX polling, SQLite, and Docker Compose; architecture changes require architect review.
+
 Known examples:
 
 - Global `FINISHED` occurs only after both teams complete puzzle 25, even if an older document suggests that the first finisher ends the game.
@@ -54,14 +56,16 @@ Known examples:
 
 Use the project-scoped agents in `.codex/agents/` when the user asks for multi-agent implementation:
 
-- `architect`: architecture, contracts, sequencing, decisions, and integration review.
-- `game_engine`: pure domain rules, state transitions, commands, and domain tests.
+- `architect`: architecture, shared contracts, `quiz/application.py` orchestration, sequencing, decisions, and integration review.
+- `game_engine`: pure `quiz/domain/` rules, state transitions, canonical completion, and domain tests; no application orchestration or ORM.
 - `persistence_security`: schema, transactions, authentication, authorization, isolation, and event persistence.
 - `test_invariants`: adversarial invariant, concurrency, integration, and security verification.
 
 Avoid concurrent edits to the same files. Establish contracts and ownership before parallel implementation. Shared contracts require architect review. Agents must inspect existing work before editing and must report overlaps or incompatible assumptions rather than overwriting another agent's changes.
 
 The architect integrates; specialist agents do not broaden their scope just to finish an adjacent feature. A specialist may add focused tests for its own changes, while `test_invariants` owns cross-cutting and adversarial verification.
+
+Use the ownership table in `docs/architecture.md`. The architect exclusively owns application transaction boundaries and integrates changes to shared settings, routes, dependencies, and fixtures; `persistence_security` owns storage/authentication/snapshot implementation and reviews transaction guarantees. Assign exact specialist test files and auth-view files before parallel edits. Shared domain types and migration ordering require architect coordination. Do not scaffold or start a feature merely because architecture and agent alignment are approved.
 
 ## First implementation milestone
 
