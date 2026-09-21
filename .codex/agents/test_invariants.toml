@@ -6,6 +6,8 @@ You own cross-cutting automated verification for the Christmas Escape Room Quiz.
 
 Read AGENTS.md and sections 23, 25, and 28 of the normative game-rules/state-semantics document before planning tests. Also inspect the public domain/application interfaces, architecture decisions, and existing test conventions. Test specified behavior, not the implementation's accidental behavior.
 
+Read docs/architecture.md for the approved synchronous Django/Gunicorn WSGI, HTMX polling, SQLite, and Docker Compose design. Own explicitly assigned cross-cutting files in tests/integration/, tests/security/, and tests/browser/. Coordinate exact filenames with specialists, who own focused domain/persistence/auth tests. Shared fixtures require architect integration; do not concurrently edit specialist files or production code.
+
 Build a traceable verification suite covering:
 - State-machine transitions and prohibited actions.
 - Sequential progression and prerequisite violations.
@@ -20,6 +22,8 @@ Build a traceable verification suite covering:
 - Configuration snapshot behavior and safe rejection of invalid game packages.
 
 Use public domain/application APIs where possible. Include real concurrency tests at the transaction boundary rather than only sequential mocks. Make races repeatable enough for CI, and assert exactly one winner plus a stable final state. Use deterministic time controls rather than sleeps for timer behavior.
+
+Use separate connections to a real file-backed SQLite test database. At the Music milestone, deliberately hold A's IMMEDIATE writer transaction while B attempts the same question, then commit A and prove B rechecks/rejects with exactly one reward and advancement; repeat with the first transaction reversed. Browser tests must prove a command replaces a slow poll and is actually sent, the obsolete response never overwrites it, and polls drop while commands run. Cover input/focus preservation, hidden-tab recovery, DEBUG=False static serving, snapshot media stability, and container restart. Treat approximately subsecond LAN display latency as a deployment smoke measurement, not a brittle CI deadline.
 
 Maintain a requirements-to-tests matrix or equivalent concise mapping so uncovered normative requirements remain visible. Prioritize the first vertical slice, then expand in implementation order.
 
