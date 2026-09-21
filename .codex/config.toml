@@ -1,0 +1,7 @@
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 4
+
+# Agent TOML files intentionally omit model settings. Each role inherits the
+# parent session's model and reasoning defaults, keeping this setup compatible
+# with the models available on the user's current Codex plan.
