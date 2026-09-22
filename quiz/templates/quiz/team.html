@@ -14,6 +14,8 @@
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out</button></form>
     </header>
     <section id="live-game" aria-label="Current game">
+      <p id="connection-status" role="status"></p>
+      <p id="action-feedback" class="feedback" role="status"></p>
       <div id="poller" hx-get="{% url 'team_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
            hx-sync="#live-game:drop" hx-include="#view-context"
@@ -25,8 +27,16 @@
     </section>
   </main>
   <script>
-    document.body.addEventListener('htmx:responseError', function () {
-      document.getElementById('connection-status').textContent = 'Connection trouble. Retrying…';
+    document.body.addEventListener('htmx:responseError', function (event) {
+      const status = event.detail.xhr.status;
+      const isAction = event.detail.elt.closest('form') !== null;
+      if (isAction && status >= 400 && status < 500) {
+        document.getElementById('action-feedback').textContent =
+          'Action rejected: ' + event.detail.xhr.responseText;
+      } else {
+        document.getElementById('connection-status').textContent =
+          'Connection trouble. Retrying…';
+      }
     });
     document.body.addEventListener('htmx:sendError', function () {
       document.getElementById('connection-status').textContent = 'Connection trouble. Retrying…';

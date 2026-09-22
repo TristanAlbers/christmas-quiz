@@ -1,6 +1,6 @@
 # Christmas quiz implementation plan
 
-Status: phase 1 complete on 2026-09-22; phases 2–9 are plans, not implemented
+Status: phases 1–2 complete on 2026-09-22; phases 3–9 are plans, not implemented
 features. This document alone does not authorize a new phase. The prompts below
 authorize one named phase when the user submits them. Do not start subsequent
 phases automatically. [USER.md](USER.md) describes what can be used today.
@@ -13,14 +13,15 @@ mechanics. A phase is an acceptance boundary, not a promise that it fits one
 context window. Continue an unfinished phase in another session using the resume
 prompt below, without widening scope.
 
-The repository now has a working phase 1 slice: synchronous Django/WSGI,
+The repository now has working phase 1 and 2 slices: synchronous Django/WSGI,
 Compose app/dev targets, WhiteNoise, local HTMX, a public health endpoint,
 two team and two admin logins, admin Start, the two-puzzle demo package,
 snapshot-backed private media, persisted answer attempts/completion, audit,
 idempotent receipts, WAL/IMMEDIATE SQLite transactions, 500 ms polling, and
-domain/integration/security/Chromium tests. See the phase 1 handoff below for
-evidence. Timers, reset, shops, attacks, Music Quiz, full 25-puzzle content,
-and the TV view are not implemented.
+domain/integration/security/Chromium tests. Phase 2 adds basic administration,
+generic Hint tokens, and immediate Skip; see both handoffs below for evidence.
+Timers, attacks, Music Quiz, full 25-puzzle content, and the TV view are not
+implemented.
 
 The existing specifications and `docs/architecture.md` remain authoritative
 as described in `AGENTS.md`. `docs/contracts-first-slice.md` records the
@@ -178,6 +179,8 @@ and stop at this phase's gate.
 ### 3. Recoverable gameplay time, Freeze, and Uno Reverse
 
 Agents: all four. Prerequisite: phase 2 green and approved downtime semantics.
+
+Before implementing the new timer/effect screens, establish the reusable visual foundation for team/admin views: responsive application shell, typography/spacing, buttons/forms/status components, team identity, Advent/puzzle presentation, points/inventory presentation, and distinct paused/frozen/interruption states. Keep this deliberately lightweight; final artwork, animation and polish remain phase 7.
 
 First settle the gameplay clock/restart contract. Implement server-owned persisted
 time, 5-minute Advent-time Freeze, expiry, admin Freeze/unfreeze, configured Freeze
@@ -463,8 +466,9 @@ status, and stop. Do not restart scaffolding or begin the next phase automatical
 | --- | --- | --- |
 | Scaffold | Superseded by phase 1 implementation | Placeholder and health retained; scaffold tests included in the phase 1 run. |
 | 1 | Complete | 2026-09-22: isolated Compose app/dev images rebuilt. App migrated/provisioned and restarted cleanly; `check`, `makemigrations --check --dry-run`, Ruff, 31 domain/integration/security tests on disposable file-backed SQLite, and 3 Chromium browser tests all pass with no skips. Health/index/login pages and DEBUG=False hashed CSS/HTMX JS return HTTP 200. Tests verify Team A journey to puzzle 2 after a persisted wrong answer, Team B isolation, receipts, audit/reward/fragment atomicity, rollback, snapshot recovery, SQLite writer contention, focus under polling, command versus slow poll, and reconnect. A separate live-process restart on disposable runtime preserved the run ID, puzzle 2, 7 points, fragment, 2 attempts/receipts and 3 audit events. Existing `./var` runtime was not used for validation. |
-| Current-use documentation | Complete | 2026-09-22: `USER.md` documents phase 1 setup, accounts, Start/team play, package authoring, private snapshots, validation, process restart, and the unavailable game reset/TV controls; README points to it. Credential rotation guidance correctly requires container recreation. Plan now requires contemporaneous guide/env updates and frequent resumable checkpoints. `git diff --check` passed; local Markdown links resolve; every `.env.example` variable appears in the guide; the JSON puzzle example parses and has the live package's required puzzle keys. No runtime checks were needed for documentation-only changes. |
-| 2–9 | Not started | Dependent on the preceding gates and decisions above. |
+| Current-use documentation | Complete | 2026-09-22: `USER.md` covers phases 1–2, including setup, accounts, team play, admin controls, Hint and Skip actions, package authoring, private snapshots, and validation. The TV view and later mechanics remain unavailable. README points to the guide. Credential rotation requires container recreation; `.env.example` needs no phase-2 changes. |
+| 2 | Complete | 2026-09-22 final isolated image gate passed: `manage.py check`, `makemigrations --check --dry-run`, full Ruff, 63 domain/integration/security tests (40.456 s), and 3 Chromium browser tests (9.928 s), with zero failures/skips. Disposable app healthy; `/health/`, `/`, `/login/`, `/admin-login/`, hashed CSS, and local HTMX JS returned HTTP 200. `git diff --check` passed. Contracts and exact ownership are in `docs/phase-2-contract.md`; the handoff below records scope and limits. Next action is phase 3 only after a separate prompt and its clock/restart contract decision. |
+| 3–9 | Not started | Dependent on the preceding gates and decisions above. |
 
 For each implementation handoff, add the actual phase status, changed interfaces,
 checks run with pass/fail/skipped status, unimplemented acceptance cases, any
@@ -499,6 +503,36 @@ attempts may leave an unreferenced staged snapshot directory; it cannot affect
 active-run reads, and cleanup can be added with the future reset/maintenance
 workflow. No rule ambiguity or user decision blocks this slice.
 
-Next action: begin phase 2 only with a separate prompt and first resolve its
-repeated Hint-use contract. Do not treat the demo package as finished event
-content.
+At this phase-1 handoff, the next action was to begin phase 2 with a separate
+prompt and resolve its repeated Hint-use contract. Phase 2 is now complete;
+the demo package remains demonstration content, not finished event content.
+
+### Phase 2 handoff, 2026-09-22
+
+Implemented basic admin pause/resume, signed point adjustments, current-puzzle
+force completion, immediate admin Hint reveal, full reset, team Hint purchases
+and use, and immediate paid Skip. Correct answers, Skip, and admin force
+completion share one application completion persistence path and the pure domain
+completion policy. Every successful phase-2 command commits its result, receipt,
+and audit event in an SQLite `IMMEDIATE` transaction. Hint tokens and reveals
+are durable and team-private. Reset preserves the old run and audit trail while
+creating a new active READY run from the same immutable snapshot, with fresh
+configured initial values. All three completion routes stop before opening
+puzzle 13 until the mandatory Music interruption is implemented.
+
+`docs/phase-2-contract.md` records the settled Hint rule, reset model,
+commands, errors, file ownership, and migration order. The demo package is
+schema version 2 with configurable Hint and Skip prices. Version 1 snapshots
+remain readable but cannot use those price-dependent actions. `USER.md` now
+documents the available controls and their limits. Domain, storage, adversarial,
+security, HTTP, and browser tests cover the phase-2 gate, including concurrent
+spending, competing resets, stale requests, authorization, Hint privacy,
+exactly-once completion, and the puzzle-13 boundary.
+
+Validation used rebuilt isolated Compose images, disposable file-backed SQLite,
+and a disposable app runtime. `manage.py check`, migration consistency, full
+Ruff, 63 domain/integration/security tests, 3 Chromium browser tests, health,
+index/login pages, hashed CSS/HTMX assets, and `git diff --check` all passed.
+No tests skipped. No live game runtime was touched. Phase 3 clock downtime and
+Freeze/Reverse decisions remain open; no attack, timer, or Music mechanics were
+added here. Stop at this gate.

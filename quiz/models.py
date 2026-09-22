@@ -52,6 +52,7 @@ class TeamRun(models.Model):
     activity_state = models.CharField(max_length=24)
     current_number = models.PositiveSmallIntegerField(default=1)
     points = models.IntegerField(default=0)
+    hint_tokens = models.IntegerField(default=0)
 
     class Meta:
         constraints = [
@@ -61,6 +62,9 @@ class TeamRun(models.Model):
             ),
             models.CheckConstraint(
                 condition=Q(points__gte=0), name="team_points_nonnegative"
+            ),
+            models.CheckConstraint(
+                condition=Q(hint_tokens__gte=0), name="hint_tokens_nonnegative"
             ),
             models.CheckConstraint(
                 condition=Q(current_number__gte=1), name="current_number_positive"
@@ -159,6 +163,49 @@ class AnswerReceipt(models.Model):
             models.UniqueConstraint(
                 fields=["run", "actor", "request_id"], name="unique_answer_receipt"
             )
+        ]
+
+
+class CommandReceipt(models.Model):
+    """Committed result for one phase-2 command by an authenticated actor."""
+
+    run = models.ForeignKey(Run, on_delete=models.PROTECT)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    request_id = models.UUIDField()
+    action = models.CharField(max_length=40)
+    payload_digest = models.CharField(max_length=64)
+    result = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["actor", "request_id"], name="unique_command_receipt"
+            )
+        ]
+
+
+class HintReveal(models.Model):
+    """One durable reveal per team and puzzle; text remains in the run snapshot."""
+
+    run = models.ForeignKey(Run, on_delete=models.PROTECT)
+    team_id = models.CharField(max_length=1)
+    puzzle_id = models.CharField(max_length=100)
+    source = models.CharField(
+        max_length=8, choices=[("player", "Player"), ("admin", "Admin")]
+    )
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    request_id = models.UUIDField()
+    revealed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "team_id", "puzzle_id"], name="unique_hint_reveal"
+            ),
+            models.CheckConstraint(
+                condition=Q(team_id__in=["a", "b"]), name="valid_hint_team"
+            ),
         ]
 
 

@@ -43,18 +43,33 @@ def _relative_path(value):
 
 
 def _validate(config, package_id):
-    if not isinstance(config, dict) or set(config) != {
+    if not isinstance(config, dict):
+        raise InvalidPackage("Invalid package top level")
+    common_keys = {
         "schema_version",
         "package_id",
         "initial_points",
         "teams",
-    }:
+    }
+    version = config.get("schema_version")
+    required_keys = common_keys | (
+        {"hint_cost", "skip_cost"} if version == 2 else set()
+    )
+    if (
+        type(version) is not int
+        or version not in (1, 2)
+        or set(config) != required_keys
+    ):
         raise InvalidPackage("Invalid package top level")
-    if config["schema_version"] != 1 or config["package_id"] != package_id:
+    if config["package_id"] != package_id:
         raise InvalidPackage("Unsupported schema or mismatched package ID")
     points = config["initial_points"]
     if type(points) is not int or points < 0:
         raise InvalidPackage("initial_points must be nonnegative integer")
+    if version == 2:
+        for key in ("hint_cost", "skip_cost"):
+            if type(config[key]) is not int or config[key] < 0:
+                raise InvalidPackage(f"{key} must be nonnegative integer")
     teams = config["teams"]
     if not isinstance(teams, dict) or set(teams) != {"a", "b"}:
         raise InvalidPackage("Exactly teams a and b are required")

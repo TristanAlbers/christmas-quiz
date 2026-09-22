@@ -29,7 +29,7 @@ def _login(request, form_type, intended_role):
                     actor = None
                 if actor is not None and actor.role == intended_role:
                     login(request, user)
-                    return redirect("index")
+                    return redirect("team" if actor.role == "team" else "admin_game")
             form.add_error(None, "Invalid credentials")
     else:
         form = form_type()

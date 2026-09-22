@@ -19,9 +19,64 @@
       <form method="post" action="{% url 'admin_start' %}">
         {% csrf_token %}
         <input type="hidden" name="request_id" value="{{ request_id }}">
-        <input type="hidden" name="package_id" value="christmas-2026-demo">
-        <button type="submit">Start development demo</button>
+        <input type="hidden" name="package_id" value="{{ package_id|default:'christmas-2026-demo' }}">
+        <button type="submit">Start game</button>
       </form>
+    {% endif %}
+    {% if run_id %}
+      {% if global_state == 'ADVENT_QUIZ' %}
+        <form method="post" action="{% url 'admin_action' 'pause' %}">
+          {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+          <input type="hidden" name="request_id" value="{{ pause_request_id }}">
+          <button type="submit">Pause game</button>
+        </form>
+      {% elif global_state == 'PAUSED' %}
+        <form method="post" action="{% url 'admin_action' 'resume' %}">
+          {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+          <input type="hidden" name="request_id" value="{{ resume_request_id }}">
+          <button type="submit">Resume game</button>
+        </form>
+      {% endif %}
+      <form method="post" action="{% url 'admin_action' 'reset' %}">
+        {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+        <input type="hidden" name="request_id" value="{{ reset_request_id }}">
+        <button type="submit">Reset full game</button>
+      </form>
+      {% for control in team_controls %}
+        <section aria-label="Team {{ control.team.team_id|upper }}">
+          <h2>Team {{ control.team.team_id|upper }}</h2>
+          <p>{{ control.team.activity_state }} · {{ control.team.points }} points · {{ control.team.hint_tokens }} Hint tokens · Puzzle {{ control.team.current_number }}</p>
+          {% if control.team.completed_numbers %}<p>Completed: {{ control.team.completed_numbers|join:', ' }}</p>{% endif %}
+          {% if global_state == 'ADVENT_QUIZ' or global_state == 'PAUSED' %}
+            <form method="post" action="{% url 'admin_action' 'points' %}">
+              {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+              <input type="hidden" name="team_id" value="{{ control.team.team_id }}">
+              <input type="hidden" name="request_id" value="{{ control.points_request_id }}">
+              <label>Point change (use a negative number to remove)
+                <input type="number" name="delta" required step="1"></label>
+              <button type="submit">Apply points</button>
+            </form>
+          {% endif %}
+          {% if global_state == 'ADVENT_QUIZ' and control.team.current_question_id %}
+            <form method="post" action="{% url 'admin_action' 'force-complete' %}">
+              {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+              <input type="hidden" name="team_id" value="{{ control.team.team_id }}">
+              <input type="hidden" name="question_id" value="{{ control.team.current_question_id }}">
+              <input type="hidden" name="request_id" value="{{ control.force_request_id }}">
+              <button type="submit">Complete current puzzle</button>
+            </form>
+            {% if not control.team.hint_revealed %}
+              <form method="post" action="{% url 'admin_action' 'provide-hint' %}">
+                {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+                <input type="hidden" name="team_id" value="{{ control.team.team_id }}">
+                <input type="hidden" name="question_id" value="{{ control.team.current_question_id }}">
+                <input type="hidden" name="request_id" value="{{ control.hint_request_id }}">
+                <button type="submit">Reveal Hint to team</button>
+              </form>
+            {% endif %}
+          {% endif %}
+        </section>
+      {% endfor %}
     {% endif %}
   </main>
 </body>

@@ -1,15 +1,25 @@
 <div class="status">
-  <p id="connection-status" role="status"></p>
-  {% if feedback %}<p class="feedback" role="status">{{ feedback }}</p>{% endif %}
   <p>Game: {{ state.global_state }} · Team: {{ state.team_state }}</p>
   {% if state.run_id %}
-    <p>Points: {{ state.points }} · Puzzle: {{ state.current_number }}</p>
+    <p>Points: {{ state.points }} · Hint tokens: {{ state.hint_tokens }} · Puzzle: {{ state.current_number }}</p>
+    {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
+      <form method="post" action="{% url 'team_action' 'purchase-hint' %}"
+            hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit"
+            hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+            hx-target="#game-status" hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="run_id" value="{{ state.run_id }}">
+        <input type="hidden" name="request_id" value="{{ purchase_request_id }}">
+        <button type="submit">Buy Hint token ({{ state.hint_cost }} points)</button>
+      </form>
+    {% endif %}
     {% if state.completed_numbers %}<p>Completed: {{ state.completed_numbers|join:", " }}</p>{% endif %}
     {% if state.fragments %}<p>Fragments: {{ state.fragments|join:", " }}</p>{% endif %}
   {% else %}
     <p>Waiting for an administrator to start the game.</p>
   {% endif %}
 </div>
+{% if feedback %}<p id="action-feedback" class="feedback" role="status" hx-swap-oob="outerHTML">{{ feedback }}</p>{% endif %}
 {% if replace_pane %}
   {% include 'quiz/_question_pane.html' with oob=True %}
 {% endif %}

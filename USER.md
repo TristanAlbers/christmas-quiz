@@ -1,6 +1,6 @@
 # Using the Christmas Quiz today
 
-This guide describes the **phase 1 development demo** that is implemented now.
+This guide describes the **phase 2 development demo** that is implemented now.
 It has two isolated teams, two named game masters, and two sample puzzles per
 team. It is not the authored Christmas event, and completing sample puzzle 2
 does not finish the game.
@@ -49,10 +49,11 @@ password. After login, follow the home-page link to the Team or Admin view.
 Log out with the button on the page.
 
 Before Start, a team view shows `READY` and no puzzle. A game master opens
-`/admin-game/` and presses **Start development demo**. The current admin UI
+`/admin-game/` and presses **Start game**. The current admin UI
 starts only package ID `christmas-2026-demo`; it has no package selector.
 Start opens puzzle 1 for both teams. A second Start does not create another
-active run.
+active run. After a full reset, Start resumes the new READY run using the same
+pinned package snapshot.
 
 Each team sees only its own current puzzle, points, completed numbers, and
 earned fragments. A wrong answer is recorded and leaves the team on the same
@@ -64,11 +65,27 @@ The browser polls the server every 500 ms while visible; reloading or logging
 back in reads persisted state. Team identity and answer correctness are decided
 by the server.
 
-The demo defines hints in its package, but there is no Hint purchase, reveal,
-or admin hint action yet. There is no Skip, pause, attack, Challenge, Music Quiz,
-TV overview, or finished-game view in this phase. Completing sample puzzle 2
-leaves the team with no further sample puzzle; it does not mark either team or
-the global game finished.
+While the game is running, a team can buy a generic Hint token for the configured
+cost (1 point in the demo). Tokens remain after progression. Using one on the
+current puzzle reveals its hint only to that team and consumes one token. The
+same hint cannot consume a second token. An admin can reveal it without using a
+token. A team can Skip its current puzzle immediately for the configured cost
+(2 points in the demo); Skip grants the same completion reward and fragment as
+a correct answer. Insufficient points reject the purchase or Skip. There is no
+Skip inventory.
+
+The admin page shows both teams and supports pause/resume, signed point changes,
+current-puzzle force completion, immediate Hint reveal, and full reset. Pausing
+blocks team gameplay and hides the current puzzle until resume; it preserves
+each team's position and inventory. Point removal cannot make a balance
+negative. Reset creates a new READY run with initial points and empty tokens,
+progress, and hints, while preserving the prior run and audit history. Reload
+the admin page to see another admin's latest controls. There is no attack,
+timer, Challenge, Music Quiz, TV overview, or finished-game view in this phase.
+Completing sample puzzle 2 leaves the team with no further sample puzzle; it
+does not mark either team or the global game finished. A package extended to
+puzzle 13 cannot progress beyond puzzle 12 until the mandatory Music Quiz is
+implemented.
 
 ## Edit the demo before Start
 
@@ -78,8 +95,10 @@ Edit that JSON and its referenced files under the same package directory
 **before** starting a run. The package is declarative data; it cannot execute
 Python code. Credentials belong in `.env`, never in a package.
 
-The top level requires exactly `schema_version: 1`, `package_id`,
-`initial_points`, and `teams`. `initial_points` is a nonnegative integer.
+The phase 2 top level requires exactly `schema_version: 2`, `package_id`,
+`initial_points`, `hint_cost`, `skip_cost`, and `teams`. All three point values
+are nonnegative integers. Existing version 1 snapshots remain readable, but
+they have no configured prices and cannot use Hint purchases or Skip.
 `teams` requires exactly `a` and `b`. Each team has a `puzzles` list with 2–25
 entries numbered sequentially from 1. Each puzzle requires `id`, `number`,
 `title`, `body`, `validator`, `reward_points`, `hint`, `fragment`, and `media`.
@@ -132,17 +151,15 @@ A browser refresh or login after restart reads the saved attempts, rewards,
 fragments, and current puzzle. Do not edit or delete the database or pinned
 snapshot directories while a run is active.
 
-Restarting the server is **not** resetting or restarting the game. Phase 1 has
-no supported Reset button or command, and a started run cannot be returned to
-`READY` through the UI. Do not delete SQLite files or snapshots as a reset
-workaround; that would discard history and bypass the game's future reset
-rules. Admin reset is planned for phase 2. A tested backup and restore
-procedure is also not available yet.
+Restarting the server is **not** resetting the game. Use the admin **Reset full
+game** button to create a new READY run while retaining the old run and audit
+history. Do not delete SQLite files or snapshots as a reset workaround. A
+tested backup and restore procedure is not available yet.
 
 For validation, use a separate Compose project and disposable `/app/var`
 mount. Follow the exact isolation setup in [docs/scaffold.md](docs/scaffold.md)
 before running migrations or tests, so an existing event database is not
-touched. After that setup, the phase 1 checks are:
+touched. After that setup, the phase 2 checks are:
 
 ```sh
 docker compose --profile dev build app dev
@@ -150,9 +167,9 @@ docker compose up -d app
 docker compose exec app python manage.py check
 docker compose exec app python manage.py makemigrations --check --dry-run
 docker compose run --rm --entrypoint ruff dev check .
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase1-tests.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase2-tests.sqlite3 \
   dev test tests.domain tests.integration tests.security
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase1-browser.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase2-browser.sqlite3 \
   dev test tests.browser.test_live_sync
 ```
 

@@ -1,7 +1,9 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "package_id": "christmas-2026-demo",
   "initial_points": 3,
+  "hint_cost": 1,
+  "skip_cost": 2,
   "teams": {
     "a": {
       "puzzles": [

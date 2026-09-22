@@ -1,6 +1,11 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture; phase 1 first vertical slice implemented.
+Status: approved architecture; phases 1 and 2 implemented.
+
+Phase 2 implementation decisions are recorded in
+[`phase-2-contract.md`](phase-2-contract.md): one durable Hint reveal per
+team/puzzle, generic Hint inventory, immediate Skip via canonical completion,
+and reset by creating a new READY run ID from the immutable prior snapshot.
 
 This document records implementation choices. Game behavior remains governed by
 `christmas-2026-game-rules-state-semantics.md`, followed by `Design.md`, `Views.md`,

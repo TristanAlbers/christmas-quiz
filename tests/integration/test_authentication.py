@@ -63,7 +63,7 @@ class AuthenticationTests(TestCase):
         accepted = self.client.post(
             "/login/", {"team": "a", "pin": SECRETS["QUIZ_TEAM_A_PIN"]}
         )
-        self.assertEqual(accepted.status_code, 302)
+        self.assertRedirects(accepted, "/team/", fetch_redirect_response=False)
         self.assertEqual(
             actor_for_user(
                 get_user_model().objects.get(pk=self.client.session["_auth_user_id"])
@@ -77,10 +77,36 @@ class AuthenticationTests(TestCase):
             "/admin-login/",
             {"username": "admin-one", "password": SECRETS["QUIZ_ADMIN_ONE_PASSWORD"]},
         )
-        self.assertEqual(accepted.status_code, 302)
+        self.assertRedirects(accepted, "/admin-game/", fetch_redirect_response=False)
         self.assertEqual(
             actor_for_user(
                 get_user_model().objects.get(pk=self.client.session["_auth_user_id"])
             ).role,
             "admin",
         )
+
+    def test_each_account_lands_on_its_own_role_page(self):
+        with patch.dict(os.environ, SECRETS):
+            call_command("provision_accounts")
+        logins = (
+            ("/login/", {"team": "a", "pin": SECRETS["QUIZ_TEAM_A_PIN"]}, "/team/"),
+            ("/login/", {"team": "b", "pin": SECRETS["QUIZ_TEAM_B_PIN"]}, "/team/"),
+            (
+                "/admin-login/",
+                {"username": "admin-one", "password": SECRETS["QUIZ_ADMIN_ONE_PASSWORD"]},
+                "/admin-game/",
+            ),
+            (
+                "/admin-login/",
+                {"username": "admin-two", "password": SECRETS["QUIZ_ADMIN_TWO_PASSWORD"]},
+                "/admin-game/",
+            ),
+        )
+        for login_url, credentials, destination in logins:
+            with self.subTest(account=credentials.get("team") or credentials.get("username")):
+                response = self.client.post(login_url, credentials)
+                self.assertRedirects(response, destination, fetch_redirect_response=False)
+                self.assertRedirects(
+                    self.client.get("/"), destination, fetch_redirect_response=False
+                )
+                self.client.post("/logout/")

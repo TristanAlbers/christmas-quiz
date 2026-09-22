@@ -63,6 +63,83 @@ class LiveSyncBrowserTests(LiveServerTestCase):
         await page.locator("#answer-input").wait_for()
         return browser, context, page, page_errors
 
+    async def _wait_for_three_state_polls(self, page):
+        baseline = await page.evaluate("window.__gameStatusSwaps")
+        await page.wait_for_function(
+            "baseline => window.__gameStatusSwaps >= baseline + 3",
+            arg=baseline,
+            timeout=5000,
+        )
+
+    async def _watch_state_polls(self, page):
+        await page.evaluate(
+            """() => {
+                window.__gameStatusSwaps = 0;
+                const status = document.getElementById('game-status');
+                const observer = new MutationObserver(records => {
+                    if (records.some(record => record.type === 'childList')) {
+                        window.__gameStatusSwaps += 1;
+                    }
+                });
+                observer.observe(status, {childList: true});
+            }"""
+        )
+
+    def test_wrong_answer_feedback_survives_later_polls(self):
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser, context, page, _ = await self._open_team_page(playwright)
+                try:
+                    await self._watch_state_polls(page)
+                    await page.locator("#answer-input").fill("green")
+                    await page.locator(
+                        "#question-pane form[action='/team/answer/'] "
+                        "button[type=submit]"
+                    ).click()
+                    feedback = page.locator("#action-feedback")
+                    await feedback.filter(
+                        has_text="Incorrect answer. Try again."
+                    ).wait_for()
+                    await self._wait_for_three_state_polls(page)
+                    self.assertIn("Incorrect answer", await feedback.inner_text())
+                    question = await page.locator("#question-pane").inner_text()
+                    self.assertIn("Demo A1", question)
+                finally:
+                    await context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+        self.assertEqual(
+            Attempt.objects.filter(team_id="a", is_correct=False).count(), 1
+        )
+
+    def test_rejected_hint_feedback_survives_later_polls(self):
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser, context, page, _ = await self._open_team_page(playwright)
+                try:
+                    await self._watch_state_polls(page)
+                    async with page.expect_response(
+                        lambda response: "/team/action/use-hint/" in response.url
+                        and response.status == 409
+                    ):
+                        await page.get_by_role("button", name="Use Hint token").click()
+                    feedback = page.locator("#action-feedback")
+                    await feedback.filter(has_text="no hint tokens").wait_for()
+                    await self._wait_for_three_state_polls(page)
+                    self.assertIn("no hint tokens", await feedback.inner_text())
+                    question = await page.locator("#question-pane").inner_text()
+                    self.assertIn("Demo A1", question)
+                finally:
+                    await context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
     def test_poll_preserves_typing_focus_and_serves_local_static(self):
         async def check():
             from playwright.async_api import async_playwright
@@ -159,7 +236,10 @@ class LiveSyncBrowserTests(LiveServerTestCase):
                     await asyncio.wait_for(poll_held.wait(), 5)
                     await page.locator("#answer-input").fill("red")
                     submit_task = asyncio.create_task(
-                        page.locator("#question-pane button[type=submit]").click()
+                        page.locator(
+                            "#question-pane form[action='/team/answer/'] "
+                            "button[type=submit]"
+                        ).click()
                     )
                     await asyncio.wait_for(post_seen.wait(), 5)
                     count_during_command = poll_count

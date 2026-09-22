@@ -14,6 +14,8 @@ ErrorCode = Literal[
     "disallowed_state",
     "request_conflict",
     "temporarily_busy",
+    "insufficient_points",
+    "no_hint_tokens",
 ]
 
 
@@ -57,6 +59,8 @@ class QuestionProjection:
     title: str
     body: str
     media_urls: tuple[str, ...] = ()
+    hint: str | None = None
+    hint_available: bool = False
 
 
 @dataclass(frozen=True)
@@ -69,9 +73,68 @@ class TeamProjection:
     completed_numbers: tuple[int, ...]
     fragments: tuple[str, ...]
     question: QuestionProjection | None
+    hint_tokens: int = 0
+    hint_cost: int | None = None
+    skip_cost: int | None = None
 
 
 @dataclass(frozen=True)
 class AnswerResult:
     outcome: Literal["incorrect", "completed"]
     state: TeamProjection
+
+
+@dataclass(frozen=True)
+class RunCommand:
+    request_id: str
+    run_id: str
+
+
+@dataclass(frozen=True)
+class AdminPoints:
+    request_id: str
+    run_id: str
+    team_id: TeamId
+    delta: int
+
+
+@dataclass(frozen=True)
+class AdminPuzzle:
+    request_id: str
+    run_id: str
+    team_id: TeamId
+    question_id: str
+
+
+@dataclass(frozen=True)
+class TeamPuzzle:
+    request_id: str
+    run_id: str
+    question_id: str
+
+
+@dataclass(frozen=True)
+class CommandResult:
+    outcome: str
+    run_id: str
+    global_state: str
+
+
+@dataclass(frozen=True)
+class AdminTeamProjection:
+    team_id: TeamId
+    activity_state: str
+    points: int
+    hint_tokens: int
+    current_number: int
+    current_question_id: str | None
+    completed_numbers: tuple[int, ...]
+    hint_revealed: bool
+
+
+@dataclass(frozen=True)
+class AdminProjection:
+    run_id: str | None
+    global_state: str
+    package_id: str | None
+    teams: tuple[AdminTeamProjection, ...]

@@ -6,13 +6,30 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from quiz.application import (
-    get_admin_status,
+    adjust_points,
+    force_complete_current,
+    get_admin_state,
     get_team_state,
+    pause_game,
+    provide_hint,
+    purchase_hint,
+    reset_game,
+    resume_game,
+    skip_current,
     start_game,
     submit_answer,
+    use_hint,
 )
 from quiz.auth import actor_for_user
-from quiz.contracts import ApplicationError, StartGame, SubmitAnswer
+from quiz.contracts import (
+    AdminPoints,
+    AdminPuzzle,
+    ApplicationError,
+    RunCommand,
+    StartGame,
+    SubmitAnswer,
+    TeamPuzzle,
+)
 
 ERROR_STATUS = {
     "unauthenticated": 401,
@@ -23,6 +40,8 @@ ERROR_STATUS = {
     "disallowed_state": 409,
     "request_conflict": 409,
     "temporarily_busy": 503,
+    "insufficient_points": 409,
+    "no_hint_tokens": 409,
 }
 
 
@@ -34,8 +53,15 @@ def _error(exc):
 
 def _context(state):
     question_id = state.question.id if state.question else ""
+    hint_revealed = "1" if state.question and state.question.hint is not None else "0"
     return ":".join(
-        (state.run_id or "", state.global_state, state.team_state, question_id)
+        (
+            state.run_id or "",
+            state.global_state,
+            state.team_state,
+            question_id,
+            hint_revealed,
+        )
     )
 
 
@@ -47,10 +73,19 @@ def _team_context(state, *, feedback="", replace_pane=False):
         "replace_pane": replace_pane,
         "view_context": _context(state),
         "request_id": str(uuid.uuid4()),
+        "purchase_request_id": str(uuid.uuid4()),
+        "use_request_id": str(uuid.uuid4()),
+        "skip_request_id": str(uuid.uuid4()),
     }
 
 
 def index(request):
+    if request.user.is_authenticated:
+        try:
+            actor = actor_for_user(request.user)
+        except ApplicationError as exc:
+            return _error(exc)
+        return redirect("team" if actor.role == "team" else "admin_game")
     return render(request, "quiz/index.html")
 
 
@@ -124,7 +159,7 @@ def team_answer(request):
 def admin_game(request):
     try:
         actor = actor_for_user(request.user)
-        status = get_admin_status(actor)
+        status = get_admin_state(actor)
     except ApplicationError as exc:
         if exc.code == "unauthenticated":
             return redirect("admin_login")
@@ -133,9 +168,23 @@ def admin_game(request):
         request,
         "quiz/admin.html",
         {
-            "global_state": status.global_state if status else "READY",
-            "run_id": status.run_id if status else None,
+            "global_state": status.global_state,
+            "run_id": status.run_id,
+            "package_id": status.package_id,
+            "teams": status.teams,
             "request_id": str(uuid.uuid4()),
+            "pause_request_id": str(uuid.uuid4()),
+            "resume_request_id": str(uuid.uuid4()),
+            "reset_request_id": str(uuid.uuid4()),
+            "team_controls": [
+                {
+                    "team": team,
+                    "points_request_id": str(uuid.uuid4()),
+                    "force_request_id": str(uuid.uuid4()),
+                    "hint_request_id": str(uuid.uuid4()),
+                }
+                for team in status.teams
+            ],
         },
     )
 
@@ -152,6 +201,86 @@ def admin_start(request):
                 package_id=request.POST.get("package_id", ""),
             ),
         )
+    except ApplicationError as exc:
+        return _error(exc)
+    return redirect("admin_game")
+
+
+@never_cache
+@require_POST
+def team_action(request, action):
+    try:
+        actor = actor_for_user(request.user)
+        base = dict(
+            request_id=request.POST.get("request_id", ""),
+            run_id=request.POST.get("run_id", ""),
+        )
+        if action == "purchase-hint":
+            result = purchase_hint(actor, RunCommand(**base))
+        elif action == "use-hint":
+            result = use_hint(actor, TeamPuzzle(
+                **base, question_id=request.POST.get("question_id", "")
+            ))
+        elif action == "skip":
+            result = skip_current(actor, TeamPuzzle(
+                **base, question_id=request.POST.get("question_id", "")
+            ))
+        else:
+            return HttpResponse(status=404)
+        state = get_team_state(actor)
+    except ApplicationError as exc:
+        return _error(exc)
+    if not request.headers.get("HX-Request"):
+        return redirect("team")
+    feedback = (
+        "Hint was already revealed. No token used."
+        if result.outcome == "already_revealed"
+        else {
+            "purchase-hint": "Hint token purchased.",
+            "use-hint": "Hint revealed.",
+            "skip": "Puzzle skipped and completed.",
+        }[action]
+    )
+    return render(
+        request, "quiz/_team_state.html",
+        _team_context(state, feedback=feedback, replace_pane=True),
+    )
+
+
+@never_cache
+@require_POST
+def admin_action(request, action):
+    try:
+        actor = actor_for_user(request.user)
+        base = dict(
+            request_id=request.POST.get("request_id", ""),
+            run_id=request.POST.get("run_id", ""),
+        )
+        if action == "pause":
+            pause_game(actor, RunCommand(**base))
+        elif action == "resume":
+            resume_game(actor, RunCommand(**base))
+        elif action == "reset":
+            reset_game(actor, RunCommand(**base))
+        elif action == "points":
+            try:
+                delta = int(request.POST.get("delta", ""))
+            except (TypeError, ValueError) as exc:
+                raise ApplicationError("invalid_input") from exc
+            adjust_points(actor, AdminPoints(
+                **base, team_id=request.POST.get("team_id", ""), delta=delta,
+            ))
+        elif action in ("force-complete", "provide-hint"):
+            command = AdminPuzzle(
+                **base, team_id=request.POST.get("team_id", ""),
+                question_id=request.POST.get("question_id", ""),
+            )
+            if action == "force-complete":
+                force_complete_current(actor, command)
+            else:
+                provide_hint(actor, command)
+        else:
+            return HttpResponse(status=404)
     except ApplicationError as exc:
         return _error(exc)
     return redirect("admin_game")

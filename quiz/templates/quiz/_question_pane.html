@@ -6,6 +6,31 @@
     {% for media_url in state.question.media_urls %}
       <img class="puzzle-image" src="{{ media_url }}" alt="Private puzzle clue">
     {% endfor %}
+    {% if state.question.hint %}<p class="hint"><strong>Hint:</strong> {{ state.question.hint }}</p>{% endif %}
+    {% if state.question.hint_available and not state.question.hint %}
+      <form method="post" action="{% url 'team_action' 'use-hint' %}"
+            hx-post="{% url 'team_action' 'use-hint' %}" hx-trigger="submit"
+            hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+            hx-target="#game-status" hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="run_id" value="{{ state.run_id }}">
+        <input type="hidden" name="question_id" value="{{ state.question.id }}">
+        <input type="hidden" name="request_id" value="{{ use_request_id }}">
+        <button type="submit">Use Hint token</button>
+      </form>
+    {% endif %}
+    {% if state.skip_cost != None %}
+      <form method="post" action="{% url 'team_action' 'skip' %}"
+            hx-post="{% url 'team_action' 'skip' %}" hx-trigger="submit"
+            hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+            hx-target="#game-status" hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="run_id" value="{{ state.run_id }}">
+        <input type="hidden" name="question_id" value="{{ state.question.id }}">
+        <input type="hidden" name="request_id" value="{{ skip_request_id }}">
+        <button type="submit">Skip now ({{ state.skip_cost }} points)</button>
+      </form>
+    {% endif %}
     <form method="post" action="{% url 'team_answer' %}"
           hx-post="{% url 'team_answer' %}" hx-trigger="submit"
           hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
