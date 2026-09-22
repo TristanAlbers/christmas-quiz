@@ -1,3 +1,24 @@
+[project]
+name = "christmas-quiz"
+version = "0.1.0"
+description = "Self-hosted Christmas escape-room quiz"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "Django==5.2.17",
+    "gunicorn==26.2.0",
+    "whitenoise==6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "playwright==1.63.0",
+    "ruff==0.16.8",
+]
+
+[tool.uv]
+package = false
+
 [tool.ruff]
 target-version = "py312"
 line-length = 88
