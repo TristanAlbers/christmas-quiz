@@ -1,0 +1,15 @@
+<div class="status">
+  <p id="connection-status" role="status"></p>
+  {% if feedback %}<p class="feedback" role="status">{{ feedback }}</p>{% endif %}
+  <p>Game: {{ state.global_state }} · Team: {{ state.team_state }}</p>
+  {% if state.run_id %}
+    <p>Points: {{ state.points }} · Puzzle: {{ state.current_number }}</p>
+    {% if state.completed_numbers %}<p>Completed: {{ state.completed_numbers|join:", " }}</p>{% endif %}
+    {% if state.fragments %}<p>Fragments: {{ state.fragments|join:", " }}</p>{% endif %}
+  {% else %}
+    <p>Waiting for an administrator to start the game.</p>
+  {% endif %}
+</div>
+{% if replace_pane %}
+  {% include 'quiz/_question_pane.html' with oob=True %}
+{% endif %}

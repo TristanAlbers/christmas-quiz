@@ -1,3 +1,9 @@
 :root { color-scheme: light; font-family: system-ui, sans-serif; }
 body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f5f2; color: #153b31; }
-main { margin: 1rem; max-width: 35rem; padding: 2rem; background: white; border-radius: .75rem; }
+main { box-sizing: border-box; width: min(100% - 2rem, 35rem); margin: 1rem; padding: 1.5rem; background: white; border-radius: .75rem; }
+.page-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+button, input { font: inherit; }
+button { cursor: pointer; padding: .55rem .9rem; }
+input[name="answer"] { display: block; box-sizing: border-box; width: 100%; padding: .6rem; margin: .4rem 0 .8rem; }
+.puzzle-image { display: block; max-width: 100%; width: 5rem; image-rendering: pixelated; }
+.feedback { font-weight: 600; }

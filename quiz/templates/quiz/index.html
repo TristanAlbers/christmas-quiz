@@ -11,7 +11,13 @@
 <body>
   <main>
     <h1>Christmas Quiz</h1>
-    <p>The application scaffold is running. Gameplay is not available yet.</p>
+    <p>Development first slice</p>
+    {% if user.is_authenticated %}
+      <p><a href="{% url 'team' %}">Team view</a> · <a href="{% url 'admin_game' %}">Admin view</a></p>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Log out</button></form>
+    {% else %}
+      <p><a href="{% url 'login' %}">Log in</a></p>
+    {% endif %}
   </main>
 </body>
 </html>

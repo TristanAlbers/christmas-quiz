@@ -1,0 +1,28 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Christmas Quiz · Admin</title>
+  <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
+</head>
+<body>
+  <main>
+    <header class="page-header"><h1>Game master</h1>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out</button></form>
+    </header>
+    {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+    <p>Game: {{ global_state }}</p>
+    {% if run_id %}<p>Run: {{ run_id }}</p>{% endif %}
+    {% if global_state == 'READY' %}
+      <form method="post" action="{% url 'admin_start' %}">
+        {% csrf_token %}
+        <input type="hidden" name="request_id" value="{{ request_id }}">
+        <input type="hidden" name="package_id" value="christmas-2026-demo">
+        <button type="submit">Start development demo</button>
+      </form>
+    {% endif %}
+  </main>
+</body>
+</html>

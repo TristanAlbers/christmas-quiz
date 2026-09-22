@@ -1,0 +1,22 @@
+<div id="question-pane" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
+  <input id="view-context" type="hidden" name="view_context" value="{{ view_context }}">
+  {% if state.question %}
+    <h2>{{ state.question.title }}</h2>
+    <p>{{ state.question.body }}</p>
+    {% for media_url in state.question.media_urls %}
+      <img class="puzzle-image" src="{{ media_url }}" alt="Private puzzle clue">
+    {% endfor %}
+    <form method="post" action="{% url 'team_answer' %}"
+          hx-post="{% url 'team_answer' %}" hx-trigger="submit"
+          hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+          hx-target="#game-status" hx-swap="innerHTML">
+      {% csrf_token %}
+      <input type="hidden" name="run_id" value="{{ state.run_id }}">
+      <input type="hidden" name="question_id" value="{{ state.question.id }}">
+      <input type="hidden" name="request_id" value="{{ request_id }}">
+      <label for="answer-input">Answer</label>
+      <input id="answer-input" name="answer" autocomplete="off" required>
+      <button type="submit">Submit</button>
+    </form>
+  {% endif %}
+</div>

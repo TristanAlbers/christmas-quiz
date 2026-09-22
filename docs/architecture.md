@@ -1,6 +1,6 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture; application scaffold implemented, gameplay pending.
+Status: approved architecture; phase 1 first vertical slice implemented.
 
 This document records implementation choices. Game behavior remains governed by
 `christmas-2026-game-rules-state-semantics.md`, followed by `Design.md`, `Views.md`,
@@ -224,6 +224,13 @@ referenced media asset**, then pins the completed snapshot in the short Start
 transaction. Every active-run read uses that snapshot, including after a restart.
 Source package edits or deletion cannot silently change active rules or media.
 Keep secret credentials out of committed puzzle packages.
+
+In phase 1, `load_snapshot` verifies the manifest and all declared media bytes
+when it reads configuration, including within an answer transaction. The two
+asset demonstration package keeps this short. A larger event package may make
+that writer hold time material; measure it and adopt a validated immutable
+snapshot cache or pretransaction verification with an in-transaction pin check
+before loading large media packages. Do not skip integrity verification.
 
 Persist attempts, balances, progression, reward history, fragments, and audit
 events. Events identify timestamp, run/request, actor, affected team, action,

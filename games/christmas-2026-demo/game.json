@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "package_id": "christmas-2026-demo",
+  "initial_points": 3,
+  "teams": {
+    "a": {
+      "puzzles": [
+        {
+          "id": "a-1",
+          "number": 1,
+          "title": "Demo A1: North star",
+          "body": "Enter the colour of the star in your private image.",
+          "validator": {"type": "text_exact", "answer": "red"},
+          "reward_points": 4,
+          "hint": "The colour starts with R.",
+          "fragment": "DEMO-A-STAR",
+          "media": ["a/star.png"]
+        },
+        {
+          "id": "a-2",
+          "number": 2,
+          "title": "Demo A2: Count the bells",
+          "body": "How many bells are in the demo clue?",
+          "validator": {"type": "number_exact", "answer": "3"},
+          "reward_points": 2,
+          "hint": "One more than two.",
+          "fragment": "DEMO-A-BELLS",
+          "media": []
+        }
+      ]
+    },
+    "b": {
+      "puzzles": [
+        {
+          "id": "b-1",
+          "number": 1,
+          "title": "Demo B1: Winter sky",
+          "body": "Enter the colour in your private image.",
+          "validator": {"type": "text_exact", "answer": "blue"},
+          "reward_points": 4,
+          "hint": "The colour starts with B.",
+          "fragment": "DEMO-B-SKY",
+          "media": ["b/sky.png"]
+        },
+        {
+          "id": "b-2",
+          "number": 2,
+          "title": "Demo B2: Count the candles",
+          "body": "How many candles are in the demo clue?",
+          "validator": {"type": "number_exact", "answer": "7"},
+          "reward_points": 2,
+          "hint": "A lucky number.",
+          "fragment": "DEMO-B-CANDLES",
+          "media": []
+        }
+      ]
+    }
+  }
+}

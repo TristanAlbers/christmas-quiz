@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "quiz",
+    "quiz.apps.QuizConfig",
 ]
 
 MIDDLEWARE = [
@@ -60,9 +60,15 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": os.environ.get("DATABASE_PATH", str(BASE_DIR / "var" / "quiz.sqlite3")),
         "OPTIONS": {"timeout": 5},
+        "TEST": {"NAME": os.environ.get("TEST_DATABASE_PATH") or None},
     }
 }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+QUIZ_GAMES_ROOT = Path(os.environ.get("QUIZ_GAMES_ROOT", str(BASE_DIR / "games")))
+QUIZ_SNAPSHOT_ROOT = Path(
+    os.environ.get("QUIZ_SNAPSHOT_ROOT", str(BASE_DIR / "var" / "snapshots"))
+)
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Europe/Amsterdam"

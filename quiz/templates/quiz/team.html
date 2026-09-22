@@ -1,0 +1,39 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Christmas Quiz · Team {{ team_name }}</title>
+  <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
+  <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
+</head>
+<body>
+  <main>
+    <header class="page-header"><h1>Team {{ team_name }}</h1>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out</button></form>
+    </header>
+    <section id="live-game" aria-label="Current game">
+      <div id="poller" hx-get="{% url 'team_state' %}"
+           hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
+           hx-sync="#live-game:drop" hx-include="#view-context"
+           hx-target="#game-status" hx-swap="innerHTML"></div>
+      <div id="game-status" aria-live="polite">
+        {% include 'quiz/_team_state.html' with replace_pane=False %}
+      </div>
+      {% include 'quiz/_question_pane.html' %}
+    </section>
+  </main>
+  <script>
+    document.body.addEventListener('htmx:responseError', function () {
+      document.getElementById('connection-status').textContent = 'Connection trouble. Retrying…';
+    });
+    document.body.addEventListener('htmx:sendError', function () {
+      document.getElementById('connection-status').textContent = 'Connection trouble. Retrying…';
+    });
+    document.body.addEventListener('htmx:afterRequest', function (event) {
+      if (event.detail.successful) document.getElementById('connection-status').textContent = '';
+    });
+  </script>
+</body>
+</html>

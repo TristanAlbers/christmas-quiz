@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Django management entry point."""
 
 import os

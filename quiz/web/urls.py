@@ -1,8 +1,21 @@
 from django.urls import path
 
-from quiz.web import views
+from quiz.web import auth_views, media_views, views
 
 urlpatterns = [
     path("", views.index, name="index"),
     path("health/", views.health, name="health"),
+    path("login/", auth_views.team_login, name="login"),
+    path("admin-login/", auth_views.admin_login, name="admin_login"),
+    path("logout/", auth_views.sign_out, name="logout"),
+    path("team/", views.team, name="team"),
+    path("team/state/", views.team_state, name="team_state"),
+    path("team/answer/", views.team_answer, name="team_answer"),
+    path("admin-game/", views.admin_game, name="admin_game"),
+    path("admin-game/start/", views.admin_start, name="admin_start"),
+    path(
+        "media/<uuid:run_id>/<str:team_id>/<path:asset_path>/",
+        media_views.private_media,
+        name="private_media",
+    ),
 ]
