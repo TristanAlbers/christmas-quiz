@@ -93,19 +93,28 @@ class AuthenticationTests(TestCase):
             ("/login/", {"team": "b", "pin": SECRETS["QUIZ_TEAM_B_PIN"]}, "/team/"),
             (
                 "/admin-login/",
-                {"username": "admin-one", "password": SECRETS["QUIZ_ADMIN_ONE_PASSWORD"]},
+                {
+                    "username": "admin-one",
+                    "password": SECRETS["QUIZ_ADMIN_ONE_PASSWORD"],
+                },
                 "/admin-game/",
             ),
             (
                 "/admin-login/",
-                {"username": "admin-two", "password": SECRETS["QUIZ_ADMIN_TWO_PASSWORD"]},
+                {
+                    "username": "admin-two",
+                    "password": SECRETS["QUIZ_ADMIN_TWO_PASSWORD"],
+                },
                 "/admin-game/",
             ),
         )
         for login_url, credentials, destination in logins:
-            with self.subTest(account=credentials.get("team") or credentials.get("username")):
+            account = credentials.get("team") or credentials.get("username")
+            with self.subTest(account=account):
                 response = self.client.post(login_url, credentials)
-                self.assertRedirects(response, destination, fetch_redirect_response=False)
+                self.assertRedirects(
+                    response, destination, fetch_redirect_response=False
+                )
                 self.assertRedirects(
                     self.client.get("/"), destination, fetch_redirect_response=False
                 )
