@@ -1,0 +1,3 @@
+# Codex Cloud/pip dependency entry point. The repository itself is not a package.
+-r requirements.lock
+-r requirements-dev.lock
