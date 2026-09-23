@@ -1,6 +1,6 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture; phases 1 and 2 implemented, phase 3 in progress.
+Status: approved architecture; phases 1–3 implemented and validated.
 
 Phase 2 implementation decisions are recorded in
 [`phase-2-contract.md`](phase-2-contract.md): one durable Hint reveal per

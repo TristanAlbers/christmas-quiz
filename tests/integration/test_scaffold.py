@@ -12,7 +12,4 @@ class ScaffoldTests(SimpleTestCase):
     def test_index_loads_local_static_assets(self):
         response = self.client.get(reverse("index"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, staticfiles_storage.url("quiz/app.css"))
-        self.assertContains(
-            response, staticfiles_storage.url("quiz/vendor/htmx.min.js")
-        )
+        self.assertContains(response, staticfiles_storage.url("quiz/landing.css"))

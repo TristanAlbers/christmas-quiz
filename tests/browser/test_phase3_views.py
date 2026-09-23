@@ -129,11 +129,11 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         "form[action='/team/action/purchase-reverse/']"
                     )
                     await reverse_form.locator("button[type=submit]").click()
-                    await page.get_by_text("Uno Reverse:", exact=False).wait_for(
+                    await page.get_by_text("Uno Reverse active", exact=False).wait_for(
                         timeout=5000
                     )
                     self.assertIn(
-                        "Uno Reverse: active",
+                        "Uno Reverse active",
                         await page.locator(".state-panel-puzzle").inner_text(),
                     )
                     state = await asyncio.to_thread(get_team_state, self.a)
@@ -144,11 +144,15 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         self.b,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.locator(".state-panel-freeze").wait_for(timeout=5000)
+                    await page.get_by_text(
+                        "Uno Reverse inactive", exact=False
+                    ).wait_for(timeout=5000)
                     state = await asyncio.to_thread(get_team_state, self.a)
-                    self.assertEqual(state.team_state, "FREEZE")
+                    attacker = await asyncio.to_thread(get_team_state, self.b)
+                    self.assertEqual(state.team_state, "PUZZLE")
                     self.assertFalse(state.uno_reverse_active)
-                    self.assertEqual(await page.locator("#answer-input").count(), 0)
+                    self.assertEqual(attacker.team_state, "FREEZE")
+                    self.assertEqual(await page.locator("#answer-input").count(), 1)
                 finally:
                     await context.close()
                     await browser.close()

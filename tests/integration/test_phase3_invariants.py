@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.db import connections
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import TransactionTestCase, override_settings
 from django.utils import timezone
 
 from quiz.application import (
