@@ -75,6 +75,14 @@ class Phase31BrowserTests(LiveServerTestCase):
                     package_select = admin_page.locator("select[name='package_id']")
                     await package_select.wait_for()
                     await package_select.select_option("christmas-2026-demo")
+
+                    # READY is polled every 500 ms. The selection must survive
+                    # multiple poll swaps so the admin is not racing the poller.
+                    await admin_page.wait_for_timeout(1200)
+                    self.assertEqual(
+                        await package_select.input_value(), "christmas-2026-demo"
+                    )
+
                     await admin_page.get_by_role("button", name="Start game").click()
                     await admin_page.get_by_text("ADVENT_QUIZ", exact=True).wait_for(
                         timeout=5000
