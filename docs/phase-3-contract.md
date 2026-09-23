@@ -3,6 +3,15 @@
 Status: implemented and validated for phase 3, 2026-09-23. The normative game
 rules remain authoritative.
 
+> **Lifecycle supersession (phase 3.1):** the gameplay-clock, Freeze, Uno Reverse,
+> privacy, package-schema-v3 and transaction decisions in this contract remain
+> valid. The statements below that assume Reset creates a new active `READY` run
+> are historical phase-3 behavior and are superseded by
+> `phase-3.1-contract.md`. After phase 3.1, a full Reset ends/deactivates the
+> active run and leaves no replacement run; the next Start creates a new run and
+> starts its gameplay clock from a freshly staged snapshot of the selected source
+> package.
+
 ## Settled decisions
 
 ### Gameplay clock and unexpected downtime
@@ -81,10 +90,17 @@ commands do not charge points, consume Reverse, or write success receipts/events
 Migration `0003_phase3` follows `0002_phase2`. `Run` gains the persisted gameplay
 clock accumulator/anchor. `TeamRun` gains a nullable Freeze start on that clock
 and a Boolean Reverse flag, with constraints defending valid nonnegative/pairing
-state. Reset creates a stopped READY clock and clears both effects; Start of a
-READY reset run starts its clock. The package advances to schema version 3 and
-requires nonnegative integer `freeze_cost` and `uno_reverse_cost`. Existing v1/v2
-snapshots remain readable, but phase-3 purchases are unavailable for them.
+state. The package advances to schema version 3 and requires nonnegative integer
+`freeze_cost` and `uno_reverse_cost`. Existing v1/v2 snapshots remain readable,
+but phase-3 purchases are unavailable for them.
+
+During the original phase-3 implementation, Reset created a stopped READY clock
+on a replacement active run and Start of that READY run started its clock. That
+lifecycle is superseded by phase 3.1: Reset now deactivates the old run and
+creates no replacement. A later Start creates a new run from a newly staged
+snapshot and initializes that new run's stopped/starting gameplay clock according
+to the existing phase-3 clock policy. Existing historical runs keep their stored
+clock/effect data unchanged.
 
 ## Ownership and edit order
 
