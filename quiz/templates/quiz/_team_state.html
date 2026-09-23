@@ -15,39 +15,6 @@
     {% elif state.global_state == 'PAUSED' %}
       <div class="interruption-message"><h2>Game paused</h2><p>Your exact puzzle state and effect timers are preserved.</p></div>
     {% endif %}
-    {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
-      <div class="action-grid">
-        <form method="post" action="{% url 'team_action' 'purchase-hint' %}"
-              hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit"
-              hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-              hx-target="#game-status" hx-swap="innerHTML">
-          {% csrf_token %}
-          <input type="hidden" name="run_id" value="{{ state.run_id }}">
-          <input type="hidden" name="request_id" value="{{ purchase_request_id }}">
-          <button type="submit">Buy Hint ({{ state.hint_cost }})</button>
-        </form>
-        {% if state.uno_reverse_cost != None and not state.uno_reverse_active %}
-          <form method="post" action="{% url 'team_action' 'purchase-reverse' %}"
-                hx-post="{% url 'team_action' 'purchase-reverse' %}" hx-trigger="submit"
-                hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-                hx-target="#game-status" hx-swap="innerHTML">
-            {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}">
-            <input type="hidden" name="request_id" value="{{ reverse_request_id }}">
-            <button type="submit">Buy Uno Reverse ({{ state.uno_reverse_cost }})</button>
-          </form>
-        {% endif %}
-        {% if state.freeze_cost != None %}
-          <form method="post" action="{% url 'team_action' 'freeze' %}"
-                hx-post="{% url 'team_action' 'freeze' %}" hx-trigger="submit"
-                hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-                hx-target="#game-status" hx-swap="innerHTML">
-            {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}">
-            <input type="hidden" name="request_id" value="{{ freeze_request_id }}">
-            <button type="submit">Freeze opponent ({{ state.freeze_cost }})</button>
-          </form>
-        {% endif %}
-      </div>
-    {% endif %}
     {% if state.completed_numbers %}<p>Completed: {{ state.completed_numbers|join:", " }}</p>{% endif %}
     {% if state.fragments %}<p>Fragments: {{ state.fragments|join:", " }}</p>{% endif %}
   {% else %}
@@ -55,6 +22,9 @@
   {% endif %}
 </div>
 {% if feedback %}<p id="action-feedback" class="feedback" role="status" hx-swap-oob="outerHTML">{{ feedback }}</p>{% endif %}
+{% if replace_actions %}
+  {% include 'quiz/_team_actions.html' with oob=True %}
+{% endif %}
 {% if replace_pane %}
   {% include 'quiz/_question_pane.html' with oob=True %}
 {% endif %}

@@ -57,7 +57,7 @@ def _error(exc):
     return response
 
 
-def _context(state):
+def _question_context(state):
     question_id = state.question.id if state.question else ""
     hint_revealed = "1" if state.question and state.question.hint is not None else "0"
     return ":".join(
@@ -71,13 +71,32 @@ def _context(state):
     )
 
 
-def _team_context(state, *, feedback="", replace_pane=False):
+def _team_actions_context(state):
+    return ":".join(
+        (
+            state.run_id or "",
+            state.global_state,
+            state.team_state,
+            "1" if state.uno_reverse_active else "0",
+        )
+    )
+
+
+def _team_context(
+    state,
+    *,
+    feedback="",
+    replace_pane=False,
+    replace_actions=False,
+):
     return {
         "state": state,
         "team_name": "A" if state.run_id is None else "",
         "feedback": feedback,
         "replace_pane": replace_pane,
-        "view_context": _context(state),
+        "replace_actions": replace_actions,
+        "view_context": _question_context(state),
+        "actions_context": _team_actions_context(state),
         "request_id": str(uuid.uuid4()),
         "purchase_request_id": str(uuid.uuid4()),
         "use_request_id": str(uuid.uuid4()),
@@ -87,7 +106,58 @@ def _team_context(state, *, feedback="", replace_pane=False):
     }
 
 
-def _admin_context(state):
+def _admin_global_context(state):
+    return ":".join((state.run_id or "", state.global_state))
+
+
+def _admin_package_context(state):
+    package_context = ",".join(
+        f"{item.package_id}:{'1' if item.startable else '0'}"
+        for item in state.packages
+    )
+    mode = "READY" if state.global_state == "READY" else "ACTIVE"
+    return "|".join((mode, package_context))
+
+
+def _admin_team_context(state, team_id):
+    team = next((item for item in state.teams if item.team_id == team_id), None)
+    if team is None:
+        return f"{state.run_id or ''}:{state.global_state}:{team_id}"
+    return ":".join(
+        (
+            state.run_id or "",
+            state.global_state,
+            team_id,
+            team.activity_state,
+            team.current_question_id or "",
+            "1" if team.hint_revealed else "0",
+        )
+    )
+
+
+def _admin_context(
+    state,
+    *,
+    replace_package_controls=False,
+    replace_global_controls=False,
+    replace_team_a_controls=False,
+    replace_team_b_controls=False,
+):
+    team_controls = [
+        {
+            "team": team,
+            "points_request_id": str(uuid.uuid4()),
+            "force_request_id": str(uuid.uuid4()),
+            "hint_request_id": str(uuid.uuid4()),
+            "freeze_request_id": str(uuid.uuid4()),
+            "unfreeze_request_id": str(uuid.uuid4()),
+        }
+        for team in state.teams
+    ]
+    controls_by_team = {
+        control["team"].team_id: control
+        for control in team_controls
+    }
     return {
         "global_state": state.global_state,
         "run_id": state.run_id,
@@ -96,21 +166,21 @@ def _admin_context(state):
         "packages": state.packages,
         "discovery_error": state.discovery_error,
         "has_startable_packages": any(item.startable for item in state.packages),
+        "global_context": _admin_global_context(state),
+        "package_context": _admin_package_context(state),
+        "team_a_context": _admin_team_context(state, "a"),
+        "team_b_context": _admin_team_context(state, "b"),
+        "replace_package_controls": replace_package_controls,
+        "replace_global_controls": replace_global_controls,
+        "replace_team_a_controls": replace_team_a_controls,
+        "replace_team_b_controls": replace_team_b_controls,
         "request_id": str(uuid.uuid4()),
         "pause_request_id": str(uuid.uuid4()),
         "resume_request_id": str(uuid.uuid4()),
         "reset_request_id": str(uuid.uuid4()),
-        "team_controls": [
-            {
-                "team": team,
-                "points_request_id": str(uuid.uuid4()),
-                "force_request_id": str(uuid.uuid4()),
-                "hint_request_id": str(uuid.uuid4()),
-                "freeze_request_id": str(uuid.uuid4()),
-                "unfreeze_request_id": str(uuid.uuid4()),
-            }
-            for team in state.teams
-        ],
+        "team_controls": team_controls,
+        "team_a_control": controls_by_team.get("a"),
+        "team_b_control": controls_by_team.get("b"),
     }
 
 
@@ -151,11 +221,18 @@ def team_state(request):
         state = get_team_state(actor)
     except ApplicationError as exc:
         return _error(exc)
-    replace = request.GET.get("view_context") != _context(state)
+    replace_pane = request.GET.get("view_context") != _question_context(state)
+    replace_actions = (
+        request.GET.get("actions_context") != _team_actions_context(state)
+    )
     return render(
         request,
         "quiz/_team_state.html",
-        _team_context(state, replace_pane=replace),
+        _team_context(
+            state,
+            replace_pane=replace_pane,
+            replace_actions=replace_actions,
+        ),
     )
 
 
@@ -185,7 +262,12 @@ def team_answer(request):
     return render(
         request,
         "quiz/_team_state.html",
-        _team_context(result.state, feedback=feedback, replace_pane=True),
+        _team_context(
+            result.state,
+            feedback=feedback,
+            replace_pane=True,
+            replace_actions=True,
+        ),
     )
 
 
@@ -210,7 +292,29 @@ def admin_state(request):
         state = get_admin_state(actor)
     except ApplicationError as exc:
         return _error(exc)
-    return render(request, "quiz/_admin_state.html", _admin_context(state))
+    return render(
+        request,
+        "quiz/_admin_state.html",
+        _admin_context(
+            state,
+            replace_package_controls=(
+                request.GET.get("package_context")
+                != _admin_package_context(state)
+            ),
+            replace_global_controls=(
+                request.GET.get("global_context")
+                != _admin_global_context(state)
+            ),
+            replace_team_a_controls=(
+                request.GET.get("team_a_context")
+                != _admin_team_context(state, "a")
+            ),
+            replace_team_b_controls=(
+                request.GET.get("team_b_context")
+                != _admin_team_context(state, "b")
+            ),
+        ),
+    )
 
 
 @never_cache
@@ -276,8 +380,14 @@ def team_action(request, action):
         }[action]
     )
     return render(
-        request, "quiz/_team_state.html",
-        _team_context(state, feedback=feedback, replace_pane=True),
+        request,
+        "quiz/_team_state.html",
+        _team_context(
+            state,
+            feedback=feedback,
+            replace_pane=True,
+            replace_actions=True,
+        ),
     )
 
 
@@ -290,6 +400,7 @@ def admin_action(request, action):
             request_id=request.POST.get("request_id", ""),
             run_id=request.POST.get("run_id", ""),
         )
+        team_id = request.POST.get("team_id", "")
         if action == "pause":
             pause_game(actor, RunCommand(**base))
         elif action == "resume":
@@ -302,11 +413,12 @@ def admin_action(request, action):
             except (TypeError, ValueError) as exc:
                 raise ApplicationError("invalid_input") from exc
             adjust_points(actor, AdminPoints(
-                **base, team_id=request.POST.get("team_id", ""), delta=delta,
+                **base, team_id=team_id, delta=delta,
             ))
         elif action in ("force-complete", "provide-hint"):
             command = AdminPuzzle(
-                **base, team_id=request.POST.get("team_id", ""),
+                **base,
+                team_id=team_id,
                 question_id=request.POST.get("question_id", ""),
             )
             if action == "force-complete":
@@ -314,9 +426,7 @@ def admin_action(request, action):
             else:
                 provide_hint(actor, command)
         elif action in ("freeze", "unfreeze"):
-            command = AdminTeam(
-                **base, team_id=request.POST.get("team_id", "")
-            )
+            command = AdminTeam(**base, team_id=team_id)
             if action == "freeze":
                 admin_freeze(actor, command)
             else:
@@ -327,6 +437,16 @@ def admin_action(request, action):
         return _error(exc)
     if not request.headers.get("HX-Request"):
         return redirect("admin_game")
+
+    global_change = action in ("pause", "resume", "reset")
     return render(
-        request, "quiz/_admin_state.html", _admin_context(get_admin_state(actor))
+        request,
+        "quiz/_admin_state.html",
+        _admin_context(
+            get_admin_state(actor),
+            replace_package_controls=action == "reset",
+            replace_global_controls=global_change,
+            replace_team_a_controls=global_change or team_id == "a",
+            replace_team_b_controls=global_change or team_id == "b",
+        ),
     )

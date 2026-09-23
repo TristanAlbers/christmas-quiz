@@ -140,18 +140,17 @@ select {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
-    transform 140ms ease,
     filter 140ms ease,
     box-shadow 140ms ease;
 }
 
 .theme-button:hover {
   filter: brightness(1.08);
-  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28), var(--shadow-glow-red);
 }
 
 .theme-button:active {
-  transform: translateY(0);
+  filter: brightness(0.98);
 }
 
 .theme-text-link {
