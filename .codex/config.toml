@@ -2,6 +2,23 @@
 enabled = true
 max_concurrent_threads_per_session = 4
 
-# Agent TOML files intentionally omit model settings. Each role inherits the
-# parent session's model and reasoning defaults, keeping this setup compatible
-# with the models available on the user's current Codex plan.
+# Fallback for subagents that do not define their own model configuration.
+# Most ordinary coordination and verification work does not need High reasoning.
+default_subagent_model = "gpt-5.6-sol"
+default_subagent_reasoning_effort = "medium"
+
+[agents.architect]
+description = "Lead architect and integrator for repository structure, boundaries, contracts, architecture decisions, implementation sequencing, and cross-agent consistency."
+config_file = "agents/architect.toml"
+
+[agents.game_engine]
+description = "Domain specialist for the authoritative game state machine, commands, policies, canonical puzzle completion, timers, points, attacks, challenges, and deterministic domain tests."
+config_file = "agents/game_engine.toml"
+
+[agents.persistence_security]
+description = "Persistence and security specialist for schema design, atomic transactions, authentication, authorization, strict team isolation, concurrency control, configuration snapshots, and audit events."
+config_file = "agents/persistence_security.toml"
+
+[agents.test_invariants]
+description = "Adversarial verification specialist that turns hard invariants and minimum critical cases into automated domain, integration, concurrency, security, and recovery tests."
+config_file = "agents/test_invariants.toml"

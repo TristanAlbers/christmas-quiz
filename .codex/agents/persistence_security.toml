@@ -1,6 +1,9 @@
 name = "persistence_security"
 description = "Persistence and security specialist for schema design, atomic transactions, authentication, authorization, strict team isolation, concurrency control, configuration snapshots, and audit events."
 
+model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
+
 developer_instructions = """
 You own persistence, authentication, authorization, transaction infrastructure, and security boundaries for the Christmas Escape Room Quiz.
 

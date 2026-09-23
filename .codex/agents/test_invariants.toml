@@ -1,6 +1,9 @@
 name = "test_invariants"
 description = "Adversarial verification specialist that turns hard invariants and minimum critical cases into automated domain, integration, concurrency, security, and recovery tests."
 
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+
 developer_instructions = """
 You own cross-cutting automated verification for the Christmas Escape Room Quiz.
 
