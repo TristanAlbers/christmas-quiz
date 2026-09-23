@@ -67,11 +67,14 @@ Canonical states:
 
 ### READY
 
-- Initial state.
-- Both teams are `READY`.
+- Initial state and the state after an administrator fully resets/ends the active game.
 - No gameplay interaction is available.
-- An admin must start the game.
-- Start changes the global state to `ADVENT_QUIZ` and both teams to their first `PUZZLE`.
+- No game run needs to be active merely to represent `READY`.
+- Both teams are conceptually `READY` and receive only a waiting-for-game-master view.
+- Administrators may inspect the available game packages and select which package to start.
+- Inspecting/listing packages MUST NOT itself create a run or immutable run snapshot.
+- Start validates the selected current source package, creates a new immutable configuration/media snapshot, creates a new active run, and changes the global state to `ADVENT_QUIZ` with both teams on their first `PUZZLE`.
+- A process, application, container, host, browser, or network restart is not a transition to `READY`. If an active run exists, it MUST be recovered instead of replaced or reloaded from source configuration.
 
 ### ADVENT_QUIZ
 
@@ -666,14 +669,18 @@ Admin-provided hint reveals immediately without consuming a token.
 
 Admin full reset:
 
-- global state → `READY`;
-- both teams → `READY`;
-- progression reset;
-- points/items/fragments reset to configured initial values;
-- active timers/effects cleared;
-- one-time mechanics reset;
-- event log preserved;
-- reset itself logged.
+- ends/deactivates the current active run;
+- application state → `READY`;
+- no replacement active run is created;
+- teams receive the `READY`/waiting projection;
+- all old run progression, balances/items/fragments, timers/effects and one-time mechanics remain preserved as historical facts of that inactive run;
+- the old immutable configuration/media snapshot remains preserved as part of that run's recoverable/auditable history;
+- the event log and request receipts remain preserved;
+- reset itself is logged;
+- commands targeting the old run become stale;
+- the next Start may select the same source package or a different one and creates a fresh run/snapshot initialized from the selected package's current source configuration.
+
+Reset is distinct from restart/recovery. An application/container/server restart MUST NOT perform the full-reset behavior when an active run exists.
 
 ---
 
@@ -739,9 +746,20 @@ Configurable values should include at least:
 - fragments;
 - media.
 
-The active game configuration is loaded/versioned when the game starts.
+Multiple source packages may exist simultaneously under the configured `games/`
+root. While `READY`, administrators may inspect which packages are available and
+select one to start. Package discovery MUST NOT itself create a run or immutable
+snapshot.
 
-The active game MUST use that configuration snapshot. Changing source configuration during an active game must not silently change its rules.
+The active game configuration is loaded/versioned when the selected game starts.
+Start creates a fresh immutable snapshot of the selected source configuration and
+all referenced media, and the newly created active run is pinned to that snapshot.
+
+The active game MUST use that configuration snapshot. Changing or deleting source configuration during an active game must not silently change its rules or media.
+
+Restart/recovery MUST continue the active run from its persisted state and pinned snapshot without rereading source configuration.
+
+After a full Reset there is no active package/run. Starting again revalidates the selected package's current source files and creates a new run/snapshot.
 
 ---
 
@@ -827,12 +845,16 @@ The first-finisher record is persistent.
 
 ## Global
 
-1. Exactly one global state is active.
-2. `FINISHED` means both teams completed puzzle 25.
-3. Music Quiz can trigger only once per game.
-4. `PAUSED` preserves underlying team states.
-5. `MUSIC_QUIZ` preserves underlying team states.
-6. Gameplay timers do not advance during either interruption.
+1. Exactly one conceptual global state is active.
+2. `READY` MAY be represented by the absence of an active run.
+3. At most one active run exists.
+4. `FINISHED` means both teams completed puzzle 25.
+5. Music Quiz can trigger only once per game.
+6. `PAUSED` preserves underlying team states.
+7. `MUSIC_QUIZ` preserves underlying team states.
+8. Gameplay timers do not advance during either interruption.
+9. Restart/recovery does not create a new run or reload source configuration for an active run.
+10. Full Reset leaves no active run and preserves the old run as history.
 
 ## Team
 
@@ -961,6 +983,10 @@ A disconnect is never implicitly:
 
 This applies during Freeze, Challenge and normal Advent gameplay.
 
+The same principle applies to application/container/server recovery: process
+restart is not implicitly a Reset. If an active run exists, the application
+continues that run from persisted state and its pinned snapshot.
+
 ---
 
 # 27. Implementation priority
@@ -1078,15 +1104,23 @@ Do not make the normal game architecture unnecessarily complicated to optimize f
 - API manipulation cannot bypass isolation.
 - Frontend manipulation cannot bypass rules.
 
-### Administration
+### Administration and lifecycle
 
-- Start/resume/pause works.
+- Start from `READY` requires/selects a valid package and creates a fresh run/snapshot.
+- Merely listing packages does not create a snapshot/run.
+- Invalid packages cannot be started and provide an administrator-visible diagnostic.
+- Application/container restart with an active run preserves its run ID, state and pinned snapshot.
+- Source package edits/deletion do not alter an active run.
+- Full reset leaves no active run.
+- Teams return to a waiting/`READY` projection after reset.
+- Event log and old run history survive reset.
+- Reset is logged.
+- Old commands become stale after reset.
+- Starting after reset creates a new run and observes the selected package's current source configuration.
+- Two concurrent administrators cannot create competing active runs.
 - Point changes are atomic and non-negative.
 - Admin force completion follows canonical completion.
 - Earlier reopen creates prerequisite violation without rollback.
-- Full reset returns both teams to `READY`.
-- Event log survives reset.
-- Reset is logged.
 
 ---
 
