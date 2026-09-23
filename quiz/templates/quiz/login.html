@@ -1,10 +1,57 @@
+{% load static %}
 <!doctype html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Quiz login</title></head>
-<body>
-<main>
-  <h1>{% if role == "team" %}Team login{% else %}Admin login{% endif %}</h1>
-  <form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Sign in</button></form>
-</main>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#061813">
+  <title>{% if role == "team" %}Teaminlog{% else %}Game Master-inlog{% endif %} · Kerstmis Quiz</title>
+  <link rel="stylesheet" href="{% static 'quiz/landing.css' %}">
+</head>
+<body class="auth-page">
+  <div class="christmas-lights" aria-hidden="true">
+    <span class="light-bulb light-bulb--red"></span>
+    <span class="light-bulb light-bulb--gold"></span>
+    <span class="light-bulb light-bulb--green"></span>
+    <span class="light-bulb light-bulb--red"></span>
+    <span class="light-bulb light-bulb--gold"></span>
+    <span class="light-bulb light-bulb--green"></span>
+    <span class="light-bulb light-bulb--red"></span>
+  </div>
+
+  <div class="forest" aria-hidden="true"></div>
+
+  <main class="auth-shell">
+    <section class="auth-card theme-card" aria-labelledby="auth-title">
+      <header class="auth-header">
+        <p class="theme-eyebrow">Kerstmis Quiz</p>
+        <h1 class="auth-title theme-display" id="auth-title">
+          {% if role == "team" %}Teaminlog{% else %}Game Master{% endif %}
+        </h1>
+        <p class="theme-muted">
+          {% if role == "team" %}
+            Kies je team en vul de teamcode in.
+          {% else %}
+            Log in om de quiz te beheren.
+          {% endif %}
+        </p>
+      </header>
+
+      <form class="auth-form" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="auth-submit theme-button" type="submit">
+          {% if role == "team" %}Naar de quiz{% else %}Open Game Master{% endif %}
+        </button>
+      </form>
+
+      <div class="auth-back">
+        <a class="theme-text-link" href="{% url 'index' %}">
+          <span aria-hidden="true">←</span>
+          Terug naar start
+        </a>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

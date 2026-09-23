@@ -1,17 +1,53 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Christmas Quiz</title>
-  <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
-  <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
+  <meta name="theme-color" content="#061813">
+  <title>Kerstmis Quiz</title>
+  <link rel="stylesheet" href="{% static 'quiz/landing.css' %}">
 </head>
-<body>
-  <main>
-    <h1>Christmas Quiz</h1>
-    <p><a href="{% url 'login' %}">Team login</a> · <a href="{% url 'admin_login' %}">Admin login</a></p>
+<body class="landing-page">
+  <div class="christmas-lights" aria-hidden="true">
+    <span class="light-bulb light-bulb--red"></span>
+    <span class="light-bulb light-bulb--gold"></span>
+    <span class="light-bulb light-bulb--green"></span>
+    <span class="light-bulb light-bulb--red"></span>
+    <span class="light-bulb light-bulb--gold"></span>
+    <span class="light-bulb light-bulb--green"></span>
+    <span class="light-bulb light-bulb--red"></span>
+    <span class="light-bulb light-bulb--gold"></span>
+    <span class="light-bulb light-bulb--green"></span>
+  </div>
+
+  <div class="forest" aria-hidden="true"></div>
+
+  <main class="landing-shell">
+    <section class="landing-card theme-card" aria-labelledby="landing-title">
+      <div class="landing-mark" aria-hidden="true">✦</div>
+      <p class="theme-eyebrow">Kerst Escape Room · 2026</p>
+      <h1 class="landing-title theme-display" id="landing-title">Kerstmis Quiz</h1>
+      <p class="landing-subtitle">
+        25 vakjes. Twee teams. Eén winnaar.
+        Werk samen, kraak de puzzels en bereik als eerste het einde.
+      </p>
+
+      <nav class="landing-actions" aria-label="Kies je ingang">
+        <a class="theme-button" href="{% url 'login' %}">
+          <span aria-hidden="true">🎄</span>
+          Speel als team
+        </a>
+        <a class="landing-admin theme-text-link" href="{% url 'admin_login' %}">
+          Naar Game Master
+          <span aria-hidden="true">→</span>
+        </a>
+      </nav>
+
+      <p class="landing-note">
+        Gebruik voor ieder team alleen de eigen teaminlog.
+      </p>
+    </section>
   </main>
 </body>
 </html>
