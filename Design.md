@@ -99,6 +99,40 @@ games/
 
 without needing to substantially modify the application itself.
 
+Multiple packages may coexist, for example:
+
+```text
+games/
+├── christmas-2026-family/
+├── christmas-2026-friends/
+└── christmas-2026-demo/
+```
+
+### Game Package Selection and Run Lifecycle
+
+`READY` represents the condition in which no game is currently active. It does not require a persisted active game run.
+
+While the application is `READY`:
+
+* administrators should be able to see the available game packages under `games/`;
+* administrators should select which package to start;
+* teams should only see a waiting-for-game-master state;
+* inspecting the list of available packages must not itself create an immutable snapshot or start a run.
+
+Starting a game is the boundary at which source configuration becomes live game configuration. When an administrator starts a selected package, the application should:
+
+1. validate the current source package;
+2. snapshot the package configuration and every referenced media asset;
+3. create a new active run pinned to that immutable snapshot;
+4. initialize both teams and their puzzle progress from that snapshot;
+5. enter `ADVENT_QUIZ`.
+
+After Start, the active run must use its pinned snapshot. Editing or deleting source files under `games/` must not silently change an active game.
+
+Application, Docker, host, browser, or network restarts are **recovery events, not game resets**. If an active run exists after restart, the application should continue that exact run using persisted state and its pinned snapshot, including progression, points, timers, effects and other durable state.
+
+An administrator's full Reset intentionally ends the active run. Reset should preserve the completed run, its immutable snapshot, receipts and audit history, but should leave **no active replacement run**. The application then returns to `READY`, where an administrator may select the same package or a different package. Starting again creates a new run and a new snapshot from the package's current source files.
+
 The exact puzzle format should therefore be designed to make puzzles easy to create, edit, import, export, and replace.
 
 A puzzle definition should ideally be able to specify things such as:
@@ -202,7 +236,7 @@ The application should contain a dedicated **Game Master / Admin interface**.
 
 This interface is intended for the two admins who will be responsible for running and supervising the game.
 
-The admin interface should provide a start button, openinig the first advent calendar box for both teams, comprehensive overview of the current state of the entire game, and should allow the admins to intervene when necessary.
+When no game is active, the admin interface should show the available game packages and allow an administrator to select one and start a new run. Starting opens the first advent calendar box for both teams. While a game is active, the interface should provide a comprehensive overview of the current state of the entire game and allow the admins to intervene when necessary.
 
 ### Game Overview
 
@@ -230,6 +264,7 @@ The dashboard should update automatically so that admins can monitor the game li
 
 Admins should be able to manually:
 
+* Reset/end the entire active game and return to game selection
 * Award points
 * Remove points
 * Unlock a puzzle
@@ -339,6 +374,8 @@ The game configuration contains the specific puzzles, answers, hints, point cost
 Persistent game state contains information generated while the game is being played, such as team progression, points, timers, and completed puzzles.
 
 Media/assets contain images, audio, and other files required by the puzzles.
+
+When a game starts, the selected source package and referenced media become an immutable run snapshot. The persistent active run points to that snapshot. Source package files remain authoring/input data and are not reread to change an already-active run.
 
 The Christmas 2026 game should therefore be replaceable without modifying the core application.
 
