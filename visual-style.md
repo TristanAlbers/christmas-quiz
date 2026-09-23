@@ -234,7 +234,9 @@ Regels:
 
 Donkere dennenvormen en lichte sneeuw onderaan kunnen grote lege schermen sfeer geven.
 
-Niet gebruiken achter kleine, dichte mobiele gameplay-layouts als dit de ruimte beperkt.
+De landing gebruikt hiervoor `winter-forest.svg`, een transparant herhalend silhouet. Gebruik geen grote `conic-gradient()`-tegels om bomen na te bootsen: op bepaalde viewport-verhoudingen kunnen de gevulde gradientvlakken als rechthoekige groene artefacten zichtbaar worden.
+
+Niet gebruiken achter kleine, dichte mobiele gameplay-layouts als dit de ruimte beperkt. In lage landscape-weergaven mag het bos volledig verdwijnen.
 
 ---
 
@@ -275,12 +277,17 @@ Daarom:
 - minimale interactieve hoogte ongeveer `48px`;
 - primaire knoppen liefst volle breedte;
 - formulieren één kolom;
+- invoervelden minimaal `16px` tekst zodat iOS niet automatisch inzoomt;
 - belangrijke status boven de fold;
 - geen hover-afhankelijke interactie;
 - voldoende ruimte tussen sabotage/shop/antwoord-acties;
-- geen decoratie die verticale ruimte opeet zonder gameplaywaarde.
+- geen decoratie die verticale ruimte opeet zonder gameplaywaarde;
+- gebruik `100dvh`/`100svh` met een `100vh` fallback voor mobiele browserbalken;
+- houd rekening met `env(safe-area-inset-*)` bij schermen met een notch/home indicator;
+- test ten minste smalle portrait- en landscape-weergaven;
+- decoratie mag in landscape of op zeer kleine schermen worden vereenvoudigd.
 
-Landing en login mogen gecentreerd en filmischer zijn.
+Landing en login mogen gecentreerd en filmischer zijn, maar moeten kunnen scrollen als het scherm of het geopende toetsenbord minder verticale ruimte beschikbaar maakt.
 
 ---
 

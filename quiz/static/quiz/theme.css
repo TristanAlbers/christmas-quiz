@@ -59,11 +59,15 @@
 html {
   min-height: 100%;
   background: var(--color-bg);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  min-width: 100%;
   min-height: 100vh;
+  min-height: 100svh;
   font-family: var(--font-ui);
   color: var(--color-text);
   background:
@@ -133,6 +137,8 @@ select {
   font-weight: 800;
   text-decoration: none;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition:
     transform 140ms ease,
     filter 140ms ease,

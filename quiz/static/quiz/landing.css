@@ -3,7 +3,9 @@
 .landing-page,
 .auth-page {
   position: relative;
-  overflow-x: hidden;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow-x: clip;
   isolation: isolate;
 }
 
@@ -137,29 +139,30 @@
 .forest {
   position: fixed;
   right: 0;
-  bottom: 2.8rem;
+  bottom: 2.4rem;
   left: 0;
   z-index: -1;
-  height: 10rem;
-  opacity: 0.7;
+  height: clamp(6.5rem, 18vw, 10rem);
+  opacity: 0.72;
   pointer-events: none;
-  background:
-    conic-gradient(from 150deg at 8% 100%, transparent 0 58deg, #0a2a20 59deg 301deg, transparent 302deg),
-    conic-gradient(from 150deg at 24% 100%, transparent 0 58deg, #0c3327 59deg 301deg, transparent 302deg),
-    conic-gradient(from 150deg at 42% 100%, transparent 0 58deg, #08251c 59deg 301deg, transparent 302deg),
-    conic-gradient(from 150deg at 62% 100%, transparent 0 58deg, #0d382b 59deg 301deg, transparent 302deg),
-    conic-gradient(from 150deg at 82% 100%, transparent 0 58deg, #09271e 59deg 301deg, transparent 302deg);
-  background-size: 18rem 9rem, 13rem 7.5rem, 20rem 10rem, 14rem 8rem, 18rem 9.5rem;
-  background-repeat: no-repeat;
-  background-position: 0 100%, 12% 100%, 36% 100%, 62% 100%, 90% 100%;
+  background-image: url("./winter-forest.svg");
+  background-position: center bottom;
+  background-repeat: repeat-x;
+  background-size: auto 100%;
 }
 
 .landing-shell,
 .auth-shell {
   display: grid;
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   place-items: center;
-  padding: 5.25rem var(--page-pad) 8rem;
+  padding:
+    max(5.25rem, calc(3.75rem + env(safe-area-inset-top)))
+    max(var(--page-pad), env(safe-area-inset-right))
+    max(7rem, calc(5.75rem + env(safe-area-inset-bottom)))
+    max(var(--page-pad), env(safe-area-inset-left));
 }
 
 .landing-card {
@@ -257,6 +260,10 @@
   border-radius: var(--radius-sm);
   color: #fffdf8;
   background: rgba(2, 13, 10, 0.52);
+  font-size: 1rem;
+  line-height: 1.25;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .auth-form select option {
@@ -293,15 +300,158 @@
 
 @media (max-width: 36rem) {
   .christmas-lights {
+    top: max(0.45rem, env(safe-area-inset-top));
     width: 108vw;
+    padding-inline: 0.5rem;
   }
 
   .light-bulb:nth-child(2n) {
     display: none;
   }
 
+  .landing-shell,
+  .auth-shell {
+    place-items: start center;
+    padding-top: max(4.75rem, calc(3.8rem + env(safe-area-inset-top)));
+    padding-bottom: max(6.25rem, calc(5rem + env(safe-area-inset-bottom)));
+  }
+
   .landing-card,
   .auth-card {
     border-radius: var(--radius-md);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+
+  .landing-card {
+    padding: clamp(1.35rem, 5.5vw, 1.9rem);
+  }
+
+  .landing-title {
+    font-size: clamp(2.45rem, 13vw, 3.75rem);
+    line-height: 1;
+  }
+
+  .landing-subtitle {
+    margin-top: 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .landing-actions {
+    margin-top: 1.5rem;
+  }
+
+  .landing-note {
+    margin-top: 1.15rem;
+  }
+
+  .auth-card {
+    padding: clamp(1.3rem, 5.5vw, 1.9rem);
+  }
+
+  .auth-title {
+    font-size: clamp(2.15rem, 11vw, 3.1rem);
+  }
+
+  .forest {
+    bottom: 1.8rem;
+    height: 6.5rem;
+    opacity: 0.6;
+    background-size: auto 100%;
+  }
+}
+
+@media (max-width: 22rem) {
+  .landing-title {
+    font-size: 2.3rem;
+  }
+
+  .theme-eyebrow {
+    font-size: 0.7rem;
+    letter-spacing: 0.13em;
+  }
+
+  .landing-mark {
+    width: 2.8rem;
+    height: 2.8rem;
+    margin-bottom: 0.8rem;
+  }
+}
+
+@media (max-height: 36rem) and (orientation: landscape) {
+  .christmas-lights {
+    top: 0.25rem;
+  }
+
+  .landing-shell,
+  .auth-shell {
+    min-height: 100dvh;
+    place-items: start center;
+    padding-top: max(3.5rem, calc(2.75rem + env(safe-area-inset-top)));
+    padding-bottom: max(2rem, calc(1rem + env(safe-area-inset-bottom)));
+  }
+
+  .landing-card,
+  .auth-card {
+    width: min(100%, 39rem);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .landing-mark {
+    display: none;
+  }
+
+  .landing-title {
+    font-size: clamp(2.3rem, 8vw, 3.4rem);
+  }
+
+  .landing-subtitle {
+    margin-top: 0.65rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .landing-actions {
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: min(100%, 31rem);
+    align-items: center;
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  .landing-note {
+    margin-top: 0.75rem;
+  }
+
+  .auth-header {
+    margin-bottom: 1rem;
+  }
+
+  .auth-title {
+    font-size: 2.4rem;
+  }
+
+  .auth-form p {
+    margin-bottom: 0.7rem;
+  }
+
+  .forest {
+    display: none;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .theme-button:hover {
+    filter: none;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page::before,
+  .auth-page::before,
+  .light-bulb {
+    animation: none;
   }
 }
