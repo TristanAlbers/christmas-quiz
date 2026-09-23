@@ -2,6 +2,8 @@
 
 Status: implemented and validated for phase 2, 2026-09-22. This contract was agreed before implementation; the normative game rules remain authoritative.
 
+> **Lifecycle supersession (phase 3.1):** the Hint, Skip, pause/resume, point, completion, receipt, audit, authorization and transaction decisions in this contract remain valid. The phase-2 Reset/READY implementation described below is historical behavior and is superseded by `phase-3.1-contract.md`. After phase 3.1, full Reset deactivates the active run and leaves no replacement active run; `READY` is represented by the absence of an active run, and the next Start selects a source package and creates a fresh snapshot/new run.
+
 ## Hint decision
 
 There is one configured hint per puzzle and one durable reveal per `(run, team, puzzle)`. A team's first use on its accessible current puzzle consumes one generic Hint token and reveals that hint. An administrator's first reveal for a team's current puzzle reveals it without consuming a token. A new use after either reveal returns `already_revealed` without consuming a token or writing another reveal event; its no-op result is audited. Retrying the *same* request ID returns its original stored result. An absent configured hint rejects. Revealed text appears only in that team's current accessible puzzle projection; a different team never receives it. Unspent tokens survive progression. This settles the repeated-use ambiguity in `implementation_plan.md` without changing the specified first-use rule.
@@ -14,7 +16,11 @@ Commands: `pause_game`, `resume_game`, `adjust_points` (signed nonzero integer d
 
 Correct answer, immediate paid Skip, and current-puzzle admin force completion all invoke one application persistence function around the existing pure `complete_puzzle` decision. Skip cost and completion reward occur in the same transaction and both are represented in the point change. No completion route can create duplicate rewards or fragments. Until phase 4, a package with puzzle 13 cannot advance from puzzle 12 into normal puzzle 13 gameplay; the application rejects that completion before cost/attempt effects. Phase 4 will implement the mandatory one-time Music interruption for all routes.
 
-Full reset atomically deactivates the old run and creates a new active `READY` run with a new UUID but the same immutable snapshot and package. The new run has fresh `READY` team rows at configured initial points, zero Hint tokens, current puzzle 1, and fresh incomplete progress; it has no reveal or one-time rows. The reset audit event belongs to the old run and identifies the new run. A subsequent Start transitions that `READY` run to `ADVENT_QUIZ` only when its package ID matches, setting both team activity states to `PUZZLE`. This preserves initial values while old run commands become stale. Two administrators are serialized by the database writer slot and the unique active-run constraint. Reset never deletes audit events or old run facts.
+### Historical phase-2 Reset implementation
+
+Phase 2 originally implemented full reset by atomically deactivating the old run and creating a new active `READY` run with a new UUID but the same immutable snapshot and package. The new run had fresh `READY` team rows at configured initial points, zero Hint tokens, current puzzle 1, and fresh incomplete progress; it had no reveal or one-time rows. The reset audit event belonged to the old run and identified the new run. A subsequent Start transitioned that `READY` run to `ADVENT_QUIZ` only when its package ID matched, setting both team activity states to `PUZZLE`.
+
+This behavior remains part of the phase-2 historical handoff, but is no longer the target lifecycle. `docs/phase-3.1-contract.md` supersedes this subsection. Phase 3.1 keeps the important invariants—old commands become stale, audit history remains immutable, two administrators cannot create competing active runs—but removes the replacement READY run and reloads current source configuration only when a new Start is explicitly accepted.
 
 ## File ownership and edit order
 
