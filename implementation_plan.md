@@ -1,7 +1,7 @@
 # Christmas quiz implementation plan
 
-Status: phases 1–3 complete as of 2026-09-23; phase 3.1 is planned next;
-phases 4–9 are plans, not implemented features. This document alone does not authorize a new
+Status: phases 1–3.1 complete as of 2026-09-23; phases 4–9 are plans, not
+implemented features. This document alone does not authorize a new
 phase. The prompts below authorize one named phase when the user submits them.
 Do not start subsequent phases automatically. [USER.md](USER.md) describes what
 can be used today.
@@ -14,7 +14,7 @@ mechanics. A phase is an acceptance boundary, not a promise that it fits one
 context window. Continue an unfinished phase in another session using the resume
 prompt below, without widening scope.
 
-The repository now has working phases 1–3: synchronous Django/WSGI,
+The repository now has working phases 1–3.1: synchronous Django/WSGI,
 Compose app/dev targets, WhiteNoise, local HTMX, a public health endpoint,
 two team and two admin logins, admin Start, the two-puzzle demo package,
 snapshot-backed private media, persisted answer attempts/completion, audit,
@@ -23,15 +23,11 @@ domain/integration/security/Chromium tests. Phase 2 adds basic administration,
 generic Hint tokens, and immediate Skip. Phase 3 adds the persisted Advent clock,
 five-minute gameplay-time Freeze, admin Freeze/unfreeze, paid player Freeze
 attacks, one active Uno Reverse, protected frozen reads, package schema version 3,
-and simple polling views. Music Quiz, Challenges, full 25-puzzle content, and the
-TV view are not implemented.
-
-A lifecycle correction has been approved as phase 3.1. It changes the old
-phase-2/phase-3 Reset model so `READY` means no active run, Reset ends/deactivates
-the current run without creating a replacement, administrators select from the
-available source packages, and Start creates a new immutable snapshot/new run.
-This correction deliberately happens after phase 3 is green and before phase 4
-so the completed phase-3 work is not destabilized.
+and simple polling views. Phase 3.1 makes `READY` the no-active-run condition,
+archives without replacement on Reset, discovers selectable source packages,
+starts a fresh snapshot/run, and safely retires legacy active READY shells.
+Music Quiz, Challenges, full 25-puzzle content, and the TV view are not
+implemented.
 
 Music Quiz, full 25-puzzle content, Challenge, the TV view, final package
 authoring/import/export and emergency controls remain later phases.
@@ -608,11 +604,11 @@ status, and stop. Do not restart scaffolding or begin the next phase automatical
 | --- | --- | --- |
 | Scaffold | Superseded by phase 1 implementation | Placeholder and health retained; scaffold tests included in the phase 1 run. |
 | 1 | Complete | 2026-09-22: isolated Compose app/dev images rebuilt. App migrated/provisioned and restarted cleanly; `check`, `makemigrations --check --dry-run`, Ruff, 31 domain/integration/security tests on disposable file-backed SQLite, and 3 Chromium browser tests all pass with no skips. Health/index/login pages and DEBUG=False hashed CSS/HTMX JS return HTTP 200. Tests verify Team A journey to puzzle 2 after a persisted wrong answer, Team B isolation, receipts, audit/reward/fragment atomicity, rollback, snapshot recovery, SQLite writer contention, focus under polling, command versus slow poll, and reconnect. A separate live-process restart on disposable runtime preserved the run ID, puzzle 2, 7 points, fragment, 2 attempts/receipts and 3 audit events. Existing `./var` runtime was not used for validation. |
-| Current-use documentation | Complete | 2026-09-23: `USER.md` covers phases 1–3, including setup, accounts, team play, admin controls, Hint/Skip/Freeze/Reverse actions, the persisted clock and downtime policy, package authoring, private snapshots, restart behavior, and validation. The TV view and later mechanics remain unavailable. README points to the guide. Credential rotation requires container recreation; `.env.example` needs no phase-3 changes. Phase 3.1 must update `USER.md` only when its new behavior actually lands and validates. |
+| Current-use documentation | Complete | 2026-09-23: `USER.md` covers phases 1–3.1, including setup, accounts, no-run READY/package selection, fresh Start snapshots, archival Reset, team waiting privacy, legacy READY-shell migration, Hint/Skip/Freeze/Reverse actions, the persisted clock/downtime policy, package data, private snapshots, restart behavior, and validation. The TV view and later mechanics remain unavailable. README points to the guide. Credential requirements and `.env.example` are unchanged. |
 | 2 | Complete | 2026-09-22 final isolated image gate passed: `manage.py check`, `makemigrations --check --dry-run`, full Ruff, 63 domain/integration/security tests (40.456 s), and 3 Chromium browser tests (9.928 s), with zero failures/skips. Disposable app healthy; `/health/`, `/`, `/login/`, `/admin-login/`, hashed CSS, and local HTMX JS returned HTTP 200. `git diff --check` passed. `docs/phase-2-contract.md` remains the historical phase-2 contract; its old replacement-READY-run Reset model is explicitly superseded for future behavior by phase 3.1. |
 | 3 | Complete | 2026-09-23: the persisted Advent clock, five-minute Freeze, admin Freeze/unfreeze, paid player Freeze attacks, one active Uno Reverse, protected frozen reads, and simple polling views are implemented. `docs/phase-3-contract.md` records the downtime and routing decisions. Fresh Compose-image validation passed Django checks, migration consistency, full Ruff, 107 domain/integration/security tests, 7 Chromium browser tests, and `git diff --check`, with zero failures/skips. Controlled file-backed SQLite tests cover pause/restart preservation, expiry reconciliation, competing purchases/attacks, atomic Reverse consumption, and polling without a writer lock. Next action is phase 3.1. |
-| 3.1 | Planned next | Lifecycle correction is specified in `docs/phase-3.1-contract.md`: no-active-run READY, Reset without replacement run, read-only package discovery, explicit package selection, fresh snapshot/new run on Start, safe legacy READY-shell compatibility, and restart preservation. |
-| 4–9 | Not started | Dependent on phase 3.1 and the preceding gates/decisions above. |
+| 3.1 | Complete | 2026-09-23: READY now has no active run; Reset archives the run without replacement rows; admin discovery lists valid/invalid direct packages without staging; selected Start stages outside and commits one fresh run; migration `0004` safely retires legacy active READY shells. Fresh Compose images passed checks, migration drift, Ruff, 122 domain/integration/security tests, 8 Chromium tests, and `git diff --check`. An actual disposable app-container restart preserved the same run/snapshot, paused clock, progression, balance, Freeze and Uno Reverse. Next action requires a separate phase-4 prompt. |
+| 4–9 | Not started | Phase 3.1 is green; later phases still require their own authorization and prerequisite decisions. |
 
 For each implementation handoff, add the actual phase status, changed interfaces,
 checks run with pass/fail/skipped status, unimplemented acceptance cases, any
@@ -718,4 +714,39 @@ and read-path locking are covered. No live game runtime was used.
 No Phase 4 Music behavior, Challenge behavior, final content, or TV overview was
 added. There are no unresolved Phase 3 blockers. Phase 3.1 is the next approved
 lifecycle correction; phase 4 still requires a separate prompt and resolution of
+its documented Music decisions.
+
+### Phase 3.1 handoff, 2026-09-23
+
+Implemented the no-active-run lifecycle correction without changing phase-3
+gameplay rules or package schema version 3. Admin READY views discover every
+direct package directory, show invalid packages disabled with an administrator-
+only diagnostic, and explicitly select the package passed to Start. Discovery is
+read-only. Start validates and stages configuration and referenced media before
+the SQLite writer transaction, which rechecks receipts and the one-active-run
+invariant before creating one new run and its complete team/progress/clock state.
+
+Full Reset now reconciles the gameplay clock, marks the displayed run inactive,
+records its receipt and audit event on that archived run, and creates no Run,
+TeamRun, or PuzzleProgress replacement. No-run team projections contain only the
+conceptual READY/waiting state. The previous run, all run-scoped facts, receipts,
+events, and pinned snapshot remain preserved. Exact request retries remain
+idempotent; new old-run commands are stale. Migration
+`0004_retire_legacy_ready_runs` idempotently deactivates only legacy active READY
+shells and preserves their history. Active runs continue solely from their
+pinned snapshot across source edits/deletion and restarts.
+
+Validation used freshly rebuilt app/dev images and disposable file-backed SQLite.
+`manage.py check`, `makemigrations --check --dry-run`, full Ruff, 122
+domain/integration/security tests, 8 Chromium browser tests, and
+`git diff --check` passed with zero failures or skips. Focused migration tests
+prove legacy history preservation and gameplay-run safety; controlled writer
+tests cover competing Starts, Resets, and Reset followed by a fresh Start. A
+separate disposable Gunicorn container was started with progression, balance,
+paused clock, Freeze, and Uno Reverse state; after an actual container restart it
+recovered the identical run ID and snapshot digest with all state unchanged.
+
+No Phase 4 Music behavior, Challenge behavior, schema v4, advanced package
+authoring/import/export, final event content, or TV view was added. There are no
+unresolved phase-3.1 blockers. Stop here; phase 4 requires a separate prompt and
 its documented Music decisions.

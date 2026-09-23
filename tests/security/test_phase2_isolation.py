@@ -169,5 +169,5 @@ class PhaseTwoIsolationTests(TestCase):
                 {"request_id": str(uuid4()), "run_id": self.run_id},
             )
             self.assertEqual(response.status_code, 302)
-        self.assertNotEqual(get_team_state(self.a).run_id, self.run_id)
+        self.assertIsNone(get_team_state(self.a).run_id)
         self.assertEqual(get_team_state(self.a).global_state, "READY")

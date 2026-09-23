@@ -1,7 +1,7 @@
 # Phase 3.1 game selection and run lifecycle contract
 
-Status: approved lifecycle correction to implement after phase 3 is green and
-before phase 4 begins.
+Status: implemented and validated for phase 3.1, 2026-09-23. Phase 4 has not
+begun.
 
 The normative game rules remain authoritative. This contract supersedes only the
 Reset/READY/new-run lifecycle decisions recorded in the phase-2 and phase-3
@@ -248,3 +248,16 @@ Phase 3.1 is complete only when all of the following are tested:
 
 No Music Quiz implementation, Challenge behavior, advanced package import/export,
 or final package-authoring polish belongs to phase 3.1.
+
+## Implementation record
+
+Migration `0004_retire_legacy_ready_runs` is the selected compatibility path. It
+idempotently deactivates only rows which are both active and in global `READY`;
+it does not delete or rewrite their team, progress, receipt, audit, or snapshot
+references, and it leaves active gameplay runs untouched.
+
+The admin `READY` projection now carries read-only package status entries and an
+optional root-discovery diagnostic. Start still uses `package_id` plus the
+existing administrator-scoped UUID receipt contract. Reset receipts remain
+attached to the archived old run, so exact retries return their committed result
+while new commands against that inactive run are stale.

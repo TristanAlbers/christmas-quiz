@@ -147,8 +147,17 @@ class AdminTeamProjection:
 
 
 @dataclass(frozen=True)
+class PackageProjection:
+    package_id: str
+    startable: bool
+    diagnostic: str | None = None
+
+
+@dataclass(frozen=True)
 class AdminProjection:
     run_id: str | None
     global_state: str
     package_id: str | None
     teams: tuple[AdminTeamProjection, ...]
+    packages: tuple[PackageProjection, ...] = ()
+    discovery_error: str | None = None

@@ -1,7 +1,7 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture; phases 1–3 implemented and validated.
-Phase 3.1 is the approved lifecycle correction to implement next, before phase 4.
+Status: approved architecture; phases 1–3.1 implemented and validated.
+Phase 4 remains a separately authorized future phase.
 
 Phase 2 implementation decisions are recorded in
 [`phase-2-contract.md`](phase-2-contract.md): one durable Hint reveal per
