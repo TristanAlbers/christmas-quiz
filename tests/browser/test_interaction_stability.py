@@ -181,7 +181,7 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         "section[aria-label='Controls for Team A']"
                     )
                     await controls.get_by_role(
-                        "button", name="Freeze team"
+                        "button", name="Freeze team", exact=True
                     ).wait_for()
                     await asyncio.to_thread(
                         admin_freeze,
@@ -189,11 +189,11 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         AdminTeam(str(uuid4()), self.run_id, "a"),
                     )
                     await controls.get_by_role(
-                        "button", name="Unfreeze team"
+                        "button", name="Unfreeze team", exact=True
                     ).wait_for(timeout=5000)
                     self.assertEqual(
                         await controls.get_by_role(
-                            "button", name="Freeze team"
+                            "button", name="Freeze team", exact=True
                         ).count(),
                         0,
                     )
@@ -204,7 +204,7 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         AdminTeam(str(uuid4()), self.run_id, "a"),
                     )
                     await controls.get_by_role(
-                        "button", name="Freeze team"
+                        "button", name="Freeze team", exact=True
                     ).wait_for(timeout=5000)
                 finally:
                     await context.close()
