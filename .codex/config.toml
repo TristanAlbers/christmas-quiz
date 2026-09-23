@@ -3,8 +3,9 @@ enabled = true
 max_concurrent_threads_per_session = 4
 
 # Fallback for subagents that do not define their own model configuration.
-# Most ordinary coordination and verification work does not need High reasoning.
-default_subagent_model = "gpt-5.6-sol"
+# Routine coordination, inspection, and verification should prefer Terra at Medium;
+# explicitly configured high-risk specialists remain on Sol.
+default_subagent_model = "gpt-5.6-terra"
 default_subagent_reasoning_effort = "medium"
 
 [agents.architect]
