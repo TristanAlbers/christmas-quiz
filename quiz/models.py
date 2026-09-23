@@ -36,13 +36,19 @@ class Run(models.Model):
     package_id = models.CharField(max_length=100)
     snapshot_path = models.CharField(max_length=500)
     snapshot_digest = models.CharField(max_length=64)
+    gameplay_elapsed_ms = models.BigIntegerField(default=0)
+    advent_clock_anchor = models.DateTimeField(null=True, blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["active"], condition=Q(active=True), name="one_active_run"
-            )
+            ),
+            models.CheckConstraint(
+                condition=Q(gameplay_elapsed_ms__gte=0),
+                name="gameplay_elapsed_nonnegative",
+            ),
         ]
 
 
@@ -53,6 +59,8 @@ class TeamRun(models.Model):
     current_number = models.PositiveSmallIntegerField(default=1)
     points = models.IntegerField(default=0)
     hint_tokens = models.IntegerField(default=0)
+    freeze_started_gameplay_ms = models.BigIntegerField(null=True, blank=True)
+    reverse_active = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
@@ -68,6 +76,24 @@ class TeamRun(models.Model):
             ),
             models.CheckConstraint(
                 condition=Q(current_number__gte=1), name="current_number_positive"
+            ),
+            models.CheckConstraint(
+                condition=Q(freeze_started_gameplay_ms__isnull=True)
+                | Q(freeze_started_gameplay_ms__gte=0),
+                name="freeze_start_nonnegative",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        activity_state="FREEZE",
+                        freeze_started_gameplay_ms__isnull=False,
+                    )
+                    | (
+                        ~Q(activity_state="FREEZE")
+                        & Q(freeze_started_gameplay_ms__isnull=True)
+                    )
+                ),
+                name="freeze_state_start_paired",
             ),
         ]
 

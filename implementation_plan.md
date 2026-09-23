@@ -1,7 +1,7 @@
 # Christmas quiz implementation plan
 
-Status: phases 1–2 complete on 2026-09-22; phases 3–9 are plans, not implemented
-features. This document alone does not authorize a new phase. The prompts below
+Status: phases 1–3 complete as of 2026-09-23; phases 4–9 are plans, not
+implemented features. This document alone does not authorize a new phase. The prompts below
 authorize one named phase when the user submits them. Do not start subsequent
 phases automatically. [USER.md](USER.md) describes what can be used today.
 
@@ -13,15 +13,16 @@ mechanics. A phase is an acceptance boundary, not a promise that it fits one
 context window. Continue an unfinished phase in another session using the resume
 prompt below, without widening scope.
 
-The repository now has working phase 1 and 2 slices: synchronous Django/WSGI,
+The repository now has working phases 1–3: synchronous Django/WSGI,
 Compose app/dev targets, WhiteNoise, local HTMX, a public health endpoint,
 two team and two admin logins, admin Start, the two-puzzle demo package,
 snapshot-backed private media, persisted answer attempts/completion, audit,
 idempotent receipts, WAL/IMMEDIATE SQLite transactions, 500 ms polling, and
 domain/integration/security/Chromium tests. Phase 2 adds basic administration,
-generic Hint tokens, and immediate Skip; see both handoffs below for evidence.
-Timers, attacks, Music Quiz, full 25-puzzle content, and the TV view are not
-implemented.
+generic Hint tokens, and immediate Skip. Phase 3 adds the persisted Advent clock,
+five-minute gameplay-time Freeze, admin Freeze/unfreeze, and paid Uno Reverse;
+see the handoffs below for evidence. Music Quiz, Challenges, full 25-puzzle
+content, and the TV view are not implemented.
 
 The existing specifications and `docs/architecture.md` remain authoritative
 as described in `AGENTS.md`. `docs/contracts-first-slice.md` records the
@@ -466,9 +467,10 @@ status, and stop. Do not restart scaffolding or begin the next phase automatical
 | --- | --- | --- |
 | Scaffold | Superseded by phase 1 implementation | Placeholder and health retained; scaffold tests included in the phase 1 run. |
 | 1 | Complete | 2026-09-22: isolated Compose app/dev images rebuilt. App migrated/provisioned and restarted cleanly; `check`, `makemigrations --check --dry-run`, Ruff, 31 domain/integration/security tests on disposable file-backed SQLite, and 3 Chromium browser tests all pass with no skips. Health/index/login pages and DEBUG=False hashed CSS/HTMX JS return HTTP 200. Tests verify Team A journey to puzzle 2 after a persisted wrong answer, Team B isolation, receipts, audit/reward/fragment atomicity, rollback, snapshot recovery, SQLite writer contention, focus under polling, command versus slow poll, and reconnect. A separate live-process restart on disposable runtime preserved the run ID, puzzle 2, 7 points, fragment, 2 attempts/receipts and 3 audit events. Existing `./var` runtime was not used for validation. |
-| Current-use documentation | Complete | 2026-09-22: `USER.md` covers phases 1–2, including setup, accounts, team play, admin controls, Hint and Skip actions, package authoring, private snapshots, and validation. The TV view and later mechanics remain unavailable. README points to the guide. Credential rotation requires container recreation; `.env.example` needs no phase-2 changes. |
+| Current-use documentation | Complete | 2026-09-23: `USER.md` covers phases 1–3, including setup, accounts, team play, admin controls, Hint/Skip/Freeze/Reverse actions, the persisted clock and downtime policy, package authoring, private snapshots, restart behavior, and validation. The TV view and later mechanics remain unavailable. README points to the guide. Credential rotation requires container recreation; `.env.example` needs no phase-3 changes. |
 | 2 | Complete | 2026-09-22 final isolated image gate passed: `manage.py check`, `makemigrations --check --dry-run`, full Ruff, 63 domain/integration/security tests (40.456 s), and 3 Chromium browser tests (9.928 s), with zero failures/skips. Disposable app healthy; `/health/`, `/`, `/login/`, `/admin-login/`, hashed CSS, and local HTMX JS returned HTTP 200. `git diff --check` passed. Contracts and exact ownership are in `docs/phase-2-contract.md`; the handoff below records scope and limits. Next action is phase 3 only after a separate prompt and its clock/restart contract decision. |
-| 3–9 | Not started | Dependent on the preceding gates and decisions above. |
+| 3 | Complete | 2026-09-23: the persisted Advent clock, five-minute Freeze, admin Freeze/unfreeze, paid player Freeze attacks, one active Uno Reverse, protected frozen reads, and simple polling views are implemented. `docs/phase-3-contract.md` records the downtime and routing decisions. Fresh Compose-image validation passed Django checks, migration consistency, full Ruff, 107 domain/integration/security tests, 7 Chromium browser tests, and `git diff --check`, with zero failures/skips. Controlled file-backed SQLite tests cover pause/restart preservation, expiry reconciliation, competing purchases/attacks, atomic Reverse consumption, and polling without a writer lock. Next action is phase 4 only after a separate prompt and its listed Music decisions. |
+| 4–9 | Not started | Dependent on the preceding gates and decisions above. |
 
 For each implementation handoff, add the actual phase status, changed interfaces,
 checks run with pass/fail/skipped status, unimplemented acceptance cases, any
@@ -533,6 +535,39 @@ Validation used rebuilt isolated Compose images, disposable file-backed SQLite,
 and a disposable app runtime. `manage.py check`, migration consistency, full
 Ruff, 63 domain/integration/security tests, 3 Chromium browser tests, health,
 index/login pages, hashed CSS/HTMX assets, and `git diff --check` all passed.
-No tests skipped. No live game runtime was touched. Phase 3 clock downtime and
-Freeze/Reverse decisions remain open; no attack, timer, or Music mechanics were
-added here. Stop at this gate.
+No tests skipped. No live game runtime was touched. At the phase-2 handoff, the
+Phase 3 clock downtime and Freeze/Reverse decisions remained open; no attack,
+timer, or Music mechanics were added in that phase.
+
+### Phase 3 handoff, 2026-09-23
+
+Implemented one persisted Advent-gameplay clock per run, deterministic clock and
+effect policies, five-minute gameplay-time Freeze, logical expiry on reads with
+transactional reconciliation on commands, direct admin Freeze/unfreeze, paid
+player Freeze attacks, and one durable paid Uno Reverse per team. All mutations
+retain the existing UUID receipt, audit, stale-run, actor recheck, and SQLite
+`IMMEDIATE` transaction contracts. Team/admin projections and 500 ms polling
+views expose only authorized effect state; frozen and paused teams cannot obtain
+their puzzle, revealed Hint, answer/shop controls, or private media.
+
+`docs/phase-3-contract.md` settles the two prerequisite decisions. Unexpected
+downtime counts while persisted state is `ADVENT_QUIZ`; paused downtime does not.
+Only a valid paid player Freeze attack consumes and redirects Uno Reverse, while
+admin Freeze and the future Challenge-loss route apply directly. The attacker
+still pays on a reversed attack. Schema version 3 snapshots pin nonnegative
+`freeze_cost` and `uno_reverse_cost`; version 1/2 snapshots remain readable but
+cannot use mechanics whose cost was not snapshotted.
+
+Validation used freshly rebuilt Compose images and disposable file-backed SQLite.
+`manage.py check`, `makemigrations --check --dry-run`, full Ruff, 107
+domain/integration/security tests, 7 Chromium browser tests, and
+`git diff --check` passed with zero failures or skips. Focused specialist evidence
+also included 22 deterministic domain tests, 7 storage tests, 21 combined
+storage/isolation/race tests, and 16 adversarial/browser gate tests. Controlled
+writer contention proves one Reverse/purchase outcome and no double charge;
+restart, pause, exact expiry, protected media, forged client timing/target data,
+and read-path locking are covered. No live game runtime was used.
+
+No Phase 4 Music behavior, Challenge behavior, final content, or TV overview was
+added. There are no unresolved Phase 3 blockers. Stop at this gate; phase 4
+requires a separate prompt and resolution of its documented Music decisions.

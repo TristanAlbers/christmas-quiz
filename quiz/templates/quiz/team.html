@@ -9,7 +9,7 @@
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
 </head>
 <body>
-  <main>
+  <main class="app-shell">
     <header class="page-header"><h1>Team {{ team_name }}</h1>
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out</button></form>
     </header>

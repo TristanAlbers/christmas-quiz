@@ -52,12 +52,15 @@ def _validate(config, package_id):
         "teams",
     }
     version = config.get("schema_version")
-    required_keys = common_keys | (
-        {"hint_cost", "skip_cost"} if version == 2 else set()
-    )
+    versioned_keys = {
+        1: set(),
+        2: {"hint_cost", "skip_cost"},
+        3: {"hint_cost", "skip_cost", "freeze_cost", "uno_reverse_cost"},
+    }
+    required_keys = common_keys | versioned_keys.get(version, set())
     if (
         type(version) is not int
-        or version not in (1, 2)
+        or version not in versioned_keys
         or set(config) != required_keys
     ):
         raise InvalidPackage("Invalid package top level")
@@ -66,8 +69,11 @@ def _validate(config, package_id):
     points = config["initial_points"]
     if type(points) is not int or points < 0:
         raise InvalidPackage("initial_points must be nonnegative integer")
-    if version == 2:
-        for key in ("hint_cost", "skip_cost"):
+    if version in (2, 3):
+        price_keys = ["hint_cost", "skip_cost"]
+        if version == 3:
+            price_keys.extend(["freeze_cost", "uno_reverse_cost"])
+        for key in price_keys:
             if type(config[key]) is not int or config[key] < 0:
                 raise InvalidPackage(f"{key} must be nonnegative integer")
     teams = config["teams"]

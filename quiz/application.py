@@ -16,6 +16,7 @@ from quiz.contracts import (
     AdminPoints,
     AdminProjection,
     AdminPuzzle,
+    AdminTeam,
     AdminTeamProjection,
     AnswerResult,
     ApplicationError,
@@ -39,19 +40,27 @@ from quiz.domain.phase2 import (
     adjust_points as decide_points,
 )
 from quiz.domain.phase2 import (
-    pause_game as decide_pause,
-)
-from quiz.domain.phase2 import (
     pay_skip,
 )
 from quiz.domain.phase2 import (
     purchase_hint as decide_hint_purchase,
 )
 from quiz.domain.phase2 import (
-    resume_game as decide_resume,
-)
-from quiz.domain.phase2 import (
     reveal_hint as decide_hint_reveal,
+)
+from quiz.domain.phase3 import (
+    EffectTeamState,
+    apply_direct_freeze,
+    effective_gameplay_ms,
+    freeze_remaining_ms,
+    pause_gameplay_clock,
+    reconcile_freeze,
+    remove_freeze,
+    resolve_freeze_attack,
+    resume_gameplay_clock,
+)
+from quiz.domain.phase3 import (
+    purchase_uno_reverse as decide_reverse_purchase,
 )
 from quiz.models import (
     AccountRole,
@@ -104,10 +113,65 @@ def _verify_actor(actor: Actor, role: str) -> None:
         raise ApplicationError("forbidden")
 
 
-def _projection(run: Run | None, team_id: str) -> TeamProjection:
+def _server_now(now):
+    value = timezone.now() if now is None else now
+    # Reuse the pure clock validation so every injected clock follows one rule.
+    try:
+        effective_gameplay_ms(0, None, value)
+    except DomainError as exc:
+        raise ApplicationError(exc.code) from exc
+    return value
+
+
+def _gameplay_ms(run: Run, now) -> int:
+    return effective_gameplay_ms(
+        run.gameplay_elapsed_ms, run.advent_clock_anchor, now
+    )
+
+
+def _effect_state(team: TeamRun) -> EffectTeamState:
+    return EffectTeamState(
+        activity_state=team.activity_state,
+        points=team.points,
+        freeze_started_ms=team.freeze_started_gameplay_ms,
+        uno_reverse_active=team.reverse_active,
+    )
+
+
+def _persist_effect_state(team: TeamRun, state: EffectTeamState) -> None:
+    team.activity_state = state.activity_state
+    team.points = state.points
+    team.freeze_started_gameplay_ms = state.freeze_started_ms
+    team.reverse_active = state.uno_reverse_active
+    team.save(update_fields=[
+        "activity_state", "points", "freeze_started_gameplay_ms", "reverse_active"
+    ])
+
+
+def _reconcile_expired_freezes(run: Run, gameplay_ms: int) -> None:
+    """Persist logical expiries only inside an existing writer transaction."""
+    for team in TeamRun.objects.filter(run=run, activity_state="FREEZE"):
+        state = reconcile_freeze(
+            team.activity_state, team.freeze_started_gameplay_ms, gameplay_ms
+        )
+        if state.activity_state != team.activity_state:
+            team.activity_state = state.activity_state
+            team.freeze_started_gameplay_ms = state.freeze_started_ms
+            team.save(update_fields=["activity_state", "freeze_started_gameplay_ms"])
+
+
+def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
     if run is None:
         return TeamProjection(None, "READY", "READY", 0, None, (), (), None)
+    now = _server_now(now)
     team = TeamRun.objects.get(run=run, team_id=team_id)
+    gameplay_ms = _gameplay_ms(run, now)
+    effective = reconcile_freeze(
+        team.activity_state, team.freeze_started_gameplay_ms, gameplay_ms
+    )
+    remaining = freeze_remaining_ms(
+        effective.freeze_started_ms, gameplay_ms
+    ) if effective.activity_state == "FREEZE" else None
     config = load_snapshot(run)
     progress = list(PuzzleProgress.objects.filter(run=run, team_id=team_id))
     completed = tuple(sorted(row.number for row in progress if row.completed))
@@ -117,7 +181,7 @@ def _projection(run: Run | None, team_id: str) -> TeamProjection:
         .values_list("fragment", flat=True)
     )
     question = None
-    if run.global_state == "ADVENT_QUIZ" and team.activity_state == "PUZZLE":
+    if run.global_state == "ADVENT_QUIZ" and effective.activity_state == "PUZZLE":
         puzzles = config["teams"][team_id]["puzzles"]
         if team.current_number <= len(puzzles) and team.current_number not in completed:
             item = puzzles[team.current_number - 1]
@@ -146,7 +210,7 @@ def _projection(run: Run | None, team_id: str) -> TeamProjection:
     return TeamProjection(
         run_id=str(run.id),
         global_state=run.global_state,
-        team_state=team.activity_state,
+        team_state=effective.activity_state,
         points=team.points,
         current_number=team.current_number,
         completed_numbers=completed,
@@ -155,6 +219,10 @@ def _projection(run: Run | None, team_id: str) -> TeamProjection:
         hint_tokens=team.hint_tokens,
         hint_cost=config.get("hint_cost"),
         skip_cost=config.get("skip_cost"),
+        freeze_cost=config.get("freeze_cost"),
+        uno_reverse_cost=config.get("uno_reverse_cost"),
+        uno_reverse_active=team.reverse_active,
+        freeze_remaining_ms=remaining,
     )
 
 
@@ -321,10 +389,13 @@ def _complete_current(
     }
 
 
-def get_team_state(actor: Actor) -> TeamProjection:
+def get_team_state(actor: Actor, *, now=None) -> TeamProjection:
+    now = _server_now(now)
     with read_snapshot():
         _verify_actor(actor, "team")
-        return _projection(Run.objects.filter(active=True).first(), actor.team_id)
+        return _projection(
+            Run.objects.filter(active=True).first(), actor.team_id, now
+        )
 
 
 def get_admin_status(actor: Actor) -> StartResult | None:
@@ -334,16 +405,26 @@ def get_admin_status(actor: Actor) -> StartResult | None:
         return StartResult(str(run.id), run.global_state) if run else None
 
 
-def get_admin_state(actor: Actor) -> AdminProjection:
+def get_admin_state(actor: Actor, *, now=None) -> AdminProjection:
+    now = _server_now(now)
     with read_snapshot():
         _verify_actor(actor, "admin")
         run = Run.objects.filter(active=True).first()
         if run is None:
             return AdminProjection(None, "READY", None, ())
         config = load_snapshot(run)
+        gameplay_ms = _gameplay_ms(run, now)
         teams = []
         for team_id in ("a", "b"):
             row = TeamRun.objects.get(run=run, team_id=team_id)
+            effective = reconcile_freeze(
+                row.activity_state, row.freeze_started_gameplay_ms, gameplay_ms
+            )
+            remaining = (
+                freeze_remaining_ms(effective.freeze_started_ms, gameplay_ms)
+                if effective.activity_state == "FREEZE"
+                else None
+            )
             progress = list(PuzzleProgress.objects.filter(run=run, team_id=team_id))
             puzzles = config["teams"][team_id]["puzzles"]
             completed_numbers = tuple(
@@ -359,7 +440,7 @@ def get_admin_state(actor: Actor) -> AdminProjection:
             )
             teams.append(AdminTeamProjection(
                 team_id=team_id,
-                activity_state=row.activity_state,
+                activity_state=effective.activity_state,
                 points=row.points,
                 hint_tokens=row.hint_tokens,
                 current_number=row.current_number,
@@ -368,13 +449,16 @@ def get_admin_state(actor: Actor) -> AdminProjection:
                 hint_revealed=bool(puzzle and HintReveal.objects.filter(
                     run=run, team_id=team_id, puzzle_id=puzzle["id"]
                 ).exists()),
+                uno_reverse_active=row.reverse_active,
+                freeze_remaining_ms=remaining,
             ))
         return AdminProjection(
             str(run.id), run.global_state, run.package_id, tuple(teams)
         )
 
 
-def start_game(actor: Actor, command: StartGame) -> StartResult:
+def start_game(actor: Actor, command: StartGame, *, now=None) -> StartResult:
+    now = _server_now(now)
     request_id = _uuid(command.request_id)
     if not isinstance(command.package_id, str) or not command.package_id:
         raise ApplicationError("invalid_input")
@@ -413,7 +497,8 @@ def start_game(actor: Actor, command: StartGame) -> StartResult:
                 if ready is None or ready.package_id != command.package_id:
                     raise ApplicationError("disallowed_state")
                 ready.global_state = "ADVENT_QUIZ"
-                ready.save(update_fields=["global_state"])
+                ready.advent_clock_anchor = now
+                ready.save(update_fields=["global_state", "advent_clock_anchor"])
                 TeamRun.objects.filter(run=ready).update(activity_state="PUZZLE")
                 result = StartResult(str(ready.id), "ADVENT_QUIZ")
                 StartReceipt.objects.create(
@@ -432,6 +517,7 @@ def start_game(actor: Actor, command: StartGame) -> StartResult:
                 package_id=command.package_id,
                 snapshot_path=staged.path,
                 snapshot_digest=staged.digest,
+                advent_clock_anchor=now,
             )
             for team_id in ("a", "b"):
                 TeamRun.objects.create(
@@ -475,7 +561,8 @@ def start_game(actor: Actor, command: StartGame) -> StartResult:
         raise
 
 
-def submit_answer(actor: Actor, command: SubmitAnswer) -> AnswerResult:
+def submit_answer(actor: Actor, command: SubmitAnswer, *, now=None) -> AnswerResult:
+    now = _server_now(now)
     request_id = _uuid(command.request_id)
     run_id = _uuid(command.run_id)
     if (
@@ -504,10 +591,20 @@ def submit_answer(actor: Actor, command: SubmitAnswer) -> AnswerResult:
             if receipt:
                 if receipt.payload_digest != digest:
                     raise ApplicationError("request_conflict")
-                return _restore_answer(receipt.result)
+                restored = _restore_answer(receipt.result)
+                active = Run.objects.filter(pk=run_id, active=True).first()
+                if active is not None:
+                    # Preserve the recorded outcome while never replaying puzzle
+                    # or hint content that has since become inaccessible.
+                    return AnswerResult(
+                        restored.outcome, _projection(active, actor.team_id, now)
+                    )
+                return restored
             run = Run.objects.filter(pk=run_id, active=True).first()
             if run is None:
                 raise ApplicationError("stale_run")
+            gameplay_ms = _gameplay_ms(run, now)
+            _reconcile_expired_freezes(run, gameplay_ms)
             team, config, puzzles, puzzle, progress, current = _current_puzzle(
                 run, actor.team_id, command.question_id
             )
@@ -533,7 +630,7 @@ def submit_answer(actor: Actor, command: SubmitAnswer) -> AnswerResult:
             else:
                 changes = {}
                 outcome = "incorrect"
-            result = AnswerResult(outcome, _projection(run, actor.team_id))
+            result = AnswerResult(outcome, _projection(run, actor.team_id, now))
             AnswerReceipt.objects.create(
                 run=run,
                 actor_id=actor.user_id,
@@ -562,8 +659,9 @@ def submit_answer(actor: Actor, command: SubmitAnswer) -> AnswerResult:
         raise
 
 
-def _perform(actor, command, action, role, payload, apply):
+def _perform(actor, command, action, role, payload, apply, *, now=None):
     """One writer transaction for a phase-2 action, receipt, and audit event."""
+    now = _server_now(now)
     request_id, run_id, digest = _command_identity(actor, command, action, payload)
     try:
         with immediate_transaction():
@@ -572,7 +670,11 @@ def _perform(actor, command, action, role, payload, apply):
             if prior is not None:
                 return prior
             run = _active_run(run_id)
-            outcome, result_run, changes, team_id, puzzle_id = apply(run, request_id)
+            gameplay_ms = _gameplay_ms(run, now)
+            _reconcile_expired_freezes(run, gameplay_ms)
+            outcome, result_run, changes, team_id, puzzle_id = apply(
+                run, request_id, gameplay_ms
+            )
             result = _command_result(outcome, result_run)
             _save_receipt(run, actor, request_id, action, digest, result)
             _event(run, actor, request_id, action, outcome,
@@ -587,33 +689,55 @@ def _perform(actor, command, action, role, payload, apply):
         raise
 
 
-def pause_game(actor: Actor, command: RunCommand) -> CommandResult:
-    def apply(run, _request_id):
+def pause_game(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
+    now = _server_now(now)
+    def apply(run, _request_id, _gameplay_ms):
         previous = run.global_state
-        run.global_state = decide_pause(previous)
-        run.save(update_fields=["global_state"])
+        transition = pause_gameplay_clock(
+            previous,
+            run.gameplay_elapsed_ms,
+            run.advent_clock_anchor,
+            _server_now(now),
+        )
+        run.global_state = transition.global_state
+        run.gameplay_elapsed_ms = transition.clock.accumulated_ms
+        run.advent_clock_anchor = transition.clock.anchor
+        run.save(update_fields=[
+            "global_state", "gameplay_elapsed_ms", "advent_clock_anchor"
+        ])
         return (
             "paused", run,
             {"global_state": {"previous": previous, "new": run.global_state}},
             None, "",
         )
-    return _perform(actor, command, "pause", "admin", {}, apply)
+    return _perform(actor, command, "pause", "admin", {}, apply, now=now)
 
 
-def resume_game(actor: Actor, command: RunCommand) -> CommandResult:
-    def apply(run, _request_id):
+def resume_game(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
+    now = _server_now(now)
+    def apply(run, _request_id, _gameplay_ms):
         previous = run.global_state
-        run.global_state = decide_resume(previous)
-        run.save(update_fields=["global_state"])
+        transition = resume_gameplay_clock(
+            previous,
+            run.gameplay_elapsed_ms,
+            run.advent_clock_anchor,
+            _server_now(now),
+        )
+        run.global_state = transition.global_state
+        run.gameplay_elapsed_ms = transition.clock.accumulated_ms
+        run.advent_clock_anchor = transition.clock.anchor
+        run.save(update_fields=[
+            "global_state", "gameplay_elapsed_ms", "advent_clock_anchor"
+        ])
         return (
             "resumed", run,
             {"global_state": {"previous": previous, "new": run.global_state}},
             None, "",
         )
-    return _perform(actor, command, "resume", "admin", {}, apply)
+    return _perform(actor, command, "resume", "admin", {}, apply, now=now)
 
 
-def adjust_points(actor: Actor, command: AdminPoints) -> CommandResult:
+def adjust_points(actor: Actor, command: AdminPoints, *, now=None) -> CommandResult:
     if (
         command.team_id not in ("a", "b")
         or type(command.delta) is not int
@@ -621,7 +745,7 @@ def adjust_points(actor: Actor, command: AdminPoints) -> CommandResult:
     ):
         raise ApplicationError("invalid_input")
 
-    def apply(run, _request_id):
+    def apply(run, _request_id, _gameplay_ms):
         if run.global_state not in ("ADVENT_QUIZ", "PAUSED"):
             raise ApplicationError("disallowed_state")
         team = TeamRun.objects.get(run=run, team_id=command.team_id)
@@ -637,11 +761,11 @@ def adjust_points(actor: Actor, command: AdminPoints) -> CommandResult:
         )
     return _perform(actor, command, "adjust_points", "admin", {
         "team_id": command.team_id, "delta": command.delta
-    }, apply)
+    }, apply, now=now)
 
 
-def purchase_hint(actor: Actor, command: RunCommand) -> CommandResult:
-    def apply(run, _request_id):
+def purchase_hint(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
+    def apply(run, _request_id, _gameplay_ms):
         team = TeamRun.objects.get(run=run, team_id=actor.team_id)
         config = load_snapshot(run)
         if "hint_cost" not in config:
@@ -661,11 +785,11 @@ def purchase_hint(actor: Actor, command: RunCommand) -> CommandResult:
             },
             "hint_tokens": {"previous": before_tokens, "new": team.hint_tokens},
         }, actor.team_id, ""
-    return _perform(actor, command, "purchase_hint", "team", {}, apply)
+    return _perform(actor, command, "purchase_hint", "team", {}, apply, now=now)
 
 
 def _reveal(
-    actor: Actor, command: AdminPuzzle | TeamPuzzle, *, admin: bool
+    actor: Actor, command: AdminPuzzle | TeamPuzzle, *, admin: bool, now=None
 ) -> CommandResult:
     if admin and command.team_id not in ("a", "b"):
         raise ApplicationError("invalid_input")
@@ -673,7 +797,7 @@ def _reveal(
         raise ApplicationError("invalid_input")
     team_id = command.team_id if admin else actor.team_id
     action = "provide_hint" if admin else "use_hint"
-    def apply(run, request_id):
+    def apply(run, request_id, _gameplay_ms):
         team, _config, _puzzles, puzzle, _progress, _current = _current_puzzle(
             run, team_id, command.question_id
         )
@@ -702,19 +826,19 @@ def _reveal(
         }, team_id, puzzle["id"]
     return _perform(actor, command, action, "admin" if admin else "team", {
         **({"team_id": team_id} if admin else {}), "question_id": command.question_id,
-    }, apply)
+    }, apply, now=now)
 
 
-def use_hint(actor: Actor, command: TeamPuzzle) -> CommandResult:
-    return _reveal(actor, command, admin=False)
+def use_hint(actor: Actor, command: TeamPuzzle, *, now=None) -> CommandResult:
+    return _reveal(actor, command, admin=False, now=now)
 
 
-def provide_hint(actor: Actor, command: AdminPuzzle) -> CommandResult:
-    return _reveal(actor, command, admin=True)
+def provide_hint(actor: Actor, command: AdminPuzzle, *, now=None) -> CommandResult:
+    return _reveal(actor, command, admin=True, now=now)
 
 
 def _complete_action(
-    actor: Actor, command: AdminPuzzle | TeamPuzzle, *, admin: bool
+    actor: Actor, command: AdminPuzzle | TeamPuzzle, *, admin: bool, now=None
 ) -> CommandResult:
     if admin and command.team_id not in ("a", "b"):
         raise ApplicationError("invalid_input")
@@ -722,7 +846,7 @@ def _complete_action(
         raise ApplicationError("invalid_input")
     team_id = command.team_id if admin else actor.team_id
     action = "force_complete" if admin else "skip"
-    def apply(run, _request_id):
+    def apply(run, _request_id, _gameplay_ms):
         team, config, puzzles, puzzle, progress, current = _current_puzzle(
             run, team_id, command.question_id
         )
@@ -738,19 +862,166 @@ def _complete_action(
         return "completed", run, changes, team_id, puzzle["id"]
     return _perform(actor, command, action, "admin" if admin else "team", {
         **({"team_id": team_id} if admin else {}), "question_id": command.question_id,
-    }, apply)
+    }, apply, now=now)
 
 
-def skip_current(actor: Actor, command: TeamPuzzle) -> CommandResult:
-    return _complete_action(actor, command, admin=False)
+def skip_current(actor: Actor, command: TeamPuzzle, *, now=None) -> CommandResult:
+    return _complete_action(actor, command, admin=False, now=now)
 
 
-def force_complete_current(actor: Actor, command: AdminPuzzle) -> CommandResult:
-    return _complete_action(actor, command, admin=True)
+def force_complete_current(
+    actor: Actor, command: AdminPuzzle, *, now=None
+) -> CommandResult:
+    return _complete_action(actor, command, admin=True, now=now)
 
 
-def reset_game(actor: Actor, command: RunCommand) -> CommandResult:
-    def apply(run, _request_id):
+def freeze_opponent(
+    actor: Actor, command: RunCommand, *, now=None
+) -> CommandResult:
+    """Immediately buy and apply one Freeze attack to the opposing team."""
+    def apply(run, request_id, gameplay_ms):
+        config = load_snapshot(run)
+        if "freeze_cost" not in config:
+            raise ApplicationError("disallowed_state")
+        attacker = TeamRun.objects.get(run=run, team_id=actor.team_id)
+        target_id = "b" if actor.team_id == "a" else "a"
+        target = TeamRun.objects.get(run=run, team_id=target_id)
+        before_points = attacker.points
+        target_had_reverse = target.reverse_active
+        decision = resolve_freeze_attack(
+            run.global_state,
+            _effect_state(attacker),
+            _effect_state(target),
+            gameplay_ms,
+            config["freeze_cost"],
+        )
+        _persist_effect_state(attacker, decision.attacker)
+        _persist_effect_state(target, decision.target)
+        frozen_team = actor.team_id if decision.reversed else target_id
+        if decision.reversed:
+            _event(
+                run,
+                actor,
+                request_id,
+                "uno_reverse_consumed",
+                "consumed",
+                team_id=target_id,
+                changes={"uno_reverse_active": {"previous": True, "new": False}},
+            )
+        return (
+            "reversed" if decision.reversed else "frozen",
+            run,
+            {
+                "points": {
+                    "previous": before_points,
+                    "delta": decision.points_delta,
+                    "new": decision.attacker.points,
+                },
+                "target_team": target_id,
+                "frozen_team": frozen_team,
+                "reversed": decision.reversed,
+                "target_reverse": {
+                    "previous": target_had_reverse,
+                    "new": decision.target.uno_reverse_active,
+                },
+                "freeze_started_gameplay_ms": gameplay_ms,
+            },
+            actor.team_id,
+            "",
+        )
+    return _perform(actor, command, "freeze_attack", "team", {}, apply, now=now)
+
+
+def purchase_uno_reverse(
+    actor: Actor, command: RunCommand, *, now=None
+) -> CommandResult:
+    def apply(run, _request_id, gameplay_ms):
+        config = load_snapshot(run)
+        if "uno_reverse_cost" not in config:
+            raise ApplicationError("disallowed_state")
+        team = TeamRun.objects.get(run=run, team_id=actor.team_id)
+        before_points = team.points
+        decision = decide_reverse_purchase(
+            run.global_state,
+            _effect_state(team),
+            gameplay_ms,
+            config["uno_reverse_cost"],
+        )
+        _persist_effect_state(team, decision.team)
+        return (
+            "purchased",
+            run,
+            {
+                "points": {
+                    "previous": before_points,
+                    "delta": decision.points_delta,
+                    "new": decision.team.points,
+                },
+                "uno_reverse_active": {"previous": False, "new": True},
+            },
+            actor.team_id,
+            "",
+        )
+    return _perform(
+        actor, command, "purchase_uno_reverse", "team", {}, apply, now=now
+    )
+
+
+def _admin_freeze_action(
+    actor: Actor, command: AdminTeam, *, remove: bool, now=None
+) -> CommandResult:
+    if command.team_id not in ("a", "b"):
+        raise ApplicationError("invalid_input")
+    action = "admin_unfreeze" if remove else "admin_freeze"
+
+    def apply(run, _request_id, gameplay_ms):
+        team = TeamRun.objects.get(run=run, team_id=command.team_id)
+        decision = (
+            remove_freeze(run.global_state, _effect_state(team), gameplay_ms)
+            if remove
+            else apply_direct_freeze(
+                run.global_state, _effect_state(team), gameplay_ms
+            )
+        )
+        _persist_effect_state(team, decision.team)
+        return (
+            "unfrozen" if remove else "frozen",
+            run,
+            {
+                "activity_state": {
+                    "previous": "FREEZE" if remove else "PUZZLE",
+                    "new": decision.team.activity_state,
+                },
+                "freeze_started_gameplay_ms": decision.team.freeze_started_ms,
+            },
+            command.team_id,
+            "",
+        )
+    return _perform(
+        actor,
+        command,
+        action,
+        "admin",
+        {"team_id": command.team_id},
+        apply,
+        now=now,
+    )
+
+
+def admin_freeze(
+    actor: Actor, command: AdminTeam, *, now=None
+) -> CommandResult:
+    return _admin_freeze_action(actor, command, remove=False, now=now)
+
+
+def admin_unfreeze(
+    actor: Actor, command: AdminTeam, *, now=None
+) -> CommandResult:
+    return _admin_freeze_action(actor, command, remove=True, now=now)
+
+
+def reset_game(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
+    def apply(run, _request_id, _gameplay_ms):
         config = load_snapshot(run)
         run.active = False
         run.save(update_fields=["active"])
@@ -775,4 +1046,4 @@ def reset_game(actor: Actor, command: RunCommand) -> CommandResult:
             "new_run_id": str(fresh.id),
             "initial_points": config["initial_points"],
         }, None, ""
-    return _perform(actor, command, "reset", "admin", {}, apply)
+    return _perform(actor, command, "reset", "admin", {}, apply, now=now)
