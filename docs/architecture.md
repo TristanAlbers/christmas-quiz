@@ -1,16 +1,25 @@
 # Christmas Escape Room Quiz — Architecture
 
 Status: approved architecture; phases 1–3 implemented and validated.
+Phase 3.1 is the approved lifecycle correction to implement next, before phase 4.
 
 Phase 2 implementation decisions are recorded in
 [`phase-2-contract.md`](phase-2-contract.md): one durable Hint reveal per
-team/puzzle, generic Hint inventory, immediate Skip via canonical completion,
-and reset by creating a new READY run ID from the immutable prior snapshot.
+team/puzzle, generic Hint inventory, and immediate Skip via canonical completion.
+Its original Reset/READY implementation is historical and superseded by phase 3.1.
 
 Phase 3 clock and effect decisions are recorded in
 [`phase-3-contract.md`](phase-3-contract.md): active Advent downtime counts on a
 persisted gameplay clock, paused downtime does not, and only player Freeze
-attacks trigger Uno Reverse.
+attacks trigger Uno Reverse. Its original assumption that Reset creates another
+active READY run is historical and superseded by phase 3.1.
+
+Phase 3.1 lifecycle decisions are recorded in
+[`phase-3.1-contract.md`](phase-3.1-contract.md): `READY` is represented by no
+active run, Reset deactivates the current run without creating a replacement,
+package discovery is read-only, and Start of an explicitly selected source
+package creates a fresh immutable snapshot and a new active run. Restart/recovery
+always resumes an existing active run and its pinned snapshot.
 
 This document records implementation choices. Game behavior remains governed by
 `christmas-2026-game-rules-state-semantics.md`, followed by `Design.md`, `Views.md`,
@@ -74,18 +83,27 @@ quiz/
   application.py                synchronous use cases and transaction boundaries
   models.py
   migrations/
-  configuration.py              package validation and snapshot creation
+  configuration.py              package validation/discovery/snapshot creation
   web/                          authentication, forms, views, routes
   templates/
   static/
-games/christmas-2026/
-  game.json
-  team-a/{puzzles,assets}/
-  team-b/{puzzles,assets}/
+games/
+  christmas-2026-demo/
+    game.json
+    ...
+  christmas-2026-family/
+    game.json
+    ...
+  christmas-2026-friends/
+    game.json
+    ...
 tests/{domain,integration,security,browser}/
 docs/architecture.md
 var/                            untracked persistent data
 ```
+
+Package names above are illustrative. The application must discover supported
+data-only packages rather than hard-code one event package.
 
 - **Domain:** deterministic game states, answer checking, prerequisites, costs,
   rewards, and canonical completion. No Django, ORM, HTTP, or global wall-clock
@@ -96,13 +114,118 @@ var/                            untracked persistent data
 - **Persistence:** Django models, migrations, constraints, sessions, and database
   transaction configuration. Critical database constraints defend invariants;
   they do not become a second game engine.
-- **Configuration:** schema-validated declarative JSON and media. Only named,
-  implemented answer validators and completion effects are allowed. Never execute
-  code from a game package.
+- **Configuration:** schema-validated declarative JSON and media. It owns
+  read-only source-package discovery/validation plus immutable snapshot staging.
+  Only named, implemented answer validators and completion effects are allowed.
+  Never execute code from a game package.
 - **Web and presentation:** parse requests, invoke application functions, and
   render separate team, admin, and public projections. Business rules do not live
   in forms, views, or templates. Do not add generic repository interfaces or
   speculative adapter layers.
+
+## Run lifecycle and READY
+
+The application must distinguish **recovery of an existing active run** from
+**intentional creation of a new run**.
+
+`READY` is the application-level state when there is no active playable run. It
+does not require a persisted active `Run(global_state="READY")`.
+
+```text
+no active Run / READY
+        |
+        | administrator selects package + Start
+        v
+validate current source package
+        |
+stage immutable config + media snapshot
+        |
+create exactly one active Run
+initialize run/team/progress/effects/clock
+        |
+        v
+ADVENT_QUIZ
+        |
+        +---- unexpected restart ----> recover same Run + same snapshot
+        |
+        +---- full Reset ------------> deactivate Run, preserve history
+                                       |
+                                       v
+                                  no active Run / READY
+```
+
+### Package discovery
+
+When no run is active, administrators receive a read-only list of discoverable
+source packages under the configured `games/` root.
+
+Discovery may validate source packages and return actionable administrator-only
+diagnostics, but it must not:
+
+- create a run;
+- stage or retain an immutable snapshot;
+- change source package files;
+- expose answers/private package content to team or public views.
+
+Invalid packages should remain visible to administrators as unavailable rather
+than silently disappearing. Advanced authoring/import/export remains a later
+package-authoring concern.
+
+### Start
+
+Start accepts an explicit package ID. Snapshot staging happens before the short
+SQLite writer transaction so filesystem copying/integrity work does not hold the
+writer slot.
+
+After staging, the Start transaction:
+
+1. rechecks the authenticated administrator and Start idempotency;
+2. rechecks that there is no active run;
+3. pins the staged snapshot;
+4. creates exactly one active run and all initial run-scoped rows;
+5. initializes the phase-3 gameplay clock/effects according to the selected
+   snapshotted package;
+6. enters `ADVENT_QUIZ`;
+7. writes the receipt/audit facts and commits.
+
+Concurrent Starts are resolved by SQLite plus the one-active-run constraint. A
+losing pre-staged directory may remain unreferenced for later safe cleanup, but
+must never affect the winning run.
+
+### Reset
+
+Full Reset acts on the displayed active run ID. It deactivates the active run,
+records the reset against that old run and leaves **no replacement active run**.
+
+Reset preserves:
+
+- the inactive run and its team/progression/effect facts;
+- attempts, reward/fragment history and balances as historical run facts;
+- receipts and immutable audit events;
+- the immutable snapshot referenced by the old run.
+
+After Reset, old-run commands are stale. Admins see package selection and teams
+see only a waiting projection.
+
+Reset must not stage or select a package. The next accepted Start may choose the
+same or a different source package and creates a fresh snapshot/new run.
+
+### Restart/recovery
+
+Browser reload, disconnect, Gunicorn restart, container restart, Docker restart,
+host restart, or equivalent failure recovery never invokes Reset semantics.
+
+If an active run exists, the application continues that exact run from persisted
+database state and its pinned snapshot. Source package edits or deletion cannot
+change or break that run.
+
+Phase-3 downtime semantics remain unchanged during recovery: persisted
+`ADVENT_QUIZ` downtime counts on the gameplay clock; persisted `PAUSED` downtime
+does not.
+
+Legacy active `READY` shells created by the old phase-2/phase-3 Reset model must
+be retired through an explicit safe compatibility path during phase 3.1. The
+upgrade must not require deleting `quiz.sqlite3` or wiping the runtime directory.
 
 ## State, commands, isolation, and transactions
 
@@ -111,6 +234,10 @@ from the normative specification. `PAUSED` and `MUSIC_QUIZ` preserve underlying
 team states and gameplay-timer durations. Use `completed` for puzzle status and
 record completion route separately. There is exactly one completion pipeline for
 correct answers, immediate Skip, and admin force-completion.
+
+When no active run exists, state projections render conceptual global/team
+`READY`. No previous run's points, inventory, fragments, effects, questions or
+media may be projected into that waiting state.
 
 Keep current completion separate from historical reward/fragment awards so a
 reopened puzzle cannot award them twice. Enforce all earlier prerequisites on the
@@ -125,6 +252,10 @@ client-supplied team ID. Repeated request IDs with the same command return the
 recorded outcome without repeating effects; reuse with a different payload is
 rejected. Preserve IDs when retrying an uncertain request, and issue a new ID for
 a new answer attempt.
+
+Start is the exception to run-scoped commands because it occurs before a run
+exists. Its receipt/idempotency scope remains actor + request ID plus payload
+digest, and its payload includes the selected package ID.
 
 Distinguish a persisted incorrect answer from a rejected command. Use stable
 results for authentication/authorization failure, invalid input, stale run or
@@ -149,6 +280,10 @@ Python locks or SQLite's ineffective `select_for_update()` for race correctness.
 Do not wrap every HTTP request in a write transaction or hold locks while
 rendering HTML or doing filesystem work.
 
+Filesystem-heavy package snapshot staging is specifically outside the Start
+writer transaction. The short Start transaction only pins an already validated
+staged snapshot after rechecking the one-active-run invariant.
+
 State projections must come from a consistent database snapshot. Prefer a single
 SELECT for the first slice. If a projection later requires multiple queries, use
 a short read-only `DEFERRED` snapshot with the persistence specialist; do not
@@ -160,7 +295,7 @@ winner, awards points, and immediately advances to the next question. A competin
 transaction waits, then reads the committed state and rejects its old question.
 An invalid or rolled-back transaction wins nothing. This is database acceptance
 order, not client timestamps or a guarantee of network-arrival FIFO. The same
-atomicity principle governs completion, purchases, and other races.
+atomicity principle governs completion, purchases, Starts, resets and other races.
 
 ## Live views: 500 ms polling
 
@@ -229,11 +364,16 @@ infrastructure is needed.
 
 ## Configuration, audit, and recovery
 
-Start validates and stages an immutable snapshot of configuration **and every
-referenced media asset**, then pins the completed snapshot in the short Start
-transaction. Every active-run read uses that snapshot, including after a restart.
-Source package edits or deletion cannot silently change active rules or media.
-Keep secret credentials out of committed puzzle packages.
+Source game packages are authoring/input data. Package discovery may inspect and
+validate them while `READY`, but discovery is read-only and does not create an
+immutable snapshot.
+
+Start validates and stages an immutable snapshot of the explicitly selected
+configuration **and every referenced media asset**, then pins the completed
+snapshot in the short Start transaction while creating the new active run. Every
+active-run read uses that snapshot, including after a restart. Source package
+edits or deletion cannot silently change active rules or media. Keep secret
+credentials out of committed puzzle packages.
 
 In phase 1, `load_snapshot` verifies the manifest and all declared media bytes
 when it reads configuration, including within an answer transaction. The two
@@ -242,16 +382,22 @@ that writer hold time material; measure it and adopt a validated immutable
 snapshot cache or pretransaction verification with an in-transaction pin check
 before loading large media packages. Do not skip integrity verification.
 
-Persist attempts, balances, progression, reward history, fragments, and audit
-events. Events identify timestamp, run/request, actor, affected team, action,
-result, relevant puzzle/effect, and previous/delta/new values where applicable.
-Audit history is append-only through all supported application operations;
-resets preserve history and record the reset. Do not offer audit editing in admin
-tools. Database triggers are optional later defense in depth, not a prerequisite.
+Persist attempts, balances, progression, reward history, fragments, clocks,
+effects, receipts, and audit events. Events identify timestamp, run/request,
+actor, affected team, action, result, relevant puzzle/effect, and
+previous/delta/new values where applicable. Audit history is append-only through
+all supported application operations; resets preserve history and record the
+reset. Do not offer audit editing in admin tools. Database triggers are optional
+later defense in depth, not a prerequisite.
 
-Timers in later milestones use persisted, server-authoritative gameplay time and
-injected clocks for tests. Browser refresh/disconnect never changes game outcomes.
-Unexpected server-downtime accounting must be settled before timer implementation.
+A full Reset deactivates the old run but does not delete it or its referenced
+snapshot and does not create a replacement active run. This is intentionally
+different from crash/restart recovery, which preserves and resumes the active run.
+
+Phase-3 timers use persisted, server-authoritative gameplay time and injected
+clocks for tests. Browser refresh/disconnect never changes game outcomes.
+Unexpected server-downtime accounting is settled in `phase-3-contract.md`:
+persisted active Advent downtime counts and paused downtime does not.
 
 Provide a consistent SQLite backup plus its referenced snapshots and a documented,
 tested restore procedure. Backups under `var/backups` survive container replacement
@@ -282,6 +428,11 @@ needed edits or receive an explicit temporary file assignment; never edit them
 concurrently. Domain input/output structures are reviewed before persistence or
 web code depends on them. Application transactions call domain policies once;
 persistence specialists do not independently implement the same use cases.
+
+For phase 3.1 specifically, `@game_engine` should normally remain out of production
+changes. The lifecycle correction is primarily application/configuration/
+persistence/web integration. Preserve phase-3 domain policies unless a genuine
+pure-domain defect is discovered.
 
 ## First slice and validation
 
@@ -333,8 +484,8 @@ contracts and exact file ownership are in `docs/contracts-first-slice.md`.
 ## Decisions still deferred
 
 There is no known blocking rule ambiguity for the first slice. Do not implement
-Freeze, Music Quiz, Challenge, Uno Reverse, or polished calendars before that
-slice is stable without explicit reprioritization.
+Music Quiz, Challenge, or polished calendars before their planned milestones
+without explicit reprioritization.
 
 - Public TV progression: normative section 15 treats progression as private and
   identifies Music scores as an explicit shared exception; `Views.md` requests
@@ -342,6 +493,8 @@ slice is stable without explicit reprioritization.
   feature; never expose full team state to satisfy the display requirement.
 - Server-downtime accounting is settled for phase 3: persisted `ADVENT_QUIZ`
   downtime counts, while persisted `PAUSED` downtime does not.
+- Reset/READY/package-selection lifecycle is settled for phase 3.1 in
+  `docs/phase-3.1-contract.md`; do not reopen the old replacement-READY-run model.
 - Emergency reopening and unusual corrections need specific contracts before
   their later milestones. Do not invent those contracts in ordinary gameplay.
 
