@@ -1,0 +1,23 @@
+<div id="admin-package-controls"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <input class="poll-context" type="hidden" name="package_context" value="{{ package_context }}">
+  {% if global_state == 'READY' %}
+    <section class="action-card" aria-labelledby="package-selection-title">
+      <h2 id="package-selection-title">Choose a game package</h2>
+      <p>Starting creates a fresh game snapshot. Source edits do not change an active run.</p>
+      <form id="package-selection-form" method="post" action="{% url 'admin_start' %}">
+        {% csrf_token %}
+        <input type="hidden" name="request_id" value="{{ request_id }}">
+        <label for="package-id">Game package</label>
+        <select id="package-id" name="package_id" required>
+          <option value="">Select a package</option>
+          {% for package in packages %}
+            <option value="{{ package.package_id }}"{% if not package.startable %} disabled{% endif %}>
+              {{ package.package_id }}{% if not package.startable %} — unavailable{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+        <button class="button-primary" type="submit"{% if not has_startable_packages %} disabled{% endif %}>Start game</button>
+      </form>
+    </section>
+  {% endif %}
+</div>

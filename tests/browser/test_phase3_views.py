@@ -96,6 +96,9 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     )
                     await page.locator(".state-panel-freeze").wait_for(timeout=5000)
                     self.assertEqual(await page.locator("#answer-input").count(), 0)
+                    self.assertEqual(
+                        await page.locator("#team-actions form").count(), 0
+                    )
                     self.assertNotIn(
                         "Demo A1", await page.locator("#live-game").inner_text()
                     )
@@ -112,6 +115,12 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         timeout=5000
                     )
                     self.assertEqual(await page.locator("#answer-input").count(), 1)
+                    self.assertEqual(
+                        await page.locator(
+                            "form[action='/team/action/freeze/']"
+                        ).count(),
+                        1,
+                    )
                 finally:
                     await context.close()
                     await browser.close()
@@ -136,6 +145,7 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         "Uno Reverse active",
                         await page.locator(".state-panel-puzzle").inner_text(),
                     )
+                    self.assertEqual(await reverse_form.count(), 0)
                     state = await asyncio.to_thread(get_team_state, self.a)
                     self.assertTrue(state.uno_reverse_active)
 
@@ -147,6 +157,7 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     await page.get_by_text(
                         "Uno Reverse inactive", exact=False
                     ).wait_for(timeout=5000)
+                    await reverse_form.wait_for(timeout=5000)
                     state = await asyncio.to_thread(get_team_state, self.a)
                     attacker = await asyncio.to_thread(get_team_state, self.b)
                     self.assertEqual(state.team_state, "PUZZLE")

@@ -10,7 +10,12 @@ from django.db import OperationalError
 from django.urls import reverse
 from django.utils import timezone
 
-from quiz.configuration import InvalidPackage, load_snapshot, stage_snapshot
+from quiz.configuration import (
+    InvalidPackage,
+    discover_packages,
+    load_snapshot,
+    stage_snapshot,
+)
 from quiz.contracts import (
     Actor,
     AdminPoints,
@@ -21,6 +26,7 @@ from quiz.contracts import (
     AnswerResult,
     ApplicationError,
     CommandResult,
+    PackageProjection,
     QuestionProjection,
     RunCommand,
     StartGame,
@@ -410,51 +416,72 @@ def get_admin_state(actor: Actor, *, now=None) -> AdminProjection:
     with read_snapshot():
         _verify_actor(actor, "admin")
         run = Run.objects.filter(active=True).first()
-        if run is None:
-            return AdminProjection(None, "READY", None, ())
-        config = load_snapshot(run)
-        gameplay_ms = _gameplay_ms(run, now)
-        teams = []
-        for team_id in ("a", "b"):
-            row = TeamRun.objects.get(run=run, team_id=team_id)
-            effective = reconcile_freeze(
-                row.activity_state, row.freeze_started_gameplay_ms, gameplay_ms
-            )
-            remaining = (
-                freeze_remaining_ms(effective.freeze_started_ms, gameplay_ms)
-                if effective.activity_state == "FREEZE"
-                else None
-            )
-            progress = list(PuzzleProgress.objects.filter(run=run, team_id=team_id))
-            puzzles = config["teams"][team_id]["puzzles"]
-            completed_numbers = tuple(
-                sorted(p.number for p in progress if p.completed)
-            )
-            puzzle = (
-                puzzles[row.current_number - 1]
-                if (
-                    row.current_number <= len(puzzles)
-                    and row.current_number not in completed_numbers
+        if run is not None:
+            config = load_snapshot(run)
+            gameplay_ms = _gameplay_ms(run, now)
+            teams = []
+            for team_id in ("a", "b"):
+                row = TeamRun.objects.get(run=run, team_id=team_id)
+                effective = reconcile_freeze(
+                    row.activity_state, row.freeze_started_gameplay_ms, gameplay_ms
                 )
-                else None
+                remaining = (
+                    freeze_remaining_ms(effective.freeze_started_ms, gameplay_ms)
+                    if effective.activity_state == "FREEZE"
+                    else None
+                )
+                progress = list(
+                    PuzzleProgress.objects.filter(run=run, team_id=team_id)
+                )
+                puzzles = config["teams"][team_id]["puzzles"]
+                completed_numbers = tuple(
+                    sorted(p.number for p in progress if p.completed)
+                )
+                puzzle = (
+                    puzzles[row.current_number - 1]
+                    if (
+                        row.current_number <= len(puzzles)
+                        and row.current_number not in completed_numbers
+                    )
+                    else None
+                )
+                teams.append(AdminTeamProjection(
+                    team_id=team_id,
+                    activity_state=effective.activity_state,
+                    points=row.points,
+                    hint_tokens=row.hint_tokens,
+                    current_number=row.current_number,
+                    current_question_id=puzzle["id"] if puzzle else None,
+                    completed_numbers=completed_numbers,
+                    hint_revealed=bool(puzzle and HintReveal.objects.filter(
+                        run=run, team_id=team_id, puzzle_id=puzzle["id"]
+                    ).exists()),
+                    uno_reverse_active=row.reverse_active,
+                    freeze_remaining_ms=remaining,
+                ))
+            return AdminProjection(
+                str(run.id), run.global_state, run.package_id, tuple(teams)
             )
-            teams.append(AdminTeamProjection(
-                team_id=team_id,
-                activity_state=effective.activity_state,
-                points=row.points,
-                hint_tokens=row.hint_tokens,
-                current_number=row.current_number,
-                current_question_id=puzzle["id"] if puzzle else None,
-                completed_numbers=completed_numbers,
-                hint_revealed=bool(puzzle and HintReveal.objects.filter(
-                    run=run, team_id=team_id, puzzle_id=puzzle["id"]
-                ).exists()),
-                uno_reverse_active=row.reverse_active,
-                freeze_remaining_ms=remaining,
-            ))
-        return AdminProjection(
-            str(run.id), run.global_state, run.package_id, tuple(teams)
+
+    # Source discovery is intentionally outside the database snapshot. It is
+    # read-only filesystem work and a later Start rechecks the active-run guard.
+    try:
+        packages = tuple(
+            PackageProjection(item.package_id, item.startable, item.diagnostic)
+            for item in discover_packages()
         )
+        discovery_error = None
+    except InvalidPackage as exc:
+        packages = ()
+        discovery_error = str(exc)
+    return AdminProjection(
+        None,
+        "READY",
+        None,
+        (),
+        packages=packages,
+        discovery_error=discovery_error,
+    )
 
 
 def start_game(actor: Actor, command: StartGame, *, now=None) -> StartResult:
@@ -473,15 +500,10 @@ def start_game(actor: Actor, command: StartGame, *, now=None) -> StartResult:
             if prior.payload_digest != digest:
                 raise ApplicationError("request_conflict")
             return StartResult(**prior.result)
-    with read_snapshot():
-        ready_exists = Run.objects.filter(active=True, global_state="READY").exists()
-    if ready_exists:
-        staged = None
-    else:
-        try:
-            staged = stage_snapshot(command.package_id)
-        except InvalidPackage as exc:
-            raise ApplicationError("invalid_input") from exc
+    try:
+        staged = stage_snapshot(command.package_id)
+    except InvalidPackage as exc:
+        raise ApplicationError("invalid_input") from exc
     try:
         with immediate_transaction():
             _verify_actor(actor, "admin")
@@ -493,24 +515,6 @@ def start_game(actor: Actor, command: StartGame, *, now=None) -> StartResult:
                     raise ApplicationError("request_conflict")
                 return StartResult(**prior.result)
             if Run.objects.filter(active=True).exists():
-                ready = Run.objects.filter(active=True, global_state="READY").first()
-                if ready is None or ready.package_id != command.package_id:
-                    raise ApplicationError("disallowed_state")
-                ready.global_state = "ADVENT_QUIZ"
-                ready.advent_clock_anchor = now
-                ready.save(update_fields=["global_state", "advent_clock_anchor"])
-                TeamRun.objects.filter(run=ready).update(activity_state="PUZZLE")
-                result = StartResult(str(ready.id), "ADVENT_QUIZ")
-                StartReceipt.objects.create(
-                    actor_id=actor.user_id, request_id=request_id,
-                    payload_digest=digest, run=ready, result=asdict(result),
-                )
-                _event(ready, actor, request_id, "start", "started", changes={
-                    "global_state": {"previous": "READY", "new": "ADVENT_QUIZ"},
-                    "initial_points": load_snapshot(ready)["initial_points"],
-                })
-                return result
-            if staged is None:
                 raise ApplicationError("disallowed_state")
             run = Run.objects.create(
                 global_state="ADVENT_QUIZ",
@@ -1021,29 +1025,20 @@ def admin_unfreeze(
 
 
 def reset_game(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
-    def apply(run, _request_id, _gameplay_ms):
-        config = load_snapshot(run)
+    def apply(run, _request_id, gameplay_ms):
+        previous = run.global_state
         run.active = False
-        run.save(update_fields=["active"])
-        fresh = Run.objects.create(
-            global_state="READY", package_id=run.package_id,
-            snapshot_path=run.snapshot_path, snapshot_digest=run.snapshot_digest,
-        )
-        for team_id in ("a", "b"):
-            TeamRun.objects.create(
-                run=fresh, team_id=team_id, activity_state="READY",
-                current_number=1, points=config["initial_points"], hint_tokens=0,
-            )
-            for puzzle in config["teams"][team_id]["puzzles"]:
-                PuzzleProgress.objects.create(
-                    run=fresh,
-                    team_id=team_id,
-                    puzzle_id=puzzle["id"],
-                    number=puzzle["number"],
-                )
-        return "reset", fresh, {
-            "global_state": {"previous": run.global_state, "new": "READY"},
-            "new_run_id": str(fresh.id),
-            "initial_points": config["initial_points"],
+        run.global_state = "READY"
+        run.gameplay_elapsed_ms = gameplay_ms
+        run.advent_clock_anchor = None
+        run.save(update_fields=[
+            "active",
+            "global_state",
+            "gameplay_elapsed_ms",
+            "advent_clock_anchor",
+        ])
+        return "reset", run, {
+            "global_state": {"previous": previous, "new": "READY"},
+            "active": {"previous": True, "new": False},
         }, None, ""
     return _perform(actor, command, "reset", "admin", {}, apply, now=now)

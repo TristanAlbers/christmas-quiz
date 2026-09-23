@@ -16,8 +16,10 @@
     {% if error %}<p role="alert">{{ error }}</p>{% endif %}
     <section id="live-admin" aria-label="Live game administration">
       <div id="admin-poller" hx-get="{% url 'admin_state' %}" hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
-           hx-sync="#live-admin:drop" hx-target="#admin-state" hx-swap="innerHTML"></div>
-      <div id="admin-state">{% include 'quiz/_admin_state.html' %}</div>
+           hx-sync="#live-admin:drop" hx-include="#admin-controls .poll-context"
+           hx-target="#admin-state" hx-swap="innerHTML"></div>
+      <div id="admin-state">{% include 'quiz/_admin_state.html' with replace_package_controls=False replace_global_controls=False replace_team_a_controls=False replace_team_b_controls=False %}</div>
+      {% include 'quiz/_admin_controls.html' %}
     </section>
   </main>
 </body>

@@ -1,6 +1,6 @@
 # Using the Christmas Quiz today
 
-This guide describes the **phase 3 development demo** that is implemented now.
+This guide describes the **phase 3.1 development demo** that is implemented now.
 It has two isolated teams, two named game masters, and two sample puzzles per
 team. It is not the authored Christmas event, and completing sample puzzle 2
 does not finish the game.
@@ -48,12 +48,13 @@ team login form asks for a team choice and PIN. Game masters use
 password. After login, follow the home-page link to the Team or Admin view.
 Log out with the button on the page.
 
-Before Start, a team view shows `READY` and no puzzle. A game master opens
-`/admin-game/` and presses **Start game**. The current admin UI
-starts only package ID `christmas-2026-demo`; it has no package selector.
-Start opens puzzle 1 for both teams. A second Start does not create another
-active run. After a full reset, Start resumes the new READY run using the same
-pinned package snapshot.
+Before Start, there is no active run. A team sees only `READY` and a waiting
+message—no package names or state from an earlier game. A game master opens
+`/admin-game/`, selects one valid discovered package, and presses **Start game**.
+Invalid packages remain visible but disabled, with a concise diagnostic shown
+only to administrators. Merely viewing this list does not create a snapshot.
+An accepted Start creates a fresh run and immutable snapshot and opens puzzle 1
+for both teams. Simultaneous or repeated Starts cannot create competing runs.
 
 Each team sees only its own current puzzle, points, completed numbers, and
 earned fragments. A wrong answer is recorded and leaves the team on the same
@@ -78,9 +79,13 @@ The admin page shows both teams and supports pause/resume, signed point changes,
 current-puzzle force completion, immediate Hint reveal, full reset, direct
 Freeze, and unfreeze. Pausing blocks team gameplay and hides the current puzzle
 until resume; it preserves each team's position, inventory, and exact effect
-time remaining. Point removal cannot make a balance negative. Reset creates a
-new READY run with initial points and empty tokens, progress, and effects while
-preserving the prior run and audit history. The admin view polls every 500 ms.
+time remaining. Point removal cannot make a balance negative. **Reset full
+game** asks for confirmation, archives the active run, preserves its snapshot,
+facts, receipts, and audit history, and leaves no active replacement run. Teams
+then see only the waiting state, while administrators return to package
+selection. The next Start may choose the same or a different package and always
+creates a fresh run and snapshot from that package's current source files. The
+admin view polls every 500 ms.
 
 During Advent play a team can immediately spend the configured Freeze cost (3
 points in the demo) to Freeze its opponent for five minutes of Advent gameplay
@@ -102,13 +107,15 @@ does not mark either team or the global game finished. A package extended to
 puzzle 13 cannot progress beyond puzzle 12 until the mandatory Music Quiz is
 implemented.
 
-## Edit the demo before Start
+## Add or edit packages before Start
 
-The only package selectable through the current admin UI is
-[`games/christmas-2026-demo/game.json`](games/christmas-2026-demo/game.json).
-Edit that JSON and its referenced files under the same package directory
-**before** starting a run. The package is declarative data; it cannot execute
-Python code. Credentials belong in `.env`, never in a package.
+The admin READY page discovers direct package directories under `games/`, such
+as [`games/christmas-2026-demo/game.json`](games/christmas-2026-demo/game.json).
+The directory name and JSON `package_id` must match. Edit the JSON and its
+referenced files under the same package directory **before** starting a run.
+The package is declarative data; it cannot execute Python code. Credentials
+belong in `.env`, never in a package. Rich authoring/import/export tools are not
+implemented yet.
 
 The phase 3 top level requires exactly `schema_version: 3`, `package_id`,
 `initial_points`, `hint_cost`, `skip_cost`, `freeze_cost`,
@@ -147,16 +154,17 @@ For example, this is a valid puzzle entry inside Team A's `puzzles` list:
 ```
 
 Use the linked `game.json` for a complete valid package with both teams and
-all required puzzle entries. Media paths must stay within the package; Start
+all required puzzle entries. Media paths must stay within the package.
 
 Start validates the package, copies its JSON and every referenced media file
 into a digest-checked snapshot under `./var/snapshots`, and pins that snapshot
 to the run. Editing or deleting the source package **after** Start does not
 change the active run. The app serves private media from the pinned snapshot
 only to the owning team while that asset belongs to its current visible
-puzzle. Private media is never served from the public static directory.
-The current UI cannot switch to a newly named package; a general package
-selection and authoring workflow is planned for a later phase.
+puzzle. Private media is never served from the public static directory. Source
+package edits or deletion cannot change or break an active run. After Reset,
+editing a source package and selecting it again creates a different snapshot
+whose new run sees the edited content.
 
 ## Restart, recovery, and validation
 
@@ -167,15 +175,18 @@ fragments, and current puzzle. Do not edit or delete the database or pinned
 snapshot directories while a run is active.
 
 Restarting the server is **not** resetting the game. An active Advent clock
-continues across restart, while a paused clock stays stopped. Use the admin **Reset full
-game** button to create a new READY run while retaining the old run and audit
-history. Do not delete SQLite files or snapshots as a reset workaround. A
-tested backup and restore procedure is not available yet.
+continues across restart, while a paused clock stays stopped. Use the admin
+**Reset full game** button to end the active run and return to package selection;
+it does not create another run. Do not delete SQLite files or snapshots as a
+reset workaround. Migration `0004_retire_legacy_ready_runs` safely deactivates
+active READY shells created by older phase-2/phase-3 resets while preserving
+their database rows and snapshot references. A tested backup and restore
+procedure is not available yet.
 
 For validation, use a separate Compose project and disposable `/app/var`
 mount. Follow the exact isolation setup in [docs/scaffold.md](docs/scaffold.md)
 before running migrations or tests, so an existing event database is not
-touched. After that setup, the phase 3 checks are:
+touched. After that setup, the phase 3.1 checks are:
 
 ```sh
 docker compose --profile dev build app dev
@@ -183,9 +194,9 @@ docker compose up -d app
 docker compose exec app python manage.py check
 docker compose exec app python manage.py makemigrations --check --dry-run
 docker compose run --rm --entrypoint ruff dev check .
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase3-tests.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase31-tests.sqlite3 \
   dev test tests.domain tests.integration tests.security
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase3-browser.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase31-browser.sqlite3 \
   dev test tests.browser
 ```
 

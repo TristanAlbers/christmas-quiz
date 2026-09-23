@@ -18,11 +18,12 @@
       <p id="action-feedback" class="feedback" role="status"></p>
       <div id="poller" hx-get="{% url 'team_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
-           hx-sync="#live-game:drop" hx-include="#view-context"
+           hx-sync="#live-game:drop" hx-include="#view-context, #actions-context"
            hx-target="#game-status" hx-swap="innerHTML"></div>
       <div id="game-status" aria-live="polite">
-        {% include 'quiz/_team_state.html' with replace_pane=False %}
+        {% include 'quiz/_team_state.html' with replace_pane=False replace_actions=False %}
       </div>
+      {% include 'quiz/_team_actions.html' %}
       {% include 'quiz/_question_pane.html' %}
     </section>
   </main>

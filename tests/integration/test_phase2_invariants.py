@@ -268,13 +268,13 @@ class PhaseTwoJourneyTests(PhaseTwoSetup, TestCase):
         reset_command = self.command()
         result = reset_game(self.admin, reset_command)
         self.assertEqual(reset_game(self.admin, reset_command), result)
-        self.assertNotEqual(result.run_id, self.run_id)
+        self.assertEqual(result.run_id, self.run_id)
         self.assertEqual(result.global_state, "READY")
-        self.assertEqual(Run.objects.filter(active=True).count(), 1)
-        self.assertEqual(get_team_state(self.a).points, 3)
+        self.assertEqual(Run.objects.filter(active=True).count(), 0)
+        self.assertEqual(get_team_state(self.a).points, 0)
         self.assertEqual(get_team_state(self.a).hint_tokens, 0)
         self.assertIsNone(get_team_state(self.a).question)
-        self.assertFalse(HintReveal.objects.filter(run_id=result.run_id).exists())
+        self.assertTrue(HintReveal.objects.filter(run_id=self.run_id).exists())
         self.assertTrue(
             set(old_events).issubset(
                 set(AuditEvent.objects.values_list("id", flat=True))
@@ -301,7 +301,7 @@ class PhaseTwoJourneyTests(PhaseTwoSetup, TestCase):
         restarted = start_game(
             self.admin2, StartGame(str(uuid4()), "christmas-2026-demo")
         )
-        self.assertEqual(restarted.run_id, result.run_id)
+        self.assertNotEqual(restarted.run_id, result.run_id)
         self.assertEqual(get_team_state(self.a).question.id, "a-1")
 
 
@@ -386,7 +386,7 @@ class PhaseTwoContentionTests(PhaseTwoSetup, TransactionTestCase):
             ).completed
         )
 
-    def test_two_admin_resets_cannot_create_competing_active_runs(self):
+    def test_two_admin_resets_leave_no_competing_active_runs(self):
         first, second = self.compete(
             lambda: reset_game(self.admin, self.command()),
             lambda: reset_game(self.admin2, self.command()),
@@ -394,12 +394,12 @@ class PhaseTwoContentionTests(PhaseTwoSetup, TransactionTestCase):
         self.assertEqual(first.outcome, "reset")
         self.assertIsInstance(second, ApplicationError)
         self.assertEqual(second.code, "stale_run")
-        self.assertEqual(Run.objects.filter(active=True).count(), 1)
-        self.assertEqual(str(Run.objects.get(active=True).pk), first.run_id)
+        self.assertEqual(Run.objects.filter(active=True).count(), 0)
+        self.assertEqual(first.run_id, self.run_id)
         self.assertEqual(AuditEvent.objects.filter(action="reset").count(), 1)
         self.assertEqual(CommandReceipt.objects.filter(action="reset").count(), 1)
 
-    def test_start_waiting_for_reset_uses_only_the_new_ready_run(self):
+    def test_start_waiting_for_reset_creates_a_fresh_run(self):
         first, second = self.compete(
             lambda: reset_game(self.admin, self.command()),
             lambda: start_game(
@@ -407,9 +407,10 @@ class PhaseTwoContentionTests(PhaseTwoSetup, TransactionTestCase):
             ),
         )
         self.assertEqual(first.outcome, "reset")
-        self.assertEqual(second.run_id, first.run_id)
+        self.assertNotEqual(second.run_id, first.run_id)
         self.assertEqual(second.global_state, "ADVENT_QUIZ")
         self.assertEqual(Run.objects.filter(active=True).count(), 1)
+        self.assertEqual(str(Run.objects.get(active=True).pk), second.run_id)
         self.assertEqual(get_team_state(self.a).question.id, "a-1")
         self.assertEqual(AuditEvent.objects.filter(action="reset").count(), 1)
 

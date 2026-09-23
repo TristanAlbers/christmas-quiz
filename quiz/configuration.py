@@ -17,6 +17,13 @@ class InvalidPackage(ValueError):
 
 
 @dataclass(frozen=True)
+class DiscoveredPackage:
+    package_id: str
+    startable: bool
+    diagnostic: str | None = None
+
+
+@dataclass(frozen=True)
 class StagedSnapshot:
     path: str
     digest: str
@@ -146,26 +153,90 @@ def _root(setting, fallback):
     ).resolve()
 
 
-def stage_snapshot(package_id):
-    """Do filesystem validation/copy before the short Start write transaction."""
+def _source_package(package_id):
     if not isinstance(package_id, str) or not re.fullmatch(
         r"[a-zA-Z0-9_-]{1,100}", package_id
     ):
-        raise InvalidPackage("Invalid package ID")
+        raise InvalidPackage("Directory name must be a 1-100 character package ID")
     games_root = _root("QUIZ_GAMES_ROOT", "games")
     source = games_root / package_id
     if source.is_symlink() or not source.is_dir():
-        raise InvalidPackage("Package does not exist")
+        raise InvalidPackage("Package directory is missing or is a symlink")
     if (source / "game.json").is_symlink():
-        raise InvalidPackage("Symlink package JSON is forbidden")
+        raise InvalidPackage("game.json must be a regular file, not a symlink")
     try:
         raw = (source / "game.json").read_bytes()
         if len(raw) > 2_000_000:
-            raise InvalidPackage("Package JSON is too large")
+            raise InvalidPackage("game.json exceeds the 2 MB limit")
         config = json.loads(raw)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise InvalidPackage("Cannot read package JSON") from exc
+        raise InvalidPackage(
+            "game.json is missing, unreadable, or invalid JSON"
+        ) from exc
     referenced = _validate(config, package_id)
+    return source, config, referenced
+
+
+def _validate_source_media(source, referenced):
+    for rel in sorted(referenced):
+        source_asset = source / rel
+        if any(
+            part.is_symlink()
+            for part in (source_asset, *source_asset.parents)
+            if part != source.parent
+        ):
+            raise InvalidPackage("Referenced media must not use symlinks")
+        try:
+            valid_file = source_asset.is_file()
+            oversized = valid_file and source_asset.stat().st_size > 20_000_000
+        except OSError as exc:
+            raise InvalidPackage("Referenced media is unreadable") from exc
+        if not valid_file:
+            raise InvalidPackage("Referenced media file is missing")
+        if oversized:
+            raise InvalidPackage("Referenced media exceeds the 20 MB limit")
+
+
+def discover_packages():
+    """Return direct source packages without creating runs or snapshots."""
+    games_root = _root("QUIZ_GAMES_ROOT", "games")
+    try:
+        entries = sorted(games_root.iterdir(), key=lambda entry: entry.name)
+    except OSError as exc:
+        raise InvalidPackage("Configured games root is missing or unreadable") from exc
+
+    discovered = []
+    for entry in entries:
+        if not entry.is_dir():
+            continue
+        try:
+            source, _, referenced = _source_package(entry.name)
+            _validate_source_media(source, referenced)
+        except InvalidPackage as exc:
+            discovered.append(
+                DiscoveredPackage(
+                    package_id=entry.name,
+                    startable=False,
+                    diagnostic=str(exc),
+                )
+            )
+        else:
+            discovered.append(
+                DiscoveredPackage(
+                    package_id=entry.name,
+                    startable=True,
+                )
+            )
+    return tuple(discovered)
+
+
+def stage_snapshot(package_id):
+    """Do filesystem validation/copy before the short Start write transaction."""
+    source, config, referenced = _source_package(package_id)
+    # Validate the complete source package before creating staging state.  The
+    # checks are repeated while each asset is copied because source packages are
+    # mutable authoring input until the completed snapshot is atomically pinned.
+    _validate_source_media(source, referenced)
     snapshot_root = _root("QUIZ_SNAPSHOT_ROOT", "var/snapshots")
     snapshot_root.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".staging-", dir=snapshot_root))
@@ -180,13 +251,27 @@ def stage_snapshot(package_id):
                 for part in (source_asset, *source_asset.parents)
                 if part != source.parent
             ):
-                raise InvalidPackage("Symlink media is forbidden")
-            if not source_asset.is_file() or source_asset.stat().st_size > 20_000_000:
-                raise InvalidPackage("Missing or oversized media")
+                raise InvalidPackage("Referenced media must not use symlinks")
             target = staging / "media" / rel
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source_asset, target)
-            hashes[f"media/{rel}"] = _digest(target.read_bytes())
+            try:
+                if not source_asset.is_file():
+                    raise InvalidPackage("Referenced media file is missing")
+                if source_asset.stat().st_size > 20_000_000:
+                    raise InvalidPackage(
+                        "Referenced media exceeds the 20 MB limit"
+                    )
+                shutil.copyfile(source_asset, target)
+                if target.stat().st_size > 20_000_000:
+                    raise InvalidPackage(
+                        "Referenced media exceeds the 20 MB limit"
+                    )
+                target_bytes = target.read_bytes()
+            except OSError as exc:
+                raise InvalidPackage(
+                    "Referenced media became unreadable while staging"
+                ) from exc
+            hashes[f"media/{rel}"] = _digest(target_bytes)
         manifest_bytes = _canonical({"schema_version": 1, "files": hashes})
         (staging / "manifest.json").write_bytes(manifest_bytes)
         digest = _digest(manifest_bytes)
