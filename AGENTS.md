@@ -90,11 +90,11 @@ For non-trivial implementation work, the parent/main routing agent owns the Git 
 
 ### Branch lifecycle
 
-When the user asks Codex to implement repository changes and does not explicitly request work directly on the current branch:
+When the user asks Codex to implement repository changes and does not explicitly request work directly on the current branch, first determine whether the checked-out branch already belongs to the current task or pull request. Reuse a suitable existing feature branch for follow-up work, such as review feedback or a CI fix on an open pull request. Create a new feature branch only when starting from `main` or from a branch unrelated to the requested work.
 
 1. inspect the current Git state and preserve unrelated user changes;
 2. update local knowledge of `main` and base the work on the current `main` when it is safe to do so;
-3. create a short-lived feature branch with a descriptive name such as `codex/<task>` or another repository-appropriate prefix;
+3. reuse the current suitable task branch, or create a short-lived feature branch with a descriptive name such as `codex/<task>` or another repository-appropriate prefix when the current branch is `main` or unrelated;
 4. perform implementation and focused local verification on that branch;
 5. inspect the final diff before committing;
 6. create one or more coherent commits with descriptive messages;
