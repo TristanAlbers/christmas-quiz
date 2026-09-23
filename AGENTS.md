@@ -84,6 +84,65 @@ Known examples:
 
 ---
 
+## Repository, branch, pull-request, and CI workflow
+
+For non-trivial implementation work, the parent/main routing agent owns the Git lifecycle. Specialist agents work inside the branch/worktree assigned by the parent; they do not independently create competing branches, commits, pushes, or pull requests unless the parent explicitly delegates that responsibility.
+
+### Branch lifecycle
+
+When the user asks Codex to implement repository changes and does not explicitly request work directly on the current branch:
+
+1. inspect the current Git state and preserve unrelated user changes;
+2. update local knowledge of `main` and base the work on the current `main` when it is safe to do so;
+3. create a short-lived feature branch with a descriptive name such as `codex/<task>` or another repository-appropriate prefix;
+4. perform implementation and focused local verification on that branch;
+5. inspect the final diff before committing;
+6. create one or more coherent commits with descriptive messages;
+7. push the feature branch;
+8. create a pull request targeting `main` when GitHub authentication/network access is available and the user has not asked to stop before PR creation;
+9. report the branch name, pull request, local validation, and CI status in the final handoff.
+
+Do not commit implementation work directly to `main` unless the user explicitly requests that workflow. Do not merge a pull request, enable auto-merge, alter branch protection, or delete branches unless the user explicitly asks for that action.
+
+When multiple implementation agents truly need independent writable checkouts, the parent may use Git worktrees. Worktrees are an isolation mechanism, not a reason for each specialist to invent its own delivery branch. The parent remains responsible for integrating the final branch and PR.
+
+### Local verification policy
+
+Local verification is optimized for fast implementation feedback. It is not required to duplicate the full GitHub Actions suite after every edit.
+
+During implementation:
+
+* run the smallest tests that cover the changed behavior and nearby invariants;
+* run Ruff on changed Python files or the smallest practical relevant scope;
+* run Django/system/migration checks locally when the change makes those checks relevant;
+* run browser tests locally when browser behavior is being changed or when they are needed to diagnose a failure;
+* expand local test scope when a targeted test fails, the change is unusually broad, or the failure suggests wider impact.
+
+Do not repeatedly run an unchanged full repository suite merely for reassurance. Expensive full browser/integration verification should normally be left to CI once focused local evidence is green.
+
+### CI as the authoritative full-suite gate
+
+GitHub Actions is the authoritative clean-environment verification gate for a pull request. The CI workflow is expected to build the development test image, lint Python, run Django checks, detect migration drift, and execute the complete test suite including browser tests.
+
+A green CI run is sufficient evidence for checks that CI already executed successfully. Do not ask an agent to rerun the same unchanged full suite locally merely to reproduce green CI evidence.
+
+When CI fails:
+
+1. inspect the failed job/step and its logs rather than rereading all successful checks;
+2. route diagnosis only to the ownership area implicated by the failure;
+3. reproduce the failing check locally at the smallest useful scope when practical;
+4. implement the fix and run focused local verification;
+5. commit and push the correction so CI reruns;
+6. avoid a blind `push → wait → guess → push` loop when the failing behavior can be exercised locally.
+
+CI should reduce repetitive model-driven verification, not replace useful local debugging. Deterministic compute belongs in tests, Ruff, Django checks, Playwright, and GitHub Actions; model reasoning should focus on implementation, diagnosis, and gaps that deterministic checks cannot decide.
+
+### Pull-request trigger expectations
+
+The full CI workflow should normally run for pull requests targeting `main` and for pushes to `main`. Feature-branch pushes without a pull request should not run the expensive full CI suite unless a specific workflow requires it. This prevents duplicate push and pull-request runs for the same commit while preserving clean verification before merge and after integration on `main`.
+
+---
+
 # Mandatory agent routing
 
 The project-scoped agents under `.codex/agents/` are the default owners of their respective areas.
@@ -144,10 +203,11 @@ Verification is evidence gathering, not implementation. A phase-gate check must 
 For a routine verification-only request, the parent/main agent should:
 
 1. Read the named phase gate in `implementation_plan.md`, the current phase handoff/progress entry or phase-specific contract, and the current changed files/diff.
-2. Inspect the existing relevant test commands and validation evidence.
-3. Run the smallest relevant checks first.
-4. If the phase is ready for final handoff and relevant code changed since the last complete gate, run the complete applicable gate once.
-5. If all required evidence is green and no requirement is ambiguous or uncovered, report the result and stop.
+2. Inspect the existing relevant test commands, CI evidence, and validation evidence.
+3. Run the smallest relevant local checks first.
+4. If the work is on a pull request and the repository CI already provides the complete applicable gate, use the final CI run as the complete clean-environment gate rather than redundantly running the same unchanged full suite locally.
+5. If CI is unavailable, does not cover a required gate, or local reproduction is needed to diagnose a failure, run the missing applicable gate locally once.
+6. If all required evidence is green and no requirement is ambiguous or uncovered, report the result and stop.
 
 Do not automatically spawn `architect`, `game_engine`, or `persistence_security` merely to watch or independently repeat green verification. Do not require each specialist to reread the whole repository or normative specification for a routine gate.
 
@@ -162,7 +222,7 @@ Expand context only when evidence requires it:
 
 When escalation is necessary, delegate only the failing or ambiguous ownership area. Do not automatically summon all agents for one failure.
 
-Do not rerun an unchanged full suite merely to gain confidence. A complete gate should normally be rerun only after a relevant code/test/configuration change, after fixing a failure, when previously skipped evidence becomes available, or for the final handoff if no complete gate has yet been run against the final state.
+Do not rerun an unchanged full suite merely to gain confidence. A complete gate should normally be rerun only after a relevant code/test/configuration change, after fixing a failure, when previously skipped evidence becomes available, when CI does not provide the required gate, or for final handoff when no complete CI/local gate has yet run against the final state.
 
 An implementation prompt that names all four agents authorizes those agents for implementation ownership; it does not mean all four must participate in every later verification pass.
 
