@@ -1,9 +1,10 @@
 # Christmas quiz implementation plan
 
-Status: phases 1–3 complete as of 2026-09-23; phases 4–9 are plans, not
-implemented features. This document alone does not authorize a new phase. The prompts below
-authorize one named phase when the user submits them. Do not start subsequent
-phases automatically. [USER.md](USER.md) describes what can be used today.
+Status: phases 1–3 complete as of 2026-09-23; phase 3.1 is planned next;
+phases 4–9 are plans, not implemented features. This document alone does not authorize a new
+phase. The prompts below authorize one named phase when the user submits them.
+Do not start subsequent phases automatically. [USER.md](USER.md) describes what
+can be used today.
 
 ## Recommendation and current baseline
 
@@ -20,16 +21,29 @@ snapshot-backed private media, persisted answer attempts/completion, audit,
 idempotent receipts, WAL/IMMEDIATE SQLite transactions, 500 ms polling, and
 domain/integration/security/Chromium tests. Phase 2 adds basic administration,
 generic Hint tokens, and immediate Skip. Phase 3 adds the persisted Advent clock,
-five-minute gameplay-time Freeze, admin Freeze/unfreeze, and paid Uno Reverse;
-see the handoffs below for evidence. Music Quiz, Challenges, full 25-puzzle
-content, and the TV view are not implemented.
+five-minute gameplay-time Freeze, admin Freeze/unfreeze, paid player Freeze
+attacks, one active Uno Reverse, protected frozen reads, package schema version 3,
+and simple polling views. Music Quiz, Challenges, full 25-puzzle content, and the
+TV view are not implemented.
+
+A lifecycle correction has been approved as phase 3.1. It changes the old
+phase-2/phase-3 Reset model so `READY` means no active run, Reset ends/deactivates
+the current run without creating a replacement, administrators select from the
+available source packages, and Start creates a new immutable snapshot/new run.
+This correction deliberately happens after phase 3 is green and before phase 4
+so the completed phase-3 work is not destabilized.
+
+Music Quiz, full 25-puzzle content, Challenge, the TV view, final package
+authoring/import/export and emergency controls remain later phases.
 
 The existing specifications and `docs/architecture.md` remain authoritative
 as described in `AGENTS.md`. `docs/contracts-first-slice.md` records the
-implemented first-slice API and ownership. Read the current code and
-[USER.md](USER.md) before planning a later phase; the original scaffold
-inventory above has been replaced by this current baseline.
+implemented first-slice API and ownership. Phase-specific contracts are
+historical/implementation records; where `docs/phase-3.1-contract.md` explicitly
+supersedes the Reset/READY lifecycle text in phase 2 or phase 3, the phase-3.1
+contract is the current lifecycle target.
 
+Read the current code and [USER.md](USER.md) before planning a later phase.
 Preserve unrelated user edits and active runtime data. The four
 `.codex/agents/*.toml` definitions match the current ownership roles.
 
@@ -41,28 +55,32 @@ parts of `Design.md`, `Views.md`, and `Game States.md`, and
 cannot override a normative rule. Inspect the current worktree and this plan
 before edits; the inventory above will become historical as phases complete.
 
+Read the contract for the phase being implemented plus any earlier contracts it
+depends on. A later contract may explicitly supersede only a named portion of an
+earlier implementation contract; do not discard unrelated earlier behavior.
+
 `@architect` coordinates all phases and reviews integration. Before delegation,
 record the phase's public contracts, exact production/test file assignments,
 migration order, and shared-file edit order. Reuse existing specialist agents;
 parallelize only non-overlapping files after agreeing contracts. Respect the
 configured four-thread session limit: stage specialist work and independent
 verification rather than requiring a root coordinator, architect, and all three
-specialists to run simultaneously. The architect
-owns `quiz/application.py`, `quiz/contracts.py`, settings/root routing,
-dependencies/deployment, shared fixtures, and initial non-auth views/templates/
-static integration. `@game_engine` owns deterministic domain policies and domain
-tests. `@persistence_security` owns models/migrations, configuration/snapshots,
+specialists to run simultaneously. The architect owns `quiz/application.py`,
+`quiz/contracts.py`, settings/root routing, dependencies/deployment, shared
+fixtures, and initial non-auth views/templates/static integration.
+`@game_engine` owns deterministic domain policies and domain tests.
+`@persistence_security` owns models/migrations, configuration/snapshots,
 authentication and explicitly assigned private-media infrastructure.
 `@test_invariants` owns independent adversarial/integration/browser verification.
 
-Use the exact first-slice ownership table in
-`docs/contracts-first-slice.md` for phase 1. The architect must additionally name
-owners for new account-management commands, package fixtures, and media views
-before parallel edits. For later phases, extend that table with actual filenames
-before coding; no specialist may concurrently edit application orchestration,
-shared contracts, settings, routes, migrations owned by another editor, or shared
-test fixtures. A specialist finding a production defect reports it to its owner;
-test ownership does not grant production ownership.
+Use the exact first-slice ownership table in `docs/contracts-first-slice.md` for
+phase 1. The architect must additionally name owners for new account-management
+commands, package fixtures, and media views before parallel edits. For later
+phases, extend that table with actual filenames before coding; no specialist may
+concurrently edit application orchestration, shared contracts, settings, routes,
+migrations owned by another editor, or shared test fixtures. A specialist finding
+a production defect reports it to its owner; test ownership does not grant
+production ownership.
 
 Every phase must deliver working UI for its newly exposed actions, backend
 legality/isolation, atomic persistence, audit/idempotency where applicable, and
@@ -81,20 +99,19 @@ content.
 Keep [USER.md](USER.md) accurate as each user-facing behavior, configuration,
 account, URL, package format, validation, or deployment change lands, not just
 at phase handoff. Update `.env.example` at the same time whenever environment
-variables or their requirements change. Treat these documentation edits as
-part of the same phase, before its gate is declared complete; describe
-unavailable controls explicitly instead of documenting a workaround that
-bypasses application rules.
+variables or their requirements change. Treat these documentation edits as part
+of the same phase, before its gate is declared complete; describe unavailable
+controls explicitly instead of documenting a workaround that bypasses
+application rules.
 
 Update this plan's progress log **during** work, not only at final handoff.
 Record a checkpoint after contract/ownership agreement, after implementation
 milestones, after each meaningful validation batch or failure/fix, and before
 turn end or a likely usage interruption when possible. Each checkpoint should
 state current status, what changed, checks actually run with passes/failures/
-skips, blockers, and the exact next action so another session can resume
-without repeating completed work. Replace stale checkpoint text when a later
-result supersedes it; do not mark a phase complete until its full gate has
-passed.
+skips, blockers, and the exact next action so another session can resume without
+repeating completed work. Replace stale checkpoint text when a later result
+supersedes it; do not mark a phase complete until its full gate has passed.
 
 ## Phase sequence and ready-to-paste prompts
 
@@ -181,7 +198,12 @@ and stop at this phase's gate.
 
 Agents: all four. Prerequisite: phase 2 green and approved downtime semantics.
 
-Before implementing the new timer/effect screens, establish the reusable visual foundation for team/admin views: responsive application shell, typography/spacing, buttons/forms/status components, team identity, Advent/puzzle presentation, points/inventory presentation, and distinct paused/frozen/interruption states. Keep this deliberately lightweight; final artwork, animation and polish remain phase 7.
+Before implementing the new timer/effect screens, establish the reusable visual
+foundation for team/admin views: responsive application shell,
+typography/spacing, buttons/forms/status components, team identity,
+Advent/puzzle presentation, points/inventory presentation, and distinct
+paused/frozen/interruption states. Keep this deliberately lightweight; final
+artwork, animation and polish remain phase 7.
 
 First settle the gameplay clock/restart contract. Implement server-owned persisted
 time, 5-minute Advent-time Freeze, expiry, admin Freeze/unfreeze, configured Freeze
@@ -207,10 +229,110 @@ polling contracts. Prove pause preserves remaining time and frozen teams cannot
 retrieve hidden puzzle/hint/media content. Validate and stop at the phase gate.
 ```
 
+### 3.1. Game selection and run lifecycle correction
+
+Agents: `@architect`, `@persistence_security`, `@test_invariants`;
+`@game_engine` only if inspection finds a genuinely pure lifecycle rule.
+Prerequisite: phase 3 completely green with its handoff/documentation committed.
+
+Read `docs/phase-3.1-contract.md` before implementation. This phase deliberately
+corrects the old phase-2/phase-3 Reset model without reopening phase-3 gameplay
+rules.
+
+Treat `READY` as the application-level state with no active run. Full Reset
+deactivates/ends the current run, preserves all history/audit/receipts and the old
+immutable snapshot, and creates no replacement run. Team views show only a
+waiting state while no run exists.
+
+Add read-only discovery of available source packages under `games/`. Admins can
+see valid packages and concise diagnostics for invalid packages. Merely listing
+or validating packages must not create snapshots.
+
+Start explicitly selects a package. It validates/stages a fresh immutable
+snapshot from the package's current source files before the short writer
+transaction, then atomically creates exactly one active run and initializes all
+phase-2/phase-3 run state, including the gameplay clock.
+
+Preserve the key recovery invariant: an application/container/host restart with
+an active run always continues the same run and pinned snapshot. Never reread the
+source package for an active run.
+
+Provide a safe upgrade path for legacy active `READY` reset shells created by the
+old implementation without requiring deletion of `quiz.sqlite3`.
+
+Gate:
+
+- active run survives restart with same run ID, snapshot, progression, balances,
+  gameplay clock, Freeze and Uno Reverse;
+- source package edits/deletion cannot alter/break an active run;
+- Reset leaves no active run and preserves/logs old run history;
+- old-run commands are stale after Reset;
+- teams leak no prior state while waiting;
+- admin READY view lists valid and invalid packages with actionable status;
+- package discovery creates no snapshots;
+- Start creates a new snapshot/new run from current selected source files;
+- Reset + source edit + Start observes the new source through the new snapshot;
+- concurrent Starts cannot create competing active runs;
+- legacy active READY shells can be safely retired;
+- the complete phase-3 regression gate remains green.
+
+```text
+@architect Implement only phase 3.1 of implementation_plan.md after confirming
+phase 3 is fully complete and green.
+
+Read AGENTS.md, the authoritative specifications, docs/architecture.md,
+docs/phase-2-contract.md, docs/phase-3-contract.md,
+docs/phase-3.1-contract.md, USER.md, and the final phase-3 handoff. Inspect the
+current worktree before editing and preserve all completed phase-3 gameplay-clock,
+Freeze, Uno Reverse, schema-v3, privacy and restart behavior. Do not begin phase 4
+or Music Quiz work.
+
+Implement the lifecycle contract exactly as documented:
+
+- READY is the no-active-run condition; do not keep an active READY shell.
+- Full Reset deactivates the current run, logs/preserves it and its immutable
+  snapshot/history/receipts, and creates no replacement Run or team/progress rows.
+- Team projections with no active run expose only a waiting-for-game-master READY
+  state and no previous puzzle/points/inventory/effect/media data.
+- Admin READY view discovers all source game packages under the configured games
+  root. Discovery is read-only and must not create snapshots. Show invalid
+  packages disabled with concise actionable administrator-only diagnostics.
+- Start explicitly selects one package, validates/stages its current source
+  configuration and referenced media outside the writer transaction, then
+  atomically creates exactly one active run and initializes all phase-2/phase-3
+  state from that fresh snapshot.
+- An active run always uses its pinned immutable snapshot. Source edits/deletion
+  cannot alter it.
+- Application/container/server restart with an active run resumes that exact run;
+  restart is never treated as Reset or package reload.
+- Preserve the phase-3 downtime policy: active Advent downtime counts and paused
+  downtime does not.
+- Keep the one-active-run and request-id/idempotency invariants under simultaneous
+  admin Starts/Resets.
+- Implement a safe, idempotent compatibility path for legacy active READY shells
+  created by the old Reset model without deleting the persistent database.
+- Reuse the completed phase-3 package schema; do not introduce schema v4.
+- Leave advanced package import/export/authoring polish to phase 7.
+
+Coordinate @persistence_security for source-package discovery/validation and any
+safe legacy-data migration/compatibility work. Coordinate @test_invariants for
+restart/reset/start races, snapshot isolation, waiting-state privacy and browser
+coverage. Avoid @game_engine production edits unless a pure lifecycle rule truly
+requires them.
+
+Update USER.md only after the new behavior works. Keep phase-2 and phase-3
+contracts as historical records with explicit lifecycle-supersession notes rather
+than rewriting their unrelated decisions.
+
+Run the full phase-3.1 gate plus the complete applicable phase-3 regression suite,
+update architecture/contracts/progress evidence, and stop. Do not start phase 4.
+```
+
 ### 4. The puzzle-13 Music Quiz interruption
 
-Agents: all four. Prerequisite: phase 3 green; Music pause/result-display contracts
-resolved. Extend development data through puzzle 13 with 11 Music questions.
+Agents: all four. Prerequisite: phase 3.1 green; Music pause/result-display
+contracts resolved. Extend development data through puzzle 13 with 11 Music
+questions.
 
 All three completion routes trigger Music immediately and exactly once. Preserve
 underlying team states and timer durations. Both teams answer the same active
@@ -231,13 +353,14 @@ reward/advance, then repeat with B first. No sleep-based race ordering.
 
 ```text
 @architect Implement only phase 4 of implementation_plan.md: the one-time
-puzzle-13 Music Quiz. Coordinate @game_engine, @persistence_security, and
-@test_invariants after settling the documented Music interruption and result-time
-contracts. Connect answer, Skip, and admin completion to one atomic trigger;
-implement all 11 questions, first-valid-transaction winners, configured normal-point
-rewards, public Music scores, and timed final results followed by exact Advent
-restoration. Use deterministic real-SQLite winner tests in both acceptance orders
-and browser synchronization tests. Validate and stop at this phase's gate.
+puzzle-13 Music Quiz. Confirm phase 3.1 is green first. Coordinate @game_engine,
+@persistence_security, and @test_invariants after settling the documented Music
+interruption and result-time contracts. Connect answer, Skip, and admin completion
+to one atomic trigger; implement all 11 questions, first-valid-transaction
+winners, configured normal-point rewards, public Music scores, and timed final
+results followed by exact Advent restoration. Use deterministic real-SQLite winner
+tests in both acceptance orders and browser synchronization tests. Validate and
+stop at this phase's gate.
 ```
 
 ### 5. Complete 25-puzzle progression and the two-team finish
@@ -305,11 +428,12 @@ screens must remove puzzle/hint content, not merely blur it. Add audio/image
 presentation and TV playback if selected, including explicit operator interaction
 where the browser requires it.
 
-Document the declarative package format with templates, validation diagnostics,
-and a simple documented import/export workflow. Validate referenced assets,
-unknown validators/effects, prerequisites, both teams' 25 puzzles, and 11 Music
-questions for a release package. Reject unsupported executable behavior. Keep the
-small demo/test package role explicit. Actual riddles, answers, media and physical
+Build on the basic package discovery/selection implemented in phase 3.1. Document
+the declarative package format with templates, richer validation diagnostics, and
+a simple documented import/export workflow. Validate referenced assets, unknown
+validators/effects, prerequisites, both teams' 25 puzzles, and 11 Music questions
+for a release package. Reject unsupported executable behavior. Keep the small
+demo/test package role explicit. Actual riddles, answers, media and physical
 components require user-authored or separately requested content; placeholders
 do not count as a completed event package.
 
@@ -324,10 +448,11 @@ media work with @persistence_security and independent privacy/browser verificati
 with @test_invariants; involve @game_engine only for explicitly agreed validator
 extensions. Build the usable team calendars, admin controls/audit view, and public
 TV projection without leaking private state. Resolve allowed public fields and TV
-audio before dependent work. Document and validate an easy data-only package
-import/export workflow. Keep demonstration content labeled and list real event
-content still needed. Validate views, polling, media, isolation, and package round
-trip; stop at this gate.
+audio before dependent work. Extend the phase-3.1 package-selection foundation
+with documented data-only authoring/import/export workflow and richer release
+validation. Keep demonstration content labeled and list real event content still
+needed. Validate views, polling, media, isolation, and package round trip; stop at
+this gate.
 ```
 
 ### 8. Explicit emergency recovery controls
@@ -406,8 +531,9 @@ independent work when a decision blocks only one part of a phase.
 | --- | --- |
 | Phase 1 contract review | Finalize minimal package/validator schema, Start receipt scope before a run exists, account provisioning, and read/write transaction wiring. These are implementation decisions within the existing architecture, not known first-slice rule blockers. |
 | Phase 2 Hint use | There is one hint per puzzle; the documents do not specify whether using another token after reveal consumes it. Define repeated use and admin/player reveal interactions explicitly, including receipt retries. |
-| Phase 3 timers | Does unexpected server downtime count as Advent gameplay time? Architecture explicitly defers this. Settle clock persistence/restart behavior before implementing timers. |
-| Phase 3/6 Freeze routes | Freeze attacks consume/reverse Uno Reverse explicitly; applicability to admin Freeze and Challenge outcome Freeze is not explicit. Use one canonical mechanic with an agreed route policy; do not silently choose different rules in different agents. |
+| Phase 3 timers | Settled in `docs/phase-3-contract.md`: unexpected downtime counts while persisted state is `ADVENT_QUIZ`; paused downtime does not. |
+| Phase 3/6 Freeze routes | Settled for phase 3 in `docs/phase-3-contract.md`: only paid player Freeze attacks trigger Reverse; admin Freeze applies directly. Challenge outcome uses the same direct-target policy unless its own phase uncovers a normative conflict. |
+| Phase 3.1 lifecycle | Settled in `docs/phase-3.1-contract.md`: READY has no active run; Reset creates no replacement run; discovery is read-only; Start creates a fresh snapshot/run; restart recovers the existing active run. |
 | Phase 4 Music | Supporting states permit pausing Music; the normative diagram does not specify that transition. Review whether it is permitted, which mode resumes, and whether final-score display duration stops during pause/downtime. Distinguish the result-display timer from suspended Advent gameplay timers. |
 | Phase 4/7 public view | Normative isolation treats progression/points/effects as private; `Views.md` asks for public percentages. Music scores and the specified first-finisher announcement have explicit sharing rules. Obtain an approved projection before exposing extra Advent team data; show only permitted fields meanwhile. |
 | Phase 4/7 audio | `Design.md` prefers central playback, while `Views.md` leaves playback from phones open. Choose the event playback workflow; define shared audio access separately from private puzzle media. |
@@ -415,13 +541,18 @@ independent work when a decision blocks only one part of a phase.
 
 Already resolved by authority: Skip is an immediate action, Hint tokens are
 generic inventory, puzzle status is `completed`, Freeze hides underlying
-puzzle/hint content, and global FINISHED waits for both teams. Do not re-open
-these decisions because older presentation documents differ.
+puzzle/hint content, global FINISHED waits for both teams, and Reset/restart are
+distinct lifecycle operations. Do not re-open these decisions because older
+implementation contracts differ.
 
 ## Validation workflow for implementation sessions
 
 Use the existing Docker workflow. Sources are copied into images, not mounted as
 live application code: rebuild both targets before validating changed code/tests.
+Source game packages are bind-mounted read-only at runtime; package-only authoring
+changes do not by themselves require rebuilding the application image, but code
+or test changes do.
+
 Use disposable test databases; tests must not mutate the persistent event run.
 Read the current `docs/scaffold.md` and Compose configuration in case commands
 have evolved. The following commands are for a development/disposable runtime
@@ -440,15 +571,25 @@ docker compose run --rm dev test tests.integration.test_scaffold
 ```
 
 Then run the smallest relevant Django domain/integration/security labels on the
-fresh dev image. The dev image contains Playwright/Chromium, but no browser test
-harness exists at baseline: phase 1 must implement and document its concrete
-browser-test command and isolated server/database setup. Use it for affected
-polling/view phases; do not report installed Playwright as browser-test coverage.
-Run the complete applicable suite at integration/release gates, not repeatedly
-without a new change or unresolved concern. Inspect `DEBUG=False` hashed static
-URLs, health, and actual application pages when runtime behavior changes. If
-Docker/device access is unavailable, record the exact unrun gate rather than
-claiming success from static inspection.
+fresh dev image. Use the existing concrete browser-test harness created in phase
+1 for affected polling/view phases. Run the complete applicable suite at
+integration/release gates, not repeatedly without a new change or unresolved
+concern. Inspect `DEBUG=False` hashed static URLs, health, and actual application
+pages when runtime behavior changes. If Docker/device access is unavailable,
+record the exact unrun gate rather than claiming success from static inspection.
+
+For phase 3.1 specifically, use disposable persisted runtime data to prove both
+sides of the lifecycle distinction:
+
+- restart an active phase-3 run and verify the exact run/snapshot/effects survive;
+- Reset and verify there is no active run;
+- edit a source package after Reset, Start it, and prove a new snapshot/run sees
+  the new content;
+- edit/delete source files during an active run and prove the active snapshot is
+  unaffected;
+- race two admin Starts using separate SQLite connections/requests;
+- exercise the legacy READY-shell compatibility path on a database created by the
+  old Reset implementation.
 
 ## Resume prompt for an unfinished phase
 
@@ -467,10 +608,11 @@ status, and stop. Do not restart scaffolding or begin the next phase automatical
 | --- | --- | --- |
 | Scaffold | Superseded by phase 1 implementation | Placeholder and health retained; scaffold tests included in the phase 1 run. |
 | 1 | Complete | 2026-09-22: isolated Compose app/dev images rebuilt. App migrated/provisioned and restarted cleanly; `check`, `makemigrations --check --dry-run`, Ruff, 31 domain/integration/security tests on disposable file-backed SQLite, and 3 Chromium browser tests all pass with no skips. Health/index/login pages and DEBUG=False hashed CSS/HTMX JS return HTTP 200. Tests verify Team A journey to puzzle 2 after a persisted wrong answer, Team B isolation, receipts, audit/reward/fragment atomicity, rollback, snapshot recovery, SQLite writer contention, focus under polling, command versus slow poll, and reconnect. A separate live-process restart on disposable runtime preserved the run ID, puzzle 2, 7 points, fragment, 2 attempts/receipts and 3 audit events. Existing `./var` runtime was not used for validation. |
-| Current-use documentation | Complete | 2026-09-23: `USER.md` covers phases 1–3, including setup, accounts, team play, admin controls, Hint/Skip/Freeze/Reverse actions, the persisted clock and downtime policy, package authoring, private snapshots, restart behavior, and validation. The TV view and later mechanics remain unavailable. README points to the guide. Credential rotation requires container recreation; `.env.example` needs no phase-3 changes. |
-| 2 | Complete | 2026-09-22 final isolated image gate passed: `manage.py check`, `makemigrations --check --dry-run`, full Ruff, 63 domain/integration/security tests (40.456 s), and 3 Chromium browser tests (9.928 s), with zero failures/skips. Disposable app healthy; `/health/`, `/`, `/login/`, `/admin-login/`, hashed CSS, and local HTMX JS returned HTTP 200. `git diff --check` passed. Contracts and exact ownership are in `docs/phase-2-contract.md`; the handoff below records scope and limits. Next action is phase 3 only after a separate prompt and its clock/restart contract decision. |
-| 3 | Complete | 2026-09-23: the persisted Advent clock, five-minute Freeze, admin Freeze/unfreeze, paid player Freeze attacks, one active Uno Reverse, protected frozen reads, and simple polling views are implemented. `docs/phase-3-contract.md` records the downtime and routing decisions. Fresh Compose-image validation passed Django checks, migration consistency, full Ruff, 107 domain/integration/security tests, 7 Chromium browser tests, and `git diff --check`, with zero failures/skips. Controlled file-backed SQLite tests cover pause/restart preservation, expiry reconciliation, competing purchases/attacks, atomic Reverse consumption, and polling without a writer lock. Next action is phase 4 only after a separate prompt and its listed Music decisions. |
-| 4–9 | Not started | Dependent on the preceding gates and decisions above. |
+| Current-use documentation | Complete | 2026-09-23: `USER.md` covers phases 1–3, including setup, accounts, team play, admin controls, Hint/Skip/Freeze/Reverse actions, the persisted clock and downtime policy, package authoring, private snapshots, restart behavior, and validation. The TV view and later mechanics remain unavailable. README points to the guide. Credential rotation requires container recreation; `.env.example` needs no phase-3 changes. Phase 3.1 must update `USER.md` only when its new behavior actually lands and validates. |
+| 2 | Complete | 2026-09-22 final isolated image gate passed: `manage.py check`, `makemigrations --check --dry-run`, full Ruff, 63 domain/integration/security tests (40.456 s), and 3 Chromium browser tests (9.928 s), with zero failures/skips. Disposable app healthy; `/health/`, `/`, `/login/`, `/admin-login/`, hashed CSS, and local HTMX JS returned HTTP 200. `git diff --check` passed. `docs/phase-2-contract.md` remains the historical phase-2 contract; its old replacement-READY-run Reset model is explicitly superseded for future behavior by phase 3.1. |
+| 3 | Complete | 2026-09-23: the persisted Advent clock, five-minute Freeze, admin Freeze/unfreeze, paid player Freeze attacks, one active Uno Reverse, protected frozen reads, and simple polling views are implemented. `docs/phase-3-contract.md` records the downtime and routing decisions. Fresh Compose-image validation passed Django checks, migration consistency, full Ruff, 107 domain/integration/security tests, 7 Chromium browser tests, and `git diff --check`, with zero failures/skips. Controlled file-backed SQLite tests cover pause/restart preservation, expiry reconciliation, competing purchases/attacks, atomic Reverse consumption, and polling without a writer lock. Next action is phase 3.1. |
+| 3.1 | Planned next | Lifecycle correction is specified in `docs/phase-3.1-contract.md`: no-active-run READY, Reset without replacement run, read-only package discovery, explicit package selection, fresh snapshot/new run on Start, safe legacy READY-shell compatibility, and restart preservation. |
+| 4–9 | Not started | Dependent on phase 3.1 and the preceding gates/decisions above. |
 
 For each implementation handoff, add the actual phase status, changed interfaces,
 checks run with pass/fail/skipped status, unimplemented acceptance cases, any
@@ -517,27 +659,32 @@ and use, and immediate paid Skip. Correct answers, Skip, and admin force
 completion share one application completion persistence path and the pure domain
 completion policy. Every successful phase-2 command commits its result, receipt,
 and audit event in an SQLite `IMMEDIATE` transaction. Hint tokens and reveals
-are durable and team-private. Reset preserves the old run and audit trail while
-creating a new active READY run from the same immutable snapshot, with fresh
-configured initial values. All three completion routes stop before opening
-puzzle 13 until the mandatory Music interruption is implemented.
+are durable and team-private.
 
-`docs/phase-2-contract.md` records the settled Hint rule, reset model,
-commands, errors, file ownership, and migration order. The demo package is
-schema version 2 with configurable Hint and Skip prices. Version 1 snapshots
-remain readable but cannot use those price-dependent actions. `USER.md` now
-documents the available controls and their limits. Domain, storage, adversarial,
-security, HTTP, and browser tests cover the phase-2 gate, including concurrent
-spending, competing resets, stale requests, authorization, Hint privacy,
-exactly-once completion, and the puzzle-13 boundary.
+The phase-2 implementation of Reset preserved the old run/audit trail while
+creating a new active READY run from the same immutable snapshot, with fresh
+configured initial values. That is retained as historical implementation
+evidence, but its lifecycle semantics are superseded by the planned phase 3.1
+contract. Phase 3.1 will instead leave no active run after Reset and make the
+next Start explicitly select/stage a fresh source package.
+
+All three completion routes stop before opening puzzle 13 until the mandatory
+Music interruption is implemented.
+
+`docs/phase-2-contract.md` records the settled Hint rule, commands, errors, file
+ownership, migration order and historical reset model. The demo package is schema
+version 2 with configurable Hint and Skip prices. Version 1 snapshots remain
+readable but cannot use those price-dependent actions. `USER.md` documents the
+available phase-2 controls and limits. Domain, storage, adversarial, security,
+HTTP, and browser tests cover the phase-2 gate, including concurrent spending,
+competing resets, stale requests, authorization, Hint privacy, exactly-once
+completion, and the puzzle-13 boundary.
 
 Validation used rebuilt isolated Compose images, disposable file-backed SQLite,
 and a disposable app runtime. `manage.py check`, migration consistency, full
 Ruff, 63 domain/integration/security tests, 3 Chromium browser tests, health,
 index/login pages, hashed CSS/HTMX assets, and `git diff --check` all passed.
-No tests skipped. No live game runtime was touched. At the phase-2 handoff, the
-Phase 3 clock downtime and Freeze/Reverse decisions remained open; no attack,
-timer, or Music mechanics were added in that phase.
+No tests skipped. No live game runtime was touched.
 
 ### Phase 3 handoff, 2026-09-23
 
@@ -569,5 +716,6 @@ restart, pause, exact expiry, protected media, forged client timing/target data,
 and read-path locking are covered. No live game runtime was used.
 
 No Phase 4 Music behavior, Challenge behavior, final content, or TV overview was
-added. There are no unresolved Phase 3 blockers. Stop at this gate; phase 4
-requires a separate prompt and resolution of its documented Music decisions.
+added. There are no unresolved Phase 3 blockers. Phase 3.1 is the next approved
+lifecycle correction; phase 4 still requires a separate prompt and resolution of
+its documented Music decisions.
