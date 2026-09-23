@@ -90,17 +90,19 @@ The project-scoped agents under `.codex/agents/` are the default owners of their
 
 **The user does not need to explicitly request multi-agent mode or name an agent.**
 
-For every non-trivial implementation, review, debugging, or design task:
+For every non-trivial implementation, debugging, or design task:
 
 1. Inspect the task.
 2. Classify it by ownership using the routing rules below.
-3. Delegate work to the owning agent automatically.
+3. Delegate work to the owning agent automatically when specialist judgment or specialist-owned edits are required.
 4. Use the `architect` to coordinate tasks spanning multiple ownership areas or touching shared integration points.
 5. Integrate specialist results only after their ownership boundaries and assumptions are compatible.
 
-Do not perform specialist-owned implementation directly in the parent/main agent when an appropriate project agent exists, except for trivial read-only inspection, summarization, or mechanical edits that do not alter behavior.
+Verification-only and phase-gate requests follow the dedicated fast path below and do not automatically fan out to all implementation owners.
 
-If ownership is uncertain, route to `architect` first.
+Do not perform specialist-owned implementation directly in the parent/main agent when an appropriate project agent exists, except for trivial read-only inspection, summarization, mechanical edits that do not alter behavior, or routine verification covered by the fast path below.
+
+If implementation ownership is uncertain, route to `architect` first. A verification task is not ownership-uncertain merely because the behavior under test spans multiple components.
 
 Do not create a new agent merely because a task spans multiple areas. Use the existing agents unless a genuinely missing responsibility is identified.
 
@@ -115,10 +117,10 @@ Default role configuration:
 * `architect`: GPT-5.6 Sol / high.
 * `game_engine`: GPT-5.6 Sol / high.
 * `persistence_security`: GPT-5.6 Sol / high.
-* `test_invariants`: GPT-5.6 Sol / medium.
-* Unconfigured subagents: GPT-5.6 Sol / medium.
+* `test_invariants`: GPT-5.6 Terra / medium.
+* Unconfigured subagents: GPT-5.6 Terra / medium.
 
-These are defaults chosen according to the reasoning demands and risk of each role.
+These are defaults chosen according to the reasoning demands and risk of each role. Expensive high-reasoning specialists are reserved for work where their judgment materially affects correctness; routine inspection and verification should not invoke them merely because a phase is cross-cutting.
 
 Do not escalate an agent's model or reasoning effort merely because a task is large. Escalation is appropriate when the assigned work contains genuinely difficult reasoning, unresolved architectural ambiguity, concurrency or security analysis, subtle interacting invariants, or when a previous attempt failed for reasoning-related reasons.
 
@@ -129,9 +131,40 @@ Do not downgrade a specialist merely to save usage when the task falls inside th
 * use `architect` at high reasoning for architecture, shared contracts, integration boundaries, cross-agent conflicts, or difficult application transaction orchestration;
 * use `game_engine` at high reasoning for interacting game-state rules, canonical completion, timer semantics, idempotency, race semantics, or prerequisite behavior;
 * use `persistence_security` at high reasoning for authentication, authorization, team isolation, schema guarantees, atomic transactions, concurrent writes, snapshots, recovery, or security boundaries;
-* `test_invariants` normally uses medium reasoning for verification, but difficult concurrency/security test design or unexplained failures may justify escalation to high.
+* `test_invariants` normally uses Terra at medium reasoning for verification; difficult concurrency/security test design, unexplained failures, or a genuinely subtle invariant may justify escalation to Sol or high reasoning.
 
 The parent/main agent should prefer delegation based on ownership and risk, not on a desire to maximize model usage.
+
+---
+
+## Verification and phase-gate fast path
+
+Verification is evidence gathering, not implementation. A phase-gate check must not automatically reproduce the implementation-time fan-out merely because the phase originally involved all specialists.
+
+For a routine verification-only request, the parent/main agent should:
+
+1. Read the named phase gate in `implementation_plan.md`, the current phase handoff/progress entry or phase-specific contract, and the current changed files/diff.
+2. Inspect the existing relevant test commands and validation evidence.
+3. Run the smallest relevant checks first.
+4. If the phase is ready for final handoff and relevant code changed since the last complete gate, run the complete applicable gate once.
+5. If all required evidence is green and no requirement is ambiguous or uncovered, report the result and stop.
+
+Do not automatically spawn `architect`, `game_engine`, or `persistence_security` merely to watch or independently repeat green verification. Do not require each specialist to reread the whole repository or normative specification for a routine gate.
+
+Use `test_invariants` when independent adversarial judgment is useful, when the gate contains cross-cutting concurrency/security/recovery cases that are not already convincingly exercised, or when new verification coverage must be designed. `test_invariants` should normally run on Terra / medium and should begin from the phase gate, current handoff/contract, diff, and tests rather than the full specification set.
+
+Expand context only when evidence requires it:
+
+* a failing domain/state-rule test may require `game_engine` and the relevant normative rule;
+* a failing transaction, authorization, isolation, recovery, or persistence test may require `persistence_security` and the relevant architecture/security contract;
+* an unclear shared contract, conflicting specialist assumption, integration-boundary defect, or unresolved specification interpretation may require `architect`;
+* a difficult or unexplained adversarial failure may justify escalating `test_invariants` from Terra/medium to Sol and/or high reasoning.
+
+When escalation is necessary, delegate only the failing or ambiguous ownership area. Do not automatically summon all agents for one failure.
+
+Do not rerun an unchanged full suite merely to gain confidence. A complete gate should normally be rerun only after a relevant code/test/configuration change, after fixing a failure, when previously skipped evidence becomes available, or for the final handoff if no complete gate has yet been run against the final state.
+
+An implementation prompt that names all four agents authorizes those agents for implementation ownership; it does not mean all four must participate in every later verification pass.
 
 ---
 
@@ -379,6 +412,7 @@ Apply these mappings without requiring the user to name agents.
 
 | Requested work                                  | Required routing                                                                               |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Routine phase-gate verification                 | Parent/main agent first; `test_invariants` only when independent adversarial judgment is useful |
 | Change a game rule                              | `game_engine`                                                                                  |
 | Add/change a Django model                       | `persistence_security`                                                                         |
 | Change authentication or team isolation         | `persistence_security`                                                                         |
@@ -390,7 +424,7 @@ Apply these mappings without requiring the user to name agents.
 | Modify Docker/Compose/dependencies/settings     | `architect`                                                                                    |
 | Security review                                 | `persistence_security` + `test_invariants`                                                     |
 | Cross-cutting feature                           | `architect` decomposes and delegates                                                           |
-| Unclear ownership                               | `architect` decides                                                                            |
+| Unclear implementation ownership                | `architect` decides                                                                            |
 
 ---
 
