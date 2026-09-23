@@ -13,6 +13,7 @@ urlpatterns = [
     path("team/answer/", views.team_answer, name="team_answer"),
     path("team/action/<str:action>/", views.team_action, name="team_action"),
     path("admin-game/", views.admin_game, name="admin_game"),
+    path("admin-game/state/", views.admin_state, name="admin_state"),
     path("admin-game/start/", views.admin_start, name="admin_start"),
     path("admin-game/action/<str:action>/", views.admin_action, name="admin_action"),
     path(

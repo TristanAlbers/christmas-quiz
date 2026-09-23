@@ -7,12 +7,16 @@ from django.views.decorators.http import require_GET, require_POST
 
 from quiz.application import (
     adjust_points,
+    admin_freeze,
+    admin_unfreeze,
     force_complete_current,
+    freeze_opponent,
     get_admin_state,
     get_team_state,
     pause_game,
     provide_hint,
     purchase_hint,
+    purchase_uno_reverse,
     reset_game,
     resume_game,
     skip_current,
@@ -24,6 +28,7 @@ from quiz.auth import actor_for_user
 from quiz.contracts import (
     AdminPoints,
     AdminPuzzle,
+    AdminTeam,
     ApplicationError,
     RunCommand,
     StartGame,
@@ -42,6 +47,7 @@ ERROR_STATUS = {
     "temporarily_busy": 503,
     "insufficient_points": 409,
     "no_hint_tokens": 409,
+    "already_active": 409,
 }
 
 
@@ -76,6 +82,32 @@ def _team_context(state, *, feedback="", replace_pane=False):
         "purchase_request_id": str(uuid.uuid4()),
         "use_request_id": str(uuid.uuid4()),
         "skip_request_id": str(uuid.uuid4()),
+        "freeze_request_id": str(uuid.uuid4()),
+        "reverse_request_id": str(uuid.uuid4()),
+    }
+
+
+def _admin_context(state):
+    return {
+        "global_state": state.global_state,
+        "run_id": state.run_id,
+        "package_id": state.package_id,
+        "teams": state.teams,
+        "request_id": str(uuid.uuid4()),
+        "pause_request_id": str(uuid.uuid4()),
+        "resume_request_id": str(uuid.uuid4()),
+        "reset_request_id": str(uuid.uuid4()),
+        "team_controls": [
+            {
+                "team": team,
+                "points_request_id": str(uuid.uuid4()),
+                "force_request_id": str(uuid.uuid4()),
+                "hint_request_id": str(uuid.uuid4()),
+                "freeze_request_id": str(uuid.uuid4()),
+                "unfreeze_request_id": str(uuid.uuid4()),
+            }
+            for team in state.teams
+        ],
     }
 
 
@@ -164,29 +196,18 @@ def admin_game(request):
         if exc.code == "unauthenticated":
             return redirect("admin_login")
         return _error(exc)
-    return render(
-        request,
-        "quiz/admin.html",
-        {
-            "global_state": status.global_state,
-            "run_id": status.run_id,
-            "package_id": status.package_id,
-            "teams": status.teams,
-            "request_id": str(uuid.uuid4()),
-            "pause_request_id": str(uuid.uuid4()),
-            "resume_request_id": str(uuid.uuid4()),
-            "reset_request_id": str(uuid.uuid4()),
-            "team_controls": [
-                {
-                    "team": team,
-                    "points_request_id": str(uuid.uuid4()),
-                    "force_request_id": str(uuid.uuid4()),
-                    "hint_request_id": str(uuid.uuid4()),
-                }
-                for team in status.teams
-            ],
-        },
-    )
+    return render(request, "quiz/admin.html", _admin_context(status))
+
+
+@never_cache
+@require_GET
+def admin_state(request):
+    try:
+        actor = actor_for_user(request.user)
+        state = get_admin_state(actor)
+    except ApplicationError as exc:
+        return _error(exc)
+    return render(request, "quiz/_admin_state.html", _admin_context(state))
 
 
 @never_cache
@@ -225,6 +246,10 @@ def team_action(request, action):
             result = skip_current(actor, TeamPuzzle(
                 **base, question_id=request.POST.get("question_id", "")
             ))
+        elif action == "freeze":
+            result = freeze_opponent(actor, RunCommand(**base))
+        elif action == "purchase-reverse":
+            result = purchase_uno_reverse(actor, RunCommand(**base))
         else:
             return HttpResponse(status=404)
         state = get_team_state(actor)
@@ -239,6 +264,12 @@ def team_action(request, action):
             "purchase-hint": "Hint token purchased.",
             "use-hint": "Hint revealed.",
             "skip": "Puzzle skipped and completed.",
+            "freeze": (
+                "The opposing team's Reverse redirected the Freeze to you."
+                if result.outcome == "reversed"
+                else "The opposing team is frozen."
+            ),
+            "purchase-reverse": "Uno Reverse activated.",
         }[action]
     )
     return render(
@@ -279,8 +310,20 @@ def admin_action(request, action):
                 force_complete_current(actor, command)
             else:
                 provide_hint(actor, command)
+        elif action in ("freeze", "unfreeze"):
+            command = AdminTeam(
+                **base, team_id=request.POST.get("team_id", "")
+            )
+            if action == "freeze":
+                admin_freeze(actor, command)
+            else:
+                admin_unfreeze(actor, command)
         else:
             return HttpResponse(status=404)
     except ApplicationError as exc:
         return _error(exc)
-    return redirect("admin_game")
+    if not request.headers.get("HX-Request"):
+        return redirect("admin_game")
+    return render(
+        request, "quiz/_admin_state.html", _admin_context(get_admin_state(actor))
+    )

@@ -1,0 +1,121 @@
+<div class="status-card">
+  <div class="status-row">
+    <span class="eyebrow">Authoritative game state</span>
+    <strong class="state-badge state-{{ global_state|lower }}">{{ global_state }}</strong>
+  </div>
+  {% if run_id %}<p class="muted">Run {{ run_id }}</p>{% endif %}
+</div>
+
+{% if global_state == 'READY' %}
+  <form class="action-card" method="post" action="{% url 'admin_start' %}">
+    {% csrf_token %}
+    <input type="hidden" name="request_id" value="{{ request_id }}">
+    <input type="hidden" name="package_id" value="{{ package_id|default:'christmas-2026-demo' }}">
+    <button class="button-primary" type="submit">Start game</button>
+  </form>
+{% endif %}
+
+{% if run_id %}
+  <div class="toolbar" aria-label="Global game controls">
+    {% if global_state == 'ADVENT_QUIZ' %}
+      <form method="post" action="{% url 'admin_action' 'pause' %}"
+            hx-post="{% url 'admin_action' 'pause' %}" hx-sync="#live-admin:replace"
+            hx-target="#admin-state" hx-swap="innerHTML">
+        {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+        <input type="hidden" name="request_id" value="{{ pause_request_id }}">
+        <button type="submit">Pause game</button>
+      </form>
+    {% elif global_state == 'PAUSED' %}
+      <form method="post" action="{% url 'admin_action' 'resume' %}"
+            hx-post="{% url 'admin_action' 'resume' %}" hx-sync="#live-admin:replace"
+            hx-target="#admin-state" hx-swap="innerHTML">
+        {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+        <input type="hidden" name="request_id" value="{{ resume_request_id }}">
+        <button class="button-primary" type="submit">Resume game</button>
+      </form>
+    {% endif %}
+    <form method="post" action="{% url 'admin_action' 'reset' %}"
+          hx-post="{% url 'admin_action' 'reset' %}" hx-sync="#live-admin:replace"
+          hx-target="#admin-state" hx-swap="innerHTML">
+      {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+      <input type="hidden" name="request_id" value="{{ reset_request_id }}">
+      <button class="button-danger" type="submit">Reset full game</button>
+    </form>
+  </div>
+
+  <div class="team-grid">
+    {% for control in team_controls %}
+      <section class="team-card state-panel-{{ control.team.activity_state|lower }}"
+               aria-label="Team {{ control.team.team_id|upper }}">
+        <div class="status-row">
+          <h2>Team {{ control.team.team_id|upper }}</h2>
+          <strong class="state-badge">{{ control.team.activity_state }}</strong>
+        </div>
+        <p class="metric-row"><span>{{ control.team.points }} points</span><span>Puzzle {{ control.team.current_number }}</span></p>
+        <p>Hint tokens: {{ control.team.hint_tokens }} · Reverse: {% if control.team.uno_reverse_active %}active{% else %}inactive{% endif %}</p>
+        {% if control.team.freeze_remaining_ms != None %}
+          <p class="freeze-timer" data-remaining-ms="{{ control.team.freeze_remaining_ms }}">Freeze remaining: {% widthratio control.team.freeze_remaining_ms 1000 1 %} seconds</p>
+        {% endif %}
+        {% if control.team.completed_numbers %}<p>Completed: {{ control.team.completed_numbers|join:', ' }}</p>{% endif %}
+
+        {% if global_state == 'ADVENT_QUIZ' or global_state == 'PAUSED' %}
+          <div class="control-stack">
+            <form method="post" action="{% url 'admin_action' 'points' %}"
+                  hx-post="{% url 'admin_action' 'points' %}" hx-sync="#live-admin:replace"
+                  hx-target="#admin-state" hx-swap="innerHTML">
+              {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+              <input type="hidden" name="team_id" value="{{ control.team.team_id }}">
+              <input type="hidden" name="request_id" value="{{ control.points_request_id }}">
+              <label>Point change <input type="number" name="delta" required step="1"></label>
+              <button type="submit">Apply points</button>
+            </form>
+            {% if control.team.activity_state == 'FREEZE' %}
+              <form method="post" action="{% url 'admin_action' 'unfreeze' %}"
+                    hx-post="{% url 'admin_action' 'unfreeze' %}" hx-sync="#live-admin:replace"
+                    hx-target="#admin-state" hx-swap="innerHTML">
+                {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+                <input type="hidden" name="team_id" value="{{ control.team.team_id }}">
+                <input type="hidden" name="request_id" value="{{ control.unfreeze_request_id }}">
+                <button type="submit">Unfreeze team</button>
+              </form>
+            {% elif control.team.activity_state == 'PUZZLE' %}
+              <form method="post" action="{% url 'admin_action' 'freeze' %}"
+                    hx-post="{% url 'admin_action' 'freeze' %}" hx-sync="#live-admin:replace"
+                    hx-target="#admin-state" hx-swap="innerHTML">
+                {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+                <input type="hidden" name="team_id" value="{{ control.team.team_id }}">
+                <input type="hidden" name="request_id" value="{{ control.freeze_request_id }}">
+                <button type="submit">Freeze team</button>
+              </form>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if global_state == 'ADVENT_QUIZ' and control.team.activity_state == 'PUZZLE' and control.team.current_question_id %}
+          <div class="control-stack">
+            <form method="post" action="{% url 'admin_action' 'force-complete' %}"
+                  hx-post="{% url 'admin_action' 'force-complete' %}" hx-sync="#live-admin:replace"
+                  hx-target="#admin-state" hx-swap="innerHTML">
+              {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+              <input type="hidden" name="team_id" value="{{ control.team.team_id }}">
+              <input type="hidden" name="question_id" value="{{ control.team.current_question_id }}">
+              <input type="hidden" name="request_id" value="{{ control.force_request_id }}">
+              <button type="submit">Complete current puzzle</button>
+            </form>
+            {% if not control.team.hint_revealed %}
+              <form method="post" action="{% url 'admin_action' 'provide-hint' %}"
+                    hx-post="{% url 'admin_action' 'provide-hint' %}" hx-sync="#live-admin:replace"
+                    hx-target="#admin-state" hx-swap="innerHTML">
+                {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}">
+                <input type="hidden" name="team_id" value="{{ control.team.team_id }}">
+                <input type="hidden" name="question_id" value="{{ control.team.current_question_id }}">
+                <input type="hidden" name="request_id" value="{{ control.hint_request_id }}">
+                <button type="submit">Reveal Hint</button>
+              </form>
+            {% endif %}
+          </div>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </div>
+{% endif %}

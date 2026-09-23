@@ -16,6 +16,7 @@ ErrorCode = Literal[
     "temporarily_busy",
     "insufficient_points",
     "no_hint_tokens",
+    "already_active",
 ]
 
 
@@ -76,6 +77,10 @@ class TeamProjection:
     hint_tokens: int = 0
     hint_cost: int | None = None
     skip_cost: int | None = None
+    freeze_cost: int | None = None
+    uno_reverse_cost: int | None = None
+    uno_reverse_active: bool = False
+    freeze_remaining_ms: int | None = None
 
 
 @dataclass(frozen=True)
@@ -96,6 +101,13 @@ class AdminPoints:
     run_id: str
     team_id: TeamId
     delta: int
+
+
+@dataclass(frozen=True)
+class AdminTeam:
+    request_id: str
+    run_id: str
+    team_id: TeamId
 
 
 @dataclass(frozen=True)
@@ -130,6 +142,8 @@ class AdminTeamProjection:
     current_question_id: str | None
     completed_numbers: tuple[int, ...]
     hint_revealed: bool
+    uno_reverse_active: bool = False
+    freeze_remaining_ms: int | None = None
 
 
 @dataclass(frozen=True)

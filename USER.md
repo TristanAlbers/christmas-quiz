@@ -1,6 +1,6 @@
 # Using the Christmas Quiz today
 
-This guide describes the **phase 2 development demo** that is implemented now.
+This guide describes the **phase 3 development demo** that is implemented now.
 It has two isolated teams, two named game masters, and two sample puzzles per
 team. It is not the authored Christmas event, and completing sample puzzle 2
 does not finish the game.
@@ -75,13 +75,28 @@ a correct answer. Insufficient points reject the purchase or Skip. There is no
 Skip inventory.
 
 The admin page shows both teams and supports pause/resume, signed point changes,
-current-puzzle force completion, immediate Hint reveal, and full reset. Pausing
-blocks team gameplay and hides the current puzzle until resume; it preserves
-each team's position and inventory. Point removal cannot make a balance
-negative. Reset creates a new READY run with initial points and empty tokens,
-progress, and hints, while preserving the prior run and audit history. Reload
-the admin page to see another admin's latest controls. There is no attack,
-timer, Challenge, Music Quiz, TV overview, or finished-game view in this phase.
+current-puzzle force completion, immediate Hint reveal, full reset, direct
+Freeze, and unfreeze. Pausing blocks team gameplay and hides the current puzzle
+until resume; it preserves each team's position, inventory, and exact effect
+time remaining. Point removal cannot make a balance negative. Reset creates a
+new READY run with initial points and empty tokens, progress, and effects while
+preserving the prior run and audit history. The admin view polls every 500 ms.
+
+During Advent play a team can immediately spend the configured Freeze cost (3
+points in the demo) to Freeze its opponent for five minutes of Advent gameplay
+time. Freeze is not inventory. A frozen team sees its state and authoritative
+countdown, but cannot retrieve its puzzle, revealed Hint, answer/shop controls,
+or private media. An admin can remove Freeze immediately. A team can buy one
+active Uno Reverse (2 points in the demo); this is private to its owner and the
+admins. A valid player Freeze consumes the target's Reverse, charges the
+attacker, and Freezes the attacker instead. Admin Freeze applies directly and
+does not consume Reverse.
+
+The gameplay clock is persisted. Pause preserves remaining Freeze time across
+refresh, disconnect, and restart. Unexpected downtime while the persisted state
+is `ADVENT_QUIZ` counts as gameplay time; downtime while persistently `PAUSED`
+does not. Client countdown values never authorize expiry. There is no Challenge,
+Music Quiz, TV overview, or finished-game view in this phase.
 Completing sample puzzle 2 leaves the team with no further sample puzzle; it
 does not mark either team or the global game finished. A package extended to
 puzzle 13 cannot progress beyond puzzle 12 until the mandatory Music Quiz is
@@ -95,10 +110,11 @@ Edit that JSON and its referenced files under the same package directory
 **before** starting a run. The package is declarative data; it cannot execute
 Python code. Credentials belong in `.env`, never in a package.
 
-The phase 2 top level requires exactly `schema_version: 2`, `package_id`,
-`initial_points`, `hint_cost`, `skip_cost`, and `teams`. All three point values
-are nonnegative integers. Existing version 1 snapshots remain readable, but
-they have no configured prices and cannot use Hint purchases or Skip.
+The phase 3 top level requires exactly `schema_version: 3`, `package_id`,
+`initial_points`, `hint_cost`, `skip_cost`, `freeze_cost`,
+`uno_reverse_cost`, and `teams`. All five point values are nonnegative integers.
+Existing version 1 and 2 snapshots remain readable, but mechanics without a
+snapshotted configured price are unavailable for those runs.
 `teams` requires exactly `a` and `b`. Each team has a `puzzles` list with 2–25
 entries numbered sequentially from 1. Each puzzle requires `id`, `number`,
 `title`, `body`, `validator`, `reward_points`, `hint`, `fragment`, and `media`.
@@ -132,7 +148,6 @@ For example, this is a valid puzzle entry inside Team A's `puzzles` list:
 
 Use the linked `game.json` for a complete valid package with both teams and
 all required puzzle entries. Media paths must stay within the package; Start
-rejects missing files, symlinks, and individual files larger than 20 MB.
 
 Start validates the package, copies its JSON and every referenced media file
 into a digest-checked snapshot under `./var/snapshots`, and pins that snapshot
@@ -151,7 +166,8 @@ A browser refresh or login after restart reads the saved attempts, rewards,
 fragments, and current puzzle. Do not edit or delete the database or pinned
 snapshot directories while a run is active.
 
-Restarting the server is **not** resetting the game. Use the admin **Reset full
+Restarting the server is **not** resetting the game. An active Advent clock
+continues across restart, while a paused clock stays stopped. Use the admin **Reset full
 game** button to create a new READY run while retaining the old run and audit
 history. Do not delete SQLite files or snapshots as a reset workaround. A
 tested backup and restore procedure is not available yet.
@@ -159,7 +175,7 @@ tested backup and restore procedure is not available yet.
 For validation, use a separate Compose project and disposable `/app/var`
 mount. Follow the exact isolation setup in [docs/scaffold.md](docs/scaffold.md)
 before running migrations or tests, so an existing event database is not
-touched. After that setup, the phase 2 checks are:
+touched. After that setup, the phase 3 checks are:
 
 ```sh
 docker compose --profile dev build app dev
@@ -167,10 +183,10 @@ docker compose up -d app
 docker compose exec app python manage.py check
 docker compose exec app python manage.py makemigrations --check --dry-run
 docker compose run --rm --entrypoint ruff dev check .
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase2-tests.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase3-tests.sqlite3 \
   dev test tests.domain tests.integration tests.security
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase2-browser.sqlite3 \
-  dev test tests.browser.test_live_sync
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase3-browser.sqlite3 \
+  dev test tests.browser
 ```
 
 The two test databases are disposable file-backed SQLite databases created by

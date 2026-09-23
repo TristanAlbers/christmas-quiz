@@ -1,11 +1,14 @@
 """Serve only a team's currently visible private puzzle assets."""
 
 from django.http import FileResponse, Http404
+from django.utils.timezone import now as server_now
 from django.views.decorators.cache import never_cache
 
 from quiz.auth import actor_for_user
 from quiz.configuration import InvalidPackage, load_snapshot, snapshot_media_path
 from quiz.contracts import ApplicationError
+from quiz.domain.phase3 import effective_gameplay_ms, reconcile_freeze
+from quiz.domain.types import DomainError
 from quiz.models import Run, TeamRun
 from quiz.persistence import read_snapshot
 
@@ -21,9 +24,19 @@ def private_media(request, run_id, team_id, asset_path):
     with read_snapshot():
         try:
             run = Run.objects.get(pk=run_id, active=True, global_state="ADVENT_QUIZ")
-            team = TeamRun.objects.get(
-                run=run, team_id=actor.team_id, activity_state="PUZZLE"
+            team = TeamRun.objects.get(run=run, team_id=actor.team_id)
+            gameplay_ms = effective_gameplay_ms(
+                run.gameplay_elapsed_ms,
+                run.advent_clock_anchor,
+                server_now(),
             )
+            effective_team = reconcile_freeze(
+                team.activity_state,
+                team.freeze_started_gameplay_ms,
+                gameplay_ms,
+            )
+            if effective_team.activity_state != "PUZZLE":
+                raise Http404
             config = load_snapshot(run)
             puzzle = config["teams"][actor.team_id]["puzzles"][team.current_number - 1]
             if asset_path not in puzzle["media"]:
@@ -35,6 +48,7 @@ def private_media(request, run_id, team_id, asset_path):
         except (
             Run.DoesNotExist,
             TeamRun.DoesNotExist,
+            DomainError,
             InvalidPackage,
             IndexError,
             OSError,

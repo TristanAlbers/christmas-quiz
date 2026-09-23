@@ -1,17 +1,52 @@
-<div class="status">
-  <p>Game: {{ state.global_state }} · Team: {{ state.team_state }}</p>
+<div class="status-card state-panel-{{ state.team_state|lower }}">
+  <div class="status-row">
+    <span>Game: <strong>{{ state.global_state }}</strong></span>
+    <strong class="state-badge state-{{ state.team_state|lower }}">{{ state.team_state }}</strong>
+  </div>
   {% if state.run_id %}
-    <p>Points: {{ state.points }} · Hint tokens: {{ state.hint_tokens }} · Puzzle: {{ state.current_number }}</p>
+    <p class="metric-row"><span>{{ state.points }} points</span><span>{{ state.hint_tokens }} Hint tokens</span><span>Puzzle {{ state.current_number }}</span></p>
+    <p>{% if state.uno_reverse_active %}<strong>Uno Reverse active</strong>{% else %}Uno Reverse inactive{% endif %}</p>
+    {% if state.team_state == 'FREEZE' %}
+      <div class="freeze-message" role="status">
+        <h2>Frozen</h2>
+        <p>Your puzzle and Hint are hidden until the server-authoritative timer expires.</p>
+        <p class="freeze-timer" data-remaining-ms="{{ state.freeze_remaining_ms }}">{% widthratio state.freeze_remaining_ms 1000 1 %} seconds remaining</p>
+      </div>
+    {% elif state.global_state == 'PAUSED' %}
+      <div class="interruption-message"><h2>Game paused</h2><p>Your exact puzzle state and effect timers are preserved.</p></div>
+    {% endif %}
     {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
-      <form method="post" action="{% url 'team_action' 'purchase-hint' %}"
-            hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit"
-            hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-            hx-target="#game-status" hx-swap="innerHTML">
-        {% csrf_token %}
-        <input type="hidden" name="run_id" value="{{ state.run_id }}">
-        <input type="hidden" name="request_id" value="{{ purchase_request_id }}">
-        <button type="submit">Buy Hint token ({{ state.hint_cost }} points)</button>
-      </form>
+      <div class="action-grid">
+        <form method="post" action="{% url 'team_action' 'purchase-hint' %}"
+              hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit"
+              hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+              hx-target="#game-status" hx-swap="innerHTML">
+          {% csrf_token %}
+          <input type="hidden" name="run_id" value="{{ state.run_id }}">
+          <input type="hidden" name="request_id" value="{{ purchase_request_id }}">
+          <button type="submit">Buy Hint ({{ state.hint_cost }})</button>
+        </form>
+        {% if state.uno_reverse_cost != None and not state.uno_reverse_active %}
+          <form method="post" action="{% url 'team_action' 'purchase-reverse' %}"
+                hx-post="{% url 'team_action' 'purchase-reverse' %}" hx-trigger="submit"
+                hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+                hx-target="#game-status" hx-swap="innerHTML">
+            {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}">
+            <input type="hidden" name="request_id" value="{{ reverse_request_id }}">
+            <button type="submit">Buy Uno Reverse ({{ state.uno_reverse_cost }})</button>
+          </form>
+        {% endif %}
+        {% if state.freeze_cost != None %}
+          <form method="post" action="{% url 'team_action' 'freeze' %}"
+                hx-post="{% url 'team_action' 'freeze' %}" hx-trigger="submit"
+                hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+                hx-target="#game-status" hx-swap="innerHTML">
+            {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}">
+            <input type="hidden" name="request_id" value="{{ freeze_request_id }}">
+            <button type="submit">Freeze opponent ({{ state.freeze_cost }})</button>
+          </form>
+        {% endif %}
+      </div>
     {% endif %}
     {% if state.completed_numbers %}<p>Completed: {{ state.completed_numbers|join:", " }}</p>{% endif %}
     {% if state.fragments %}<p>Fragments: {{ state.fragments|join:", " }}</p>{% endif %}

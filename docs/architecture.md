@@ -1,11 +1,16 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture; phases 1 and 2 implemented.
+Status: approved architecture; phases 1 and 2 implemented, phase 3 in progress.
 
 Phase 2 implementation decisions are recorded in
 [`phase-2-contract.md`](phase-2-contract.md): one durable Hint reveal per
 team/puzzle, generic Hint inventory, immediate Skip via canonical completion,
 and reset by creating a new READY run ID from the immutable prior snapshot.
+
+Phase 3 clock and effect decisions are recorded in
+[`phase-3-contract.md`](phase-3-contract.md): active Advent downtime counts on a
+persisted gameplay clock, paused downtime does not, and only player Freeze
+attacks trigger Uno Reverse.
 
 This document records implementation choices. Game behavior remains governed by
 `christmas-2026-game-rules-state-semantics.md`, followed by `Design.md`, `Views.md`,
@@ -335,7 +340,8 @@ slice is stable without explicit reprioritization.
   identifies Music scores as an explicit shared exception; `Views.md` requests
   public percentages. Ask for an explicit allowed public projection before that
   feature; never expose full team state to satisfy the display requirement.
-- Server-downtime accounting for gameplay timers needs a decision before timers.
+- Server-downtime accounting is settled for phase 3: persisted `ADVENT_QUIZ`
+  downtime counts, while persisted `PAUSED` downtime does not.
 - Emergency reopening and unusual corrections need specific contracts before
   their later milestones. Do not invent those contracts in ordinary gameplay.
 

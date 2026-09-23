@@ -10,7 +10,7 @@ from typing import Literal
 CompletionRoute = Literal["correct_answer", "skip", "admin_force"]
 DomainErrorCode = Literal[
     "disallowed_state", "stale_question", "prerequisite_violation", "invalid_input",
-    "insufficient_points", "no_hint_tokens"
+    "insufficient_points", "no_hint_tokens", "already_active"
 ]
 
 
