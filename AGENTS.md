@@ -106,6 +106,158 @@ Do not create a new agent merely because a task spans multiple areas. Use the ex
 
 ---
 
+## Model and reasoning policy
+
+Agent model and reasoning configuration is defined in `.codex/config.toml` and `.codex/agents/*.toml`.
+
+Default role configuration:
+
+* `architect`: GPT-5.6 Sol / high.
+* `game_engine`: GPT-5.6 Sol / high.
+* `persistence_security`: GPT-5.6 Sol / high.
+* `test_invariants`: GPT-5.6 Sol / medium.
+* Unconfigured subagents: GPT-5.6 Sol / medium.
+
+These are defaults chosen according to the reasoning demands and risk of each role.
+
+Do not escalate an agent's model or reasoning effort merely because a task is large. Escalation is appropriate when the assigned work contains genuinely difficult reasoning, unresolved architectural ambiguity, concurrency or security analysis, subtle interacting invariants, or when a previous attempt failed for reasoning-related reasons.
+
+Do not spawn a high-effort specialist for work that is genuinely trivial and does not require its specialist judgment. Routine read-only inspection, mechanical edits, formatting, documentation cleanup, straightforward dependency updates, simple test execution, and similarly low-risk work may remain with the parent agent when they do not alter specialist-owned behavior.
+
+Do not downgrade a specialist merely to save usage when the task falls inside the high-risk responsibilities for which that specialist is configured. In particular:
+
+* use `architect` at high reasoning for architecture, shared contracts, integration boundaries, cross-agent conflicts, or difficult application transaction orchestration;
+* use `game_engine` at high reasoning for interacting game-state rules, canonical completion, timer semantics, idempotency, race semantics, or prerequisite behavior;
+* use `persistence_security` at high reasoning for authentication, authorization, team isolation, schema guarantees, atomic transactions, concurrent writes, snapshots, recovery, or security boundaries;
+* `test_invariants` normally uses medium reasoning for verification, but difficult concurrency/security test design or unexplained failures may justify escalation to high.
+
+The parent/main agent should prefer delegation based on ownership and risk, not on a desire to maximize model usage.
+
+---
+
+## Progress visibility and routing-agent updates
+
+The parent/main agent is the user-facing coordinator for multi-agent work.
+
+For any task that involves substantial investigation, multiple implementation steps, delegated agents, test/debug cycles, or work that may otherwise leave the interface showing only a generic `thinking` state for an extended period, provide concise progress updates while the work is underway.
+
+These updates are operational summaries, not private chain-of-thought. Do not expose hidden reasoning, internal scratch work, or token-by-token deliberation. Instead, communicate the useful conclusions and actions resulting from that reasoning.
+
+### Initial routing update
+
+Before beginning substantial delegated work, briefly tell the user:
+
+* what part of the requested task is being tackled;
+* which specialist agent or agents are being used;
+* why those agents own the work;
+* whether work can safely run in parallel or must be sequenced.
+
+For example:
+
+> Phase 3 touches domain progression and persistence. I’m having `game_engine` inspect the rule changes while `persistence_security` checks the required schema/transaction behavior. The `architect` will reconcile their contracts before shared application code is changed.
+
+Do not provide an elaborate plan for simple tasks.
+
+### Updates during execution
+
+Provide a new concise update after meaningful progress rather than remaining silent while significant work is happening.
+
+Useful updates include:
+
+* which specifications, architecture documents, or important code paths were inspected;
+* a concrete finding that materially affects the implementation;
+* which specialist is currently working on what;
+* when a specialist has completed and what its important conclusion was;
+* which implementation direction was selected after reconciling specialist results;
+* which files or ownership areas are now being modified;
+* which tests or validation commands are being run;
+* a failed command, failing test, unexpected repository state, or other blocker;
+* what a failure means and what approach is being tried next;
+* when a previously attempted approach has been abandoned and why;
+* whether remaining work is implementation, integration, verification, or cleanup.
+
+Prefer findings over narration.
+
+Good:
+
+> `persistence_security` found that the current completion path reads the balance before obtaining the SQLite write transaction. That can permit a race. The fix is being kept in the application transaction boundary rather than duplicated in the domain model.
+
+Less useful:
+
+> I am still investigating the code.
+
+Do not announce every file read, shell command, tool call, or trivial action. Group low-level actions into meaningful checkpoints.
+
+### Delegated-agent visibility
+
+When spawning a specialist, identify it by its repository role name rather than referring only to a generic background task.
+
+Examples:
+
+* `architect` — defining/reconciling the shared contract;
+* `game_engine` — implementing or checking domain semantics;
+* `persistence_security` — handling persistence, transactions, authentication, or isolation;
+* `test_invariants` — independently verifying cross-cutting behavior.
+
+When multiple agents work in parallel, keep the user aware of the workstreams without dumping their internal conversations.
+
+For example:
+
+> Two workstreams are active: `game_engine` is checking canonical completion semantics, while `test_invariants` is deriving the regression cases. They edit separate files, so they can proceed in parallel.
+
+When a specialist returns, summarize its actionable result before moving on when that result materially changes the work.
+
+### Failure and blocker reporting
+
+Do not silently retry the same failing approach for a long period.
+
+When an important setup command, build, test, migration, or implementation approach fails:
+
+1. report the concrete failure;
+2. state the likely implication based on available evidence;
+3. state what is being changed or investigated next.
+
+If the cause is not yet known, say so rather than inventing one.
+
+Example:
+
+> The Cloud setup still fails before the tests start: `uv` is trying to install the repository as a Python package, but the current `pyproject.toml` has no build-system metadata. I’m checking whether the correct fix belongs in project packaging or the Cloud setup configuration rather than repeating the same install command.
+
+If a specialist is blocked on a contract owned by another specialist, surface that conflict and route it through `architect` rather than allowing both agents to independently invent solutions.
+
+### Long-running work
+
+For longer tasks, do not leave the user with only a generic `thinking` indication while several substantial steps occur.
+
+Give a concise checkpoint whenever the phase of work materially changes, such as:
+
+* investigation → implementation;
+* specialist work → integration;
+* implementation → tests;
+* test failure → diagnosis;
+* diagnosis → corrective implementation;
+* validation → completion.
+
+Do not manufacture updates solely to satisfy a timer. An update should contain new information.
+
+### Final handoff
+
+At completion, the parent/main agent must give a concise result summary containing:
+
+* what was implemented or changed;
+* the most important implementation decisions;
+* specialists used, when relevant;
+* files or major areas changed;
+* tests and validation performed;
+* failures or skipped validation, if any;
+* unresolved concerns or follow-up work.
+
+Do not report success merely because delegated agents reported success. The parent/main agent must inspect and integrate their results and verify the repository's final state.
+
+The goal is that the user can understand what Codex is doing, why the task is progressing in a particular direction, and whether it is making progress or is blocked, without requiring access to private chain-of-thought.
+
+---
+
 ## Agent routing table
 
 ### `architect`
