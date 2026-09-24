@@ -58,7 +58,7 @@
 {% endif %}
 
 {% if run_id %}
-  <div class="team-grid">
+  <div class="team-grid" data-run-id="{{ run_id }}">
     {% for control in team_controls %}
       <section class="team-card state-panel-{{ control.team.activity_state|lower }}"
                aria-label="Team {{ control.team.team_id|upper }}">
@@ -67,7 +67,7 @@
           <strong class="state-badge">{{ control.team.activity_state }}</strong>
         </div>
         <div class="admin-team-metrics"><span>{{ control.team.points }} points</span><span><b class="hint-token" aria-hidden="true">?</b> {{ control.team.hint_tokens }} Hint token{{ control.team.hint_tokens|pluralize }}</span><span class="mini-reverse{% if control.team.uno_reverse_active %} mini-reverse--active{% endif %}">↶ Reverse {% if control.team.uno_reverse_active %}active{% else %}inactive{% endif %}</span></div>
-        {% if control.team.advent_progress %}{% include 'quiz/_advent_calendar.html' with progress=control.team.advent_progress %}{% endif %}
+        {% if control.team.advent_progress %}{% include 'quiz/_advent_calendar.html' with progress=control.team.advent_progress team_id=control.team.team_id %}{% endif %}
         {% if control.team.freeze_remaining_ms != None %}
           <p class="freeze-timer" data-remaining-ms="{{ control.team.freeze_remaining_ms }}">Freeze remaining: {% widthratio control.team.freeze_remaining_ms 1000 1 %} seconds</p>
         {% endif %}

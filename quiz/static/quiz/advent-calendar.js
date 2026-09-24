@@ -29,7 +29,7 @@
   }
 
   function observeCalendars() {
-    document.querySelectorAll("#overview-state .advent-progress[data-team-id]").forEach(function (calendar) {
+    document.querySelectorAll(".advent-progress[data-team-id]").forEach(function (calendar) {
       const key = calendarKey(calendar);
       const count = Number(calendar.dataset.completedCount);
       if (!observed.has(key) || count < observed.get(key)) {
@@ -48,7 +48,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", observeCalendars);
-  document.body.addEventListener("htmx:afterSettle", function (event) {
-    if (event.detail.target && event.detail.target.id === "overview-state") observeCalendars();
+  document.body.addEventListener("htmx:afterSettle", function () {
+    observeCalendars();
   });
 }());
