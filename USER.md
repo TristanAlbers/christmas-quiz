@@ -229,3 +229,62 @@ docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase4-browser.sqlite3 \
 The two test databases are disposable file-backed SQLite databases created by
 Django's test runner. The browser suite uses Chromium and an isolated live
 server; it exercises real polling, answer submission, and reconnect behavior.
+
+## Continue development with Codex
+
+This repository uses a staged Codex workflow to keep Plus-plan usage bounded
+without giving up the specialist review needed for correctness. Do **not** ask
+Codex to implement an entire phase in one run. Authorize one stage, inspect its
+handoff and your remaining usage, then decide whether to start the next stage.
+
+Use this prompt shape:
+
+```text
+@<role> Execute only Phase <N> Stage <letter> from implementation_plan.md.
+Follow AGENTS.md and your role configuration. Use the current phase contract/handoffs
+and only the authority needed for this packet. Report the handoff and STOP.
+```
+
+The normal sequence is:
+
+| Stage | Role | Purpose |
+| --- | --- | --- |
+| A | `@architect` | Settle the phase contract, boundaries and acceptance criteria. |
+| B | `@game_engine` | Implement the bounded domain packet. |
+| C | `@persistence_security` | Implement persistence, security and concurrency guarantees. |
+| D | `@integrator` | Wire application behavior, projections, routes and HTMX boundaries. |
+| E | `@ui_experience` | Implement the required presentation, Christmas styling and polling-safe browser interaction. |
+| F | `@test_invariants` | Independently review the completed phase for concrete gaps. |
+
+`@game_engine_high` is not a normal extra stage. Use it only when the Stage-B
+handoff identifies a concrete domain problem that needs the separately
+configured high-reasoning escalation.
+
+For example, the next phase starts with:
+
+```text
+@architect Execute only Phase 5 Stage A from implementation_plan.md.
+Follow AGENTS.md and your role configuration. Use the current phase contract/handoffs
+and only the authority needed for this packet. Report the handoff and STOP.
+```
+
+After that turn stops, review the contract and usage before running Stage B.
+Continue this way through the stages that the Phase-5 packet requires. Do not
+paste several stage prompts into one Codex turn. A stage may be skipped only
+when the current phase packet/contract explicitly says that role has no work;
+a user-visible phase normally includes Stage E.
+
+The instruction layers have different purposes:
+
+- [`AGENTS.md`](AGENTS.md) contains global authority, invariants, routing and
+  workflow rules.
+- [`.codex/agents/`](.codex/agents/) contains role-specific specialist
+  instructions and model settings.
+- [`implementation_plan.md`](implementation_plan.md) contains phase goals,
+  acceptance gates and the A–F work packets.
+- Product behavior remains in the game rules, design/view documents, product
+  decisions and phase contracts.
+
+After Stage F, use GitHub Actions as the complete deterministic gate. If CI or a
+review stage finds a defect, repair it in a new single-role turn owned by the
+implicated specialist instead of restarting the whole phase.

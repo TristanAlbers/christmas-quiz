@@ -1,238 +1,197 @@
 # Christmas quiz implementation plan
 
-Status: phases 1–4 are complete and validated as of 2026-09-24. Phases 5–9
-remain plans. This file does not authorize a new phase by itself; never start the
-next phase automatically.
+Status: phases 1–4 are complete and validated as of 2026-09-24. Phases 5–9 remain plans. This file never authorizes work by itself; the user authorizes one named stage of one named phase.
 
-`USER.md` describes the currently usable product. Historical implementation detail for completed phases is recorded in `docs/contracts-first-slice.md`, `docs/phase-2-contract.md`, `docs/phase-3-contract.md`, `docs/phase-3.1-contract.md`, `docs/phase-4-contract.md`, architecture documentation, and Git history. Future implementation sessions should not reread completed-phase handoffs unless the current phase depends on a specific historical contract or a failure makes that evidence relevant.
+Historical behavior/evidence for completed phases lives in the phase contracts, architecture docs, `USER.md`, Git history, and CI. Do not reread completed-phase history unless the current stage depends on it.
 
 ## Current baseline
 
-The repository has working and validated phases 1–4:
-
-- synchronous Django/Gunicorn WSGI, Django templates, local HTMX, WhiteNoise, Compose, SQLite;
-- two isolated team logins and two named administrators;
-- immutable package snapshots and protected private media;
-- persisted attempts/completion, audit, receipts, WAL/IMMEDIATE transactions;
-- 500 ms polling with stable interactive controls;
-- admin pause/resume, point adjustments, force completion, hints, Hint tokens, immediate Skip;
-- persisted Advent gameplay clock, Freeze, admin Freeze/unfreeze, paid Freeze attack, one Uno Reverse;
-- no-active-run `READY`, archival Reset, source-package discovery/selection, fresh snapshot/run Start, safe retirement of legacy READY shells;
-- one-time atomic puzzle-13 Music interruption, 11 shared questions, separate
-  Music scores plus configured normal rewards, Music pause/recovery/final-result
-  timing, synchronized team/admin/TV views, and current shared audio isolation;
+Phases 1–4 provide:
+- Django/Gunicorn, templates + local HTMX, SQLite, WhiteNoise and Compose;
+- isolated team/admin authentication and protected private media;
+- immutable package snapshots, receipts/audit, WAL/IMMEDIATE transaction behavior;
+- 500 ms polling with stable-interaction architecture;
+- admin controls, Hint/Skip, Freeze, Uno Reverse, persisted timers/recovery;
+- READY/package selection/archival Reset lifecycle;
+- one-time puzzle-13 Music interruption with 11 shared questions, rewards/scores, pause/recovery/final-results timing, synchronized team/admin/TV views and current-audio isolation;
 - domain/integration/security/Chromium coverage for implemented behavior.
 
-25-puzzle completion, Challenges, final polished views, final package authoring
-workflow, emergency recovery controls, and event-readiness/backup work remain
-future phases.
+Phase 4 is complete and MUST NOT be reimplemented. See `docs/phase-4-contract.md` and PR #6.
 
-## Rules for every future implementation phase
+## Active UI debt
 
-Preserve the authority and invariants in `AGENTS.md`. Read the current phase section, current code, `USER.md`, `docs/architecture.md`, and only the authoritative specification sections necessary to establish the phase contract. Expand context when ambiguity or a dependency requires it; do not make every specialist reread all specifications and historical contracts.
+Completed backend phases still leave presentation debt. Retire it incrementally, beginning with Phase 5 unless a separate UI-only repair is explicitly authorized:
+- coherent reusable Christmas shell/visual language;
+- Advent-calendar progression rather than text/percentage alone;
+- prominent 11-step Music progress;
+- visual Hint-token and Uno-Reverse treatment;
+- styled immediate Skip;
+- polling-safe input/select/button/card interaction.
 
-Use the bounded specialist workflow from `AGENTS.md`:
+`docs/product-decisions.md` records the approved coarse public Advent-progression boundary.
 
-1. `@architect` performs a short contract/ownership pass and records the phase's shared decisions, public contracts, exact production/test ownership, migration/edit order, relevant normative references, and acceptance gate.
-2. `@game_engine` and/or `@persistence_security` receive bounded assignments for their owned implementation only, with focused tests. They hand back and stop when their owned work is complete.
-3. `@architect`/parent integrates shared application/web/presentation/docs work.
-4. `@test_invariants` joins after integration for independent adversarial review/coverage, using the phase contract, final/current diff, relevant tests, and CI evidence.
-5. GitHub Actions is the authoritative unchanged full-suite gate. Do not have agents rerun an already-green unchanged full suite.
-6. Route failures back only to the implicated owner. Reactivate other specialists only when a concrete cross-boundary issue requires them.
+## How to run a stage
 
-This staging reduces duplicate context and repeated reasoning; it does **not** reduce specialist ownership, reasoning strength, required tests, security/isolation guarantees, concurrency verification, or the final gate.
+The global stage sequence, models, ownership, STOP rule, context discipline, progress reporting and validation policy are defined in `AGENTS.md` and the selected role TOML. Do not repeat them in prompts.
 
-For every phase:
-- deliver working UI for newly exposed actions;
-- enforce backend legality/isolation;
-- use atomic persistence/audit/idempotency where applicable;
-- add focused implementer tests plus independent cross-cutting tests where applicable;
-- keep the simple approved Django/HTMX/SQLite architecture;
-- update `USER.md`, relevant contracts/architecture, and `.env.example` when behavior/configuration changes;
-- keep demonstration content clearly labeled;
-- stop at the named phase gate.
-
-## Phase 4 — puzzle-13 Music Quiz interruption (complete)
-
-Prerequisite: phase 3.1 green. Before dependent implementation, settle the Music pause/resume and final-result-display timing contracts. Extend development data through puzzle 13 with 11 Music questions.
-
-All three puzzle-completion routes must trigger Music immediately and exactly once. Preserve underlying team state and timer durations. Both teams answer the same active Music question. Wrong attempts are unlimited and penalty-free. The first accepted correct transaction wins the question, receives the configured normal points, and immediately advances the question. Persist Music scores separately from normal balances. After all 11 questions, show final scores for the configured duration, then restore Advent exactly. Expose only approved shared Music fields; do not leak private balances/progression. Resolve TV/audio handling before implementing playback.
-
-Gate:
-- trigger via correct answer, Skip, and admin force-completion;
-- concurrent puzzle-13 completion triggers Music exactly once;
-- one-time trigger marker survives retries/restart;
-- underlying Freeze/timer state restores exactly;
-- stale Music question IDs reject;
-- all 11 questions work;
-- exact configured reward, no duplicate reward/advance;
-- final-results deadline survives restart and obeys the settled pause/downtime policy;
-- both browsers synchronize correctly;
-- deterministic real-SQLite winner tests cover A-first and B-first by controlling separate writer transactions, never sleep-based ordering.
-
-Ready-to-paste prompt:
+Use this invocation pattern:
 
 ```text
-@architect Implement only phase 4 of implementation_plan.md.
-
-Use the bounded specialist workflow in AGENTS.md. First perform one focused contract pass: inspect the authoritative Music rules and only the supporting phase-3/3.1 contracts needed for interruption/timer restoration, then create/update a concise phase-4 contract with the Music pause/resume policy, final-result timer policy, public projection, interfaces, exact file ownership, migration/edit order, and acceptance gate.
-
-Then delegate bounded work:
-- @game_engine: only Music/interruption domain transitions, legality, scoring decisions, restoration semantics, stale-question domain behavior, and focused deterministic domain tests.
-- @persistence_security: only Music persistence/schema/atomic first-winner transaction, one-time trigger/idempotency, restart durability, authorized projections, and focused persistence/security/concurrency tests.
-After those handoffs, integrate application.py, views/templates/polling, demo data with 11 questions, and documentation without keeping completed specialists active.
-Then invoke @test_invariants once on the integrated diff for independent race/isolation/restart/browser coverage and missing invariants.
-
-Connect answer, Skip, and admin completion to one atomic puzzle-13 trigger. Preserve exact underlying Advent/Freeze state, use deterministic separate-SQLite-connection A-first and B-first winner tests, and let GitHub Actions run the unchanged complete gate. Route any failure only to its owner. Stop after phase 4; do not begin phase 5.
+@<role> Execute only Phase <N> Stage <letter> from implementation_plan.md.
+Follow AGENTS.md and your role configuration. Use the current phase contract/handoffs
+and only the authority needed for this packet. Report the handoff and STOP.
 ```
+
+Stage letters:
+- A `architect` — contract/boundaries/acceptance.
+- B `game_engine` — domain. Use `game_engine_high` only for a separately authorized concrete escalation.
+- C `persistence_security` — persistence/security/concurrency.
+- D `integrator` — application/projections/routes/HTMX/data/docs.
+- E `ui_experience` — presentation/interaction/browser behavior.
+- F `test_invariants` — independent review-first verification.
+
+Skip a stage only when its phase packet/contract explicitly says there is no owned work. User-visible phases require Stage E unless the contract proves no presentation/interaction change is required. GitHub Actions runs after Stage F as the complete deterministic gate. Repair failures in a new turn owned only by the implicated role.
 
 ## Phase 5 — complete 25-puzzle progression and two-team finish
 
-Prerequisite: phase 4 green.
+Prerequisite: Phase 4 green.
 
-Extend demonstration data to 25 puzzles per team with distinct answers and cumulative fragments referenced by puzzle 25. Enforce prerequisites. Persist the first finisher and show the winner state immediately; the other team continues and sees the specified first-finisher indication. Only both teams completing puzzle 25 makes global `FINISHED`. Finished teams cannot initiate/receive normal gameplay attacks/actions.
+Goal: extend demo data to 25 puzzles per team, preserve strict prerequisites, support cumulative fragments/final puzzle, persist the first finisher, keep the second team playable, and enter global `FINISHED` only after both teams complete puzzle 25.
+
+UI acceptance:
+- team/admin/public progression uses Advent-calendar completed/current/future states;
+- concise `N/25`/percentage may supplement, never replace, the Advent representation;
+- first-finisher/finished states are obvious without private-state leakage;
+- inherited UI debt above is retired on affected surfaces.
 
 Gate:
-- both distinct journeys run through the real Music path to 25;
-- first finisher becomes inactive while the second remains playable;
-- concurrent final answers yield one durable first-finisher record;
-- no duplicate rewards/fragments;
-- reload/restart preserves result;
-- normal actions cannot reopen a finished team.
+- both distinct journeys traverse the real Music path to 25;
+- first finisher becomes inactive while the other team remains playable;
+- concurrent final answers produce one durable first-finisher record;
+- no duplicate rewards/fragments; restart/reload preserves outcome;
+- finished teams cannot resume normal actions;
+- phone/tablet/TV progression/finish UI is polling-stable;
+- inherited UI debt is retired or explicitly deferred with separate user approval.
 
-Prompt:
-
-```text
-@architect Implement only phase 5 of implementation_plan.md using AGENTS.md's bounded specialist workflow. Establish the finish/progression contract and file ownership once. Delegate pure progression/finish rules and focused tests to @game_engine; delegate durable first-finisher state, atomic final-answer race, constraints and focused persistence tests to @persistence_security. Integrate the 25-puzzle demo path/application/views yourself, then invoke @test_invariants once on the integrated diff for full-journey, finish-race and finished-team adversarial coverage. Use CI for the unchanged complete gate. Stop after phase 5.
-```
+Stage packets:
+- **A — architect:** settle first-finisher/global FINISHED semantics, legality, atomic race expectation, approved team/admin/public projections, UI/polling contract, ownership/edit order and gate.
+- **B — game_engine:** implement pure progression/finish rules and focused deterministic tests.
+- **C — persistence_security:** implement durable first-finisher state, atomic final-answer race, constraints/recovery/idempotency, and support only the approved coarse public progression.
+- **D — integrator:** wire 25-puzzle application journeys, projections, stable HTMX boundaries, demo data/docs and focused integration tests; never expose private puzzle content/balances/hints/inventory/fragments/hidden effects publicly.
+- **E — ui_experience:** implement Advent-calendar team/admin/public progression, finished states, responsive Christmas presentation, Music 11-step tracker, visual Hint/Reverse, styled Skip and polling-safe interactions with focused browser tests.
+- **F — test_invariants:** review full journey, finish race, duplicate effects, recovery, finished-team legality, public/privacy boundary, inherited UI acceptance and polling/browser gaps.
 
 ## Phase 6 — Challenge normal gameplay
 
-Prerequisite: phase 5 green; preserve the settled phase 3 Challenge-loss policy:
-the Freeze applies directly to the challenged team and does not consume or
-redirect an active Uno Reverse, unless a higher-authority specification conflicts.
+Prerequisite: Phase 5 green. Preserve the settled Phase-3 Challenge-loss Freeze/Reverse policy unless higher authority conflicts.
 
-Add one paid Challenge initiation opportunity per team and a shared Challenge puzzle. Attempts are unlimited and penalty-free; there is no deadline. First accepted correct answer wins. Challenge gives no Advent progression or normal point reward. If initiator wins, challenged team receives the specified Freeze on Advent return; if challenged team wins, resume without Freeze. Opportunity consumption and payment are atomic. Finished teams cannot participate.
+Goal: one paid Challenge opportunity per team; shared Challenge puzzle; unlimited penalty-free attempts; first server-accepted correct answer wins; no Advent progression/reward; initiator win freezes challenged team on Advent return; challenged-team win resumes without Freeze; initiation cost/opportunity are atomic; finished teams cannot participate.
 
 Gate:
 - eligibility/direct-request restrictions;
-- concurrent initiations/answers;
-- exactly-once opportunity and cost;
-- no reward/progression;
-- both outcome routes;
-- pause/reconnect/restart preservation;
-- disconnect never resolves Challenge.
+- atomic initiation/answer races and exactly-once opportunity/cost;
+- both outcomes, no reward/progression;
+- pause/reconnect/restart preservation; disconnect never resolves Challenge;
+- Challenge/Sabotage UI clearly shows state/cost/eligibility/rejection and remains polling-stable.
 
-Prompt:
+Stage packets:
+- **A — architect:** settle Challenge legality/outcomes, Freeze/Reverse interpretation, transaction/projection/UI contracts, ownership and gate.
+- **B — game_engine:** implement eligibility/transitions/first-answer outcomes/no-reward/return effects with focused tests.
+- **C — persistence_security:** implement durable opportunity/payment, atomic initiation/first-winner, exactly-once handling, restart durability and authorization/isolation.
+- **D — integrator:** wire Challenge application/projections/routes/stable HTMX boundaries/docs and focused integration tests; do not implement Phase-8 emergency cancellation.
+- **E — ui_experience:** implement distinct Challenge/Sabotage presentation, cost/eligibility/disabled/rejected states, stable answer/action controls and responsive Christmas UI.
+- **F — test_invariants:** review races, stale/direct requests, payment/opportunity exactly-once behavior, pause/restart/disconnect, finished-team restrictions, privacy and polling/UI requirements.
 
-```text
-@architect Implement only phase 6. Settle one concise Challenge contract and bounded ownership packet first. Delegate only Challenge domain legality/outcomes to @game_engine and only durable opportunity/payment/first-winner/concurrency state to @persistence_security. Integrate application/views afterward. Invoke @test_invariants post-integration for initiation/answer races, stale/direct requests and restart coverage. Use CI for the full gate. Do not implement emergency cancellation from phase 8. Stop after phase 6.
-```
+## Phase 7 — complete team/admin/TV usability and package authoring
 
-## Phase 7 — usable team/admin/TV views and package authoring
+Prerequisite: normal gameplay phases green.
 
-Prerequisite: normal gameplay phases green; approve any extra public projection fields and TV audio workflow.
-
-Turn functional views into usable phone/tablet team and admin interfaces: Advent calendar, shop/sabotage, fragments, distinct state screens, audit view, clear disabled/rejected actions. Keep rules on backend. Add a TV projection containing only approved public fields; never reuse team/admin private projections. Frozen screens remove private content rather than blur it. Add selected image/audio presentation and explicit operator interaction where browsers require it.
-
-Extend phase-3.1 package discovery/selection with documented data-only authoring/import/export and richer validation for assets, validator/effect names, prerequisites, 25 puzzles per team, and 11 Music questions. Reject executable behavior. Demo content remains distinct from final authored event content.
+Goal: consolidate/refine the already-started UI; complete phone/tablet team/admin experience, TV overview, media, fragments/audit/shop/sabotage, package authoring/import/export, validation UX, keyboard/touch usability and one coherent design system.
 
 Gate:
-- expected phones/tablets/TV;
-- private/public allowlists and no answer leaks;
-- stable focus/input/control behavior under polling and media changes;
+- representative phone/tablet/TV layouts are usable;
+- all `Views.md` requirements are implemented or explicitly deferred with user approval;
+- public progression follows `docs/product-decisions.md`; no private/answer leakage;
+- focus/input/select/button behavior remains stable under polling/media updates;
 - keyboard/touch usability;
-- package round trip and actionable invalid-package errors;
-- snapshot stability after source deletion.
+- coherent Advent/Christmas visual system;
+- package round trip/actionable errors and snapshot stability after source deletion.
 
-Prompt:
-
-```text
-@architect Implement only phase 7 using bounded assignments. Own presentation/integration and settle the public-field/audio contract once. Delegate package validation/media/security work only to @persistence_security. Involve @game_engine only if an explicit new declarative validator/rule requires domain semantics. After integration invoke @test_invariants once for privacy/public-projection and browser/polling coverage. Use CI as the full gate. Keep real event content requirements explicit and stop after phase 7.
-```
+Stage packets:
+- **A — architect:** produce remaining Views.md gap list, public/private projection/media contract, polling boundaries, package-security/UI ownership and gate.
+- **B — game_engine (conditional):** only if a new declarative validator/rule has real domain semantics; otherwise report intentionally skipped.
+- **C — persistence_security:** implement assigned package validation/media/security/snapshot work and focused tests.
+- **D — integrator:** implement remaining projection/media/package-authoring integration, stable HTMX boundaries/docs and focused integration tests.
+- **E — ui_experience:** complete/refine team/admin/TV, Advent calendar, shop/sabotage, fragments/audit, media/operator interaction, disabled/rejected states, package-authoring UX, keyboard/touch and polling browser regressions.
+- **F — test_invariants:** review Views/product-decision traceability, leakage, polling/media races, keyboard/touch, package round-trip/validation and snapshot stability.
 
 ## Phase 8 — explicit emergency recovery controls
 
-Prerequisite: normal gameplay/admin gates green; settle unusual-state correction contracts first.
+Prerequisite: normal gameplay/admin gates green.
 
-Add supported, explicit recovery operations rather than an unrestricted state editor: earlier-puzzle reopen/repair, finished-team reopen, team progression reset, Challenge cancellation/refund/opportunity restoration, admin Challenge initiation/resolution, admin Reverse add/remove, supported timer/effect cancellation. An earlier reopen leaves later history/rewards intact but blocks dependent progression until repaired. Historical rewards/fragments and Music trigger markers prevent duplication.
-
-Define each operation's interaction with pauses, Music, first-finisher records, and global `FINISHED`.
+Goal: supported explicit recovery operations rather than a generic state editor: earlier-puzzle repair, finished-team reopen, progression reset, Challenge cancellation/refund/opportunity restoration, admin Challenge initiation/resolution, Reverse add/remove and supported timer/effect cancellation. Preserve audit/history and duplicate-prevention guarantees.
 
 Gate:
-- admin permission/audit reasons;
-- atomic corrections;
+- admin authorization/audit reasons and atomic corrections;
 - no duplicate awards/fragments/Music;
-- Challenge cancellation refunds/restores exactly once;
+- cancellation refunds/restores exactly once;
 - stale commands cannot mutate corrected context;
-- supported unusual-state corrections remain recoverable.
+- unusual-state corrections remain recoverable;
+- dangerous controls are grouped, clear, appropriately confirmed/reasoned and polling-stable.
 
-Prompt:
-
-```text
-@architect Implement only phase 8. First create one explicit emergency-operations contract defining each supported correction and its interactions with progression, historical awards, first-finisher/global state and interruptions. Delegate pure correction legality to @game_engine and atomic persistence/refund/stale-context guarantees to @persistence_security in bounded assignments. Integrate authorized admin operations, then have @test_invariants independently attack the integrated correction paths once. Use CI for the full gate. Do not add a generic state editor. Stop after phase 8.
-```
+Stage packets:
+- **A — architect:** settle correction semantics/interactions, authorization/audit, projections, dangerous-action UI, ownership and gate.
+- **B — game_engine:** implement pure correction legality/state transitions with focused tests.
+- **C — persistence_security:** implement atomic correction/refund/restoration/stale-context/audit guarantees and focused persistence/security/concurrency tests.
+- **D — integrator:** wire authorized admin commands/projections/routes/stable HTMX boundaries/docs; never add a generic state editor.
+- **E — ui_experience:** implement grouped dangerous-action UX, reason/confirmation flows where required, outcome/rejection feedback and phone/tablet polling stability.
+- **F — test_invariants:** review permissions/audit, exactly-once restoration/refunds, duplicate prevention, stale commands, interruption interactions, recovery and dangerous-action UI behavior.
 
 ## Phase 9 — backup/restore, deployment rehearsal, event readiness
 
 Prerequisite: supported product phases green.
 
-Deliver consistent SQLite backups together with referenced immutable snapshots, restore commands/runbook, account/package setup, restart/upgrade guidance, operator checks, and off-host backup guidance. Rehearse on disposable data and restore into a clean runtime. Validate offline static/media operation, Compose persistence/permissions, expected two-team/two-admin/one-TV load, and LAN/VPN access on actual event devices. Record measured responsiveness rather than brittle timing assertions. Trace normative requirements to tests and list gaps including missing final content.
+Goal: consistent SQLite + immutable snapshot/media backups, restore commands/runbook, account/package setup, restart/upgrade guidance, off-host backup guidance, disposable rehearsal, offline static/media operation, Compose persistence/permissions, expected load, and actual-device LAN/VPN rehearsal where available.
 
 Gate:
-- fresh deployment and full-game rehearsal;
-- restart during supported modes;
+- fresh deployment/full-game rehearsal and restart in supported modes;
 - consistent backup/restore preserving state/receipts/audit/media;
 - all applicable automated checks green;
 - operator-readable runbook;
-- event readiness requires validated final package, physical/media components, and device rehearsal.
+- final package/physical-media/device rehearsal completed before claiming event readiness.
 
-Prompt:
-
-```text
-@architect Implement only phase 9. Use one bounded deployment/recovery contract. Delegate backup/restore consistency, permissions and snapshot/database guarantees to @persistence_security. Involve @game_engine only for a confirmed domain defect. After integration invoke @test_invariants once for independent restore/isolation/browser/full-game rehearsal coverage. Use disposable runtime data for destructive checks and CI for the automated full gate. Record unavailable home-server/device checks honestly. Do not claim event readiness without final content and real-device rehearsal.
-```
+Stage packets:
+- **A — architect:** settle backup consistency boundary, snapshot/media set, restore/rehearsal scope, ownership, unavailable real-device checks and remaining device/UI acceptance.
+- **B — game_engine (normally skipped):** only for a concrete domain defect found by rehearsal; otherwise report intentionally skipped.
+- **C — persistence_security:** implement backup/restore consistency, permissions, database/snapshot/media guarantees and focused recovery tests/runbook support using disposable data.
+- **D — integrator:** implement deployment/runbook/account/package setup, Compose/static/media/operator guidance, disposable rehearsal tooling and measurable readiness checks; record unavailable real-device checks honestly.
+- **E — ui_experience:** review/fix presentation/interaction defects on representative phone/tablet/TV sizes and confirm bundled/offline Christmas assets; record unavailable hardware checks honestly.
+- **F — test_invariants:** review restore consistency, isolation, restart behavior, requirements/UI gaps and rehearsal evidence; add only concrete missing automated cases.
 
 ## Deferred decisions
 
-First check whether authoritative rules already settle these. Record the architect's conclusion/source. Ask the user only for unresolved product choices.
+Check authority and `docs/product-decisions.md` first. Ask the user only for unresolved choices:
+- Phase 6: Challenge-loss Freeze/Reverse interaction if authority does not settle it.
+- Phase 8: exact earlier-puzzle/finished-team/global correction and forced-Challenge behavior.
+- Phase 7/9: only richer final-event media/operator behavior beyond the settled Phase-4 TV Music/current-audio contract.
 
-| Before | Decision / constraint |
-| --- | --- |
-| Phase 7 public view | Music scores/current shared Music fields are already settled in phase 4. Approve any additional public Advent progression fields before exposing them. |
-| Phase 7 audio | Phase 4 settled central TV Music playback and current-question audio isolation. Settle any richer final-event media/operator workflow before adding it. |
-| Phase 6 Challenge | Confirm Challenge-loss Freeze/Reverse interaction if authoritative material does not settle it. |
-| Phase 8 emergency | Define earlier-puzzle repair, finished-team/global first-finisher correction, progression resets, forced Challenge resolution, and operations during interruptions. |
+Already settled include immediate Skip, generic Hint inventory, `completed` status, Freeze privacy, two-team global finish, Reset vs restart, Phase-4 Music timing/audio semantics, coarse public Advent progression, and UI/polling requirements.
 
-Already settled: Skip is immediate, Hint tokens are generic inventory, puzzle status is `completed`, Freeze hides underlying puzzle/hint content, global `FINISHED` waits for both teams, Reset is distinct from restart, and phase-4 Music pause/timing/public-score/audio policies are recorded in `docs/phase-4-contract.md`.
+## Resume unfinished work
 
-## Validation workflow
-
-Use disposable runtime/test data. Never mutate a live event runtime to validate a phase.
-
-During implementation, run focused tests/checks only for the changed behavior. Rebuild application/test images when code/tests change. GitHub Actions is the authoritative clean-environment full gate for the PR and should run the complete test suite, lint, Django checks, and migration drift checks.
-
-Do not spend specialist reasoning on rerunning an unchanged green full suite. When CI fails, inspect only the failing evidence, route it to the responsible owner, fix narrowly, run focused local verification, and let CI rerun.
-
-Runtime/device-specific gates that CI cannot prove must still be executed at the phase that requires them or recorded honestly as unrun.
-
-## Resume prompt for an unfinished phase
-
-```text
-@architect Resume only the unfinished phase recorded in implementation_plan.md. Read the latest phase contract/handoff, current diff/worktree, and validation/CI evidence first. Preserve completed work. Reuse @game_engine or @persistence_security only for concrete remaining owned tasks; do not reacquire all specialists by default. Invoke @test_invariants after integration only for remaining adversarial coverage. Finish the current phase gate, update docs/status, and stop. Do not restart completed work or begin the next phase.
-```
+Do not restart a phase. Inspect its latest contract/handoff/diff/CI evidence, identify exactly one unfinished stage and run only that stage with the generic invocation above.
 
 ## Progress summary
 
-| Phase | Status | Evidence |
-| --- | --- | --- |
-| 1 | Complete | 2026-09-22; authenticated persisted vertical slice, immutable snapshots/private media, atomic completion, isolation/concurrency/recovery and browser polling coverage green. See `docs/contracts-first-slice.md` and Git history. |
-| 2 | Complete | 2026-09-22; admin controls, Hint/Skip, canonical completion, atomic spending/reset/stale-request coverage green. Historical lifecycle details in `docs/phase-2-contract.md`; Reset lifecycle superseded by phase 3.1. |
-| 3 | Complete | 2026-09-23; persisted gameplay clock, Freeze, Uno Reverse, protected reads, restart/pause/race/browser coverage green. See `docs/phase-3-contract.md`. |
-| 3.1 | Complete | 2026-09-23; no-run READY, archival Reset, package selection/fresh snapshots, legacy READY migration, restart/snapshot/race/browser coverage green. See `docs/phase-3.1-contract.md`. |
-| 4 | Complete | 2026-09-24; atomic puzzle-13 Music trigger, schema-v4 snapshot data, 11-question scoring/rewards, pause/recovery/final-results timing, team/admin/TV synchronization and audio isolation implemented. Independent rollback/idempotency/lifecycle/snapshot/full-journey invariants, deterministic A-first/B-first SQLite races, browser coverage, Ruff, Django checks, migration drift, and the complete 177-test GitHub Actions suite are green. See `docs/phase-4-contract.md` and PR #6. |
-| 5 | Not started | 25-puzzle progression and two-team finish. |
-| 6 | Not started | Challenge normal gameplay. |
-| 7 | Not started | Usable team/admin/TV UI and package authoring. |
-| 8 | Not started | Explicit emergency recovery controls. |
-| 9 | Not started | Backup/restore, deployment rehearsal, event readiness. |
+| Phase | Status |
+| --- | --- |
+| 1 | Complete — authenticated persisted slice, snapshots/private media, atomic completion, isolation/concurrency/recovery/browser coverage. |
+| 2 | Complete — admin controls, Hint/Skip, canonical completion, atomic spending/reset/stale handling. |
+| 3 | Complete — gameplay clock, Freeze, Uno Reverse, protected reads, restart/pause/race/browser coverage. |
+| 3.1 | Complete — READY lifecycle, archival Reset, package selection/snapshots, legacy migration, recovery/browser coverage. |
+| 4 | Complete — Music trigger/questions/rewards/timing/recovery/team-admin-TV synchronization/audio isolation; full Phase-4 validation and CI green. |
+| 5 | Not started — 25-puzzle progression/two-team finish + Advent/public progression + inherited UI debt. |
+| 6 | Not started — Challenge gameplay + Challenge/Sabotage UI. |
+| 7 | Not started — UI consolidation + media/package authoring. |
+| 8 | Not started — emergency recovery controls + intentional admin UX. |
+| 9 | Not started — backup/restore/deployment/device rehearsal/event readiness. |
