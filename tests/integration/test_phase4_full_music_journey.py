@@ -46,7 +46,7 @@ class PhaseFourFullMusicJourneyTests(TransactionTestCase):
                 AdminPuzzle(str(uuid4()), self.run_id, "a", f"a-{number}"),
             )
 
-    def test_all_eleven_questions_advance_once_and_accumulate_exact_scores_rewards(self):
+    def test_all_eleven_questions_advance_once_and_accumulate_exact_rewards(self):
         answers = (
             "jingle bells",
             "silent night",
