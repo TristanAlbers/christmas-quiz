@@ -62,4 +62,7 @@ class AdventCalendarPresentationTests(SimpleTestCase):
         self.assertIn(".advent-door__chocolate", stylesheet)
         self.assertIn(".advent-progress__title", stylesheet)
         self.assertIn('"Segoe Script"', stylesheet)
+        self.assertIn("#c13b45", stylesheet)
+        self.assertIn("#267055", stylesheet)
+        self.assertIn("#d6a133", stylesheet)
         self.assertIn("@media (prefers-reduced-motion: reduce)", stylesheet)
