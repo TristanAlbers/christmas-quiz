@@ -3,6 +3,18 @@
 .advent-progress {
   position: relative;
   margin: 1.7rem 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  overflow: visible;
+}
+
+.advent-progress::before,
+.advent-progress::after {
+  content: none;
 }
 
 .advent-team-heading {
@@ -287,6 +299,11 @@
   margin: 0;
   pointer-events: none;
   animation: advent-echo-fade 1.45s ease-out forwards;
+}
+
+.advent-progress--finished {
+  border: 0;
+  background: none;
 }
 
 .advent-progress--finished .advent-progress__board {
