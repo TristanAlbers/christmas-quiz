@@ -1,15 +1,14 @@
 # Christmas quiz implementation plan
 
-Status: phases 1–3.1 are complete and validated. Phase-4 integration is
-implemented as of 2026-09-24 and awaits its independent invariant pass and the
-unchanged GitHub Actions gate. Phases 5–9 remain plans. This file does not
-authorize a new phase by itself; never start the next phase automatically.
+Status: phases 1–4 are complete and validated as of 2026-09-24. Phases 5–9
+remain plans. This file does not authorize a new phase by itself; never start the
+next phase automatically.
 
-`USER.md` describes the currently usable product. Historical implementation detail for completed phases is recorded in `docs/contracts-first-slice.md`, `docs/phase-2-contract.md`, `docs/phase-3-contract.md`, `docs/phase-3.1-contract.md`, architecture documentation, and Git history. Future implementation sessions should not reread completed-phase handoffs unless the current phase depends on a specific historical contract or a failure makes that evidence relevant.
+`USER.md` describes the currently usable product. Historical implementation detail for completed phases is recorded in `docs/contracts-first-slice.md`, `docs/phase-2-contract.md`, `docs/phase-3-contract.md`, `docs/phase-3.1-contract.md`, `docs/phase-4-contract.md`, architecture documentation, and Git history. Future implementation sessions should not reread completed-phase handoffs unless the current phase depends on a specific historical contract or a failure makes that evidence relevant.
 
 ## Current baseline
 
-The repository has working phases 1–3.1 plus integrated phase-4 Music behavior:
+The repository has working and validated phases 1–4:
 
 - synchronous Django/Gunicorn WSGI, Django templates, local HTMX, WhiteNoise, Compose, SQLite;
 - two isolated team logins and two named administrators;
@@ -53,7 +52,7 @@ For every phase:
 - keep demonstration content clearly labeled;
 - stop at the named phase gate.
 
-## Phase 4 — puzzle-13 Music Quiz interruption
+## Phase 4 — puzzle-13 Music Quiz interruption (complete)
 
 Prerequisite: phase 3.1 green. Before dependent implementation, settle the Music pause/resume and final-result-display timing contracts. Extend development data through puzzle 13 with 11 Music questions.
 
@@ -200,13 +199,12 @@ First check whether authoritative rules already settle these. Record the archite
 
 | Before | Decision / constraint |
 | --- | --- |
-| Phase 4 Music | Supporting states permit pausing Music, while the normative diagram is not explicit. Settle whether Music can pause, what resumes, and whether final-score display duration stops during pause/downtime. Keep this timer distinct from suspended Advent gameplay timers. |
-| Phase 4/7 public view | Progression/points/effects are private unless explicitly approved. Music scores and first-finisher announcement have explicit sharing rules. Approve any additional public Advent fields before exposing them. |
-| Phase 4/7 audio | Choose central vs device playback workflow and define shared audio access separately from private puzzle media. |
+| Phase 7 public view | Music scores/current shared Music fields are already settled in phase 4. Approve any additional public Advent progression fields before exposing them. |
+| Phase 7 audio | Phase 4 settled central TV Music playback and current-question audio isolation. Settle any richer final-event media/operator workflow before adding it. |
 | Phase 6 Challenge | Confirm Challenge-loss Freeze/Reverse interaction if authoritative material does not settle it. |
 | Phase 8 emergency | Define earlier-puzzle repair, finished-team/global first-finisher correction, progression resets, forced Challenge resolution, and operations during interruptions. |
 
-Already settled: Skip is immediate, Hint tokens are generic inventory, puzzle status is `completed`, Freeze hides underlying puzzle/hint content, global `FINISHED` waits for both teams, and Reset is distinct from restart.
+Already settled: Skip is immediate, Hint tokens are generic inventory, puzzle status is `completed`, Freeze hides underlying puzzle/hint content, global `FINISHED` waits for both teams, Reset is distinct from restart, and phase-4 Music pause/timing/public-score/audio policies are recorded in `docs/phase-4-contract.md`.
 
 ## Validation workflow
 
@@ -232,7 +230,7 @@ Runtime/device-specific gates that CI cannot prove must still be executed at the
 | 2 | Complete | 2026-09-22; admin controls, Hint/Skip, canonical completion, atomic spending/reset/stale-request coverage green. Historical lifecycle details in `docs/phase-2-contract.md`; Reset lifecycle superseded by phase 3.1. |
 | 3 | Complete | 2026-09-23; persisted gameplay clock, Freeze, Uno Reverse, protected reads, restart/pause/race/browser coverage green. See `docs/phase-3-contract.md`. |
 | 3.1 | Complete | 2026-09-23; no-run READY, archival Reset, package selection/fresh snapshots, legacy READY migration, restart/snapshot/race/browser coverage green. See `docs/phase-3.1-contract.md`. |
-| 4 | Integrated; verification pending | 2026-09-24; contract, domain, schema/migration, atomic trigger/winner path, recovery, team/admin/TV polling and 13-puzzle/11-question demo implemented. Focused domain/storage/security/application/browser and deterministic A-first/B-first SQLite evidence green; independent invariant pass and unchanged CI gate pending. See `docs/phase-4-contract.md`. |
+| 4 | Complete | 2026-09-24; atomic puzzle-13 Music trigger, schema-v4 snapshot data, 11-question scoring/rewards, pause/recovery/final-results timing, team/admin/TV synchronization and audio isolation implemented. Independent rollback/idempotency/lifecycle/snapshot/full-journey invariants, deterministic A-first/B-first SQLite races, browser coverage, Ruff, Django checks, migration drift, and the complete 177-test GitHub Actions suite are green. See `docs/phase-4-contract.md` and PR #6. |
 | 5 | Not started | 25-puzzle progression and two-team finish. |
 | 6 | Not started | Challenge normal gameplay. |
 | 7 | Not started | Usable team/admin/TV UI and package authoring. |
