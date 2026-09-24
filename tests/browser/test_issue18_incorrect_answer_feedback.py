@@ -68,12 +68,10 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                 try:
                     await page.evaluate(
                         """window.__wrongAnswerEffects = 0;
-                        document.body.addEventListener('htmx:oobAfterSwap', event => {
+                        document.addEventListener('animationstart', event => {
                           if (
-                            event.detail.target.id === 'incorrect-answer-effect' &&
-                            event.detail.target.classList.contains(
-                              'incorrect-answer-effect--active'
-                            )
+                            event.target.id === 'incorrect-answer-effect' &&
+                            event.animationName === 'incorrect-answer-overlay'
                           ) {
                             window.__wrongAnswerEffects += 1;
                           }
@@ -85,12 +83,10 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     await page.locator(
                         "#incorrect-answer-effect.incorrect-answer-effect--active"
                     ).wait_for()
+                    await page.wait_for_function("window.__wrongAnswerEffects === 1")
                     self.assertIn(
                         "Incorrect answer. Try again.",
                         await page.locator("#action-feedback").inner_text(),
-                    )
-                    self.assertEqual(
-                        await page.evaluate("window.__wrongAnswerEffects"), 1
                     )
                     self.assertEqual(await page.locator("#answer-input").count(), 1)
                     self.assertTrue(await page.locator("#answer-input").is_enabled())
