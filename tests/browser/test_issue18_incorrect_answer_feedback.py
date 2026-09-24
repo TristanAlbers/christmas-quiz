@@ -68,18 +68,16 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                 try:
                     await page.evaluate(
                         """window.__wrongAnswerEffects = 0;
-                        new MutationObserver(records => {
-                          for (const record of records) {
-                            for (const node of record.addedNodes) {
-                              if (
-                                node.id === 'incorrect-answer-effect' &&
-                                node.classList?.contains('incorrect-answer-effect--active')
-                              ) {
-                                window.__wrongAnswerEffects += 1;
-                              }
-                            }
+                        document.body.addEventListener('htmx:oobAfterSwap', event => {
+                          if (
+                            event.detail.target.id === 'incorrect-answer-effect' &&
+                            event.detail.target.classList.contains(
+                              'incorrect-answer-effect--active'
+                            )
+                          ) {
+                            window.__wrongAnswerEffects += 1;
                           }
-                        }).observe(document.body, {childList: true, subtree: true});"""
+                        });"""
                     )
 
                     await page.locator("#answer-input").fill("green")
