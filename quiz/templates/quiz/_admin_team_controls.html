@@ -3,6 +3,7 @@
   {% if control %}
     <section class="action-card" aria-label="Controls for Team {{ control.team.team_id|upper }}">
       <h2>Team {{ control.team.team_id|upper }} controls</h2>
+      {% if not music %}
       {% if global_state == 'ADVENT_QUIZ' or global_state == 'PAUSED' %}
         <div class="control-stack">
           <form method="post" action="{% url 'admin_action' 'points' %}"
@@ -37,6 +38,7 @@
             </form>
           {% endif %}
         </div>
+      {% endif %}
       {% endif %}
 
       {% if global_state == 'ADVENT_QUIZ' and control.team.activity_state == 'PUZZLE' and control.team.current_question_id %}

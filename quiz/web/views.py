@@ -12,6 +12,7 @@ from quiz.application import (
     force_complete_current,
     freeze_opponent,
     get_admin_state,
+    get_public_state,
     get_team_state,
     pause_game,
     provide_hint,
@@ -22,6 +23,7 @@ from quiz.application import (
     skip_current,
     start_game,
     submit_answer,
+    submit_music_answer,
     use_hint,
 )
 from quiz.auth import actor_for_user
@@ -33,6 +35,7 @@ from quiz.contracts import (
     RunCommand,
     StartGame,
     SubmitAnswer,
+    SubmitMusicAnswer,
     TeamPuzzle,
 )
 
@@ -60,6 +63,7 @@ def _error(exc):
 def _question_context(state):
     question_id = state.question.id if state.question else ""
     hint_revealed = "1" if state.question and state.question.hint is not None else "0"
+    music = state.music
     return ":".join(
         (
             state.run_id or "",
@@ -67,6 +71,9 @@ def _question_context(state):
             state.team_state,
             question_id,
             hint_revealed,
+            music.phase if music else "",
+            music.question_id or "" if music else "",
+            str(music.question_number or "") if music else "",
         )
     )
 
@@ -78,6 +85,7 @@ def _team_actions_context(state):
             state.global_state,
             state.team_state,
             "1" if state.uno_reverse_active else "0",
+            state.music.phase if state.music else "",
         )
     )
 
@@ -103,17 +111,21 @@ def _team_context(
         "skip_request_id": str(uuid.uuid4()),
         "freeze_request_id": str(uuid.uuid4()),
         "reverse_request_id": str(uuid.uuid4()),
+        "music_request_id": str(uuid.uuid4()),
     }
 
 
 def _admin_global_context(state):
-    return ":".join((state.run_id or "", state.global_state))
+    music_phase = state.music.phase if state.music else ""
+    music_question = str(state.music.question_number or "") if state.music else ""
+    return ":".join(
+        (state.run_id or "", state.global_state, music_phase, music_question)
+    )
 
 
 def _admin_package_context(state):
     package_context = ",".join(
-        f"{item.package_id}:{'1' if item.startable else '0'}"
-        for item in state.packages
+        f"{item.package_id}:{'1' if item.startable else '0'}" for item in state.packages
     )
     mode = "READY" if state.global_state == "READY" else "ACTIVE"
     return "|".join((mode, package_context))
@@ -154,10 +166,7 @@ def _admin_context(
         }
         for team in state.teams
     ]
-    controls_by_team = {
-        control["team"].team_id: control
-        for control in team_controls
-    }
+    controls_by_team = {control["team"].team_id: control for control in team_controls}
     return {
         "global_state": state.global_state,
         "run_id": state.run_id,
@@ -165,6 +174,7 @@ def _admin_context(
         "teams": state.teams,
         "packages": state.packages,
         "discovery_error": state.discovery_error,
+        "music": state.music,
         "has_startable_packages": any(item.startable for item in state.packages),
         "global_context": _admin_global_context(state),
         "package_context": _admin_package_context(state),
@@ -181,6 +191,25 @@ def _admin_context(
         "team_controls": team_controls,
         "team_a_control": controls_by_team.get("a"),
         "team_b_control": controls_by_team.get("b"),
+    }
+
+
+def _public_audio_context(state):
+    music = state.music
+    return ":".join(
+        (
+            state.global_state,
+            str(music.question_number or "") if music else "",
+            music.audio_url or "" if music else "",
+        )
+    )
+
+
+def _public_context(state, *, replace_audio=False):
+    return {
+        "state": state,
+        "audio_context": _public_audio_context(state),
+        "replace_audio": replace_audio,
     }
 
 
@@ -222,9 +251,7 @@ def team_state(request):
     except ApplicationError as exc:
         return _error(exc)
     replace_pane = request.GET.get("view_context") != _question_context(state)
-    replace_actions = (
-        request.GET.get("actions_context") != _team_actions_context(state)
-    )
+    replace_actions = request.GET.get("actions_context") != _team_actions_context(state)
     return render(
         request,
         "quiz/_team_state.html",
@@ -272,6 +299,68 @@ def team_answer(request):
 
 
 @never_cache
+@require_POST
+def team_music_answer(request):
+    try:
+        actor = actor_for_user(request.user)
+        result = submit_music_answer(
+            actor,
+            SubmitMusicAnswer(
+                request_id=request.POST.get("request_id", ""),
+                run_id=request.POST.get("run_id", ""),
+                question_id=request.POST.get("question_id", ""),
+                answer=request.POST.get("answer", ""),
+            ),
+        )
+    except ApplicationError as exc:
+        return _error(exc)
+    if not request.headers.get("HX-Request"):
+        return redirect("team")
+    feedback = (
+        "Correct. Your team won this Music question."
+        if result.outcome == "won"
+        else "Incorrect. Keep trying."
+    )
+    return render(
+        request,
+        "quiz/_team_state.html",
+        _team_context(
+            result.state,
+            feedback=feedback,
+            replace_pane=True,
+            replace_actions=True,
+        ),
+    )
+
+
+@never_cache
+@require_GET
+def overview(request):
+    state = get_public_state()
+    return render(
+        request,
+        "quiz/overview.html",
+        _public_context(state),
+    )
+
+
+@never_cache
+@require_GET
+def overview_state(request):
+    state = get_public_state()
+    return render(
+        request,
+        "quiz/_public_state.html",
+        _public_context(
+            state,
+            replace_audio=(
+                request.GET.get("audio_context") != _public_audio_context(state)
+            ),
+        ),
+    )
+
+
+@never_cache
 @require_GET
 def admin_game(request):
     try:
@@ -298,20 +387,16 @@ def admin_state(request):
         _admin_context(
             state,
             replace_package_controls=(
-                request.GET.get("package_context")
-                != _admin_package_context(state)
+                request.GET.get("package_context") != _admin_package_context(state)
             ),
             replace_global_controls=(
-                request.GET.get("global_context")
-                != _admin_global_context(state)
+                request.GET.get("global_context") != _admin_global_context(state)
             ),
             replace_team_a_controls=(
-                request.GET.get("team_a_context")
-                != _admin_team_context(state, "a")
+                request.GET.get("team_a_context") != _admin_team_context(state, "a")
             ),
             replace_team_b_controls=(
-                request.GET.get("team_b_context")
-                != _admin_team_context(state, "b")
+                request.GET.get("team_b_context") != _admin_team_context(state, "b")
             ),
         ),
     )
@@ -346,13 +431,15 @@ def team_action(request, action):
         if action == "purchase-hint":
             result = purchase_hint(actor, RunCommand(**base))
         elif action == "use-hint":
-            result = use_hint(actor, TeamPuzzle(
-                **base, question_id=request.POST.get("question_id", "")
-            ))
+            result = use_hint(
+                actor,
+                TeamPuzzle(**base, question_id=request.POST.get("question_id", "")),
+            )
         elif action == "skip":
-            result = skip_current(actor, TeamPuzzle(
-                **base, question_id=request.POST.get("question_id", "")
-            ))
+            result = skip_current(
+                actor,
+                TeamPuzzle(**base, question_id=request.POST.get("question_id", "")),
+            )
         elif action == "freeze":
             result = freeze_opponent(actor, RunCommand(**base))
         elif action == "purchase-reverse":
@@ -412,9 +499,14 @@ def admin_action(request, action):
                 delta = int(request.POST.get("delta", ""))
             except (TypeError, ValueError) as exc:
                 raise ApplicationError("invalid_input") from exc
-            adjust_points(actor, AdminPoints(
-                **base, team_id=team_id, delta=delta,
-            ))
+            adjust_points(
+                actor,
+                AdminPoints(
+                    **base,
+                    team_id=team_id,
+                    delta=delta,
+                ),
+            )
         elif action in ("force-complete", "provide-hint"):
             command = AdminPuzzle(
                 **base,
@@ -438,12 +530,13 @@ def admin_action(request, action):
     if not request.headers.get("HX-Request"):
         return redirect("admin_game")
 
-    global_change = action in ("pause", "resume", "reset")
+    state = get_admin_state(actor)
+    global_change = action in ("pause", "resume", "reset") or bool(state.music)
     return render(
         request,
         "quiz/_admin_state.html",
         _admin_context(
-            get_admin_state(actor),
+            state,
             replace_package_controls=action == "reset",
             replace_global_controls=global_change,
             replace_team_a_controls=global_change or team_id == "a",

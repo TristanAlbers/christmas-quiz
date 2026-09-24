@@ -6,6 +6,25 @@
   {% if run_id %}<p class="muted">Run {{ run_id }}</p>{% endif %}
 </div>
 
+{% if music %}
+  <section class="music-status" aria-label="Music Quiz status">
+    <p class="eyebrow">Music Quiz</p>
+    {% if music.phase == 'question' %}
+      <h2>Question {{ music.question_number }} of {{ music.question_total }}</h2>
+      <p>{{ music.title }} — {{ music.body }}</p>
+      <p class="music-timer">{% widthratio music.question_elapsed_ms 1000 1 %} seconds</p>
+    {% else %}
+      <h2>Final Music scores</h2>
+      <p>Advent resumes in {% widthratio music.final_results_remaining_ms 1000 1 %} seconds.</p>
+    {% endif %}
+    <div class="music-scores">
+      {% for score in music.scores %}
+        <strong>Team {{ score.team_id|upper }}: {{ score.score }}</strong>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
 {% if global_state == 'READY' %}
   {% if discovery_error %}
     <p role="alert">Package discovery failed: {{ discovery_error }}</p>

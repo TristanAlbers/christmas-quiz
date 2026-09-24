@@ -1,6 +1,30 @@
 <div id="question-pane" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
   <input id="view-context" type="hidden" name="view_context" value="{{ view_context }}">
-  {% if state.question %}
+  {% if state.music %}
+    {% if state.music.phase == 'question' %}
+      <h2>{{ state.music.title }}</h2>
+      <p>{{ state.music.body }}</p>
+      {% if state.global_state == 'MUSIC_QUIZ' %}
+        <form method="post" action="{% url 'team_music_answer' %}"
+              hx-post="{% url 'team_music_answer' %}" hx-trigger="submit"
+              hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+              hx-target="#game-status" hx-swap="innerHTML">
+          {% csrf_token %}
+          <input type="hidden" name="run_id" value="{{ state.run_id }}">
+          <input type="hidden" name="question_id" value="{{ state.music.question_id }}">
+          <input type="hidden" name="request_id" value="{{ music_request_id }}">
+          <label for="music-answer-input">Song answer</label>
+          <input id="music-answer-input" name="answer" autocomplete="off" required>
+          <button type="submit">Submit Music answer</button>
+        </form>
+      {% else %}
+        <p>The Music Quiz is paused. Your answer field will return on resume.</p>
+      {% endif %}
+    {% else %}
+      <h2>Music Quiz complete</h2>
+      <p>Final scores are on screen. Advent resumes automatically.</p>
+    {% endif %}
+  {% elif state.question %}
     <h2>{{ state.question.title }}</h2>
     <p>{{ state.question.body }}</p>
     {% for media_url in state.question.media_urls %}

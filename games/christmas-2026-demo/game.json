@@ -1,63 +1,60 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "package_id": "christmas-2026-demo",
   "initial_points": 3,
   "hint_cost": 1,
   "skip_cost": 2,
   "freeze_cost": 3,
   "uno_reverse_cost": 2,
+  "music_question_reward": 2,
+  "music_score_display_duration_ms": 60000,
   "teams": {
     "a": {
       "puzzles": [
-        {
-          "id": "a-1",
-          "number": 1,
-          "title": "Demo A1: North star",
-          "body": "Enter the colour of the star in your private image.",
-          "validator": {"type": "text_exact", "answer": "red"},
-          "reward_points": 4,
-          "hint": "The colour starts with R.",
-          "fragment": "DEMO-A-STAR",
-          "media": ["a/star.png"]
-        },
-        {
-          "id": "a-2",
-          "number": 2,
-          "title": "Demo A2: Count the bells",
-          "body": "How many bells are in the demo clue?",
-          "validator": {"type": "number_exact", "answer": "3"},
-          "reward_points": 2,
-          "hint": "One more than two.",
-          "fragment": "DEMO-A-BELLS",
-          "media": []
-        }
+        {"id": "a-1", "number": 1, "title": "Demo A1: North star", "body": "Enter the colour of the star in your private image.", "validator": {"type": "text_exact", "answer": "red"}, "reward_points": 4, "hint": "The colour starts with R.", "fragment": "DEMO-A-STAR", "media": ["a/star.png"]},
+        {"id": "a-2", "number": 2, "title": "Demo A2: Count the bells", "body": "How many bells are in the demo clue?", "validator": {"type": "number_exact", "answer": "3"}, "reward_points": 2, "hint": "One more than two.", "fragment": "DEMO-A-BELLS", "media": []},
+        {"id": "a-3", "number": 3, "title": "Demo A3: Snow", "body": "Type snow.", "validator": {"type": "text_exact", "answer": "snow"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-4", "number": 4, "title": "Demo A4: Four", "body": "Enter 4.", "validator": {"type": "number_exact", "answer": "4"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-5", "number": 5, "title": "Demo A5: Holly", "body": "Type holly.", "validator": {"type": "text_exact", "answer": "holly"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-6", "number": 6, "title": "Demo A6: Six", "body": "Enter 6.", "validator": {"type": "number_exact", "answer": "6"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-7", "number": 7, "title": "Demo A7: Sleigh", "body": "Type sleigh.", "validator": {"type": "text_exact", "answer": "sleigh"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-8", "number": 8, "title": "Demo A8: Eight", "body": "Enter 8.", "validator": {"type": "number_exact", "answer": "8"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-9", "number": 9, "title": "Demo A9: Tinsel", "body": "Type tinsel.", "validator": {"type": "text_exact", "answer": "tinsel"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-10", "number": 10, "title": "Demo A10: Ten", "body": "Enter 10.", "validator": {"type": "number_exact", "answer": "10"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-11", "number": 11, "title": "Demo A11: Mistletoe", "body": "Type mistletoe.", "validator": {"type": "text_exact", "answer": "mistletoe"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-12", "number": 12, "title": "Demo A12: Twelve", "body": "Enter 12.", "validator": {"type": "number_exact", "answer": "12"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-13", "number": 13, "title": "Demo A13: Music time", "body": "Type music to start the shared Music Quiz.", "validator": {"type": "text_exact", "answer": "music"}, "reward_points": 3, "hint": "This event is all about songs.", "fragment": "DEMO-A-MUSIC", "media": []}
       ]
     },
     "b": {
       "puzzles": [
-        {
-          "id": "b-1",
-          "number": 1,
-          "title": "Demo B1: Winter sky",
-          "body": "Enter the colour in your private image.",
-          "validator": {"type": "text_exact", "answer": "blue"},
-          "reward_points": 4,
-          "hint": "The colour starts with B.",
-          "fragment": "DEMO-B-SKY",
-          "media": ["b/sky.png"]
-        },
-        {
-          "id": "b-2",
-          "number": 2,
-          "title": "Demo B2: Count the candles",
-          "body": "How many candles are in the demo clue?",
-          "validator": {"type": "number_exact", "answer": "7"},
-          "reward_points": 2,
-          "hint": "A lucky number.",
-          "fragment": "DEMO-B-CANDLES",
-          "media": []
-        }
+        {"id": "b-1", "number": 1, "title": "Demo B1: Winter sky", "body": "Enter the colour in your private image.", "validator": {"type": "text_exact", "answer": "blue"}, "reward_points": 4, "hint": "The colour starts with B.", "fragment": "DEMO-B-SKY", "media": ["b/sky.png"]},
+        {"id": "b-2", "number": 2, "title": "Demo B2: Count the candles", "body": "How many candles are in the demo clue?", "validator": {"type": "number_exact", "answer": "7"}, "reward_points": 2, "hint": "A lucky number.", "fragment": "DEMO-B-CANDLES", "media": []},
+        {"id": "b-3", "number": 3, "title": "Demo B3: Frost", "body": "Type frost.", "validator": {"type": "text_exact", "answer": "frost"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-4", "number": 4, "title": "Demo B4: Four", "body": "Enter 4.", "validator": {"type": "number_exact", "answer": "4"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-5", "number": 5, "title": "Demo B5: Ivy", "body": "Type ivy.", "validator": {"type": "text_exact", "answer": "ivy"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-6", "number": 6, "title": "Demo B6: Six", "body": "Enter 6.", "validator": {"type": "number_exact", "answer": "6"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-7", "number": 7, "title": "Demo B7: Reindeer", "body": "Type reindeer.", "validator": {"type": "text_exact", "answer": "reindeer"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-8", "number": 8, "title": "Demo B8: Eight", "body": "Enter 8.", "validator": {"type": "number_exact", "answer": "8"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-9", "number": 9, "title": "Demo B9: Garland", "body": "Type garland.", "validator": {"type": "text_exact", "answer": "garland"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-10", "number": 10, "title": "Demo B10: Ten", "body": "Enter 10.", "validator": {"type": "number_exact", "answer": "10"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-11", "number": 11, "title": "Demo B11: Stocking", "body": "Type stocking.", "validator": {"type": "text_exact", "answer": "stocking"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-12", "number": 12, "title": "Demo B12: Twelve", "body": "Enter 12.", "validator": {"type": "number_exact", "answer": "12"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-13", "number": 13, "title": "Demo B13: Music time", "body": "Type songs to start the shared Music Quiz.", "validator": {"type": "text_exact", "answer": "songs"}, "reward_points": 3, "hint": "A collection of tunes.", "fragment": "DEMO-B-MUSIC", "media": []}
       ]
     }
-  }
+  },
+  "music_questions": [
+    {"id": "music-1", "number": 1, "title": "Music 1", "body": "Identify demo song 1.", "validator": {"type": "text_exact", "answer": "jingle bells"}, "audio": null},
+    {"id": "music-2", "number": 2, "title": "Music 2", "body": "Identify demo song 2.", "validator": {"type": "text_exact", "answer": "silent night"}, "audio": null},
+    {"id": "music-3", "number": 3, "title": "Music 3", "body": "Identify demo song 3.", "validator": {"type": "text_exact", "answer": "white christmas"}, "audio": null},
+    {"id": "music-4", "number": 4, "title": "Music 4", "body": "Identify demo song 4.", "validator": {"type": "text_exact", "answer": "feliz navidad"}, "audio": null},
+    {"id": "music-5", "number": 5, "title": "Music 5", "body": "Identify demo song 5.", "validator": {"type": "text_exact", "answer": "last christmas"}, "audio": null},
+    {"id": "music-6", "number": 6, "title": "Music 6", "body": "Identify demo song 6.", "validator": {"type": "text_exact", "answer": "santa baby"}, "audio": null},
+    {"id": "music-7", "number": 7, "title": "Music 7", "body": "Identify demo song 7.", "validator": {"type": "text_exact", "answer": "winter wonderland"}, "audio": null},
+    {"id": "music-8", "number": 8, "title": "Music 8", "body": "Identify demo song 8.", "validator": {"type": "text_exact", "answer": "let it snow"}, "audio": null},
+    {"id": "music-9", "number": 9, "title": "Music 9", "body": "Identify demo song 9.", "validator": {"type": "text_exact", "answer": "the christmas song"}, "audio": null},
+    {"id": "music-10", "number": 10, "title": "Music 10", "body": "Identify demo song 10.", "validator": {"type": "text_exact", "answer": "rudolph"}, "audio": null},
+    {"id": "music-11", "number": 11, "title": "Music 11", "body": "Identify demo song 11.", "validator": {"type": "text_exact", "answer": "deck the halls"}, "audio": null}
+  ]
 }

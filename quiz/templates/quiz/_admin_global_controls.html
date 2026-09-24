@@ -2,7 +2,7 @@
   <input class="poll-context" type="hidden" name="global_context" value="{{ global_context }}">
   {% if run_id %}
     <div class="toolbar" aria-label="Global game controls">
-      {% if global_state == 'ADVENT_QUIZ' %}
+      {% if global_state == 'ADVENT_QUIZ' or global_state == 'MUSIC_QUIZ' %}
         <form method="post" action="{% url 'admin_action' 'pause' %}"
               hx-post="{% url 'admin_action' 'pause' %}" hx-sync="#live-admin:replace"
               hx-disabled-elt="find button[type='submit']"

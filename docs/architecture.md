@@ -1,7 +1,8 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture; phases 1–3.1 implemented and validated.
-Phase 4 remains a separately authorized future phase.
+Status: approved architecture; phases 1–3.1 validated and phase-4 integration
+implemented. Independent phase-4 invariant review and the unchanged CI gate are
+still required before its final completion record.
 
 Phase 2 implementation decisions are recorded in
 [`phase-2-contract.md`](phase-2-contract.md): one durable Hint reveal per
@@ -20,6 +21,12 @@ active run, Reset deactivates the current run without creating a replacement,
 package discovery is read-only, and Start of an explicitly selected source
 package creates a fresh immutable snapshot and a new active run. Restart/recovery
 always resumes an existing active run and its pinned snapshot.
+
+Phase 4 Music decisions are recorded in
+[`phase-4-contract.md`](phase-4-contract.md): puzzle-13 completion atomically
+creates one durable interruption, Music has a clock separate from Advent,
+intentional Music pause stops its question/final-result timing, active Music
+downtime counts, and only Music scores/current shared content are public.
 
 This document records implementation choices. Game behavior remains governed by
 `christmas-2026-game-rules-state-semantics.md`, followed by `Design.md`, `Views.md`,
@@ -223,6 +230,11 @@ Phase-3 downtime semantics remain unchanged during recovery: persisted
 `ADVENT_QUIZ` downtime counts on the gameplay clock; persisted `PAUSED` downtime
 does not.
 
+Phase-4 recovery persists the active question, winners, separate scores, normal
+rewards, pause target, and Music clock. Active `MUSIC_QUIZ` downtime counts toward
+question/final-result elapsed time; a deliberate Music pause does not. Final
+result expiry logically anchors resumed Advent at the expiry instant.
+
 Legacy active `READY` shells created by the old phase-2/phase-3 Reset model must
 be retired through an explicit safe compatibility path during phase 3.1. The
 upgrade must not require deleting `quiz.sqlite3` or wiping the runtime directory.
@@ -244,14 +256,13 @@ reopened puzzle cannot award them twice. Enforce all earlier prerequisites on th
 backend. Global `FINISHED` requires both teams to complete puzzle 25; the first
 finisher becomes inactive while the other team continues.
 
-Initial application functions cover Start, Submit Answer, and authorized state
-queries. The architect defines their concrete Python contracts before parallel
-implementation. Commands carry the displayed run ID, question ID, and a request
-ID. Resolve the actor and team from the authenticated server session, never a
-client-supplied team ID. Repeated request IDs with the same command return the
-recorded outcome without repeating effects; reuse with a different payload is
-rejected. Preserve IDs when retrying an uncertain request, and issue a new ID for
-a new answer attempt.
+Application functions cover lifecycle/admin actions, Advent and Music answers,
+and authorized team/admin/public projections. Commands carry the displayed run
+ID, question ID where applicable, and a request ID. Resolve the actor and team
+from the authenticated server session, never a client-supplied team ID. Repeated
+request IDs with the same command return the recorded outcome without repeating
+effects; reuse with a different payload is rejected. Preserve IDs when retrying
+an uncertain request, and issue a new ID for a new answer attempt.
 
 Start is the exception to run-scoped commands because it occurs before a run
 exists. Its receipt/idempotency scope remains actor + request ID plus payload
@@ -296,6 +307,14 @@ transaction waits, then reads the committed state and rejects its old question.
 An invalid or rolled-back transaction wins nothing. This is database acceptance
 order, not client timestamps or a guarantee of network-arrival FIFO. The same
 atomicity principle governs completion, purchases, Starts, resets and other races.
+
+Correct answer, Skip, and admin force-completion reach puzzle 13 through the same
+completion transaction. That transaction creates the unique per-run `MusicQuiz`
+marker, stops Advent time, and initializes both Music scores. Music attempts,
+question winner, score, configured normal reward, next question, receipt and
+audit event commit together. Schema-v4 snapshots contain exactly 11 declarative
+Music questions and optional current-question audio; the TV route can resolve
+only the currently shareable audio from the pinned snapshot.
 
 ## Live views: 500 ms polling
 
@@ -398,6 +417,8 @@ Phase-3 timers use persisted, server-authoritative gameplay time and injected
 clocks for tests. Browser refresh/disconnect never changes game outcomes.
 Unexpected server-downtime accounting is settled in `phase-3-contract.md`:
 persisted active Advent downtime counts and paused downtime does not.
+The separate Music/final-results downtime and logical restoration rules are
+settled in `phase-4-contract.md`.
 
 Provide a consistent SQLite backup plus its referenced snapshots and a documented,
 tested restore procedure. Backups under `var/backups` survive container replacement
@@ -483,8 +504,8 @@ contracts and exact file ownership are in `docs/contracts-first-slice.md`.
 
 ## Decisions still deferred
 
-There is no known blocking rule ambiguity for the first slice. Do not implement
-Music Quiz, Challenge, or polished calendars before their planned milestones
+There is no known blocking phase-4 ambiguity. Do not implement Challenge,
+25-puzzle finish behavior, or polished calendars before their planned milestones
 without explicit reprioritization.
 
 - Public TV progression: normative section 15 treats progression as private and

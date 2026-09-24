@@ -1,0 +1,8 @@
+<div id="overview-audio"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <input class="poll-context" type="hidden" name="audio_context" value="{{ audio_context }}">
+  {% if state.music and state.music.audio_url %}
+    <audio class="music-audio" controls autoplay src="{{ state.music.audio_url }}">
+      Your browser does not support audio playback.
+    </audio>
+  {% endif %}
+</div>
