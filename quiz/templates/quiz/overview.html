@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
 </head>
-<body>
+<body class="game-page game-page--overview">
   <main class="app-shell app-shell-wide public-overview">
     <div id="live-overview" aria-label="Public game overview">
       <div id="overview-poller" hx-get="{% url 'overview_state' %}"

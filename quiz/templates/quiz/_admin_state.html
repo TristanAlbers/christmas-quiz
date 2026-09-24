@@ -4,7 +4,16 @@
     <strong class="state-badge state-{{ global_state|lower }}">{{ global_state }}</strong>
   </div>
   {% if run_id %}<p class="muted">Run {{ run_id }}</p>{% endif %}
+  {% if run_id %}<p class="game-clock">Playing time: <strong>{% widthratio gameplay_elapsed_ms 1000 1 %} seconds</strong></p>{% endif %}
 </div>
+
+{% if first_finisher_team_id %}
+  <aside class="finish-banner{% if global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
+    <p class="eyebrow">{% if global_state == 'FINISHED' %}Race complete{% else %}First finisher{% endif %}</p>
+    <h2>Team {{ first_finisher_team_id|upper }} finished first</h2>
+    <p>{% if global_state == 'FINISHED' %}Both teams completed all 25 doors.{% else %}The other team remains active.{% endif %}</p>
+  </aside>
+{% endif %}
 
 {% if music %}
   <section class="music-status" aria-label="Music Quiz status">
@@ -22,6 +31,7 @@
         <strong>Team {{ score.team_id|upper }}: {{ score.score }}</strong>
       {% endfor %}
     </div>
+    {% include 'quiz/_music_progress.html' with music=music %}
   </section>
 {% endif %}
 
@@ -56,12 +66,11 @@
           <h2>Team {{ control.team.team_id|upper }}</h2>
           <strong class="state-badge">{{ control.team.activity_state }}</strong>
         </div>
-        <p class="metric-row"><span>{{ control.team.points }} points</span><span>Puzzle {{ control.team.current_number }}</span></p>
-        <p>Hint tokens: {{ control.team.hint_tokens }} · Reverse: {% if control.team.uno_reverse_active %}active{% else %}inactive{% endif %}</p>
+        <div class="admin-team-metrics"><span>{{ control.team.points }} points</span><span><b class="hint-token" aria-hidden="true">?</b> {{ control.team.hint_tokens }} Hint token{{ control.team.hint_tokens|pluralize }}</span><span class="mini-reverse{% if control.team.uno_reverse_active %} mini-reverse--active{% endif %}">↶ Reverse {% if control.team.uno_reverse_active %}active{% else %}inactive{% endif %}</span></div>
+        {% if control.team.advent_progress %}{% include 'quiz/_advent_calendar.html' with progress=control.team.advent_progress %}{% endif %}
         {% if control.team.freeze_remaining_ms != None %}
           <p class="freeze-timer" data-remaining-ms="{{ control.team.freeze_remaining_ms }}">Freeze remaining: {% widthratio control.team.freeze_remaining_ms 1000 1 %} seconds</p>
         {% endif %}
-        {% if control.team.completed_numbers %}<p>Completed: {{ control.team.completed_numbers|join:', ' }}</p>{% endif %}
       </section>
     {% endfor %}
   </div>

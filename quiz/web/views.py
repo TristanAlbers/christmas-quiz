@@ -85,6 +85,7 @@ def _team_actions_context(state):
             state.global_state,
             state.team_state,
             "1" if state.uno_reverse_active else "0",
+            state.first_finisher_team_id or "",
             state.music.phase if state.music else "",
         )
     )
@@ -99,6 +100,9 @@ def _team_context(
 ):
     return {
         "state": state,
+        "advent_progress": state.advent_progress,
+        "first_finisher_team_id": state.first_finisher_team_id,
+        "gameplay_elapsed_ms": state.gameplay_elapsed_ms,
         "team_name": "A" if state.run_id is None else "",
         "feedback": feedback,
         "replace_pane": replace_pane,
@@ -175,6 +179,8 @@ def _admin_context(
         "packages": state.packages,
         "discovery_error": state.discovery_error,
         "music": state.music,
+        "first_finisher_team_id": state.first_finisher_team_id,
+        "gameplay_elapsed_ms": state.gameplay_elapsed_ms,
         "has_startable_packages": any(item.startable for item in state.packages),
         "global_context": _admin_global_context(state),
         "package_context": _admin_package_context(state),
@@ -208,6 +214,9 @@ def _public_audio_context(state):
 def _public_context(state, *, replace_audio=False):
     return {
         "state": state,
+        "teams": state.teams,
+        "first_finisher_team_id": state.first_finisher_team_id,
+        "gameplay_elapsed_ms": state.gameplay_elapsed_ms,
         "audio_context": _public_audio_context(state),
         "replace_audio": replace_audio,
     }

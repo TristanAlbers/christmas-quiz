@@ -1,5 +1,5 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "package_id": "christmas-2026-demo",
   "initial_points": 3,
   "hint_cost": 1,
@@ -23,7 +23,19 @@
         {"id": "a-10", "number": 10, "title": "Demo A10: Ten", "body": "Enter 10.", "validator": {"type": "number_exact", "answer": "10"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
         {"id": "a-11", "number": 11, "title": "Demo A11: Mistletoe", "body": "Type mistletoe.", "validator": {"type": "text_exact", "answer": "mistletoe"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
         {"id": "a-12", "number": 12, "title": "Demo A12: Twelve", "body": "Enter 12.", "validator": {"type": "number_exact", "answer": "12"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
-        {"id": "a-13", "number": 13, "title": "Demo A13: Music time", "body": "Type music to start the shared Music Quiz.", "validator": {"type": "text_exact", "answer": "music"}, "reward_points": 3, "hint": "This event is all about songs.", "fragment": "DEMO-A-MUSIC", "media": []}
+        {"id": "a-13", "number": 13, "title": "Demo A13: Music time", "body": "Type music to start the shared Music Quiz.", "validator": {"type": "text_exact", "answer": "music"}, "reward_points": 3, "hint": "This event is all about songs.", "fragment": "DEMO-A-MUSIC", "media": []},
+        {"id": "a-14", "number": 14, "title": "Demo A14: Carol clue one", "body": "Type candle.", "validator": {"type": "text_exact", "answer": "candle"}, "reward_points": 1, "hint": null, "fragment": "C", "media": []},
+        {"id": "a-15", "number": 15, "title": "Demo A15: Carol clue two", "body": "Enter 15.", "validator": {"type": "number_exact", "answer": "15"}, "reward_points": 1, "hint": null, "fragment": "A", "media": []},
+        {"id": "a-16", "number": 16, "title": "Demo A16: Carol clue three", "body": "Type robin.", "validator": {"type": "text_exact", "answer": "robin"}, "reward_points": 1, "hint": null, "fragment": "R", "media": []},
+        {"id": "a-17", "number": 17, "title": "Demo A17: Carol clue four", "body": "Enter 17.", "validator": {"type": "number_exact", "answer": "17"}, "reward_points": 1, "hint": null, "fragment": "O", "media": []},
+        {"id": "a-18", "number": 18, "title": "Demo A18: Carol clue five", "body": "Type lantern.", "validator": {"type": "text_exact", "answer": "lantern"}, "reward_points": 1, "hint": null, "fragment": "L", "media": []},
+        {"id": "a-19", "number": 19, "title": "Demo A19: Evergreen", "body": "Type evergreen.", "validator": {"type": "text_exact", "answer": "evergreen"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-20", "number": 20, "title": "Demo A20: Twenty", "body": "Enter 20.", "validator": {"type": "number_exact", "answer": "20"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-21", "number": 21, "title": "Demo A21: Nutcracker", "body": "Type nutcracker.", "validator": {"type": "text_exact", "answer": "nutcracker"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-22", "number": 22, "title": "Demo A22: Twenty-two", "body": "Enter 22.", "validator": {"type": "number_exact", "answer": "22"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-23", "number": 23, "title": "Demo A23: Pudding", "body": "Type pudding.", "validator": {"type": "text_exact", "answer": "pudding"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "a-24", "number": 24, "title": "Demo A24: Christmas Eve", "body": "Enter 24.", "validator": {"type": "number_exact", "answer": "24"}, "reward_points": 1, "hint": "The date before Christmas Day.", "fragment": null, "media": []},
+        {"id": "a-25", "number": 25, "title": "Demo A25: Assemble the carol", "body": "Combine the five single-letter fragments awarded after Music.", "validator": {"type": "text_exact", "answer": "carol"}, "reward_points": 5, "hint": "Read those five fragments in award order.", "fragment": "DEMO-A-FINAL", "media": []}
       ]
     },
     "b": {
@@ -40,7 +52,19 @@
         {"id": "b-10", "number": 10, "title": "Demo B10: Ten", "body": "Enter 10.", "validator": {"type": "number_exact", "answer": "10"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
         {"id": "b-11", "number": 11, "title": "Demo B11: Stocking", "body": "Type stocking.", "validator": {"type": "text_exact", "answer": "stocking"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
         {"id": "b-12", "number": 12, "title": "Demo B12: Twelve", "body": "Enter 12.", "validator": {"type": "number_exact", "answer": "12"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
-        {"id": "b-13", "number": 13, "title": "Demo B13: Music time", "body": "Type songs to start the shared Music Quiz.", "validator": {"type": "text_exact", "answer": "songs"}, "reward_points": 3, "hint": "A collection of tunes.", "fragment": "DEMO-B-MUSIC", "media": []}
+        {"id": "b-13", "number": 13, "title": "Demo B13: Music time", "body": "Type songs to start the shared Music Quiz.", "validator": {"type": "text_exact", "answer": "songs"}, "reward_points": 3, "hint": "A collection of tunes.", "fragment": "DEMO-B-MUSIC", "media": []},
+        {"id": "b-14", "number": 14, "title": "Demo B14: North clue one", "body": "Type nutmeg.", "validator": {"type": "text_exact", "answer": "nutmeg"}, "reward_points": 1, "hint": null, "fragment": "N", "media": []},
+        {"id": "b-15", "number": 15, "title": "Demo B15: North clue two", "body": "Enter 15.", "validator": {"type": "number_exact", "answer": "15"}, "reward_points": 1, "hint": null, "fragment": "O", "media": []},
+        {"id": "b-16", "number": 16, "title": "Demo B16: North clue three", "body": "Type ribbon.", "validator": {"type": "text_exact", "answer": "ribbon"}, "reward_points": 1, "hint": null, "fragment": "R", "media": []},
+        {"id": "b-17", "number": 17, "title": "Demo B17: North clue four", "body": "Enter 17.", "validator": {"type": "number_exact", "answer": "17"}, "reward_points": 1, "hint": null, "fragment": "T", "media": []},
+        {"id": "b-18", "number": 18, "title": "Demo B18: North clue five", "body": "Type hearth.", "validator": {"type": "text_exact", "answer": "hearth"}, "reward_points": 1, "hint": null, "fragment": "H", "media": []},
+        {"id": "b-19", "number": 19, "title": "Demo B19: Snowflake", "body": "Type snowflake.", "validator": {"type": "text_exact", "answer": "snowflake"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-20", "number": 20, "title": "Demo B20: Twenty", "body": "Enter 20.", "validator": {"type": "number_exact", "answer": "20"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-21", "number": 21, "title": "Demo B21: Chimney", "body": "Type chimney.", "validator": {"type": "text_exact", "answer": "chimney"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-22", "number": 22, "title": "Demo B22: Twenty-two", "body": "Enter 22.", "validator": {"type": "number_exact", "answer": "22"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-23", "number": 23, "title": "Demo B23: Cranberry", "body": "Type cranberry.", "validator": {"type": "text_exact", "answer": "cranberry"}, "reward_points": 1, "hint": null, "fragment": null, "media": []},
+        {"id": "b-24", "number": 24, "title": "Demo B24: Christmas Eve", "body": "Enter 24.", "validator": {"type": "number_exact", "answer": "24"}, "reward_points": 1, "hint": "The date before Christmas Day.", "fragment": null, "media": []},
+        {"id": "b-25", "number": 25, "title": "Demo B25: Find the direction", "body": "Combine the five single-letter fragments awarded after Music.", "validator": {"type": "text_exact", "answer": "north"}, "reward_points": 5, "hint": "Read those five fragments in award order.", "fragment": "DEMO-B-FINAL", "media": []}
       ]
     }
   },

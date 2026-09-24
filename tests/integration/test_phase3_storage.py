@@ -110,7 +110,7 @@ class PhaseThreeStorageTests(TestCase):
 class PhaseThreeMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0002_phase2")
     migrate_to = ("quiz", "0003_phase3")
-    latest_migration = ("quiz", "0005_phase4_music")
+    latest_migration = ("quiz", "0006_phase5_finish")
 
     def setUp(self):
         super().setUp()

@@ -1,38 +1,41 @@
 <div id="team-actions"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
   <input id="actions-context" type="hidden" name="actions_context" value="{{ actions_context }}">
   {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
-    <div class="action-grid">
-      <form method="post" action="{% url 'team_action' 'purchase-hint' %}"
+    <section class="action-card shop-card" aria-labelledby="team-shop-title">
+      <p class="eyebrow">Team shop</p><h2 id="team-shop-title">Power-ups</h2>
+      <div class="action-grid">
+      <form class="shop-item shop-item--hint" method="post" action="{% url 'team_action' 'purchase-hint' %}"
             hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit"
             hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
             hx-target="#game-status" hx-swap="innerHTML">
         {% csrf_token %}
         <input type="hidden" name="run_id" value="{{ state.run_id }}">
         <input type="hidden" name="request_id" value="{{ purchase_request_id }}">
-        <button type="submit">Buy Hint ({{ state.hint_cost }})</button>
+        <span class="shop-item__icon hint-token" aria-hidden="true">?</span><strong>Hint token</strong><span>Reveal help for the current puzzle.</span><button type="submit">Buy Hint ({{ state.hint_cost }})</button>
       </form>
       {% if state.uno_reverse_cost != None and not state.uno_reverse_active %}
-        <form method="post" action="{% url 'team_action' 'purchase-reverse' %}"
+        <form class="shop-item shop-item--reverse" method="post" action="{% url 'team_action' 'purchase-reverse' %}"
               hx-post="{% url 'team_action' 'purchase-reverse' %}" hx-trigger="submit"
               hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
               hx-target="#game-status" hx-swap="innerHTML">
           {% csrf_token %}
           <input type="hidden" name="run_id" value="{{ state.run_id }}">
           <input type="hidden" name="request_id" value="{{ reverse_request_id }}">
-          <button type="submit">Buy Uno Reverse ({{ state.uno_reverse_cost }})</button>
+          <span class="shop-item__icon reverse-mark" aria-hidden="true">↶</span><strong>Uno Reverse</strong><span>Reflect the next incoming Freeze.</span><button type="submit">Buy Uno Reverse ({{ state.uno_reverse_cost }})</button>
         </form>
       {% endif %}
       {% if state.freeze_cost != None %}
-        <form method="post" action="{% url 'team_action' 'freeze' %}"
+        <form class="shop-item shop-item--freeze" method="post" action="{% url 'team_action' 'freeze' %}"
               hx-post="{% url 'team_action' 'freeze' %}" hx-trigger="submit"
               hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
               hx-target="#game-status" hx-swap="innerHTML">
           {% csrf_token %}
           <input type="hidden" name="run_id" value="{{ state.run_id }}">
           <input type="hidden" name="request_id" value="{{ freeze_request_id }}">
-          <button type="submit">Freeze opponent ({{ state.freeze_cost }})</button>
+          <span class="shop-item__icon" aria-hidden="true">❄</span><strong>Freeze</strong><span>Temporarily stop the other team.</span><button type="submit">Freeze opponent ({{ state.freeze_cost }})</button>
         </form>
       {% endif %}
-    </div>
+      </div>
+    </section>
   {% endif %}
 </div>

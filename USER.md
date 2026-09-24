@@ -1,9 +1,9 @@
 # Using the Christmas Quiz today
 
-This guide describes the **phase 4 development demo** implemented now. It has
-two isolated teams, two named game masters, 13 sample puzzles per team, 11 shared
-Music questions, and a public TV overview. It is not the authored Christmas
-event, and completing sample puzzle 13 does not finish the game.
+This guide describes the **phase 5 development demo** implemented now. It has
+two isolated teams, two named game masters, 25 distinct sample puzzles per team,
+11 shared Music questions, and a public TV overview. It is not the authored
+Christmas event.
 
 ## Set up the server
 
@@ -48,9 +48,10 @@ team login form asks for a team choice and PIN. Game masters use
 password. After login, follow the home-page link to the Team or Admin view.
 Log out with the button on the page.
 
-Open `/overview/` on the shared TV. Outside Music it intentionally shows only
-the global state: Advent progression, balances, effects, fragments, and private
-puzzle media are not public.
+Open `/overview/` on the shared TV. Outside Music it shows the global state,
+both teams' coarse 25-door Advent progress, first finisher when known, and the
+server-authoritative gameplay elapsed time. Balances, effects, fragments,
+hints, inventory, puzzle content, attempts, and private media are not public.
 
 Before Start, there is no active run. A team sees only `READY` and a waiting
 message—no package names or state from an earlier game. A game master opens
@@ -118,13 +119,19 @@ not. The TV is the central audio surface when a Music question declares audio;
 the demo uses no licensed audio files. Only the current shared Music audio can be
 served, never future Music audio or either team's private puzzle media.
 
+After Music, each team continues through its own puzzles 14–25. Puzzle 25 asks
+the team to combine the ordered fragments earned during its journey. Correct
+answer, paid Skip, and admin completion all use the same completion path. The
+first team to complete puzzle 25 is durably recorded and becomes inactive while
+the other team remains playable. The game enters `FINISHED` and stops the
+Advent clock only when both teams have completed puzzle 25. Reload and restart
+preserve the winner, finish state, rewards, fragments, and audit history.
+
 The gameplay clock is persisted. Pause preserves remaining Freeze time across
 refresh, disconnect, and restart. Unexpected downtime while the persisted state
 is `ADVENT_QUIZ` counts as gameplay time; downtime while persistently `PAUSED`
-does not. Client countdown values never authorize expiry. There is no Challenge
-or finished-game view in this phase. Completing sample puzzle 13 leaves the team
-with no further Advent puzzle after Music; it does not mark either team or the
-global game finished. Puzzle 14–25 behavior belongs to phase 5.
+does not. Client countdown values never authorize expiry. Challenge is not
+implemented yet.
 
 ## Add or edit packages before Start
 
@@ -136,14 +143,14 @@ The package is declarative data; it cannot execute Python code. Credentials
 belong in `.env`, never in a package. Rich authoring/import/export tools are not
 implemented yet.
 
-The phase 4 top level requires exactly `schema_version: 4`, `package_id`,
+The phase 5 top level requires exactly `schema_version: 5`, `package_id`,
 `initial_points`, `hint_cost`, `skip_cost`, `freeze_cost`,
 `uno_reverse_cost`, `music_question_reward`,
 `music_score_display_duration_ms`, `teams`, and `music_questions`. Prices and
 rewards are nonnegative integers; the display duration is positive. Existing
-version 1–3 snapshots remain readable, but cannot silently invent Music data.
-`teams` requires exactly `a` and `b`. Each team has a `puzzles` list with 2–25
-entries numbered sequentially from 1. Each puzzle requires `id`, `number`,
+version 1–4 snapshots remain readable and retain their original behavior.
+`teams` requires exactly `a` and `b`. Each team has exactly 25 puzzles numbered
+sequentially from 1. Each puzzle requires `id`, `number`,
 `title`, `body`, `validator`, `reward_points`, `hint`, `fragment`, and `media`.
 The ID uses letters, numbers, `_`, or `-`; `reward_points` is a nonnegative
 integer. `hint` and `fragment` are text or `null`; `media` is a list of
@@ -207,12 +214,13 @@ reset workaround. Migration `0004_retire_legacy_ready_runs` safely deactivates
 active READY shells created by older phase-2/phase-3 resets while preserving
 their database rows and snapshot references. Migration `0005_phase4_music` adds
 the durable Music trigger, clocks, results, attempts, scores, and pause target.
+Migration `0006_phase5_finish` adds the immutable first-finisher fact.
 A tested backup and restore procedure is not available yet.
 
 For validation, use a separate Compose project and disposable `/app/var`
 mount. Follow the exact isolation setup in [docs/scaffold.md](docs/scaffold.md)
 before running migrations or tests, so an existing event database is not
-touched. After that setup, the phase-4 checks are:
+touched. After that setup, the phase-5 checks are:
 
 ```sh
 docker compose --profile dev build app dev
@@ -220,9 +228,9 @@ docker compose up -d app
 docker compose exec app python manage.py check
 docker compose exec app python manage.py makemigrations --check --dry-run
 docker compose run --rm --entrypoint ruff dev check .
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase4-tests.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase5-tests.sqlite3 \
   dev test tests.domain tests.integration tests.security
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase4-browser.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase5-browser.sqlite3 \
   dev test tests.browser
 ```
 

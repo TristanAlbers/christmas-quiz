@@ -15,6 +15,7 @@
         <h1>Final Music scores</h1>
         <p>Advent resumes in {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconds.</p>
       {% endif %}
+      {% include 'quiz/_music_progress.html' with music=state.music %}
       <div class="music-scores public-music-scores">
         {% for score in state.music.scores %}
           <article><span>Team {{ score.team_id|upper }}</span><strong>{{ score.score }}</strong></article>
@@ -26,11 +27,19 @@
     </div>
   {% elif state.global_state == 'READY' %}
     <h1>Waiting for the Game Master</h1>
-  {% elif state.global_state == 'PAUSED' %}
-    <h1>Game paused</h1>
   {% else %}
-    <h1>Advent Quiz in progress</h1>
-    <p>Team progression and balances remain private.</p>
+    {% if state.global_state == 'FINISHED' %}<h1>The Advent race is complete</h1>{% elif state.global_state == 'PAUSED' %}<h1>Game paused</h1>{% else %}<h1>Advent Quiz in progress</h1>{% endif %}
+    <p class="game-clock">Playing time: <strong>{% widthratio gameplay_elapsed_ms 1000 1 %} seconds</strong></p>
+    {% if first_finisher_team_id %}
+      <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
+        <p class="eyebrow">{% if state.global_state == 'FINISHED' %}Final result{% else %}First finisher{% endif %}</p>
+        <h2>Team {{ first_finisher_team_id|upper }} finished first</h2>
+        <p>{% if state.global_state == 'FINISHED' %}Both teams completed the calendar.{% else %}The race continues for the other team.{% endif %}</p>
+      </aside>
+    {% endif %}
+    <div class="public-calendar-grid">
+      {% for team in teams %}{% include 'quiz/_advent_calendar.html' with progress=team.advent_progress team_id=team.team_id %}{% endfor %}
+    </div>
   {% endif %}
 </section>
 {% if replace_audio %}

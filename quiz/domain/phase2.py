@@ -94,7 +94,11 @@ def reveal_hint(
 
 
 def pay_skip(
-    state: CompletionState, puzzle: PuzzleCompletion, cost: int
+    state: CompletionState,
+    puzzle: PuzzleCompletion,
+    cost: int,
+    *,
+    other_team_finished: bool = False,
 ) -> CompletionDecision:
     """Complete via the canonical route, charging from the pre-reward balance.
 
@@ -103,7 +107,12 @@ def pay_skip(
     """
     if not _nonnegative(cost):
         raise DomainError("invalid_input")
-    decision = complete_puzzle(state, puzzle, "skip")
+    decision = complete_puzzle(
+        state,
+        puzzle,
+        "skip",
+        other_team_finished=other_team_finished,
+    )
     if state.points < cost:
         raise DomainError("insufficient_points")
     return replace(

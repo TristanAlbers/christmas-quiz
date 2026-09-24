@@ -1,6 +1,7 @@
 <div id="question-pane" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
   <input id="view-context" type="hidden" name="view_context" value="{{ view_context }}">
   {% if state.music %}
+    {% include 'quiz/_music_progress.html' with music=state.music %}
     {% if state.music.phase == 'question' %}
       <h2>{{ state.music.title }}</h2>
       <p>{{ state.music.body }}</p>
@@ -30,7 +31,7 @@
     {% for media_url in state.question.media_urls %}
       <img class="puzzle-image" src="{{ media_url }}" alt="Private puzzle clue">
     {% endfor %}
-    {% if state.question.hint %}<p class="hint"><strong>Hint:</strong> {{ state.question.hint }}</p>{% endif %}
+    {% if state.question.hint %}<aside class="hint-card"><span class="hint-token" aria-hidden="true">?</span><div><strong>Hint revealed</strong><p>{{ state.question.hint }}</p></div></aside>{% endif %}
     {% if state.question.hint_available and not state.question.hint %}
       <form method="post" action="{% url 'team_action' 'use-hint' %}"
             hx-post="{% url 'team_action' 'use-hint' %}" hx-trigger="submit"
@@ -40,11 +41,11 @@
         <input type="hidden" name="run_id" value="{{ state.run_id }}">
         <input type="hidden" name="question_id" value="{{ state.question.id }}">
         <input type="hidden" name="request_id" value="{{ use_request_id }}">
-        <button type="submit">Use Hint token</button>
+        <button class="button-hint" type="submit"><span class="hint-token" aria-hidden="true">?</span> Use Hint token</button>
       </form>
     {% endif %}
     {% if state.skip_cost != None %}
-      <form method="post" action="{% url 'team_action' 'skip' %}"
+      <form class="skip-action" method="post" action="{% url 'team_action' 'skip' %}"
             hx-post="{% url 'team_action' 'skip' %}" hx-trigger="submit"
             hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
             hx-target="#game-status" hx-swap="innerHTML">
@@ -52,10 +53,10 @@
         <input type="hidden" name="run_id" value="{{ state.run_id }}">
         <input type="hidden" name="question_id" value="{{ state.question.id }}">
         <input type="hidden" name="request_id" value="{{ skip_request_id }}">
-        <button type="submit">Skip now ({{ state.skip_cost }} points)</button>
+        <button class="button-skip" type="submit"><span aria-hidden="true">»</span> Skip this puzzle now <small>{{ state.skip_cost }} points · completes immediately</small></button>
       </form>
     {% endif %}
-    <form method="post" action="{% url 'team_answer' %}"
+    <form class="answer-form" method="post" action="{% url 'team_answer' %}"
           hx-post="{% url 'team_answer' %}" hx-trigger="submit"
           hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
           hx-target="#game-status" hx-swap="innerHTML">
@@ -65,7 +66,7 @@
       <input type="hidden" name="request_id" value="{{ request_id }}">
       <label for="answer-input">Answer</label>
       <input id="answer-input" name="answer" autocomplete="off" required>
-      <button type="submit">Submit</button>
+      <button class="button-primary" type="submit">Submit answer</button>
     </form>
   {% endif %}
 </div>

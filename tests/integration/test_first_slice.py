@@ -2,6 +2,7 @@
 
 import tempfile
 import uuid
+from dataclasses import replace
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -67,11 +68,33 @@ class FirstSliceJourneyTests(TestCase):
         self.assertEqual(correct.state.question.id, "a-2")
         self.assertEqual(correct.state.points, 7)
         self.assertEqual(correct.state.fragments, ("DEMO-A-STAR",))
-        self.assertEqual(submit_answer(self.team_a, command), correct)
+        retry = submit_answer(self.team_a, command)
+        self.assertEqual(retry.outcome, correct.outcome)
+        self.assertGreaterEqual(
+            retry.state.gameplay_elapsed_ms,
+            correct.state.gameplay_elapsed_ms,
+        )
+        self.assertEqual(
+            replace(
+                retry.state,
+                gameplay_elapsed_ms=correct.state.gameplay_elapsed_ms,
+            ),
+            correct.state,
+        )
 
         # A fresh state query reads committed database state, not in-process state.
         reloaded = get_team_state(self.team_a)
-        self.assertEqual(reloaded, correct.state)
+        self.assertGreaterEqual(
+            reloaded.gameplay_elapsed_ms,
+            retry.state.gameplay_elapsed_ms,
+        )
+        self.assertEqual(
+            replace(
+                reloaded,
+                gameplay_elapsed_ms=correct.state.gameplay_elapsed_ms,
+            ),
+            correct.state,
+        )
         self.assertEqual(TeamRun.objects.get(team_id="b").current_number, 1)
         self.assertEqual(AnswerReceipt.objects.count(), 2)
         self.assertEqual(Attempt.objects.count(), 2)

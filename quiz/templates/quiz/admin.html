@@ -8,9 +8,9 @@
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
 </head>
-<body>
+<body class="game-page game-page--admin">
   <main class="app-shell app-shell-wide">
-    <header class="page-header"><h1>Game master</h1>
+    <header class="page-header"><div><p class="eyebrow">Christmas Escape Room</p><h1>Game master</h1></div>
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out</button></form>
     </header>
     {% if error %}<p role="alert">{{ error }}</p>{% endif %}

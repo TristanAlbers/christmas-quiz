@@ -375,6 +375,7 @@ class PhaseFourConfigurationTests(TestCase):
 class PhaseFourMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0004_retire_legacy_ready_runs")
     migrate_to = ("quiz", "0005_phase4_music")
+    latest_migration = ("quiz", "0006_phase5_finish")
 
     def setUp(self):
         super().setUp()
@@ -408,7 +409,7 @@ class PhaseFourMigrationTests(TransactionTestCase):
         self.apps = executor.loader.project_state([self.migrate_to]).apps
 
     def tearDown(self):
-        MigrationExecutor(connection).migrate([self.migrate_to])
+        MigrationExecutor(connection).migrate([self.latest_migration])
         super().tearDown()
 
     def test_all_existing_pauses_resume_advent_and_other_states_have_no_target(self):

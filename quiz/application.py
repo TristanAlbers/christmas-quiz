@@ -23,6 +23,8 @@ from quiz.contracts import (
     AdminPuzzle,
     AdminTeam,
     AdminTeamProjection,
+    AdventDoorProjection,
+    AdventProgressProjection,
     AnswerResult,
     ApplicationError,
     CommandResult,
@@ -31,6 +33,7 @@ from quiz.contracts import (
     MusicScoreProjection,
     PackageProjection,
     PublicProjection,
+    PublicTeamProgressProjection,
     QuestionProjection,
     RunCommand,
     StartGame,
@@ -95,6 +98,7 @@ from quiz.models import (
     Attempt,
     AuditEvent,
     CommandReceipt,
+    FirstFinisher,
     FragmentAward,
     HintReveal,
     MusicAttempt,
@@ -171,7 +175,7 @@ def _underlying_teams(run: Run) -> tuple[UnderlyingTeamState, ...]:
 
 def _music_timing(run: Run, config: dict, now):
     music = MusicQuiz.objects.filter(run=run).first()
-    if music is None:
+    if music is None or run.global_state == "FINISHED":
         return None, None
     decision = reconcile_music_timing(
         global_state=run.global_state,
@@ -313,6 +317,40 @@ def _reconcile_expired_freezes(run: Run, gameplay_ms: int) -> None:
             team.save(update_fields=["activity_state", "freeze_started_gameplay_ms"])
 
 
+def _advent_progress(team: TeamRun, completed: tuple[int, ...]):
+    completed_set = set(completed)
+    is_finished = team.activity_state == "FINISHED"
+    current_number = (
+        None
+        if is_finished or team.current_number in completed_set
+        else team.current_number
+    )
+    doors = tuple(
+        AdventDoorProjection(
+            number,
+            (
+                "completed"
+                if number in completed_set
+                else "current"
+                if number == current_number
+                else "future"
+            ),
+        )
+        for number in range(1, 26)
+    )
+    return AdventProgressProjection(
+        doors=doors,
+        completed_count=len(completed_set),
+        current_number=current_number,
+        is_finished=is_finished,
+    )
+
+
+def _first_finisher_team_id(run: Run) -> str | None:
+    claim = FirstFinisher.objects.filter(run=run).only("team_id").first()
+    return claim.team_id if claim is not None else None
+
+
 def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
     if run is None:
         return TeamProjection(None, "READY", "READY", 0, None, (), (), None)
@@ -379,6 +417,9 @@ def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
         uno_reverse_active=team.reverse_active,
         freeze_remaining_ms=remaining,
         music=_music_projection(run, config, music, timing, now, consumer="team"),
+        advent_progress=_advent_progress(team, completed),
+        first_finisher_team_id=_first_finisher_team_id(run),
+        gameplay_elapsed_ms=gameplay_ms,
     )
 
 
@@ -396,6 +437,12 @@ def _restore_team_projection(value: dict) -> TeamProjection:
             MusicScoreProjection(**score) for score in music["scores"]
         )
         data["music"] = MusicProjection(**music)
+    if data.get("advent_progress") is not None:
+        advent = data["advent_progress"].copy()
+        advent["doors"] = tuple(
+            AdventDoorProjection(**door) for door in advent["doors"]
+        )
+        data["advent_progress"] = AdventProgressProjection(**advent)
     return TeamProjection(**data)
 
 
@@ -486,7 +533,7 @@ def _current_puzzle(run, team_id, question_id):
 
 
 def _start_music_if_needed(run, actor, request_id, config, now) -> bool:
-    if config.get("schema_version") != 4:
+    if config.get("schema_version") not in (4, 5):
         raise ApplicationError("disallowed_state")
     decision = begin_music_interruption(
         global_state=run.global_state,
@@ -557,9 +604,7 @@ def _complete_current(
     cost=0,
     now,
 ):
-    if puzzle["number"] > 13:
-        raise ApplicationError("disallowed_state")
-    if puzzle["number"] == 13 and config.get("schema_version") != 4:
+    if puzzle["number"] == 13 and config.get("schema_version") not in (4, 5):
         raise ApplicationError("disallowed_state")
     awarded_ids = set(
         FragmentAward.objects.filter(run=run, team_id=team_id).values_list(
@@ -587,10 +632,28 @@ def _complete_current(
             team.current_number + 1 if team.current_number < len(puzzles) else None
         ),
     )
+    other_team_finished = (
+        TeamRun.objects.filter(
+            run=run,
+            activity_state="FINISHED",
+        )
+        .exclude(team_id=team_id)
+        .exists()
+    )
     decision = (
-        pay_skip(state, completion, cost)
+        pay_skip(
+            state,
+            completion,
+            cost,
+            other_team_finished=other_team_finished,
+        )
         if route == "skip"
-        else complete_puzzle(state, completion, route)
+        else complete_puzzle(
+            state,
+            completion,
+            route,
+            other_team_finished=other_team_finished,
+        )
     )
     prior_points = team.points
     prior_number = team.current_number
@@ -609,7 +672,8 @@ def _complete_current(
     )
     team.points = decision.state.points
     team.current_number = decision.state.current_number
-    team.save(update_fields=["points", "current_number"])
+    team.activity_state = decision.state.team_state
+    team.save(update_fields=["points", "current_number", "activity_state"])
     if decision.fragment_award is not None:
         FragmentAward.objects.create(
             run=run,
@@ -622,6 +686,51 @@ def _complete_current(
         if puzzle["number"] == 13
         else False
     )
+    if decision.claim_first_finisher:
+        FirstFinisher.objects.create(run=run, team_id=team_id)
+    if decision.game_finished:
+        run.global_state = "FINISHED"
+        run.gameplay_elapsed_ms = _gameplay_ms(run, now)
+        run.advent_clock_anchor = None
+        run.pause_resume_target = None
+        run.save(
+            update_fields=[
+                "global_state",
+                "gameplay_elapsed_ms",
+                "advent_clock_anchor",
+                "pause_resume_target",
+            ]
+        )
+    if decision.team_finished:
+        _event(
+            run,
+            actor,
+            request_id,
+            "team_finished",
+            "finished",
+            team_id=team_id,
+            puzzle_id=puzzle["id"],
+        )
+    if decision.claim_first_finisher:
+        _event(
+            run,
+            actor,
+            request_id,
+            "first_finisher",
+            "claimed",
+            team_id=team_id,
+            puzzle_id=puzzle["id"],
+        )
+    if decision.game_finished:
+        _event(
+            run,
+            actor,
+            request_id,
+            "game_finished",
+            "finished",
+            team_id=team_id,
+            puzzle_id=puzzle["id"],
+        )
     return {
         "points": {
             "previous": prior_points,
@@ -634,6 +743,9 @@ def _complete_current(
         "cost": cost,
         "reward": reward,
         "music_triggered": music_triggered,
+        "team_finished": decision.team_finished,
+        "first_finisher": decision.claim_first_finisher,
+        "game_finished": decision.game_finished,
     }
 
 
@@ -702,6 +814,7 @@ def get_admin_state(actor: Actor, *, now=None) -> AdminProjection:
                         ),
                         uno_reverse_active=row.reverse_active,
                         freeze_remaining_ms=remaining,
+                        advent_progress=_advent_progress(row, completed_numbers),
                     )
                 )
             return AdminProjection(
@@ -712,6 +825,8 @@ def get_admin_state(actor: Actor, *, now=None) -> AdminProjection:
                 music=_music_projection(
                     run, config, music, timing, now, consumer="admin"
                 ),
+                first_finisher_team_id=_first_finisher_team_id(run),
+                gameplay_elapsed_ms=gameplay_ms,
             )
 
     # Source discovery is intentionally outside the database snapshot. It is
@@ -748,6 +863,24 @@ def get_public_state(*, now=None) -> PublicProjection:
         return PublicProjection(
             global_state,
             _music_projection(run, config, music, timing, now, consumer="public"),
+            tuple(
+                PublicTeamProgressProjection(
+                    team.team_id,
+                    _advent_progress(
+                        team,
+                        tuple(
+                            PuzzleProgress.objects.filter(
+                                run=run,
+                                team_id=team.team_id,
+                                completed=True,
+                            ).values_list("number", flat=True)
+                        ),
+                    ),
+                )
+                for team in TeamRun.objects.filter(run=run).order_by("team_id")
+            ),
+            _first_finisher_team_id(run),
+            _gameplay_ms_value,
         )
 
 
@@ -999,7 +1132,7 @@ def submit_music_answer(
             if run is None:
                 raise ApplicationError("stale_run")
             config = load_snapshot(run)
-            if config.get("schema_version") != 4:
+            if config.get("schema_version") not in (4, 5):
                 raise ApplicationError("disallowed_state")
             _persist_music_timing(run, config, now)
             music = MusicQuiz.objects.get(run=run)

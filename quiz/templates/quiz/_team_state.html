@@ -24,8 +24,25 @@
         {% endif %}
       </div>
     {% else %}
-      <p class="metric-row"><span>{{ state.points }} points</span><span>{{ state.hint_tokens }} Hint tokens</span><span>Puzzle {{ state.current_number }}</span></p>
-      <p>{% if state.uno_reverse_active %}<strong>Uno Reverse active</strong>{% else %}Uno Reverse inactive{% endif %}</p>
+      <div class="inventory-strip" aria-label="Team resources">
+        <div class="resource-card resource-card--coins"><span aria-hidden="true">✦</span><strong>{{ state.points }}</strong><span>points</span></div>
+        <div class="resource-card resource-card--hint"><span class="hint-token" aria-hidden="true">?</span><strong>{{ state.hint_tokens }} Hint tokens</strong><span>available</span></div>
+        <div class="resource-card resource-card--reverse{% if state.uno_reverse_active %} resource-card--active{% endif %}"><span class="reverse-mark" aria-hidden="true">↶</span><strong>Uno Reverse {% if state.uno_reverse_active %}active{% else %}inactive{% endif %}</strong><span>{% if state.uno_reverse_active %}Ready to reflect{% else %}Not held{% endif %}</span></div>
+      </div>
+    {% endif %}
+    {% if not state.music and advent_progress %}
+      {% include 'quiz/_advent_calendar.html' with progress=advent_progress %}
+    {% endif %}
+    {% if first_finisher_team_id %}
+      <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
+        {% if state.global_state == 'FINISHED' %}
+          <p class="eyebrow">Race complete</p><h2>Team {{ first_finisher_team_id|upper }} finished first</h2>
+          <p>Both teams completed all 25 Advent doors.</p>
+        {% else %}
+          <p class="eyebrow">First finisher</p><h2>Team {{ first_finisher_team_id|upper }} completed the calendar</h2>
+          {% if state.team_state == 'FINISHED' %}<p>Your team is finished. The other team can keep playing.</p>{% else %}<p>The race continues—your current puzzle is still active.</p>{% endif %}
+        {% endif %}
+      </aside>
     {% endif %}
     {% if not state.music and state.team_state == 'FREEZE' %}
       <div class="freeze-message" role="status">
@@ -36,8 +53,7 @@
     {% elif not state.music and state.global_state == 'PAUSED' %}
       <div class="interruption-message"><h2>Game paused</h2><p>Your exact puzzle state and effect timers are preserved.</p></div>
     {% endif %}
-    {% if not state.music and state.completed_numbers %}<p>Completed: {{ state.completed_numbers|join:", " }}</p>{% endif %}
-    {% if not state.music and state.fragments %}<p>Fragments: {{ state.fragments|join:", " }}</p>{% endif %}
+    {% if not state.music and state.fragments %}<div class="fragment-card"><strong>Collected fragments</strong><p>{{ state.fragments|join:", " }}</p></div>{% endif %}
   {% else %}
     <p>Waiting for an administrator to start the game.</p>
   {% endif %}

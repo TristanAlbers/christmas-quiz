@@ -99,21 +99,40 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     await page.get_by_text("Demo A1", exact=False).wait_for()
                     await self._watch_swaps(page, "game-status")
                     button = page.get_by_role("button", name="Buy Hint (1)")
+                    await button.scroll_into_view_if_needed()
                     await button.evaluate("el => window.__pressedButton = el")
                     box = await button.bounding_box()
                     self.assertIsNotNone(box)
+                    pointer_x = box["x"] + box["width"] / 2
+                    pointer_y = box["y"] + box["height"] / 2
+                    self.assertTrue(
+                        await button.evaluate(
+                            """(el, point) =>
+                                document.elementFromPoint(point.x, point.y) === el""",
+                            {"x": pointer_x, "y": pointer_y},
+                        )
+                    )
                     await page.mouse.move(
-                        box["x"] + box["width"] / 2,
-                        box["y"] + box["height"] / 2,
+                        pointer_x,
+                        pointer_y,
                     )
                     await page.mouse.down()
                     await self._wait_for_two_swaps(page)
                     self.assertTrue(
                         await button.evaluate("el => window.__pressedButton === el")
                     )
+                    self.assertTrue(
+                        await button.evaluate(
+                            """(el, point) =>
+                                document.elementFromPoint(point.x, point.y) === el""",
+                            {"x": pointer_x, "y": pointer_y},
+                        )
+                    )
                     await page.mouse.up()
-                    await page.get_by_text("1 Hint tokens", exact=False).wait_for(
-                        timeout=5000
+                    await (
+                        page.locator(".resource-card--hint")
+                        .filter(has_text="1 Hint tokens")
+                        .wait_for(timeout=5000)
                     )
                 finally:
                     await context.close()
@@ -137,9 +156,7 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                 try:
                     await page.get_by_text("ADVENT_QUIZ", exact=True).wait_for()
                     await self._watch_swaps(page, "admin-state")
-                    controls = page.locator(
-                        "section[aria-label='Controls for Team A']"
-                    )
+                    controls = page.locator("section[aria-label='Controls for Team A']")
                     field = controls.locator("input[name='delta']")
                     await field.fill("2")
                     await field.focus()
@@ -152,9 +169,7 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     self.assertTrue(
                         await field.evaluate("el => document.activeElement === el")
                     )
-                    await controls.get_by_role(
-                        "button", name="Apply points"
-                    ).click()
+                    await controls.get_by_role("button", name="Apply points").click()
                     await page.get_by_text("5 points", exact=False).wait_for(
                         timeout=5000
                     )
@@ -177,9 +192,7 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     self.admin_session_cookie,
                 )
                 try:
-                    controls = page.locator(
-                        "section[aria-label='Controls for Team A']"
-                    )
+                    controls = page.locator("section[aria-label='Controls for Team A']")
                     await controls.get_by_role(
                         "button", name="Freeze team", exact=True
                     ).wait_for()
