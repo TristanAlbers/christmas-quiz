@@ -2,65 +2,74 @@
    Loaded after app.css so the component can evolve without disturbing unrelated UI. */
 .advent-progress {
   position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  margin: 1.8rem 0 0;
-  padding: 1.35rem .9rem 1rem;
-  border: .16rem solid #b8d7e4;
-  border-radius: 1.2rem;
-  background:
-    radial-gradient(circle at 12% 13%, rgba(255,255,255,.92) 0 .08rem, transparent .1rem),
-    radial-gradient(circle at 76% 20%, rgba(255,255,255,.78) 0 .1rem, transparent .12rem),
-    radial-gradient(circle at 43% 31%, rgba(255,255,255,.72) 0 .07rem, transparent .09rem),
-    linear-gradient(180deg, #103a56 0 44%, #2e6683 58%, #c9e3ed 59%, #eef7fa 73%, #fbfdfe 100%);
-  background-size: 4.6rem 4.6rem, 6.7rem 6.7rem, 5.5rem 5.5rem, auto;
-  box-shadow:
-    inset 0 0 0 .08rem rgba(255,255,255,.78),
-    inset 0 -2.2rem 3.5rem rgba(255,255,255,.28),
-    0 .8rem 1.7rem rgba(21,55,75,.18);
-  color: #f8fcfe;
+  margin: 1.7rem 0 0;
 }
 
-.advent-progress::before {
+.advent-team-heading {
+  margin: 0 0 .55rem;
+  color: #173b2e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  line-height: 1.05;
+  text-align: center;
+}
+
+.advent-progress__board {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 1.25rem .9rem 1rem;
+  border: .28rem solid #74352f;
+  border-radius: .65rem .65rem .95rem .95rem;
+  background:
+    radial-gradient(circle at 8% 9%, rgba(255,255,255,.85) 0 .07rem, transparent .09rem),
+    radial-gradient(circle at 86% 15%, rgba(255,255,255,.72) 0 .06rem, transparent .08rem),
+    linear-gradient(165deg, #173f31, #0d2f25 72%);
+  background-size: 5rem 5rem, 6.2rem 6.2rem, auto;
+  box-shadow:
+    inset 0 0 0 .13rem #d3a53b,
+    inset 0 -2.4rem 3.5rem rgba(1,17,12,.17),
+    0 .75rem 1.35rem rgba(35,17,12,.2);
+  color: #fff8e5;
+}
+
+.advent-progress__board::before {
   content: "";
   position: absolute;
   z-index: 0;
-  inset: auto -6% -.7rem;
-  height: 42%;
-  border: 0;
-  border-radius: 50% 50% 0 0;
+  inset: auto -7% -.65rem;
+  height: 29%;
   background:
-    radial-gradient(ellipse at 8% 100%, #f9fcfd 0 37%, transparent 38%),
-    radial-gradient(ellipse at 36% 100%, #e5f2f7 0 43%, transparent 44%),
-    radial-gradient(ellipse at 66% 100%, #f9fcfd 0 42%, transparent 43%),
-    radial-gradient(ellipse at 96% 100%, #deedf4 0 38%, transparent 39%);
-  clip-path: none;
-  opacity: .92;
+    radial-gradient(ellipse at 8% 100%, #fff 0 38%, transparent 39%),
+    radial-gradient(ellipse at 35% 100%, #eef5f6 0 43%, transparent 44%),
+    radial-gradient(ellipse at 68% 100%, #fff 0 42%, transparent 43%),
+    radial-gradient(ellipse at 96% 100%, #e7f0f2 0 37%, transparent 38%);
+  opacity: .9;
   pointer-events: none;
 }
 
-.advent-progress::after {
-  content: "✦  ❄  ·  ✦  ❄  ·  ✦  ❄  ·  ✦";
+.advent-progress__board::after {
+  content: "✦  ●  ✦  ●  ✦  ●  ✦";
   position: absolute;
   z-index: 0;
-  inset: .28rem .55rem auto;
-  color: rgba(244,251,255,.9);
-  font-size: clamp(.48rem, 1vw, .72rem);
-  letter-spacing: .18em;
+  inset: .24rem .55rem auto;
+  color: #ffe38b;
+  font-size: clamp(.48rem, 1vw, .7rem);
+  letter-spacing: .24em;
   white-space: nowrap;
   overflow: hidden;
-  text-shadow: 0 0 .55rem rgba(230,247,255,.9);
+  text-shadow: 0 0 .4rem #ffd45a;
   pointer-events: none;
 }
 
 .advent-progress__snow {
   position: absolute;
   z-index: 3;
-  inset: -.18rem -.15rem auto;
-  height: .58rem;
+  inset: -.16rem -.12rem auto;
+  height: .54rem;
   border-radius: 60% 45% 65% 50%;
-  background: linear-gradient(180deg, #fff, #e8f3f8);
-  box-shadow: 0 .1rem .3rem rgba(19,57,78,.16);
+  background: linear-gradient(180deg, #fff, #edf5f6);
+  box-shadow: 0 .1rem .25rem rgba(20,44,37,.17);
   pointer-events: none;
 }
 
@@ -71,30 +80,43 @@
   z-index: 2;
 }
 
-.advent-progress__header h2 {
-  margin: .1rem 0 0;
-  color: #fff;
-  text-shadow: 0 .1rem .45rem rgba(8,35,52,.4);
+.advent-progress__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  margin: .15rem 0 .75rem;
 }
 
-.advent-progress .eyebrow {
-  color: #dceff7;
+.advent-progress__title {
+  margin: 0;
+  color: #f6d778;
+  font-family: "Segoe Script", "Brush Script MT", "Snell Roundhand", "Apple Chancery", Georgia, serif;
+  font-size: clamp(1.65rem, 4.3vw, 2.45rem);
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: .015em;
+  text-shadow: 0 .08rem .12rem rgba(0,0,0,.45), 0 0 .7rem rgba(246,215,120,.14);
 }
 
 .progress-count {
-  padding: .3rem .68rem;
-  border: 1px solid rgba(255,255,255,.72);
+  flex: 0 0 auto;
+  padding: .28rem .62rem;
+  border: 1px solid #e7bd55;
   border-radius: 999px;
-  background: rgba(245,251,253,.92);
-  color: #234c63;
-  box-shadow: 0 .18rem .5rem rgba(11,42,61,.16);
+  background: #fff4cf;
+  color: #603515;
+  box-shadow: 0 .14rem .35rem rgba(35,17,12,.18);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .advent-calendar {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(.32rem, 1vw, .62rem);
-  margin: .9rem 0 0;
+  gap: clamp(.3rem, 1vw, .58rem);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -103,14 +125,12 @@
   position: relative;
   aspect-ratio: .88;
   min-width: 0;
-  border: .1rem solid rgba(225,242,249,.95);
-  border-radius: .48rem .48rem .22rem .22rem;
-  background: #d9edf5;
-  color: #20485e;
-  box-shadow:
-    0 .2rem .45rem rgba(10,43,62,.25),
-    inset 0 0 0 .05rem rgba(255,255,255,.72);
-  perspective: 28rem;
+  border: .12rem solid #e2b653;
+  border-radius: .42rem .42rem .18rem .18rem;
+  background: #2e1713;
+  color: #fff8e5;
+  box-shadow: inset 0 0 .5rem #120a08, 0 .2rem .3rem rgba(0,0,0,.28);
+  perspective: 25rem;
   isolation: isolate;
 }
 
@@ -120,23 +140,23 @@
   inset: 0;
   display: grid;
   place-items: center;
-  border-radius: .36rem .36rem .14rem .14rem;
+  border-radius: .28rem .28rem .1rem .1rem;
 }
 
 .advent-door__reveal {
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 38%, rgba(255,245,211,.98) 0 25%, rgba(238,202,135,.88) 46%, transparent 47%),
-    linear-gradient(145deg, #f4d7a0, #bd744b 62%, #764234);
-  box-shadow: inset 0 0 1rem rgba(69,37,27,.32);
+    radial-gradient(circle at 50% 38%, #ffe9a1 0 23%, #d08b55 45%, transparent 46%),
+    linear-gradient(145deg, #b52d3e 0 42%, #7b2331 70%, #4a1c25);
+  box-shadow: inset 0 0 .75rem rgba(31,8,11,.42);
 }
 
 .advent-door__reveal::before {
   content: "";
   position: absolute;
   inset: .18rem;
-  border: 1px dashed rgba(255,244,215,.6);
-  border-radius: .24rem;
+  border: 1px dashed rgba(255,236,177,.45);
+  border-radius: .22rem;
 }
 
 .advent-door__chocolate {
@@ -166,66 +186,63 @@
   z-index: 2;
   overflow: hidden;
   transform-origin: left center;
-  border: .08rem solid rgba(239,249,252,.92);
-  background:
-    radial-gradient(ellipse at 50% -8%, rgba(255,255,255,.96) 0 25%, transparent 27%),
-    linear-gradient(155deg, #eef8fb, #c5dde7 62%, #a9cbd8);
+  border: .08rem solid rgba(255,231,164,.75);
+  background: linear-gradient(150deg, #c13b45, #8e2633 60%, #6f1c2b);
   box-shadow:
-    inset .14rem .14rem .22rem rgba(255,255,255,.72),
-    inset -.14rem -.14rem .25rem rgba(41,88,112,.2);
+    inset .16rem .16rem .2rem rgba(255,255,255,.15),
+    inset -.16rem -.16rem .25rem rgba(55,8,15,.25);
   backface-visibility: hidden;
 }
 
-.advent-door:nth-child(4n+2) .advent-door__flap {
-  background:
-    radial-gradient(ellipse at 50% -8%, rgba(255,255,255,.95) 0 25%, transparent 27%),
-    linear-gradient(155deg, #f7eef1, #d9bac3 63%, #bb8998);
-  color: #6f3446;
+.advent-door:nth-child(3n+2) .advent-door__flap {
+  background: linear-gradient(150deg, #267055, #17513e 60%, #0c3b2c);
 }
 
-.advent-door:nth-child(5n) .advent-door__flap {
-  background:
-    radial-gradient(ellipse at 50% -8%, rgba(255,255,255,.95) 0 25%, transparent 27%),
-    linear-gradient(155deg, #fff7e2, #e9d39c 63%, #c5a85d);
-  color: #664d17;
+.advent-door:nth-child(4n) .advent-door__flap {
+  background: linear-gradient(150deg, #d6a133, #a36f15 65%, #70490c);
 }
 
-.advent-door__snowflake {
+.advent-door__ornament {
   position: absolute;
   top: 12%;
-  color: rgba(255,255,255,.93);
-  font-size: clamp(.58rem, 1.35vw, .9rem);
+  display: grid;
+  place-items: center;
+  width: 34%;
+  aspect-ratio: 1;
+  border: .16rem dotted #d8e591;
+  border-radius: 50%;
+  color: #fff0a2;
+  font-size: clamp(.4rem, 1vw, .6rem);
   line-height: 1;
-  text-shadow: 0 0 .4rem rgba(87,140,166,.38);
 }
 
 .advent-door__number {
   z-index: 1;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(.9rem, 2.4vw, 1.28rem);
+  font-size: clamp(.86rem, 2.4vw, 1.24rem);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 .05rem .08rem rgba(255,255,255,.72);
+  text-shadow: 0 .08rem .12rem rgba(0,0,0,.6);
 }
 
 .advent-door__number--inside {
   position: absolute;
   z-index: 2;
-  right: .18rem;
-  bottom: .1rem;
-  color: #fff4dc;
+  right: .16rem;
+  bottom: .08rem;
+  color: #fff6ce;
   font-size: clamp(.62rem, 1.35vw, .86rem);
   text-shadow: 0 .08rem .14rem rgba(62,28,20,.55);
 }
 
 .advent-door__knob {
   position: absolute;
-  right: 9%;
-  width: .22rem;
+  right: 10%;
+  width: .19rem;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: #b98a37;
-  box-shadow: 0 0 0 .06rem rgba(255,239,188,.5), 0 .05rem .1rem rgba(72,48,17,.25);
+  background: #ffeb9b;
+  box-shadow: 0 0 .2rem #fff;
 }
 
 .advent-door--completed .advent-door__flap {
@@ -233,28 +250,22 @@
 }
 
 .advent-door--current {
-  border-color: #ffe4a0;
-  box-shadow:
-    0 0 0 .13rem rgba(244,202,102,.72),
-    0 0 1.05rem rgba(255,224,145,.66),
-    0 .22rem .48rem rgba(10,43,62,.24);
+  border-color: #fff0a8;
+  box-shadow: 0 0 0 .14rem #f0bd3d, 0 0 1rem rgba(255,215,92,.72);
 }
 
 .advent-door--current .advent-door__flap {
-  background:
-    radial-gradient(ellipse at 50% -8%, rgba(255,255,255,.98) 0 25%, transparent 27%),
-    linear-gradient(155deg, #fff9e7, #e8dbb6 64%, #cbb472);
-  color: #5c481d;
+  background: linear-gradient(150deg, #f4c84f, #c8911e 65%, #8f5b0d);
+  color: #3f2405;
 }
 
 .advent-door--current .advent-door__number {
-  font-size: clamp(1rem, 2.65vw, 1.42rem);
-  text-shadow: 0 .05rem .08rem rgba(255,255,255,.8);
+  font-size: clamp(1rem, 2.7vw, 1.43rem);
+  text-shadow: 0 .05rem .08rem rgba(255,244,192,.55);
 }
 
 .advent-door--future {
-  filter: none;
-  opacity: .86;
+  filter: saturate(.72) brightness(.9);
 }
 
 .advent-door--future .advent-door__flap::after {
@@ -262,7 +273,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(33,77,101,.08);
+  background: rgba(12,25,21,.16);
   pointer-events: none;
 }
 
@@ -278,21 +289,17 @@
   animation: advent-echo-fade 1.45s ease-out forwards;
 }
 
-.advent-progress--finished {
-  border-color: #e5c773;
-  background:
-    radial-gradient(circle at 12% 13%, rgba(255,255,255,.92) 0 .08rem, transparent .1rem),
-    radial-gradient(circle at 76% 20%, rgba(255,255,255,.78) 0 .1rem, transparent .12rem),
-    linear-gradient(180deg, #173f58 0 48%, #4f7890 60%, #d8eaf1 61%, #f8fbfc 100%);
-}
-
-.advent-progress--finished .advent-progress__header {
-  color: #fff;
+.advent-progress--finished .advent-progress__board {
+  border-color: #b68a28;
+  background: linear-gradient(165deg, #244a38, #123326 72%);
+  box-shadow:
+    inset 0 0 0 .13rem #e0bc58,
+    0 .75rem 1.35rem rgba(35,17,12,.2);
 }
 
 .calendar-complete {
-  margin: .8rem 0 0;
-  color: #284e62;
+  margin: .78rem 0 0;
+  color: #fff2b7;
   font-weight: 900;
   text-align: center;
 }
@@ -304,11 +311,26 @@
   100% { transform: rotateY(-112deg); }
 }
 
+@keyframes advent-echo-fade {
+  0%, 72% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (min-width: 75rem) {
+  .game-page--overview .advent-progress__title { font-size: 2.2rem; }
+  .game-page--overview .advent-team-heading { font-size: 1.7rem; }
+}
+
 @media (max-width: 36rem) {
-  .advent-progress { padding: .9rem .62rem .72rem; }
+  .advent-progress { margin-top: 1.35rem; }
+  .advent-team-heading { margin-bottom: .45rem; font-size: 1.35rem; }
+  .advent-progress__board { padding: .9rem .62rem .72rem; }
+  .advent-progress__header { gap: .45rem; }
+  .advent-progress__title { font-size: 1.55rem; }
+  .progress-count { padding: .22rem .5rem; font-size: .9rem; }
   .advent-calendar { gap: .28rem; }
-  .advent-door__snowflake { font-size: .55rem; }
-  .advent-door__number { font-size: .86rem; }
+  .advent-door__ornament { font-size: .42rem; }
+  .advent-door__number { font-size: .84rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
