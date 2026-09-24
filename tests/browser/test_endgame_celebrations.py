@@ -139,15 +139,23 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         )
                     )
                     self.assertEqual(await answer.input_value(), "still playing")
-                    self.assertEqual(await answer.evaluate("el => el.selectionStart"), 5)
                     self.assertEqual(
-                        await runner_up.evaluate("el => getComputedStyle(el).pointerEvents"),
+                        await answer.evaluate("el => el.selectionStart"),
+                        5,
+                    )
+                    self.assertEqual(
+                        await runner_up.evaluate(
+                            "el => getComputedStyle(el).pointerEvents"
+                        ),
                         "none",
                     )
 
                     await team_b.wait_for_timeout(1200)
                     for page in (team_a, team_b, tv):
-                        self.assertEqual(await page.evaluate("window.__endgameShows"), 1)
+                        self.assertEqual(
+                            await page.evaluate("window.__endgameShows"),
+                            1,
+                        )
                         self.assertTrue(
                             await page.locator("#endgame-celebration").evaluate(
                                 "el => window.__endgameNode === el"
@@ -159,10 +167,13 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         await page.wait_for_timeout(900)
                         self.assertFalse(
                             await page.locator("#endgame-celebration").evaluate(
-                                "el => el.classList.contains('endgame-celebration--visible')"
+                                "el => el.classList.contains("
+                                "'endgame-celebration--visible')"
                             )
                         )
-                    await team_b.get_by_text("Team A reached the finish first").wait_for()
+                    await team_b.get_by_text(
+                        "Team A reached the finish first"
+                    ).wait_for()
                     await tv.get_by_text("Team A wins the Advent race!").wait_for()
                     self.assertEqual(await team_b.locator("#answer-input").count(), 1)
                 finally:
