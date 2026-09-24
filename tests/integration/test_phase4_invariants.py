@@ -107,7 +107,7 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             call(*args, **kwargs)
         self.assertEqual(caught.exception.code, code)
 
-    def test_music_trigger_failure_rolls_back_puzzle_completion_and_all_side_effects(self):
+    def test_music_trigger_failure_rolls_back_every_side_effect(self):
         self._force_through(12)
         team_before = TeamRun.objects.get(run_id=self.run_id, team_id="a")
         before = {
@@ -152,7 +152,7 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             before["fragments"],
         )
 
-    def test_winning_music_answer_retry_is_idempotent_and_conflicting_reuse_rejects(self):
+    def test_winning_answer_retry_is_idempotent_and_conflict_rejects(self):
         self._trigger_music(now=NOW + timedelta(seconds=1))
         before_points = TeamRun.objects.get(run_id=self.run_id, team_id="b").points
         request_id = str(uuid4())
@@ -169,7 +169,9 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
         self.assertEqual(first.outcome, "won")
         self.assertEqual(first.state.music.question_id, "music-2")
         self.assertEqual(
-            MusicAttempt.objects.filter(run_id=self.run_id, request_id=request_id).count(),
+            MusicAttempt.objects.filter(
+                run_id=self.run_id, request_id=request_id
+            ).count(),
             1,
         )
         self.assertEqual(
@@ -216,7 +218,7 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             MusicQuestionResult.objects.filter(run_id=self.run_id).count(), 1
         )
 
-    def test_music_interruption_blocks_all_advent_completion_routes_without_mutation(self):
+    def test_music_blocks_advent_completion_routes_without_mutation(self):
         self._trigger_music(now=NOW + timedelta(seconds=1))
         before_b = TeamRun.objects.get(run_id=self.run_id, team_id="b")
         before = (
@@ -229,7 +231,8 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             AuditEvent.objects.filter(run_id=self.run_id).count(),
         )
 
-        self.assertIsNone(get_team_state(self.b, now=NOW + timedelta(seconds=2)).question)
+        state = get_team_state(self.b, now=NOW + timedelta(seconds=2))
+        self.assertIsNone(state.question)
         self.assert_error(
             "disallowed_state",
             submit_answer,
@@ -271,7 +274,7 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
         )
         self.assertEqual(after, before)
 
-    def test_reset_during_music_archives_music_state_and_stales_old_answers(self):
+    def test_reset_during_music_archives_state_and_stales_old_answers(self):
         self._trigger_music(now=NOW + timedelta(seconds=1))
         quiz_id = MusicQuiz.objects.get(run_id=self.run_id).pk
         reset = reset_game(
@@ -281,7 +284,9 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
         )
         self.assertEqual(reset.outcome, "reset")
         self.assertFalse(Run.objects.get(pk=self.run_id).active)
-        self.assertTrue(MusicQuiz.objects.filter(pk=quiz_id, run_id=self.run_id).exists())
+        self.assertTrue(
+            MusicQuiz.objects.filter(pk=quiz_id, run_id=self.run_id).exists()
+        )
         waiting = get_team_state(self.a, now=NOW + timedelta(seconds=3))
         self.assertEqual((waiting.run_id, waiting.global_state), (None, "READY"))
         self.assertIsNone(waiting.music)
@@ -296,7 +301,7 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             now=NOW + timedelta(seconds=3),
         )
 
-    def test_active_music_uses_pinned_snapshot_after_source_package_is_deleted(self):
+    def test_active_music_uses_snapshot_after_source_package_is_deleted(self):
         games_root = Path(self.temp.name) / "games"
         source = games_root / "phase4-copy"
         shutil.copytree(Path("games/christmas-2026-demo"), source)
