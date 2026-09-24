@@ -210,7 +210,8 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     await page.get_by_text(
                         "Uno Reverse inactive", exact=False
                     ).wait_for(timeout=5000)
-                    await reverse_form.wait_for(timeout=5000)
+                    await reverse_form.wait_for(state="attached", timeout=5000)
+                    self.assertEqual(await reverse_form.count(), 1)
                     state = await asyncio.to_thread(get_team_state, self.a)
                     attacker = await asyncio.to_thread(get_team_state, self.b)
                     self.assertEqual(state.team_state, "PUZZLE")
