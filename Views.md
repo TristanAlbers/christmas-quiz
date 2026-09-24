@@ -1,13 +1,35 @@
 # Game Views
 
-This document is here to describe the different game views and they targets. There are three main consumers of these views, which will be hence refered to as targets:
-* `adminstrative` - These are the game masters. Their role is to manage the game state and intervene if nessecary. They also hold the privilege of adding extra points to teams if needed.
-* `overview` - This target is a generic overview. This could be seen by any one and should hence not expose any sensitive info (like currency points per team).
-* `team` - These are the participating teams in the game. They are most interested in specific info needed to play the game. Note that each team would need its own "instance", as in team A should not be able to reach or interfere with team B's view.
+This document describes the required views and their presentation/interaction targets. There are three main consumers:
+
+* `administrative` — the game masters. They manage the game state, intervene when necessary, and can perform privileged controls such as point adjustments.
+* `overview` — a generic public overview intended for a large shared TV. It must not expose sensitive team information such as private balances, answers, hints, or effects unless explicitly approved elsewhere.
+* `team` — the participating teams. Each team has its own isolated view; Team A must never be able to reach or interfere with Team B's private state.
+
+## Presentation is a first-class requirement
+
+The UI is part of the product, not a final polish pass. Every phase that introduces or changes user-visible behavior must deliver a usable presentation for that behavior at the same phase gate.
+
+The application should develop a coherent Christmas visual language incrementally: Advent-calendar doors/cards, clear game-state surfaces, festive visual accents, and deliberate visual treatment of inventory/actions. This must remain readable, responsive, and usable on the target devices; decorative styling must never reduce clarity, accessibility, touch-target quality, or privacy.
+
+Do not reduce a specified visual state to a raw text placeholder when this document describes a graphical representation. In particular:
+
+* puzzle progression should retain the Advent-calendar metaphor rather than being represented only as a percentage or text counter;
+* Music Quiz progression should be immediately visible as progress through 11 questions, using a progress bar or clear 11-step tracker in addition to the current question number;
+* active Uno Reverse and available Hint tokens should be recognizable visual cards/tokens/badges rather than plain text prompts;
+* Skip is an immediate action under the current game rules, so it should be presented as a styled action when available, not as stored inventory.
+
+## Polling and interaction stability
+
+The application uses 500 ms HTMX polling. All views must follow `docs/polling-ui-guideline.md`.
+
+Rapidly changing read-only state may be redrawn by the polling fragment. Controls that a user can still be interacting with must remain mounted while their semantic context is unchanged. Inputs, selects, buttons, forms, or interactive cards must not flicker, lose focus/selection, interrupt native controls, or lose clicks because a parent fragment is replaced every 500 ms.
+
+User-visible phases should include browser regression coverage for the interaction boundaries they introduce. For polling-sensitive controls, prefer stable node/focus/caret checks and real pointer-down/poll/pointer-up behavior where practical, not only programmatic `.click()` calls.
 
 ## Admin Ready / Game Selection View
 
-Target: `administrators`
+Target: `administrative`
 
 This view is shown when no game run is active and the application is in the global `READY` condition.
 
@@ -18,7 +40,8 @@ It should:
 * show whether the package is currently valid enough to be started;
 * show a concise actionable validation error for an invalid package instead of silently hiding it;
 * allow an administrator to select one valid package and start a new run;
-* make clear that starting creates a new game and that source-package changes do not affect an already-running game.
+* make clear that starting creates a new game and that source-package changes do not affect an already-running game;
+* keep package selectors and Start controls stable while the 500 ms status polling continues.
 
 Viewing this page or listing/validating packages must not create immutable snapshots. A snapshot is created only when Start is accepted.
 
@@ -30,7 +53,7 @@ Target: `team`
 
 This view is shown while no game run is active.
 
-The team should see only a simple waiting state such as:
+The team should see only a simple, visually intentional waiting state such as:
 
 > Waiting for the game master to start a game…
 
@@ -42,86 +65,118 @@ Once a game is started, normal polling/reload should move the team to the state 
 
 Target: `overview`
 
-This view should be optimized for desktop usage, we will stream this view to a large TV that all teams are able to see.
-
-This view should represent:
-* The current progress in percentage of both teams
-* The total playing time
-
-## Puzzle view
-Target: `team`
-
-This view should be optimized for phone usage, since the team will be connecting to it via mobile phones.
+This view should be optimized for desktop/TV usage.
 
 It should represent:
-* The event boxes needed for the puzzle
-* Current playing time
-* A image to see if an Uno Reverse card has been purchased and is active or not.
-* An image to see if and how many skips have been bought and are still active. (already used skips are not relevant)
-* An image to see if and how many hints have been bought and are still active. (already used hints are not relevant)
-* Total amount of coins / points
-* Possible interactions with the event boxes to get new questions
-* Possible interactions with the event boxes to get a hint by using a previously bought hint from the shop.
-* Possible interactions with the event boxes to submit answers to the questions
-* Possible interactions with the event boxes to use a previously bought skip.
-* Possible interactions to open a **Shop View**
-* Possible interactions to open a **Sabotage View**
 
-## Freeze View
+* both teams' progress using two clear Advent-calendar-style progress representations (for example 25 doors/boxes per team with completed/current/future states);
+* a concise progress indicator such as `13/25` and/or a percentage for each team, but not percentage text as the sole progression presentation;
+* total playing time;
+* public winner/first-finisher information only when the game rules authorize it.
+
+The overview should establish and reuse the shared Christmas visual language. It must never expose private balances, hints, answers, fragments, or hidden effects.
+
+## Puzzle View
+
 Target: `team`
 
-This view should be optimized for phone usage, since the team will be connecting to it via mobile phones.
+This view should be optimized for phone usage, with tablet compatibility.
 
-It should closely mirror the **Puzzle View**, but with a frozen hue over it and a timer of 5 minutes that is counting down.
+It should represent:
+
+* the team's Advent calendar/event boxes, including completed/current/future visual states;
+* current playing time;
+* an intentional graphical/card/badge representation of whether an Uno Reverse is active;
+* an intentional graphical/card/badge representation of the number of available Hint tokens;
+* total amount of coins/points;
+* puzzle content/media needed by the current event box;
+* interactions with the current event box to reveal/use a purchased hint where legal;
+* answer submission for the current question;
+* a clearly styled immediate Skip action where legal under the current rules;
+* access to a **Shop View**;
+* access to a **Sabotage View**.
+
+The current answer input and other controls must survive normal polling without losing focus, caret position, selection, hover/press state, or clicks.
+
+## Freeze View
+
+Target: `team`
+
+This view should be optimized for phone usage.
+
+It should use the same established visual language as the Puzzle View, but clearly communicate the frozen state and the remaining timer. Private underlying puzzle/hint content must not merely be blurred behind the freeze overlay; it should not be present in the rendered private content while frozen.
+
 Nothing should be interactable from this view.
 
 ## Shop View
 
 Target: `team`
 
-This view should be optimized for phone usage, since the team will be connecting to it via mobile phones.
+This view should be optimized for phone usage.
 
-It should represent a shop where you can buy:
-* Uno Reverse cards
-* Skip tokens for questions
-* Hint tokens for questions
+The shop should present purchasable gameplay elements as deliberate cards/items rather than raw text controls. Depending on the current rules and eligibility it can include:
+
+* an Uno Reverse purchase;
+* Hint token purchases;
+* the immediate Skip action/cost where this is exposed through the shop flow.
+
+Costs, availability, disabled states, and rejection feedback should be visually clear. Purchasing must remain backend-authoritative.
 
 ## Sabotage View
 
 Target: `team`
 
-This view should be optimized for phone usage, since the team will be connecting to it via mobile phones.
+This view should be optimized for phone usage. It may be a dedicated view or a clear subview of the shop/puzzle experience.
 
-It should represent a place where sabotage actions can take place. This might be a smaller sub view inside either the shop or the puzzle view. It should contain:
-* The ability to buy a freeze
-* The ability to send a bought freeze to the enemy team
-* The ability to challenge the enemy team (logic for challenge describe elsewhere in Design and Game States)
+It should contain:
+
+* the ability to buy/send a Freeze where legal;
+* Challenge initiation where legal;
+* clear availability/cost/disabled/rejected states;
+* no private information about the other team's inventory or state beyond explicitly approved public/interaction fields.
 
 ## Generic Music Challenge View
+
 Target: `overview`
 
-This view should be optimized for desktop usage, we will stream this view to a large TV that all teams are able to see.
+This view should be optimized for desktop/TV usage.
 
-It should contain the current game state of the music challenge. Meaning the number of the current question (there are 11 in total), and a timer per question that starts from 0 and counts up. From this view we might possibly play the music needed to answer the question later. We could also manual play this from our phones, to be decided.
+It should contain:
 
-It should also show for each participating team their current score.
+* an obvious progress bar or 11-step tracker showing progress through the 11 Music questions;
+* the current question number;
+* a timer for the active question that starts from 0 and counts up;
+* each participating team's current Music score;
+* the approved shared audio/playback interaction once that workflow is settled;
+* a clearly distinct final-results state for the configured results-display duration.
+
+Music progression should not be conveyed only as a text string such as `Question 4 of 11`; the current position must be visually scannable from across the room.
 
 ## Puzzle Music Challenge View
 
 Target: `team`
 
-This view should be optimized for phone usage, since the team will be connecting to it via mobile phones.
+This view should be optimized for phone usage.
 
-This view should reflect the current state of the music challenge and only information needed for this challenge since all other interactions are disabled. Essentially this would boil down to the question number, this should correspond with the generic music challenge view, and a field where the team can submit their answer.
+During Music Quiz it should show only information/actions needed for that mini-game. It should contain:
+
+* the same authoritative current-question state as the public Music view;
+* an obvious progress bar or 11-step tracker through the Music questions;
+* the team's answer field and submission action;
+* concise result/rejection feedback needed for repeated attempts.
+
+The answer control must remain mounted and usable across normal 500 ms polling until the authoritative question/context changes. Advancing to a new Music question is a valid context change that may replace the interaction pane.
 
 ## Administrative View
 
-Target: `administrators`
+Target: `administrative`
 
-This view should be optimized for phone usage, since the admins will be connecting to it via mobile phones.
+This view should be optimized for phone/tablet usage.
 
-When a run is active, it should essentially be a user friendly interface of the things described in [Administrative Controls](./Design.md#administrative-controls) in the Game State document.
+When a run is active, it should provide a user-friendly interface for the supported administrative controls described in `Design.md` and the game-state documents. It should also make team progression easy to understand at a glance. The preferred representation is two mirrored Advent calendars, one per team, with clear completed/current/future states and a concise progress marker such as `13/25`.
+
+Admin controls must remain stable under polling; editing a number, using a native selector, pressing a command, or interacting with a form must not race against a 500 ms redraw.
 
 When no run is active, the administrative target uses the **Admin Ready / Game Selection View** instead.
 
-A full Reset of an active game must return the administrators to the Ready / Game Selection view. A process or Docker restart must not do so when an active run is recoverable.
+A full Reset of an active game must return administrators to the Ready / Game Selection view. A process or Docker restart must not do so when an active run is recoverable.
