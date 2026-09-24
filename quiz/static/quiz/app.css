@@ -58,7 +58,9 @@ input[name="answer"] { display: block; width: 100%; margin: .45rem 0 .85rem; }
 .team-grid, .action-grid, .public-calendar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .control-stack { display: grid; gap: .65rem; margin-top: .75rem; }
 .control-stack form, .toolbar form { margin: 0; }
-.inventory-strip, .admin-team-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; margin: 1rem 0; }
+.team-resource-bar, .admin-team-metrics { display: grid; gap: .65rem; margin: 1rem 0; }
+.team-resource-bar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.admin-team-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .resource-card, .admin-team-metrics > span { display: grid; align-content: center; min-height: 5.2rem; padding: .7rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--paper); text-align: center; }
 .resource-card > strong { font-size: 1.1rem; }
 .resource-card--hint { border-color: #dfbd52; background: #fff9dc; }
@@ -129,7 +131,7 @@ input[name="answer"] { display: block; width: 100%; margin: .45rem 0 .85rem; }
   main, .app-shell { margin: .65rem auto; padding: .85rem; }
   .page-header { align-items: flex-start; }
   .action-grid, .music-scores { grid-template-columns: 1fr; }
-  .inventory-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .35rem; }
+  .team-resource-bar { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; }
   .resource-card { min-height: 4.8rem; padding: .45rem .25rem; font-size: .72rem; }
   .resource-card > strong { font-size: .82rem; }
   .admin-team-metrics { grid-template-columns: 1fr; }
