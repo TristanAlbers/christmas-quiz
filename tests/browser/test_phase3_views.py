@@ -95,6 +95,13 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         AdminTeam(str(uuid4()), self.run_id, "a"),
                     )
                     await page.locator(".state-panel-freeze").wait_for(timeout=5000)
+                    freeze_surface = page.locator(".freeze-surface")
+                    await freeze_surface.wait_for(timeout=5000)
+                    self.assertEqual(await freeze_surface.count(), 1)
+                    self.assertIn(
+                        "Your team is frozen",
+                        await page.locator(".freeze-message").inner_text(),
+                    )
                     self.assertEqual(await page.locator("#answer-input").count(), 0)
                     self.assertEqual(
                         await page.locator("#team-actions form").count(), 0
@@ -104,6 +111,18 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     )
                     self.assertEqual(
                         await page.locator("#question-pane img").count(), 0
+                    )
+                    self.assertNotIn(
+                        "Hint tokens", await page.locator("#live-game").inner_text()
+                    )
+                    surface_handle = await freeze_surface.element_handle()
+                    await page.wait_for_timeout(1100)
+                    self.assertTrue(
+                        await page.evaluate(
+                            "([surface]) => surface === "
+                            "document.querySelector('.freeze-surface')",
+                            [surface_handle],
+                        )
                     )
 
                     await asyncio.to_thread(
@@ -115,6 +134,7 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         timeout=5000
                     )
                     self.assertEqual(await page.locator("#answer-input").count(), 1)
+                    self.assertEqual(await page.locator(".freeze-surface").count(), 0)
                     self.assertEqual(
                         await page.locator(
                             "form[action='/team/action/freeze/']"

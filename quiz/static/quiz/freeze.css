@@ -1,0 +1,63 @@
+.state-panel-freeze {
+  position: relative;
+  z-index: 32;
+  border-color: #bceeff;
+  background: rgba(232, 249, 255, .96);
+  box-shadow: 0 1rem 3rem rgba(4, 55, 88, .35);
+}
+
+.freeze-message { text-align: center; }
+.freeze-message h2 { color: #07577c; font-size: clamp(1.8rem, 8vw, 3rem); }
+.freeze-message__icon {
+  margin: 0;
+  color: #168cb5;
+  font-size: clamp(2.4rem, 12vw, 4.5rem);
+  line-height: 1;
+  text-shadow: 0 .2rem .8rem rgba(28, 145, 185, .3);
+}
+
+.freeze-surface {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  overflow: hidden;
+  border: clamp(.65rem, 3vw, 2rem) solid rgba(198, 240, 255, .92);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(220, 247, 255, .36), rgba(24, 116, 157, .67) 72%),
+    repeating-linear-gradient(125deg, rgba(255,255,255,.16) 0 .12rem, transparent .12rem 1.7rem);
+  box-shadow: inset 0 0 clamp(2rem, 14vw, 8rem) #d7f6ff, inset 0 0 1.2rem #fff;
+  pointer-events: auto;
+}
+
+.freeze-surface::before,
+.freeze-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,.92) 0 .15rem, transparent .19rem) 0 0 / 4.2rem 4.2rem;
+  opacity: .55;
+  animation: frozen-haze 7s linear infinite;
+}
+.freeze-surface::after {
+  background-size: 6.7rem 6.7rem;
+  animation-duration: 11s;
+  animation-direction: reverse;
+}
+.freeze-surface__crystal {
+  position: absolute;
+  color: rgba(236, 251, 255, .82);
+  font-size: clamp(5rem, 28vw, 15rem);
+  filter: drop-shadow(0 0 1rem rgba(255,255,255,.65));
+}
+.freeze-surface__crystal--one { top: -3rem; left: -2rem; transform: rotate(-18deg); }
+.freeze-surface__crystal--two { right: -2rem; bottom: -3rem; transform: rotate(16deg); }
+.freeze-surface__crystal--three { top: 28%; right: -3rem; font-size: clamp(3rem, 17vw, 9rem); }
+
+@keyframes frozen-haze {
+  to { transform: translate3d(2rem, 4.2rem, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .freeze-surface::before,
+  .freeze-surface::after { animation: none; }
+}

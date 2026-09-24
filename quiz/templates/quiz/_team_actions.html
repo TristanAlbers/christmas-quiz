@@ -1,6 +1,6 @@
 <div id="team-actions"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
   <input id="actions-context" type="hidden" name="actions_context" value="{{ actions_context }}">
-  {% if state.run_id and not state.music %}
+  {% if state.run_id and not state.music and state.team_state != 'FREEZE' %}
     <div class="team-resource-bar" aria-label="Team resources">
       {% include 'quiz/_team_resources.html' %}
       {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
