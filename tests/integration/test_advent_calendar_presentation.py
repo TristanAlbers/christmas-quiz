@@ -31,6 +31,27 @@ class AdventCalendarPresentationTests(SimpleTestCase):
         self.assertNotIn(">Locked<", html)
         self.assertNotIn("✓", html)
 
+    def test_team_label_sits_outside_board_and_calendar_title_is_prominent(self):
+        progress = {
+            "completed_count": 0,
+            "is_finished": False,
+            "doors": [{"number": 1, "status": "current"}],
+        }
+
+        html = render_to_string(
+            "quiz/_advent_calendar.html",
+            {"progress": progress, "team_id": "b"},
+        )
+
+        team_label = html.index('class="advent-team-heading"')
+        board = html.index('class="advent-progress__board"')
+        title = html.index('class="advent-progress__title"')
+        doors = html.index('class="advent-calendar"')
+        self.assertLess(team_label, board)
+        self.assertLess(title, doors)
+        self.assertIn("Team B", html)
+        self.assertIn("Advent calendar", html)
+
     def test_completed_door_has_a_persistent_open_visual_state(self):
         stylesheet_path = finders.find("quiz/advent-calendar.css")
         self.assertIsNotNone(stylesheet_path)
@@ -39,4 +60,6 @@ class AdventCalendarPresentationTests(SimpleTestCase):
         self.assertIn(".advent-door--completed .advent-door__flap", stylesheet)
         self.assertIn("transform: rotateY(-112deg);", stylesheet)
         self.assertIn(".advent-door__chocolate", stylesheet)
+        self.assertIn(".advent-progress__title", stylesheet)
+        self.assertIn('"Segoe Script"', stylesheet)
         self.assertIn("@media (prefers-reduced-motion: reduce)", stylesheet)
