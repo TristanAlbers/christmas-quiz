@@ -1,12 +1,6 @@
 <div id="question-pane" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
   <input id="view-context" type="hidden" name="view_context" value="{{ view_context }}">
-  {% if state.team_state == 'FREEZE' %}
-    <div class="freeze-surface" aria-hidden="true">
-      <span class="freeze-surface__crystal freeze-surface__crystal--one">❄</span>
-      <span class="freeze-surface__crystal freeze-surface__crystal--two">❆</span>
-      <span class="freeze-surface__crystal freeze-surface__crystal--three">❅</span>
-    </div>
-  {% elif state.music %}
+  {% if state.music %}
     {% include 'quiz/_music_progress.html' with music=state.music %}
     {% if state.music.phase == 'question' %}
       <h2>{{ state.music.title }}</h2>
@@ -31,6 +25,12 @@
       <h2>Music Quiz complete</h2>
       <p>Final scores are on screen. Advent resumes automatically.</p>
     {% endif %}
+  {% elif state.team_state == 'FREEZE' %}
+    <div class="freeze-surface" aria-hidden="true">
+      <span class="freeze-surface__crystal freeze-surface__crystal--one">❄</span>
+      <span class="freeze-surface__crystal freeze-surface__crystal--two">❆</span>
+      <span class="freeze-surface__crystal freeze-surface__crystal--three">❅</span>
+    </div>
   {% elif state.question %}
     <h2>{{ state.question.title }}</h2>
     <p>{{ state.question.body }}</p>
