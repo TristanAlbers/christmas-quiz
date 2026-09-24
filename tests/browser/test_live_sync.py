@@ -150,7 +150,9 @@ class LiveSyncBrowserTests(LiveServerTestCase):
                 )
                 try:
                     self.assertFalse(settings.DEBUG)
-                    script_url = await page.locator("script[src]").get_attribute("src")
+                    script_url = await page.locator("script[src]").first.get_attribute(
+                        "src"
+                    )
                     script_response = await context.request.get(
                         f"{self.live_server_url}{script_url}"
                     )
