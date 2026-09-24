@@ -137,6 +137,7 @@ class Phase31PackageDiscoveryTests(TestCase):
 class Phase31CompatibilityMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0003_phase3")
     migrate_to = ("quiz", "0004_retire_legacy_ready_runs")
+    latest_migration = ("quiz", "0005_phase4_music")
 
     def setUp(self):
         super().setUp()
@@ -145,7 +146,10 @@ class Phase31CompatibilityMigrationTests(TransactionTestCase):
         self.old_apps = executor.loader.project_state([self.migrate_from]).apps
 
     def tearDown(self):
-        MigrationExecutor(connection).migrate([self.migrate_to])
+        # This historical migration test deliberately exercises only the 0004
+        # transition. Restore the current schema afterward so later test classes
+        # run against the models they imported rather than a stale 0004 database.
+        MigrationExecutor(connection).migrate([self.latest_migration])
         super().tearDown()
 
     def _migrate(self):
