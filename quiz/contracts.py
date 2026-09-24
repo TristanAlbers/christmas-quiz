@@ -54,6 +54,14 @@ class SubmitAnswer:
 
 
 @dataclass(frozen=True)
+class SubmitMusicAnswer:
+    request_id: str
+    run_id: str
+    question_id: str
+    answer: str
+
+
+@dataclass(frozen=True)
 class QuestionProjection:
     id: str
     number: int
@@ -62,6 +70,27 @@ class QuestionProjection:
     media_urls: tuple[str, ...] = ()
     hint: str | None = None
     hint_available: bool = False
+
+
+@dataclass(frozen=True)
+class MusicScoreProjection:
+    team_id: TeamId
+    score: int
+
+
+@dataclass(frozen=True)
+class MusicProjection:
+    phase: Literal["question", "final_results"]
+    question_id: str | None
+    question_number: int | None
+    question_total: int
+    title: str | None
+    body: str | None
+    scores: tuple[MusicScoreProjection, ...]
+    question_elapsed_ms: int | None = None
+    final_results_remaining_ms: int | None = None
+    previous_winner_team_id: TeamId | None = None
+    audio_url: str | None = None
 
 
 @dataclass(frozen=True)
@@ -81,11 +110,18 @@ class TeamProjection:
     uno_reverse_cost: int | None = None
     uno_reverse_active: bool = False
     freeze_remaining_ms: int | None = None
+    music: MusicProjection | None = None
 
 
 @dataclass(frozen=True)
 class AnswerResult:
     outcome: Literal["incorrect", "completed"]
+    state: TeamProjection
+
+
+@dataclass(frozen=True)
+class MusicAnswerResult:
+    outcome: Literal["incorrect", "won"]
     state: TeamProjection
 
 
@@ -161,3 +197,10 @@ class AdminProjection:
     teams: tuple[AdminTeamProjection, ...]
     packages: tuple[PackageProjection, ...] = ()
     discovery_error: str | None = None
+    music: MusicProjection | None = None
+
+
+@dataclass(frozen=True)
+class PublicProjection:
+    global_state: str
+    music: MusicProjection | None = None

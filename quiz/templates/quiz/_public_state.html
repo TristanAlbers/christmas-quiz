@@ -1,0 +1,38 @@
+<section class="status-card public-status" aria-live="polite">
+  <div class="status-row">
+    <span class="eyebrow">Christmas Escape Room</span>
+    <strong class="state-badge state-{{ state.global_state|lower }}">{{ state.global_state }}</strong>
+  </div>
+  {% if state.music %}
+    <div class="music-stage">
+      <p class="eyebrow">Music Quiz</p>
+      {% if state.music.phase == 'question' %}
+        <h1>Question {{ state.music.question_number }} of {{ state.music.question_total }}</h1>
+        <h2>{{ state.music.title }}</h2>
+        <p>{{ state.music.body }}</p>
+        <p class="music-timer">{% widthratio state.music.question_elapsed_ms 1000 1 %} seconds</p>
+      {% else %}
+        <h1>Final Music scores</h1>
+        <p>Advent resumes in {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconds.</p>
+      {% endif %}
+      <div class="music-scores public-music-scores">
+        {% for score in state.music.scores %}
+          <article><span>Team {{ score.team_id|upper }}</span><strong>{{ score.score }}</strong></article>
+        {% endfor %}
+      </div>
+      {% if state.music.previous_winner_team_id %}
+        <p class="music-winner">Last point: Team {{ state.music.previous_winner_team_id|upper }}</p>
+      {% endif %}
+    </div>
+  {% elif state.global_state == 'READY' %}
+    <h1>Waiting for the Game Master</h1>
+  {% elif state.global_state == 'PAUSED' %}
+    <h1>Game paused</h1>
+  {% else %}
+    <h1>Advent Quiz in progress</h1>
+    <p>Team progression and balances remain private.</p>
+  {% endif %}
+</section>
+{% if replace_audio %}
+  {% include 'quiz/_public_audio.html' with oob=True %}
+{% endif %}

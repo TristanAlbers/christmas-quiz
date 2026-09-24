@@ -26,12 +26,17 @@ from quiz.contracts import (
     AnswerResult,
     ApplicationError,
     CommandResult,
+    MusicAnswerResult,
+    MusicProjection,
+    MusicScoreProjection,
     PackageProjection,
+    PublicProjection,
     QuestionProjection,
     RunCommand,
     StartGame,
     StartResult,
     SubmitAnswer,
+    SubmitMusicAnswer,
     TeamProjection,
     TeamPuzzle,
 )
@@ -56,6 +61,7 @@ from quiz.domain.phase2 import (
 )
 from quiz.domain.phase3 import (
     EffectTeamState,
+    GameplayClock,
     apply_direct_freeze,
     effective_gameplay_ms,
     freeze_remaining_ms,
@@ -68,6 +74,21 @@ from quiz.domain.phase3 import (
 from quiz.domain.phase3 import (
     purchase_uno_reverse as decide_reverse_purchase,
 )
+from quiz.domain.phase4 import (
+    MUSIC_QUESTION_TOTAL,
+    MusicClock,
+    UnderlyingTeamState,
+    begin_music_interruption,
+    effective_music_ms,
+    music_phase_elapsed_ms,
+    pause_music_interruption,
+    reconcile_music_timing,
+    resolve_music_answer,
+    resume_music_interruption,
+)
+from quiz.domain.phase4 import (
+    MusicScore as DomainMusicScore,
+)
 from quiz.models import (
     AccountRole,
     AnswerReceipt,
@@ -76,6 +97,10 @@ from quiz.models import (
     CommandReceipt,
     FragmentAward,
     HintReveal,
+    MusicAttempt,
+    MusicQuestionResult,
+    MusicQuiz,
+    MusicScore,
     PuzzleProgress,
     Run,
     StartReceipt,
@@ -130,8 +155,125 @@ def _server_now(now):
 
 
 def _gameplay_ms(run: Run, now) -> int:
-    return effective_gameplay_ms(
-        run.gameplay_elapsed_ms, run.advent_clock_anchor, now
+    return effective_gameplay_ms(run.gameplay_elapsed_ms, run.advent_clock_anchor, now)
+
+
+def _underlying_teams(run: Run) -> tuple[UnderlyingTeamState, ...]:
+    return tuple(
+        UnderlyingTeamState(
+            row.team_id,
+            row.activity_state,
+            row.freeze_started_gameplay_ms,
+        )
+        for row in TeamRun.objects.filter(run=run).order_by("team_id")
+    )
+
+
+def _music_timing(run: Run, config: dict, now):
+    music = MusicQuiz.objects.filter(run=run).first()
+    if music is None:
+        return None, None
+    decision = reconcile_music_timing(
+        global_state=run.global_state,
+        pause_resume_target=run.pause_resume_target,
+        phase=music.phase,
+        music_clock=MusicClock(
+            music.music_elapsed_ms,
+            music.music_clock_anchor,
+        ),
+        advent_clock=GameplayClock(
+            run.gameplay_elapsed_ms,
+            run.advent_clock_anchor,
+        ),
+        final_results_started_ms=music.final_results_started_ms,
+        final_results_duration_ms=config["music_score_display_duration_ms"],
+        now=now,
+    )
+    return music, decision
+
+
+def _effective_run_state(run: Run, config: dict, now):
+    music, timing = _music_timing(run, config, now)
+    if timing is None:
+        return run.global_state, _gameplay_ms(run, now), music, timing
+    gameplay_ms = effective_gameplay_ms(
+        timing.advent_clock.accumulated_ms,
+        timing.advent_clock.anchor,
+        now,
+    )
+    return timing.global_state, gameplay_ms, music, timing
+
+
+def _persist_music_timing(run: Run, config: dict, now) -> bool:
+    """Persist a logically expired final display inside an existing writer."""
+    music, timing = _music_timing(run, config, now)
+    if music is None or timing.phase != "completed" or music.phase == "completed":
+        return False
+    run.global_state = timing.global_state
+    run.pause_resume_target = None
+    run.gameplay_elapsed_ms = timing.advent_clock.accumulated_ms
+    run.advent_clock_anchor = timing.advent_clock.anchor
+    run.save(
+        update_fields=[
+            "global_state",
+            "pause_resume_target",
+            "gameplay_elapsed_ms",
+            "advent_clock_anchor",
+        ]
+    )
+    music.phase = timing.phase
+    music.music_elapsed_ms = timing.music_clock.accumulated_ms
+    music.music_clock_anchor = timing.music_clock.anchor
+    music.save(update_fields=["phase", "music_elapsed_ms", "music_clock_anchor"])
+    return True
+
+
+def _music_projection(run, config, music, timing, now, *, consumer):
+    if music is None or timing is None or timing.phase == "completed":
+        return None
+    scores = tuple(
+        MusicScoreProjection(row.team_id, row.score)
+        for row in MusicScore.objects.filter(run=run).order_by("team_id")
+    )
+    question_id = None
+    question_number = music.current_question_number
+    title = None
+    body = None
+    elapsed_ms = None
+    audio_url = None
+    if timing.phase == "question" and question_number is not None:
+        question = config["music_questions"][question_number - 1]
+        if consumer in {"team", "admin"}:
+            question_id = question["id"]
+        title = question["title"]
+        body = question["body"]
+        phase_started_ms = music.current_question_started_ms
+        elapsed_ms = music_phase_elapsed_ms(
+            effective_music_ms(
+                timing.music_clock.accumulated_ms,
+                timing.music_clock.anchor,
+                now,
+            ),
+            phase_started_ms,
+        )
+        if (
+            consumer in {"public", "admin"}
+            and run.global_state == "MUSIC_QUIZ"
+            and question.get("audio") is not None
+        ):
+            audio_url = reverse("current_music_audio", kwargs={"run_id": run.id})
+    return MusicProjection(
+        phase=timing.phase,
+        question_id=question_id,
+        question_number=question_number,
+        question_total=MUSIC_QUESTION_TOTAL,
+        title=title,
+        body=body,
+        scores=scores,
+        question_elapsed_ms=elapsed_ms,
+        final_results_remaining_ms=timing.final_results_remaining_ms,
+        previous_winner_team_id=music.previous_winner_team,
+        audio_url=audio_url,
     )
 
 
@@ -149,9 +291,14 @@ def _persist_effect_state(team: TeamRun, state: EffectTeamState) -> None:
     team.points = state.points
     team.freeze_started_gameplay_ms = state.freeze_started_ms
     team.reverse_active = state.uno_reverse_active
-    team.save(update_fields=[
-        "activity_state", "points", "freeze_started_gameplay_ms", "reverse_active"
-    ])
+    team.save(
+        update_fields=[
+            "activity_state",
+            "points",
+            "freeze_started_gameplay_ms",
+            "reverse_active",
+        ]
+    )
 
 
 def _reconcile_expired_freezes(run: Run, gameplay_ms: int) -> None:
@@ -171,14 +318,16 @@ def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
         return TeamProjection(None, "READY", "READY", 0, None, (), (), None)
     now = _server_now(now)
     team = TeamRun.objects.get(run=run, team_id=team_id)
-    gameplay_ms = _gameplay_ms(run, now)
+    config = load_snapshot(run)
+    global_state, gameplay_ms, music, timing = _effective_run_state(run, config, now)
     effective = reconcile_freeze(
         team.activity_state, team.freeze_started_gameplay_ms, gameplay_ms
     )
-    remaining = freeze_remaining_ms(
-        effective.freeze_started_ms, gameplay_ms
-    ) if effective.activity_state == "FREEZE" else None
-    config = load_snapshot(run)
+    remaining = (
+        freeze_remaining_ms(effective.freeze_started_ms, gameplay_ms)
+        if effective.activity_state == "FREEZE"
+        else None
+    )
     progress = list(PuzzleProgress.objects.filter(run=run, team_id=team_id))
     completed = tuple(sorted(row.number for row in progress if row.completed))
     fragments = tuple(
@@ -187,7 +336,7 @@ def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
         .values_list("fragment", flat=True)
     )
     question = None
-    if run.global_state == "ADVENT_QUIZ" and effective.activity_state == "PUZZLE":
+    if global_state == "ADVENT_QUIZ" and effective.activity_state == "PUZZLE":
         puzzles = config["teams"][team_id]["puzzles"]
         if team.current_number <= len(puzzles) and team.current_number not in completed:
             item = puzzles[team.current_number - 1]
@@ -215,7 +364,7 @@ def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
             )
     return TeamProjection(
         run_id=str(run.id),
-        global_state=run.global_state,
+        global_state=global_state,
         team_state=effective.activity_state,
         points=team.points,
         current_number=team.current_number,
@@ -229,18 +378,33 @@ def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
         uno_reverse_cost=config.get("uno_reverse_cost"),
         uno_reverse_active=team.reverse_active,
         freeze_remaining_ms=remaining,
+        music=_music_projection(run, config, music, timing, now, consumer="team"),
     )
 
 
-def _restore_answer(value: dict) -> AnswerResult:
-    data = value["state"].copy()
+def _restore_team_projection(value: dict) -> TeamProjection:
+    data = value.copy()
     data["completed_numbers"] = tuple(data["completed_numbers"])
     data["fragments"] = tuple(data["fragments"])
     if data["question"] is not None:
         question = data["question"].copy()
         question["media_urls"] = tuple(question["media_urls"])
         data["question"] = QuestionProjection(**question)
-    return AnswerResult(value["outcome"], TeamProjection(**data))
+    if data.get("music") is not None:
+        music = data["music"].copy()
+        music["scores"] = tuple(
+            MusicScoreProjection(**score) for score in music["scores"]
+        )
+        data["music"] = MusicProjection(**music)
+    return TeamProjection(**data)
+
+
+def _restore_answer(value: dict) -> AnswerResult:
+    return AnswerResult(value["outcome"], _restore_team_projection(value["state"]))
+
+
+def _restore_music_answer(value: dict) -> MusicAnswerResult:
+    return MusicAnswerResult(value["outcome"], _restore_team_projection(value["state"]))
 
 
 def _active_run(run_id: uuid.UUID) -> Run:
@@ -321,12 +485,81 @@ def _current_puzzle(run, team_id, question_id):
     return team, config, puzzles, puzzle, progress, current
 
 
+def _start_music_if_needed(run, actor, request_id, config, now) -> bool:
+    if config.get("schema_version") != 4:
+        raise ApplicationError("disallowed_state")
+    decision = begin_music_interruption(
+        global_state=run.global_state,
+        already_triggered=MusicQuiz.objects.filter(run=run).exists(),
+        advent_clock=GameplayClock(
+            run.gameplay_elapsed_ms,
+            run.advent_clock_anchor,
+        ),
+        underlying_teams=_underlying_teams(run),
+        now=now,
+    )
+    if not decision.triggered:
+        return False
+    run.global_state = decision.global_state
+    run.gameplay_elapsed_ms = decision.advent_clock.accumulated_ms
+    run.advent_clock_anchor = decision.advent_clock.anchor
+    run.pause_resume_target = decision.pause_resume_target
+    run.save(
+        update_fields=[
+            "global_state",
+            "gameplay_elapsed_ms",
+            "advent_clock_anchor",
+            "pause_resume_target",
+        ]
+    )
+    MusicQuiz.objects.create(
+        run=run,
+        phase="question",
+        current_question_number=1,
+        current_question_started_ms=0,
+        music_elapsed_ms=decision.music_clock.accumulated_ms,
+        music_clock_anchor=decision.music_clock.anchor,
+    )
+    # Save individually: persistence validation intentionally relies on normal
+    # model creation rather than bypassing it with bulk_create.
+    MusicScore.objects.create(run=run, team_id="a")
+    MusicScore.objects.create(run=run, team_id="b")
+    _event(
+        run,
+        actor,
+        request_id,
+        "music_started",
+        "started",
+        changes={
+            "global_state": {
+                "previous": "ADVENT_QUIZ",
+                "new": "MUSIC_QUIZ",
+            },
+            "trigger_puzzle": 13,
+        },
+    )
+    return True
+
+
 def _complete_current(
-    run, actor, team_id, team, puzzles, puzzle, progress, current, route, *, cost=0
+    run,
+    actor,
+    request_id,
+    team_id,
+    team,
+    config,
+    puzzles,
+    puzzle,
+    progress,
+    current,
+    route,
+    *,
+    cost=0,
+    now,
 ):
-    # The phase-4 Music interruption is mandatory on puzzle 13. Until it exists,
-    # do not open that puzzle through any completion route.
-    if puzzle["number"] >= 13 or (puzzle["number"] == 12 and len(puzzles) >= 13):
+    if puzzle["number"] > 13:
+        raise ApplicationError("disallowed_state")
+    if puzzle["number"] == 13 and config.get("schema_version") != 4:
         raise ApplicationError("disallowed_state")
     awarded_ids = set(
         FragmentAward.objects.filter(run=run, team_id=team_id).values_list(
@@ -365,10 +598,13 @@ def _complete_current(
     current.completed = True
     current.completion_route = decision.route
     current.reward_awarded = True
-    current.completed_at = timezone.now()
+    current.completed_at = now
     current.save(
         update_fields=[
-            "completed", "completion_route", "reward_awarded", "completed_at"
+            "completed",
+            "completion_route",
+            "reward_awarded",
+            "completed_at",
         ]
     )
     team.points = decision.state.points
@@ -381,6 +617,11 @@ def _complete_current(
             puzzle_id=puzzle["id"],
             fragment=decision.fragment_award,
         )
+    music_triggered = (
+        _start_music_if_needed(run, actor, request_id, config, now)
+        if puzzle["number"] == 13
+        else False
+    )
     return {
         "points": {
             "previous": prior_points,
@@ -392,6 +633,7 @@ def _complete_current(
         "fragment": decision.fragment_award,
         "cost": cost,
         "reward": reward,
+        "music_triggered": music_triggered,
     }
 
 
@@ -399,9 +641,7 @@ def get_team_state(actor: Actor, *, now=None) -> TeamProjection:
     now = _server_now(now)
     with read_snapshot():
         _verify_actor(actor, "team")
-        return _projection(
-            Run.objects.filter(active=True).first(), actor.team_id, now
-        )
+        return _projection(Run.objects.filter(active=True).first(), actor.team_id, now)
 
 
 def get_admin_status(actor: Actor) -> StartResult | None:
@@ -418,7 +658,9 @@ def get_admin_state(actor: Actor, *, now=None) -> AdminProjection:
         run = Run.objects.filter(active=True).first()
         if run is not None:
             config = load_snapshot(run)
-            gameplay_ms = _gameplay_ms(run, now)
+            global_state, gameplay_ms, music, timing = _effective_run_state(
+                run, config, now
+            )
             teams = []
             for team_id in ("a", "b"):
                 row = TeamRun.objects.get(run=run, team_id=team_id)
@@ -430,9 +672,7 @@ def get_admin_state(actor: Actor, *, now=None) -> AdminProjection:
                     if effective.activity_state == "FREEZE"
                     else None
                 )
-                progress = list(
-                    PuzzleProgress.objects.filter(run=run, team_id=team_id)
-                )
+                progress = list(PuzzleProgress.objects.filter(run=run, team_id=team_id))
                 puzzles = config["teams"][team_id]["puzzles"]
                 completed_numbers = tuple(
                     sorted(p.number for p in progress if p.completed)
@@ -445,22 +685,33 @@ def get_admin_state(actor: Actor, *, now=None) -> AdminProjection:
                     )
                     else None
                 )
-                teams.append(AdminTeamProjection(
-                    team_id=team_id,
-                    activity_state=effective.activity_state,
-                    points=row.points,
-                    hint_tokens=row.hint_tokens,
-                    current_number=row.current_number,
-                    current_question_id=puzzle["id"] if puzzle else None,
-                    completed_numbers=completed_numbers,
-                    hint_revealed=bool(puzzle and HintReveal.objects.filter(
-                        run=run, team_id=team_id, puzzle_id=puzzle["id"]
-                    ).exists()),
-                    uno_reverse_active=row.reverse_active,
-                    freeze_remaining_ms=remaining,
-                ))
+                teams.append(
+                    AdminTeamProjection(
+                        team_id=team_id,
+                        activity_state=effective.activity_state,
+                        points=row.points,
+                        hint_tokens=row.hint_tokens,
+                        current_number=row.current_number,
+                        current_question_id=puzzle["id"] if puzzle else None,
+                        completed_numbers=completed_numbers,
+                        hint_revealed=bool(
+                            puzzle
+                            and HintReveal.objects.filter(
+                                run=run, team_id=team_id, puzzle_id=puzzle["id"]
+                            ).exists()
+                        ),
+                        uno_reverse_active=row.reverse_active,
+                        freeze_remaining_ms=remaining,
+                    )
+                )
             return AdminProjection(
-                str(run.id), run.global_state, run.package_id, tuple(teams)
+                str(run.id),
+                global_state,
+                run.package_id,
+                tuple(teams),
+                music=_music_projection(
+                    run, config, music, timing, now, consumer="admin"
+                ),
             )
 
     # Source discovery is intentionally outside the database snapshot. It is
@@ -482,6 +733,22 @@ def get_admin_state(actor: Actor, *, now=None) -> AdminProjection:
         packages=packages,
         discovery_error=discovery_error,
     )
+
+
+def get_public_state(*, now=None) -> PublicProjection:
+    now = _server_now(now)
+    with read_snapshot():
+        run = Run.objects.filter(active=True).first()
+        if run is None:
+            return PublicProjection("READY")
+        config = load_snapshot(run)
+        global_state, _gameplay_ms_value, music, timing = _effective_run_state(
+            run, config, now
+        )
+        return PublicProjection(
+            global_state,
+            _music_projection(run, config, music, timing, now, consumer="public"),
+        )
 
 
 def start_game(actor: Actor, command: StartGame, *, now=None) -> StartResult:
@@ -607,6 +874,21 @@ def submit_answer(actor: Actor, command: SubmitAnswer, *, now=None) -> AnswerRes
             run = Run.objects.filter(pk=run_id, active=True).first()
             if run is None:
                 raise ApplicationError("stale_run")
+            config = load_snapshot(run)
+            if _persist_music_timing(run, config, now):
+                _event(
+                    run,
+                    actor,
+                    request_id,
+                    "music_completed",
+                    "completed",
+                    changes={
+                        "global_state": {
+                            "previous": "MUSIC_QUIZ",
+                            "new": "ADVENT_QUIZ",
+                        }
+                    },
+                )
             gameplay_ms = _gameplay_ms(run, now)
             _reconcile_expired_freezes(run, gameplay_ms)
             team, config, puzzles, puzzle, progress, current = _current_puzzle(
@@ -627,8 +909,18 @@ def submit_answer(actor: Actor, command: SubmitAnswer, *, now=None) -> AnswerRes
             )
             if correct:
                 changes = _complete_current(
-                    run, actor, actor.team_id, team, puzzles, puzzle, progress,
-                    current, "correct_answer"
+                    run,
+                    actor,
+                    request_id,
+                    actor.team_id,
+                    team,
+                    config,
+                    puzzles,
+                    puzzle,
+                    progress,
+                    current,
+                    "correct_answer",
+                    now=now,
                 )
                 outcome = "completed"
             else:
@@ -663,6 +955,173 @@ def submit_answer(actor: Actor, command: SubmitAnswer, *, now=None) -> AnswerRes
         raise
 
 
+def submit_music_answer(
+    actor: Actor, command: SubmitMusicAnswer, *, now=None
+) -> MusicAnswerResult:
+    now = _server_now(now)
+    request_id = _uuid(command.request_id)
+    run_id = _uuid(command.run_id)
+    if (
+        not isinstance(command.question_id, str)
+        or not command.question_id
+        or not isinstance(command.answer, str)
+        or not command.answer.strip()
+        or len(command.answer) > 500
+    ):
+        raise ApplicationError("invalid_input")
+    digest = _digest(
+        "submit_music_answer",
+        actor,
+        {
+            "run_id": str(run_id),
+            "question_id": command.question_id,
+            "answer": command.answer,
+        },
+    )
+    try:
+        with immediate_transaction():
+            _verify_actor(actor, "team")
+            prior = CommandReceipt.objects.filter(
+                actor_id=actor.user_id, request_id=request_id
+            ).first()
+            if prior is not None:
+                if prior.payload_digest != digest:
+                    raise ApplicationError("request_conflict")
+                restored = _restore_music_answer(prior.result)
+                active = Run.objects.filter(pk=run_id, active=True).first()
+                if active is not None:
+                    return MusicAnswerResult(
+                        restored.outcome,
+                        _projection(active, actor.team_id, now),
+                    )
+                return restored
+            run = Run.objects.filter(pk=run_id, active=True).first()
+            if run is None:
+                raise ApplicationError("stale_run")
+            config = load_snapshot(run)
+            if config.get("schema_version") != 4:
+                raise ApplicationError("disallowed_state")
+            _persist_music_timing(run, config, now)
+            music = MusicQuiz.objects.get(run=run)
+            number = music.current_question_number
+            if number is None:
+                raise ApplicationError("disallowed_state")
+            question = config["music_questions"][number - 1]
+            current_music_ms = effective_music_ms(
+                music.music_elapsed_ms,
+                music.music_clock_anchor,
+                now,
+            )
+            scores = tuple(
+                DomainMusicScore(row.team_id, row.score)
+                for row in MusicScore.objects.filter(run=run).order_by("team_id")
+            )
+            team = TeamRun.objects.get(run=run, team_id=actor.team_id)
+            decision = resolve_music_answer(
+                global_state=run.global_state,
+                phase=music.phase,
+                current_question_id=question["id"],
+                submitted_question_id=command.question_id,
+                current_question_number=number,
+                validator_type=question["validator"]["type"],
+                expected_answer=question["validator"]["answer"],
+                submitted_answer=command.answer,
+                team_id=actor.team_id,
+                scores=scores,
+                team_points=team.points,
+                reward_points=config["music_question_reward"],
+                current_music_ms=current_music_ms,
+            )
+            attempt = MusicAttempt.objects.create(
+                run=run,
+                team_id=actor.team_id,
+                actor_id=actor.user_id,
+                request_id=request_id,
+                question_number=number,
+                question_id=question["id"],
+                is_correct=decision.outcome == "won",
+            )
+            changes = {}
+            if decision.outcome == "won":
+                MusicQuestionResult.objects.create(
+                    run=run,
+                    question_number=number,
+                    question_id=question["id"],
+                    winner_team_id=actor.team_id,
+                    reward_points=decision.points_delta,
+                    winning_attempt=attempt,
+                )
+                score = MusicScore.objects.get(run=run, team_id=actor.team_id)
+                before_score = score.score
+                score.score += decision.score_delta
+                score.save(update_fields=["score"])
+                before_points = team.points
+                team.points = decision.team_points
+                team.save(update_fields=["points"])
+                music.phase = decision.phase
+                music.current_question_number = decision.current_question_number
+                music.current_question_started_ms = (
+                    current_music_ms if decision.phase == "question" else None
+                )
+                music.final_results_started_ms = decision.final_results_started_ms
+                music.previous_winner_team = decision.winner_team_id
+                music.save(
+                    update_fields=[
+                        "phase",
+                        "current_question_number",
+                        "current_question_started_ms",
+                        "final_results_started_ms",
+                        "previous_winner_team",
+                    ]
+                )
+                changes = {
+                    "music_score": {
+                        "previous": before_score,
+                        "delta": decision.score_delta,
+                        "new": score.score,
+                    },
+                    "points": {
+                        "previous": before_points,
+                        "delta": decision.points_delta,
+                        "new": team.points,
+                    },
+                    "question_number": {
+                        "previous": number,
+                        "new": decision.current_question_number,
+                    },
+                    "music_phase": decision.phase,
+                }
+            result = MusicAnswerResult(
+                decision.outcome,
+                _projection(run, actor.team_id, now),
+            )
+            CommandReceipt.objects.create(
+                run=run,
+                actor_id=actor.user_id,
+                request_id=request_id,
+                action="submit_music_answer",
+                payload_digest=digest,
+                result=asdict(result),
+            )
+            _event(
+                run,
+                actor,
+                request_id,
+                "music_answer",
+                decision.outcome,
+                team_id=actor.team_id,
+                puzzle_id=question["id"],
+                changes=changes,
+            )
+            return result
+    except DomainError as exc:
+        raise ApplicationError(exc.code) from exc
+    except OperationalError as exc:
+        if is_busy_error(exc):
+            raise ApplicationError("temporarily_busy") from exc
+        raise
+
+
 def _perform(actor, command, action, role, payload, apply, *, now=None):
     """One writer transaction for a phase-2 action, receipt, and audit event."""
     now = _server_now(now)
@@ -674,6 +1133,21 @@ def _perform(actor, command, action, role, payload, apply, *, now=None):
             if prior is not None:
                 return prior
             run = _active_run(run_id)
+            config = load_snapshot(run)
+            if _persist_music_timing(run, config, now):
+                _event(
+                    run,
+                    actor,
+                    request_id,
+                    "music_completed",
+                    "completed",
+                    changes={
+                        "global_state": {
+                            "previous": "MUSIC_QUIZ",
+                            "new": "ADVENT_QUIZ",
+                        }
+                    },
+                )
             gameplay_ms = _gameplay_ms(run, now)
             _reconcile_expired_freezes(run, gameplay_ms)
             outcome, result_run, changes, team_id, puzzle_id = apply(
@@ -681,8 +1155,16 @@ def _perform(actor, command, action, role, payload, apply, *, now=None):
             )
             result = _command_result(outcome, result_run)
             _save_receipt(run, actor, request_id, action, digest, result)
-            _event(run, actor, request_id, action, outcome,
-                   team_id=team_id, puzzle_id=puzzle_id, changes=changes)
+            _event(
+                run,
+                actor,
+                request_id,
+                action,
+                outcome,
+                team_id=team_id,
+                puzzle_id=puzzle_id,
+                changes=changes,
+            )
             return result
     except DomainError as exc:
         code = "stale_question" if exc.code == "prerequisite_violation" else exc.code
@@ -695,49 +1177,113 @@ def _perform(actor, command, action, role, payload, apply, *, now=None):
 
 def pause_game(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
     now = _server_now(now)
+
     def apply(run, _request_id, _gameplay_ms):
         previous = run.global_state
-        transition = pause_gameplay_clock(
-            previous,
-            run.gameplay_elapsed_ms,
-            run.advent_clock_anchor,
-            _server_now(now),
+        if previous == "MUSIC_QUIZ":
+            music = MusicQuiz.objects.get(run=run)
+            transition = pause_music_interruption(
+                global_state=previous,
+                advent_clock=GameplayClock(
+                    run.gameplay_elapsed_ms, run.advent_clock_anchor
+                ),
+                music_clock=MusicClock(
+                    music.music_elapsed_ms, music.music_clock_anchor
+                ),
+                underlying_teams=_underlying_teams(run),
+                now=now,
+            )
+            music.music_elapsed_ms = transition.music_clock.accumulated_ms
+            music.music_clock_anchor = transition.music_clock.anchor
+            music.save(update_fields=["music_elapsed_ms", "music_clock_anchor"])
+            advent_clock = transition.advent_clock
+            resume_target = transition.pause_resume_target
+        else:
+            advent_transition = pause_gameplay_clock(
+                previous,
+                run.gameplay_elapsed_ms,
+                run.advent_clock_anchor,
+                now,
+            )
+            advent_clock = advent_transition.clock
+            resume_target = "ADVENT_QUIZ"
+        run.global_state = "PAUSED"
+        run.gameplay_elapsed_ms = advent_clock.accumulated_ms
+        run.advent_clock_anchor = advent_clock.anchor
+        run.pause_resume_target = resume_target
+        run.save(
+            update_fields=[
+                "global_state",
+                "gameplay_elapsed_ms",
+                "advent_clock_anchor",
+                "pause_resume_target",
+            ]
         )
-        run.global_state = transition.global_state
-        run.gameplay_elapsed_ms = transition.clock.accumulated_ms
-        run.advent_clock_anchor = transition.clock.anchor
-        run.save(update_fields=[
-            "global_state", "gameplay_elapsed_ms", "advent_clock_anchor"
-        ])
         return (
-            "paused", run,
+            "paused",
+            run,
             {"global_state": {"previous": previous, "new": run.global_state}},
-            None, "",
+            None,
+            "",
         )
+
     return _perform(actor, command, "pause", "admin", {}, apply, now=now)
 
 
 def resume_game(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
     now = _server_now(now)
+
     def apply(run, _request_id, _gameplay_ms):
         previous = run.global_state
-        transition = resume_gameplay_clock(
-            previous,
-            run.gameplay_elapsed_ms,
-            run.advent_clock_anchor,
-            _server_now(now),
+        target = run.pause_resume_target
+        if target == "MUSIC_QUIZ":
+            music = MusicQuiz.objects.get(run=run)
+            transition = resume_music_interruption(
+                global_state=previous,
+                pause_resume_target=target,
+                advent_clock=GameplayClock(
+                    run.gameplay_elapsed_ms, run.advent_clock_anchor
+                ),
+                music_clock=MusicClock(
+                    music.music_elapsed_ms, music.music_clock_anchor
+                ),
+                underlying_teams=_underlying_teams(run),
+                now=now,
+            )
+            music.music_elapsed_ms = transition.music_clock.accumulated_ms
+            music.music_clock_anchor = transition.music_clock.anchor
+            music.save(update_fields=["music_elapsed_ms", "music_clock_anchor"])
+            resumed_state = transition.global_state
+            advent_clock = transition.advent_clock
+        else:
+            advent_transition = resume_gameplay_clock(
+                previous,
+                run.gameplay_elapsed_ms,
+                run.advent_clock_anchor,
+                now,
+            )
+            resumed_state = advent_transition.global_state
+            advent_clock = advent_transition.clock
+        run.global_state = resumed_state
+        run.gameplay_elapsed_ms = advent_clock.accumulated_ms
+        run.advent_clock_anchor = advent_clock.anchor
+        run.pause_resume_target = None
+        run.save(
+            update_fields=[
+                "global_state",
+                "gameplay_elapsed_ms",
+                "advent_clock_anchor",
+                "pause_resume_target",
+            ]
         )
-        run.global_state = transition.global_state
-        run.gameplay_elapsed_ms = transition.clock.accumulated_ms
-        run.advent_clock_anchor = transition.clock.anchor
-        run.save(update_fields=[
-            "global_state", "gameplay_elapsed_ms", "advent_clock_anchor"
-        ])
         return (
-            "resumed", run,
+            "resumed",
+            run,
             {"global_state": {"previous": previous, "new": run.global_state}},
-            None, "",
+            None,
+            "",
         )
+
     return _perform(actor, command, "resume", "admin", {}, apply, now=now)
 
 
@@ -757,15 +1303,28 @@ def adjust_points(actor: Actor, command: AdminPoints, *, now=None) -> CommandRes
         team.points = decide_points(before, command.delta)
         team.save(update_fields=["points"])
         return (
-            "adjusted", run,
-            {"points": {
-                "previous": before, "delta": command.delta, "new": team.points,
-            }},
-            command.team_id, "",
+            "adjusted",
+            run,
+            {
+                "points": {
+                    "previous": before,
+                    "delta": command.delta,
+                    "new": team.points,
+                }
+            },
+            command.team_id,
+            "",
         )
-    return _perform(actor, command, "adjust_points", "admin", {
-        "team_id": command.team_id, "delta": command.delta
-    }, apply, now=now)
+
+    return _perform(
+        actor,
+        command,
+        "adjust_points",
+        "admin",
+        {"team_id": command.team_id, "delta": command.delta},
+        apply,
+        now=now,
+    )
 
 
 def purchase_hint(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
@@ -777,18 +1336,28 @@ def purchase_hint(actor: Actor, command: RunCommand, *, now=None) -> CommandResu
         before = team.points
         before_tokens = team.hint_tokens
         team.points, team.hint_tokens = decide_hint_purchase(
-            run.global_state, team.activity_state, team.points,
-            team.hint_tokens, config["hint_cost"]
+            run.global_state,
+            team.activity_state,
+            team.points,
+            team.hint_tokens,
+            config["hint_cost"],
         )
         team.save(update_fields=["points", "hint_tokens"])
-        return "purchased", run, {
-            "points": {
-                "previous": before,
-                "delta": team.points - before,
-                "new": team.points,
+        return (
+            "purchased",
+            run,
+            {
+                "points": {
+                    "previous": before,
+                    "delta": team.points - before,
+                    "new": team.points,
+                },
+                "hint_tokens": {"previous": before_tokens, "new": team.hint_tokens},
             },
-            "hint_tokens": {"previous": before_tokens, "new": team.hint_tokens},
-        }, actor.team_id, ""
+            actor.team_id,
+            "",
+        )
+
     return _perform(actor, command, "purchase_hint", "team", {}, apply, now=now)
 
 
@@ -801,6 +1370,7 @@ def _reveal(
         raise ApplicationError("invalid_input")
     team_id = command.team_id if admin else actor.team_id
     action = "provide_hint" if admin else "use_hint"
+
     def apply(run, request_id, _gameplay_ms):
         team, _config, _puzzles, puzzle, _progress, _current = _current_puzzle(
             run, team_id, command.question_id
@@ -812,25 +1382,49 @@ def _reveal(
         ).exists()
         before = team.hint_tokens
         team.hint_tokens, newly = decide_hint_reveal(
-            run.global_state, team.activity_state, team.current_number,
-            puzzle["number"], team.hint_tokens, revealed, admin=admin
+            run.global_state,
+            team.activity_state,
+            team.current_number,
+            puzzle["number"],
+            team.hint_tokens,
+            revealed,
+            admin=admin,
         )
         if not newly:
             # A fresh repeat is a no-op, without another reveal audit event.
             return "already_revealed", run, {}, team_id, puzzle["id"]
         team.save(update_fields=["hint_tokens"])
         HintReveal.objects.create(
-            run=run, team_id=team_id, puzzle_id=puzzle["id"],
-            source="admin" if admin else "player", actor_id=actor.user_id,
+            run=run,
+            team_id=team_id,
+            puzzle_id=puzzle["id"],
+            source="admin" if admin else "player",
+            actor_id=actor.user_id,
             request_id=request_id,
         )
-        return "revealed", run, {
-            "hint_tokens": {"previous": before, "new": team.hint_tokens},
-            "hint_revealed": {"previous": False, "new": True},
-        }, team_id, puzzle["id"]
-    return _perform(actor, command, action, "admin" if admin else "team", {
-        **({"team_id": team_id} if admin else {}), "question_id": command.question_id,
-    }, apply, now=now)
+        return (
+            "revealed",
+            run,
+            {
+                "hint_tokens": {"previous": before, "new": team.hint_tokens},
+                "hint_revealed": {"previous": False, "new": True},
+            },
+            team_id,
+            puzzle["id"],
+        )
+
+    return _perform(
+        actor,
+        command,
+        action,
+        "admin" if admin else "team",
+        {
+            **({"team_id": team_id} if admin else {}),
+            "question_id": command.question_id,
+        },
+        apply,
+        now=now,
+    )
 
 
 def use_hint(actor: Actor, command: TeamPuzzle, *, now=None) -> CommandResult:
@@ -850,7 +1444,8 @@ def _complete_action(
         raise ApplicationError("invalid_input")
     team_id = command.team_id if admin else actor.team_id
     action = "force_complete" if admin else "skip"
-    def apply(run, _request_id, _gameplay_ms):
+
+    def apply(run, request_id, _gameplay_ms):
         team, config, puzzles, puzzle, progress, current = _current_puzzle(
             run, team_id, command.question_id
         )
@@ -860,13 +1455,34 @@ def _complete_action(
                 raise ApplicationError("disallowed_state")
             cost = config["skip_cost"]
         changes = _complete_current(
-            run, actor, team_id, team, puzzles, puzzle, progress, current,
-            "admin_force" if admin else "skip", cost=cost,
+            run,
+            actor,
+            request_id,
+            team_id,
+            team,
+            config,
+            puzzles,
+            puzzle,
+            progress,
+            current,
+            "admin_force" if admin else "skip",
+            cost=cost,
+            now=_server_now(now),
         )
         return "completed", run, changes, team_id, puzzle["id"]
-    return _perform(actor, command, action, "admin" if admin else "team", {
-        **({"team_id": team_id} if admin else {}), "question_id": command.question_id,
-    }, apply, now=now)
+
+    return _perform(
+        actor,
+        command,
+        action,
+        "admin" if admin else "team",
+        {
+            **({"team_id": team_id} if admin else {}),
+            "question_id": command.question_id,
+        },
+        apply,
+        now=now,
+    )
 
 
 def skip_current(actor: Actor, command: TeamPuzzle, *, now=None) -> CommandResult:
@@ -879,10 +1495,9 @@ def force_complete_current(
     return _complete_action(actor, command, admin=True, now=now)
 
 
-def freeze_opponent(
-    actor: Actor, command: RunCommand, *, now=None
-) -> CommandResult:
+def freeze_opponent(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
     """Immediately buy and apply one Freeze attack to the opposing team."""
+
     def apply(run, request_id, gameplay_ms):
         config = load_snapshot(run)
         if "freeze_cost" not in config:
@@ -933,6 +1548,7 @@ def freeze_opponent(
             actor.team_id,
             "",
         )
+
     return _perform(actor, command, "freeze_attack", "team", {}, apply, now=now)
 
 
@@ -966,9 +1582,8 @@ def purchase_uno_reverse(
             actor.team_id,
             "",
         )
-    return _perform(
-        actor, command, "purchase_uno_reverse", "team", {}, apply, now=now
-    )
+
+    return _perform(actor, command, "purchase_uno_reverse", "team", {}, apply, now=now)
 
 
 def _admin_freeze_action(
@@ -979,13 +1594,13 @@ def _admin_freeze_action(
     action = "admin_unfreeze" if remove else "admin_freeze"
 
     def apply(run, _request_id, gameplay_ms):
+        if run.pause_resume_target == "MUSIC_QUIZ":
+            raise ApplicationError("disallowed_state")
         team = TeamRun.objects.get(run=run, team_id=command.team_id)
         decision = (
             remove_freeze(run.global_state, _effect_state(team), gameplay_ms)
             if remove
-            else apply_direct_freeze(
-                run.global_state, _effect_state(team), gameplay_ms
-            )
+            else apply_direct_freeze(run.global_state, _effect_state(team), gameplay_ms)
         )
         _persist_effect_state(team, decision.team)
         return (
@@ -1001,6 +1616,7 @@ def _admin_freeze_action(
             command.team_id,
             "",
         )
+
     return _perform(
         actor,
         command,
@@ -1012,33 +1628,49 @@ def _admin_freeze_action(
     )
 
 
-def admin_freeze(
-    actor: Actor, command: AdminTeam, *, now=None
-) -> CommandResult:
+def admin_freeze(actor: Actor, command: AdminTeam, *, now=None) -> CommandResult:
     return _admin_freeze_action(actor, command, remove=False, now=now)
 
 
-def admin_unfreeze(
-    actor: Actor, command: AdminTeam, *, now=None
-) -> CommandResult:
+def admin_unfreeze(actor: Actor, command: AdminTeam, *, now=None) -> CommandResult:
     return _admin_freeze_action(actor, command, remove=True, now=now)
 
 
 def reset_game(actor: Actor, command: RunCommand, *, now=None) -> CommandResult:
     def apply(run, _request_id, gameplay_ms):
         previous = run.global_state
+        music = MusicQuiz.objects.filter(run=run).first()
+        if music is not None and music.music_clock_anchor is not None:
+            music.music_elapsed_ms = effective_music_ms(
+                music.music_elapsed_ms,
+                music.music_clock_anchor,
+                _server_now(now),
+            )
+            music.music_clock_anchor = None
+            music.save(update_fields=["music_elapsed_ms", "music_clock_anchor"])
         run.active = False
         run.global_state = "READY"
         run.gameplay_elapsed_ms = gameplay_ms
         run.advent_clock_anchor = None
-        run.save(update_fields=[
-            "active",
-            "global_state",
-            "gameplay_elapsed_ms",
-            "advent_clock_anchor",
-        ])
-        return "reset", run, {
-            "global_state": {"previous": previous, "new": "READY"},
-            "active": {"previous": True, "new": False},
-        }, None, ""
+        run.pause_resume_target = None
+        run.save(
+            update_fields=[
+                "active",
+                "global_state",
+                "gameplay_elapsed_ms",
+                "advent_clock_anchor",
+                "pause_resume_target",
+            ]
+        )
+        return (
+            "reset",
+            run,
+            {
+                "global_state": {"previous": previous, "new": "READY"},
+                "active": {"previous": True, "new": False},
+            },
+            None,
+            "",
+        )
+
     return _perform(actor, command, "reset", "admin", {}, apply, now=now)

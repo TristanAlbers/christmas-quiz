@@ -4,19 +4,40 @@
     <strong class="state-badge state-{{ state.team_state|lower }}">{{ state.team_state }}</strong>
   </div>
   {% if state.run_id %}
-    <p class="metric-row"><span>{{ state.points }} points</span><span>{{ state.hint_tokens }} Hint tokens</span><span>Puzzle {{ state.current_number }}</span></p>
-    <p>{% if state.uno_reverse_active %}<strong>Uno Reverse active</strong>{% else %}Uno Reverse inactive{% endif %}</p>
-    {% if state.team_state == 'FREEZE' %}
+    {% if state.music %}
+      <div class="music-status" role="status">
+        <p class="eyebrow">Music Quiz</p>
+        {% if state.music.phase == 'question' %}
+          <h2>Question {{ state.music.question_number }} of {{ state.music.question_total }}</h2>
+          <p class="music-timer">{% widthratio state.music.question_elapsed_ms 1000 1 %} seconds</p>
+        {% else %}
+          <h2>Final Music scores</h2>
+          <p>Advent resumes in {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconds.</p>
+        {% endif %}
+        <div class="music-scores">
+          {% for score in state.music.scores %}
+            <strong>Team {{ score.team_id|upper }}: {{ score.score }}</strong>
+          {% endfor %}
+        </div>
+        {% if state.music.previous_winner_team_id %}
+          <p>Last winner: Team {{ state.music.previous_winner_team_id|upper }}</p>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="metric-row"><span>{{ state.points }} points</span><span>{{ state.hint_tokens }} Hint tokens</span><span>Puzzle {{ state.current_number }}</span></p>
+      <p>{% if state.uno_reverse_active %}<strong>Uno Reverse active</strong>{% else %}Uno Reverse inactive{% endif %}</p>
+    {% endif %}
+    {% if not state.music and state.team_state == 'FREEZE' %}
       <div class="freeze-message" role="status">
         <h2>Frozen</h2>
         <p>Your puzzle and Hint are hidden until the server-authoritative timer expires.</p>
         <p class="freeze-timer" data-remaining-ms="{{ state.freeze_remaining_ms }}">{% widthratio state.freeze_remaining_ms 1000 1 %} seconds remaining</p>
       </div>
-    {% elif state.global_state == 'PAUSED' %}
+    {% elif not state.music and state.global_state == 'PAUSED' %}
       <div class="interruption-message"><h2>Game paused</h2><p>Your exact puzzle state and effect timers are preserved.</p></div>
     {% endif %}
-    {% if state.completed_numbers %}<p>Completed: {{ state.completed_numbers|join:", " }}</p>{% endif %}
-    {% if state.fragments %}<p>Fragments: {{ state.fragments|join:", " }}</p>{% endif %}
+    {% if not state.music and state.completed_numbers %}<p>Completed: {{ state.completed_numbers|join:", " }}</p>{% endif %}
+    {% if not state.music and state.fragments %}<p>Fragments: {{ state.fragments|join:", " }}</p>{% endif %}
   {% else %}
     <p>Waiting for an administrator to start the game.</p>
   {% endif %}

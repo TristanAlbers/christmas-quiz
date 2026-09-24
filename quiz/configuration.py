@@ -63,6 +63,15 @@ def _validate(config, package_id):
         1: set(),
         2: {"hint_cost", "skip_cost"},
         3: {"hint_cost", "skip_cost", "freeze_cost", "uno_reverse_cost"},
+        4: {
+            "hint_cost",
+            "skip_cost",
+            "freeze_cost",
+            "uno_reverse_cost",
+            "music_question_reward",
+            "music_score_display_duration_ms",
+            "music_questions",
+        },
     }
     required_keys = common_keys | versioned_keys.get(version, set())
     if (
@@ -76,9 +85,9 @@ def _validate(config, package_id):
     points = config["initial_points"]
     if type(points) is not int or points < 0:
         raise InvalidPackage("initial_points must be nonnegative integer")
-    if version in (2, 3):
+    if version in (2, 3, 4):
         price_keys = ["hint_cost", "skip_cost"]
-        if version == 3:
+        if version in (3, 4):
             price_keys.extend(["freeze_cost", "uno_reverse_cost"])
         for key in price_keys:
             if type(config[key]) is not int or config[key] < 0:
@@ -144,6 +153,59 @@ def _validate(config, package_id):
                 raise InvalidPackage("media must be a list")
             for item in media:
                 referenced.add(str(_relative_path(item)))
+    if version == 4:
+        reward = config["music_question_reward"]
+        if type(reward) is not int or reward < 0:
+            raise InvalidPackage("music_question_reward must be nonnegative integer")
+        display_ms = config["music_score_display_duration_ms"]
+        if type(display_ms) is not int or display_ms <= 0:
+            raise InvalidPackage(
+                "music_score_display_duration_ms must be positive integer"
+            )
+        questions = config["music_questions"]
+        if not isinstance(questions, list) or len(questions) != 11:
+            raise InvalidPackage("Exactly 11 Music questions are required")
+        seen_music_ids = set()
+        for number, question in enumerate(questions, 1):
+            if (
+                not isinstance(question, dict)
+                or not set(question).issubset(
+                    {"id", "number", "title", "body", "validator", "audio"}
+                )
+                or set(question) - {"audio"}
+                != {"id", "number", "title", "body", "validator"}
+            ):
+                raise InvalidPackage("Invalid Music question entry")
+            question_id = question["id"]
+            if not isinstance(question_id, str) or not re.fullmatch(
+                r"[a-zA-Z0-9_-]{1,100}", question_id
+            ):
+                raise InvalidPackage("Invalid Music question ID")
+            if (
+                question_id in seen_music_ids
+                or type(question["number"]) is not int
+                or question["number"] != number
+            ):
+                raise InvalidPackage(
+                    "Music question IDs and sequential numbers must be unique"
+                )
+            seen_music_ids.add(question_id)
+            for key in ("title", "body"):
+                if not isinstance(question[key], str) or not question[key].strip():
+                    raise InvalidPackage(f"Music {key} must be nonempty text")
+            validator = question["validator"]
+            if not isinstance(validator, dict) or set(validator) != {"type", "answer"}:
+                raise InvalidPackage("Invalid Music validator")
+            if validator["type"] not in ("text_exact", "number_exact"):
+                raise InvalidPackage("Unknown Music validator")
+            if (
+                not isinstance(validator["answer"], str)
+                or not validator["answer"].strip()
+            ):
+                raise InvalidPackage("Music validator answer must be nonempty text")
+            audio = question.get("audio")
+            if audio is not None:
+                referenced.add(str(_relative_path(audio)))
     return referenced
 
 
@@ -258,14 +320,10 @@ def stage_snapshot(package_id):
                 if not source_asset.is_file():
                     raise InvalidPackage("Referenced media file is missing")
                 if source_asset.stat().st_size > 20_000_000:
-                    raise InvalidPackage(
-                        "Referenced media exceeds the 20 MB limit"
-                    )
+                    raise InvalidPackage("Referenced media exceeds the 20 MB limit")
                 shutil.copyfile(source_asset, target)
                 if target.stat().st_size > 20_000_000:
-                    raise InvalidPackage(
-                        "Referenced media exceeds the 20 MB limit"
-                    )
+                    raise InvalidPackage("Referenced media exceeds the 20 MB limit")
                 target_bytes = target.read_bytes()
             except OSError as exc:
                 raise InvalidPackage(
@@ -331,5 +389,23 @@ def snapshot_media_path(run, team_id, relative_path):
         for media in puzzle["media"]
     }
     if rel not in declared:
+        return None
+    return Path(run.snapshot_path) / "media" / rel
+
+
+def snapshot_music_audio_path(run, question_number):
+    """Return only the declared audio for one caller-authorized Music question."""
+    if type(question_number) is not int or not 1 <= question_number <= 11:
+        return None
+    try:
+        config = load_snapshot(run)
+        if config.get("schema_version") != 4:
+            return None
+        question = config["music_questions"][question_number - 1]
+        audio = question.get("audio")
+        if audio is None:
+            return None
+        rel = str(_relative_path(audio))
+    except (InvalidPackage, IndexError, KeyError, TypeError):
         return None
     return Path(run.snapshot_path) / "media" / rel

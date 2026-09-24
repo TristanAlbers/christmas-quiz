@@ -1,9 +1,9 @@
 # Using the Christmas Quiz today
 
-This guide describes the **phase 3.1 development demo** that is implemented now.
-It has two isolated teams, two named game masters, and two sample puzzles per
-team. It is not the authored Christmas event, and completing sample puzzle 2
-does not finish the game.
+This guide describes the **phase 4 development demo** implemented now. It has
+two isolated teams, two named game masters, 13 sample puzzles per team, 11 shared
+Music questions, and a public TV overview. It is not the authored Christmas
+event, and completing sample puzzle 13 does not finish the game.
 
 ## Set up the server
 
@@ -47,6 +47,10 @@ team login form asks for a team choice and PIN. Game masters use
 `/admin-login/` with username `admin-one` or `admin-two` and the matching
 password. After login, follow the home-page link to the Team or Admin view.
 Log out with the button on the page.
+
+Open `/overview/` on the shared TV. Outside Music it intentionally shows only
+the global state: Advent progression, balances, effects, fragments, and private
+puzzle media are not public.
 
 Before Start, there is no active run. A team sees only `READY` and a waiting
 message—no package names or state from an earlier game. A game master opens
@@ -97,15 +101,30 @@ admins. A valid player Freeze consumes the target's Reverse, charges the
 attacker, and Freezes the attacker instead. Admin Freeze applies directly and
 does not consume Reverse.
 
+Completing puzzle 13 by correct answer, paid Skip, or admin completion starts the
+Music Quiz immediately and only once. Both teams see the same current question
+and may submit unlimited penalty-free attempts. The first correct transaction
+accepted by SQLite wins, increases that team's public Music score by one, adds
+the configured Music reward (2 demo points) to its private normal balance, and
+advances both teams to the next question. Delayed answers for the previous
+question are rejected.
+
+Music suspends Advent interactions and preserves each team's exact underlying
+Puzzle/Freeze state. An admin may pause Music; resume returns to the same question
+or final-score display. After question 11, final scores remain for the configured
+duration (60 seconds in the demo), then Advent resumes automatically. Active
+Music downtime counts toward Music/result time; deliberate pause downtime does
+not. The TV is the central audio surface when a Music question declares audio;
+the demo uses no licensed audio files. Only the current shared Music audio can be
+served, never future Music audio or either team's private puzzle media.
+
 The gameplay clock is persisted. Pause preserves remaining Freeze time across
 refresh, disconnect, and restart. Unexpected downtime while the persisted state
 is `ADVENT_QUIZ` counts as gameplay time; downtime while persistently `PAUSED`
-does not. Client countdown values never authorize expiry. There is no Challenge,
-Music Quiz, TV overview, or finished-game view in this phase.
-Completing sample puzzle 2 leaves the team with no further sample puzzle; it
-does not mark either team or the global game finished. A package extended to
-puzzle 13 cannot progress beyond puzzle 12 until the mandatory Music Quiz is
-implemented.
+does not. Client countdown values never authorize expiry. There is no Challenge
+or finished-game view in this phase. Completing sample puzzle 13 leaves the team
+with no further Advent puzzle after Music; it does not mark either team or the
+global game finished. Puzzle 14–25 behavior belongs to phase 5.
 
 ## Add or edit packages before Start
 
@@ -117,11 +136,12 @@ The package is declarative data; it cannot execute Python code. Credentials
 belong in `.env`, never in a package. Rich authoring/import/export tools are not
 implemented yet.
 
-The phase 3 top level requires exactly `schema_version: 3`, `package_id`,
+The phase 4 top level requires exactly `schema_version: 4`, `package_id`,
 `initial_points`, `hint_cost`, `skip_cost`, `freeze_cost`,
-`uno_reverse_cost`, and `teams`. All five point values are nonnegative integers.
-Existing version 1 and 2 snapshots remain readable, but mechanics without a
-snapshotted configured price are unavailable for those runs.
+`uno_reverse_cost`, `music_question_reward`,
+`music_score_display_duration_ms`, `teams`, and `music_questions`. Prices and
+rewards are nonnegative integers; the display duration is positive. Existing
+version 1–3 snapshots remain readable, but cannot silently invent Music data.
 `teams` requires exactly `a` and `b`. Each team has a `puzzles` list with 2–25
 entries numbered sequentially from 1. Each puzzle requires `id`, `number`,
 `title`, `body`, `validator`, `reward_points`, `hint`, `fragment`, and `media`.
@@ -129,6 +149,11 @@ The ID uses letters, numbers, `_`, or `-`; `reward_points` is a nonnegative
 integer. `hint` and `fragment` are text or `null`; `media` is a list of
 relative paths within the package. The supplied demo's private images are
 `a/star.png` and `b/sky.png`.
+
+`music_questions` contains exactly 11 entries numbered sequentially. Each has a
+unique `id`, `number`, nonempty `title` and `body`, a supported `validator`, and
+optional `audio` (`null` or a safe package-relative path). Music audio is copied
+into the immutable run snapshot just like private puzzle media.
 
 The supported validators are:
 
@@ -180,13 +205,14 @@ continues across restart, while a paused clock stays stopped. Use the admin
 it does not create another run. Do not delete SQLite files or snapshots as a
 reset workaround. Migration `0004_retire_legacy_ready_runs` safely deactivates
 active READY shells created by older phase-2/phase-3 resets while preserving
-their database rows and snapshot references. A tested backup and restore
-procedure is not available yet.
+their database rows and snapshot references. Migration `0005_phase4_music` adds
+the durable Music trigger, clocks, results, attempts, scores, and pause target.
+A tested backup and restore procedure is not available yet.
 
 For validation, use a separate Compose project and disposable `/app/var`
 mount. Follow the exact isolation setup in [docs/scaffold.md](docs/scaffold.md)
 before running migrations or tests, so an existing event database is not
-touched. After that setup, the phase 3.1 checks are:
+touched. After that setup, the phase-4 checks are:
 
 ```sh
 docker compose --profile dev build app dev
@@ -194,9 +220,9 @@ docker compose up -d app
 docker compose exec app python manage.py check
 docker compose exec app python manage.py makemigrations --check --dry-run
 docker compose run --rm --entrypoint ruff dev check .
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase31-tests.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase4-tests.sqlite3 \
   dev test tests.domain tests.integration tests.security
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase31-browser.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase4-browser.sqlite3 \
   dev test tests.browser
 ```
 
