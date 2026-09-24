@@ -32,3 +32,16 @@ The following are binding presentation requirements:
 - Team/admin views target phone/tablet use; the shared overview targets desktop/TV use.
 
 These decisions change presentation and approved public projection only. They do not change backend game legality, atomicity, team isolation for private data, or the authoritative state-machine rules.
+
+## 2026-09-24 — team Music Quiz status is intentionally minimal
+
+During the Music Quiz, team phone views should keep only the interaction and progress information needed to answer the active question:
+
+- keep the existing 1–11 visual question tracker;
+- keep the existing answer field and submission interaction;
+- keep concise answer/result feedback needed for repeated attempts;
+- do **not** show a separate `Question N of 11` status heading, elapsed-seconds counter, either team's Music score, previous-winner summary, or final-results countdown in the team status area.
+
+The shared public/TV Music overview remains the place for the full question-number, timer, score, winner, and final-results status presentation. This specifically refines the earlier Music visual requirement: the phrase "in addition to the question number" applies to the public/TV overview, while the team phone view may use the 11-step tracker by itself for question progress.
+
+This is presentation-only. It does not change Music Quiz state, scoring, answer legality, progression, polling architecture, or backend projections.
