@@ -7,10 +7,12 @@
   <title>Christmas Quiz · Overview</title>
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/advent-calendar.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/endgame-celebration.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'quiz/advent-calendar.js' %}"></script>
+  <script defer src="{% static 'quiz/endgame-celebration.js' %}"></script>
 </head>
-<body class="game-page game-page--overview">
+<body class="game-page game-page--overview" data-endgame-surface="overview">
   <main class="app-shell app-shell-wide public-overview">
     <div id="live-overview" aria-label="Public game overview">
       <div id="overview-poller" hx-get="{% url 'overview_state' %}"
@@ -22,5 +24,6 @@
       {% include 'quiz/_public_audio.html' %}
     </div>
   </main>
+  {% include 'quiz/_endgame_celebration.html' %}
 </body>
 </html>
