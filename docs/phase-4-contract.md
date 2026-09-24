@@ -1,9 +1,8 @@
 # Phase 4 Music Quiz interruption contract
 
-Status: contract settled and phase-4 specialist/application/web integration
-implemented, 2026-09-24. Focused implementer validation is green; independent
-invariant review and the unchanged GitHub Actions full gate remain pending.
-Phase 5 is not authorized.
+Status: complete and validated, 2026-09-24. Focused implementer coverage,
+independent cross-cutting invariant review, deterministic SQLite race tests, and
+the unchanged GitHub Actions full gate are green. Phase 5 is not authorized.
 
 This contract is subordinate to
 `christmas-2026-game-rules-state-semantics.md`. It uses only the phase-3 clock
@@ -130,9 +129,11 @@ resolved, or pre-advance ID rejects as `stale_question`, including a delayed
 answer that arrives after another team advanced the quiz. A current ID submitted
 while Music is paused rejects as `disallowed_state`. Once there is no active
 question (final results or restored Advent), answer submission rejects as
-`disallowed_state`. Exact request-ID retries return the committed recorded
-outcome/projection; conflicting reuse rejects as `request_conflict` and never
-replays effects.
+`disallowed_state`. Exact request-ID retries return the committed outcome without
+replaying any attempt, result, score, reward, receipt, or event. While the run is
+still active, the response carries a freshly derived projection so authoritative
+clocks and timing remain current; after the run is archived, the recorded
+projection is returned. Conflicting request-ID reuse rejects as `request_conflict`.
 
 ## Snapshot/package and audio contract
 
@@ -274,13 +275,16 @@ directory defaults for phase 4.
      `implementation_plan.md`;
    - wires canonical completion, projections, 500 ms polling, central TV audio,
      and exactly 11 demo Music questions without reimplementing specialist rules.
-5. **Independent verification — `test_invariants`, once after integration**
-   - owns `tests/integration/test_phase4_invariants.py`,
-     `tests/security/test_phase4_adversarial.py`, and
-     `tests/browser/test_phase4_races.py` only;
-   - reviews the integrated diff for race, isolation, restart, polling/browser,
-     and requirements-to-tests gaps; it changes no production file unless a
-     concrete defect is explicitly reassigned.
+5. **Independent verification — completed after integration**
+   - `tests/integration/test_phase4_invariants.py` covers cross-boundary rollback,
+     receipt/idempotency conflict behavior, interruption blocking, Reset/stale
+     requests, and snapshot-only recovery after source deletion;
+   - `tests/integration/test_phase4_full_music_journey.py` covers all 11 questions,
+     exact score/reward totals, sequential advancement, and final-results state;
+   - existing `test_phase4_concurrency.py`, phase-4 security tests, and browser
+     tests were independently reviewed and retained for race/isolation/polling
+     coverage rather than duplicated into parallel files;
+   - no production file required reassignment from this review.
 
 `quiz/application.py`, `quiz/contracts.py`, shared domain types, general routes,
 templates, shared fixtures, settings, dependency/deployment files, and migration
@@ -363,7 +367,7 @@ counts; expiry resumes Advent at its logical instant; Music score is a separatel
 persisted question-win tally; normal configured points are still awarded; the TV
 is the sole automatic audio presentation; and public Advent data remains private.
 
-## Integration record
+## Integration and validation record
 
 The bounded specialist handoffs and architect integration are present in the
 working tree as of 2026-09-24. Migration `0005_phase4_music` implements the
@@ -373,22 +377,31 @@ answers, effective/persisted timer restoration, and team/admin/public projection
 The demo is schema v4 with 13 puzzles per team and 11 Music questions; its audio
 fields are deliberately `null`.
 
-Focused evidence run in the development container:
+Focused implementer evidence was green for Ruff, Django checks/migration drift,
+36 phase-4 domain/storage/security/application tests, deterministic file-backed
+A-first/B-first/concurrent-trigger SQLite tests, and Chromium synchronization.
+The independent pass then added/verified:
 
-- Ruff on changed Python: green;
-- Django `check` and `makemigrations --check --dry-run`: green;
-- 36 phase-4 domain/storage/security/application tests: green (three real-SQLite
-  tests skipped in the in-memory invocation);
-- the three skipped concurrency tests rerun against disposable file-backed
-  SQLite: green, including deterministic A-first, B-first, and concurrent
-  puzzle-13 trigger cases; and
-- `tests.browser.test_phase4_views` against file-backed SQLite/Chromium: green,
-  covering both team browsers, stable focused input, the public TV, and immediate
-  synchronized advancement.
+- injected failure at the puzzle-13 Music trigger rolls back completion, reward,
+  fragment, receipt, audit and trigger together;
+- exact Music-answer retry cannot duplicate attempts/results/scores/rewards/events
+  and conflicting request reuse is rejected;
+- active Music blocks Advent answer/Skip/admin-completion/shop mutation paths;
+- Reset archives Music state and makes old Music commands stale;
+- an active Music run continues solely from its immutable snapshot after the
+  source package is deleted; and
+- a complete 11-question journey produces exactly 11 results, exact team scores
+  and configured normal rewards, then enters final results.
 
-The independent `test_invariants` pass and unchanged complete GitHub Actions gate
-remain outstanding. A nearby regression run also identified two explicitly
-superseded test assumptions for that owner to update: the phase-2 pre-Music
-puzzle-13 barrier and a phase-3.1 migration test that leaves its schema at 0004
-instead of returning to the latest migration. No production defect was indicated
-by those failures.
+Historical regression tests were also corrected without weakening their original
+invariants: migration tests now restore the current schema after exercising old
+migration targets, lifecycle initialization derives expected puzzle rows from the
+pinned package rather than a two-puzzle constant, the legacy schema-v2 puzzle-13
+boundary tests completion rather than reaching puzzle 13, and the TV browser
+assertion checks rendered score structure.
+
+GitHub Actions CI run #48 on the final code/test head was green: development image
+build, Ruff, Django `check`, `makemigrations --check --dry-run`, and all 177 tests
+passed, including domain, integration, security, real-SQLite concurrency and
+Chromium browser coverage. No Phase-4 production defect remained from the
+independent review.
