@@ -32,8 +32,10 @@
       const status = event.detail.xhr.status;
       const isAction = event.detail.elt.closest('form') !== null;
       if (isAction && status >= 400 && status < 500) {
-        document.getElementById('action-feedback').textContent =
-          'Action rejected: ' + event.detail.xhr.responseText;
+        const message = 'Action rejected: ' + event.detail.xhr.responseText;
+        document.getElementById('action-feedback').textContent = message;
+        const shopFeedback = document.getElementById('shop-feedback');
+        if (shopFeedback) shopFeedback.textContent = message;
       } else {
         document.getElementById('connection-status').textContent =
           'Connection trouble. Retrying…';
@@ -41,12 +43,6 @@
     });
     document.body.addEventListener('htmx:sendError', function () {
       document.getElementById('connection-status').textContent = 'Connection trouble. Retrying…';
-    });
-    document.body.addEventListener('htmx:beforeRequest', function (event) {
-      const shop = document.getElementById('team-shop-dialog');
-      if (shop && shop.open && event.detail.elt.closest('#team-shop-dialog')) {
-        shop.close();
-      }
     });
     document.body.addEventListener('htmx:afterRequest', function (event) {
       if (event.detail.successful) document.getElementById('connection-status').textContent = '';
