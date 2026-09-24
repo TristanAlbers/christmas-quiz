@@ -110,6 +110,7 @@ class PhaseThreeStorageTests(TestCase):
 class PhaseThreeMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0002_phase2")
     migrate_to = ("quiz", "0003_phase3")
+    latest_migration = ("quiz", "0005_phase4_music")
 
     def setUp(self):
         super().setUp()
@@ -136,7 +137,10 @@ class PhaseThreeMigrationTests(TransactionTestCase):
         self.apps = executor.loader.project_state([self.migrate_to]).apps
 
     def tearDown(self):
-        MigrationExecutor(connection).migrate([self.migrate_to])
+        # This historical test intentionally stops at phase 3 while asserting
+        # migration 0003. Restore today's schema afterward so later tests using
+        # current ORM models do not inherit a stale database schema.
+        MigrationExecutor(connection).migrate([self.latest_migration])
         super().tearDown()
 
     def test_migration_bootstraps_only_the_active_advent_clock(self):
