@@ -95,6 +95,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         await team.locator(".resource-card--reverse").count(), 1
                     )
                     self.assertEqual(await team.locator(".button-skip").count(), 1)
+                    self.assertEqual(await team.locator(".shop-item--freeze").count(), 1)
                     for page in (team, admin, tv):
                         self.assertTrue(
                             await page.evaluate(
@@ -131,6 +132,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                     await team.get_by_text("Team A completed the calendar").wait_for(
                         timeout=5000
                     )
+                    self.assertEqual(await team.locator(".shop-item--freeze").count(), 0)
                     self.assertTrue(
                         await answer.evaluate(
                             "el => window.__answerNode === el "

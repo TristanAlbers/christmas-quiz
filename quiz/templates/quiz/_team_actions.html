@@ -24,7 +24,7 @@
           <span class="shop-item__icon reverse-mark" aria-hidden="true">↶</span><strong>Uno Reverse</strong><span>Reflect the next incoming Freeze.</span><button type="submit">Buy Uno Reverse ({{ state.uno_reverse_cost }})</button>
         </form>
       {% endif %}
-      {% if state.freeze_cost != None %}
+      {% if state.freeze_cost != None and state.first_finisher_team_id == None %}
         <form class="shop-item shop-item--freeze" method="post" action="{% url 'team_action' 'freeze' %}"
               hx-post="{% url 'team_action' 'freeze' %}" hx-trigger="submit"
               hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
