@@ -30,6 +30,14 @@
   {% endif %}
 </div>
 {% if feedback %}<p id="action-feedback" class="feedback" role="status" hx-swap-oob="outerHTML">{{ feedback }}</p>{% endif %}
+{% if feedback == 'Correct answer. Puzzle completed.' %}
+  <div id="door-completion" class="door-completion" role="status" aria-label="Puzzle completed" hx-swap-oob="outerHTML">
+    <div class="door-completion__sparkles" aria-hidden="true">✦ · ✧ · ✦</div>
+    <div class="door-completion__door" aria-hidden="true"><span>✓</span><i></i></div>
+    <strong>Puzzle completed!</strong>
+    <span>Your game state has advanced.</span>
+  </div>
+{% endif %}
 {% if update_resources and state.run_id and not state.music %}
   {% include 'quiz/_team_resources.html' with oob=True %}
 {% endif %}
