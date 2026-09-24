@@ -42,6 +42,12 @@
     document.body.addEventListener('htmx:sendError', function () {
       document.getElementById('connection-status').textContent = 'Connection trouble. Retrying…';
     });
+    document.body.addEventListener('htmx:beforeRequest', function (event) {
+      const shop = document.getElementById('team-shop-dialog');
+      if (shop && shop.open && event.detail.elt.closest('#team-shop-dialog')) {
+        shop.close();
+      }
+    });
     document.body.addEventListener('htmx:afterRequest', function (event) {
       if (event.detail.successful) document.getElementById('connection-status').textContent = '';
     });
