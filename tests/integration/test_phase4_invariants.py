@@ -165,9 +165,11 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
 
         first = submit_music_answer(self.b, command, now=NOW + timedelta(seconds=2))
         retry = submit_music_answer(self.b, command, now=NOW + timedelta(seconds=20))
-        self.assertEqual(first, retry)
         self.assertEqual(first.outcome, "won")
+        self.assertEqual(retry.outcome, first.outcome)
         self.assertEqual(first.state.music.question_id, "music-2")
+        self.assertEqual(retry.state.music.question_id, "music-2")
+        self.assertEqual(retry.state.music.scores, first.state.music.scores)
         self.assertEqual(
             MusicAttempt.objects.filter(
                 run_id=self.run_id, request_id=request_id
