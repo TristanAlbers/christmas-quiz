@@ -4,27 +4,31 @@
     <strong class="state-badge state-{{ state.team_state|lower }}">{{ state.team_state }}</strong>
   </div>
   {% if state.run_id %}
-    {% if first_finisher_team_id %}
-      <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
-        {% if state.global_state == 'FINISHED' %}
-          <p class="eyebrow">Race complete</p><h2>Team {{ first_finisher_team_id|upper }} finished first</h2>
-          <p>Both teams completed all 25 Advent doors.</p>
-        {% else %}
-          <p class="eyebrow">First finisher</p><h2>Team {{ first_finisher_team_id|upper }} completed the calendar</h2>
-          {% if state.team_state == 'FINISHED' %}<p>Your team is finished. The other team can keep playing.</p>{% else %}<p>The race continues—your current puzzle is still active.</p>{% endif %}
-        {% endif %}
-      </aside>
-    {% endif %}
     {% if not state.music and state.team_state == 'FREEZE' %}
-      <div class="freeze-message" role="status">
-        <h2>Frozen</h2>
-        <p>Your puzzle and Hint are hidden until the server-authoritative timer expires.</p>
+      <div class="freeze-message" role="status" aria-live="polite">
+        <p class="freeze-message__icon" aria-hidden="true">❄</p>
+        <p class="eyebrow">Ice lock active</p>
+        <h2>Your team is frozen</h2>
+        <p>Gameplay is unavailable. Your puzzle and Hint stay safely hidden until the server releases the freeze.</p>
         <p class="freeze-timer" data-remaining-ms="{{ state.freeze_remaining_ms }}">{% widthratio state.freeze_remaining_ms 1000 1 %} seconds remaining</p>
       </div>
-    {% elif not state.music and state.global_state == 'PAUSED' %}
-      <div class="interruption-message"><h2>Game paused</h2><p>Your exact puzzle state and effect timers are preserved.</p></div>
+    {% else %}
+      {% if first_finisher_team_id %}
+        <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
+          {% if state.global_state == 'FINISHED' %}
+            <p class="eyebrow">Race complete</p><h2>Team {{ first_finisher_team_id|upper }} finished first</h2>
+            <p>Both teams completed all 25 Advent doors.</p>
+          {% else %}
+            <p class="eyebrow">First finisher</p><h2>Team {{ first_finisher_team_id|upper }} completed the calendar</h2>
+            {% if state.team_state == 'FINISHED' %}<p>Your team is finished. The other team can keep playing.</p>{% else %}<p>The race continues—your current puzzle is still active.</p>{% endif %}
+          {% endif %}
+        </aside>
+      {% endif %}
+      {% if not state.music and state.global_state == 'PAUSED' %}
+        <div class="interruption-message"><h2>Game paused</h2><p>Your exact puzzle state and effect timers are preserved.</p></div>
+      {% endif %}
+      {% if not state.music and state.fragments %}<div class="fragment-card"><strong>Collected fragments</strong><p>{{ state.fragments|join:", " }}</p></div>{% endif %}
     {% endif %}
-    {% if not state.music and state.fragments %}<div class="fragment-card"><strong>Collected fragments</strong><p>{{ state.fragments|join:", " }}</p></div>{% endif %}
   {% else %}
     <p>Waiting for an administrator to start the game.</p>
   {% endif %}
@@ -38,7 +42,7 @@
     <span>Your game state has advanced.</span>
   </div>
 {% endif %}
-{% if update_resources and state.run_id and not state.music %}
+{% if update_resources and state.run_id and not state.music and state.team_state != 'FREEZE' %}
   {% include 'quiz/_team_resources.html' with oob=True %}
 {% endif %}
 {% if replace_actions %}

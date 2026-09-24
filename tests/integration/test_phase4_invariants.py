@@ -14,6 +14,7 @@ from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.db import connections
+from django.template.loader import render_to_string
 from django.test import TransactionTestCase, override_settings
 
 from quiz.application import (
@@ -256,6 +257,7 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             AdminPuzzle(str(uuid4()), self.run_id, "b", "b-1"),
             now=NOW + timedelta(seconds=2),
         )
+
         self.assert_error(
             "disallowed_state",
             purchase_hint,
@@ -275,6 +277,24 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             AuditEvent.objects.filter(run_id=self.run_id).count(),
         )
         self.assertEqual(after, before)
+
+    def test_frozen_team_can_render_music_answer_controls(self):
+        self._trigger_music(now=NOW + timedelta(seconds=1))
+        TeamRun.objects.filter(run_id=self.run_id, team_id="b").update(
+            activity_state="FREEZE", freeze_started_gameplay_ms=0
+        )
+        state = get_team_state(self.b, now=NOW + timedelta(seconds=2))
+
+        html = render_to_string(
+            "quiz/_question_pane.html",
+            {"state": state, "music_request_id": str(uuid4())},
+        )
+
+        self.assertEqual(state.team_state, "FREEZE")
+        self.assertIsNotNone(state.music)
+        self.assertIn('id="music-answer-input"', html)
+        self.assertIn('class="music-progress"', html)
+        self.assertNotIn('class="freeze-surface"', html)
 
     def test_reset_during_music_archives_state_and_stales_old_answers(self):
         self._trigger_music(now=NOW + timedelta(seconds=1))

@@ -25,6 +25,12 @@
       <h2>Music Quiz complete</h2>
       <p>Final scores are on screen. Advent resumes automatically.</p>
     {% endif %}
+  {% elif state.team_state == 'FREEZE' %}
+    <div class="freeze-surface" aria-hidden="true">
+      <span class="freeze-surface__crystal freeze-surface__crystal--one">❄</span>
+      <span class="freeze-surface__crystal freeze-surface__crystal--two">❆</span>
+      <span class="freeze-surface__crystal freeze-surface__crystal--three">❅</span>
+    </div>
   {% elif state.question %}
     <h2>{{ state.question.title }}</h2>
     <p>{{ state.question.body }}</p>

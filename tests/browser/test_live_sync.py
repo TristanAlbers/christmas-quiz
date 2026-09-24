@@ -154,15 +154,22 @@ class LiveSyncBrowserTests(LiveServerTestCase):
                     script_response = await context.request.get(
                         f"{self.live_server_url}{script_url}"
                     )
-                    stylesheet_link = page.locator("link[rel=stylesheet]")
-                    stylesheet_url = await stylesheet_link.get_attribute("href")
-                    stylesheet_response = await context.request.get(
-                        f"{self.live_server_url}{stylesheet_url}"
+                    stylesheet_urls = await page.locator(
+                        "link[rel=stylesheet]"
+                    ).evaluate_all(
+                        "links => links.map(link => link.getAttribute('href'))"
                     )
+                    self.assertGreaterEqual(len(stylesheet_urls), 1)
                     self.assertEqual(script_response.status, 200)
-                    self.assertEqual(stylesheet_response.status, 200)
                     self.assertRegex(script_url, r"\.[0-9a-f]{12}\.js$")
-                    self.assertRegex(stylesheet_url, r"\.[0-9a-f]{12}\.css$")
+                    for stylesheet_url in stylesheet_urls:
+                        stylesheet_response = await context.request.get(
+                            f"{self.live_server_url}{stylesheet_url}"
+                        )
+                        self.assertEqual(stylesheet_response.status, 200)
+                        self.assertRegex(
+                            stylesheet_url, r"\.[0-9a-f]{12}\.css$"
+                        )
                     self.assertTrue(
                         await page.evaluate("Boolean(window.htmx)"),
                         f"script={script_url} HTTP={script_response.status} "
