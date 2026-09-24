@@ -85,9 +85,20 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                     browser, "/overview/", {"width": 1920, "height": 1080}
                 )
                 try:
-                    self.assertEqual(await team.locator(".advent-door").count(), 25)
+                    self.assertEqual(await team.locator(".advent-door").count(), 0)
                     self.assertEqual(await admin.locator(".advent-door").count(), 50)
                     self.assertEqual(await tv.locator(".advent-door").count(), 50)
+                    resources = team.locator(".team-resource-bar")
+                    self.assertEqual(
+                        await resources.locator(".resource-card").count(), 3
+                    )
+                    self.assertTrue(
+                        await resources.evaluate(
+                            "(bar, pane) => Boolean(bar.compareDocumentPosition(pane) "
+                            "& Node.DOCUMENT_POSITION_FOLLOWING)",
+                            await team.locator("#question-pane").element_handle(),
+                        )
+                    )
                     self.assertEqual(
                         await team.locator(".resource-card--hint").count(), 1
                     )
@@ -147,9 +158,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await answer.evaluate("el => el.selectionStart"), 2
                     )
-                    self.assertEqual(
-                        await team.locator(".advent-door--current").count(), 1
-                    )
+                    self.assertEqual(await team.locator(".advent-door").count(), 0)
 
                     skip = team.locator(".button-skip")
                     box = await skip.bounding_box()
@@ -165,9 +174,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         "Both teams completed all 25 Advent doors"
                     ).wait_for(timeout=5000)
                     self.assertEqual(await team.locator("#answer-input").count(), 0)
-                    self.assertEqual(
-                        await team.locator(".advent-door--completed").count(), 25
-                    )
+                    self.assertEqual(await team.locator(".advent-door").count(), 0)
                     await tv.get_by_text("Team A finished first").wait_for(timeout=5000)
                     await admin.get_by_text("Team A finished first").wait_for(
                         timeout=5000
