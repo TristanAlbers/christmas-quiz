@@ -14,7 +14,7 @@ The application should develop a coherent Christmas visual language incrementall
 
 Do not reduce a specified visual state to a raw text placeholder when this document describes a graphical representation. In particular:
 
-* puzzle progression should retain the Advent-calendar metaphor rather than being represented only as a percentage or text counter;
+* where puzzle progression is shown, it should retain the Advent-calendar metaphor rather than being represented only as a percentage or text counter;
 * Music Quiz progression should be immediately visible as progress through 11 questions using a progress bar or clear 11-step tracker; the public/TV overview also shows the current question number;
 * active Uno Reverse and available Hint tokens should be recognizable visual cards/tokens/badges rather than plain text prompts;
 * Skip is an immediate action under the current game rules, so it should be presented as a styled action when available, not as stored inventory.
@@ -82,9 +82,10 @@ Target: `team`
 
 This view should be optimized for phone usage, with tablet compatibility.
 
+The team Puzzle View intentionally does **not** show the persistent 25-door Advent calendar/progression grid. Overall Advent progression is shown on the shared/general overview (and may also be shown in the administrative view), while the team screen stays focused on the current puzzle and the resources/actions the team can use.
+
 It should represent:
 
-* the team's Advent calendar/event boxes, including completed/current/future visual states;
 * current playing time;
 * an intentional graphical/card/badge representation of whether an Uno Reverse is active;
 * an intentional graphical/card/badge representation of the number of available Hint tokens;
@@ -95,6 +96,8 @@ It should represent:
 * a clearly styled immediate Skip action where legal under the current rules;
 * access to a **Shop View**;
 * access to a **Sabotage View**.
+
+The team resource/status controls should be grouped above the current puzzle interaction so the answer field sits below that resource area and remains prominent on a phone.
 
 The current answer input and other controls must survive normal polling without losing focus, caret position, selection, hover/press state, or clicks.
 
