@@ -36,3 +36,7 @@ config_file = "agents/ui_experience.toml"
 [agents.test_invariants]
 description = "Independent Terra/Medium post-integration/UI reviewer for adversarial coverage gaps, concurrency/isolation/recovery risks, polling/browser regressions, and requirement traceability."
 config_file = "agents/test_invariants.toml"
+
+[agents.merge_steward]
+description = "Sol/Medium PR integration specialist for dependency ordering, conflict triage, latest-main refresh, CI/review gates, and safe sequential landing. Does not invent production semantics."
+config_file = "agents/merge_steward.toml"
