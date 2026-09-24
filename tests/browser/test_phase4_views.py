@@ -76,10 +76,28 @@ class PhaseFourBrowserTests(LiveServerTestCase):
                 tv_page = await tv_context.new_page()
                 await tv_page.goto(f"{self.live_server_url}/overview/")
                 try:
-                    for page in (a_page, b_page, tv_page):
-                        await page.get_by_text(
-                            "Question 1 of 11", exact=False
-                        ).wait_for()
+                    for page in (a_page, b_page):
+                        await page.locator(".music-progress").wait_for()
+                        self.assertEqual(await page.locator(".music-step").count(), 11)
+                        self.assertEqual(
+                            await page.locator(
+                                ".music-step[aria-current='step']"
+                            ).inner_text(),
+                            "1",
+                        )
+                        self.assertEqual(
+                            await page.locator("#game-status .music-status").count(), 0
+                        )
+                        self.assertEqual(
+                            await page.locator("#game-status .music-timer").count(), 0
+                        )
+                        self.assertEqual(
+                            await page.locator("#game-status .music-scores").count(), 0
+                        )
+                    await tv_page.get_by_text(
+                        "Question 1 of 11", exact=False
+                    ).wait_for()
+
                     field = a_page.locator("#music-answer-input")
                     await field.fill("still typing")
                     await field.focus()
@@ -94,10 +112,19 @@ class PhaseFourBrowserTests(LiveServerTestCase):
                     await b_page.get_by_role(
                         "button", name="Submit Music answer"
                     ).click()
-                    for page in (a_page, b_page, tv_page):
-                        await page.get_by_text(
-                            "Question 2 of 11", exact=False
+                    for page in (a_page, b_page):
+                        await page.locator(
+                            ".music-step[aria-current='step']", has_text="2"
                         ).wait_for(timeout=5000)
+                        self.assertEqual(
+                            await page.locator("#music-answer-input").count(), 1
+                        )
+                        self.assertEqual(
+                            await page.locator("#game-status .music-status").count(), 0
+                        )
+                    await tv_page.get_by_text(
+                        "Question 2 of 11", exact=False
+                    ).wait_for(timeout=5000)
                     overview = await tv_page.locator("#overview-state").inner_text()
                     self.assertIn("Team B\n1", overview)
                     self.assertIn("Last point: Team B", overview)

@@ -207,13 +207,28 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                             browser, path, viewport, cookie
                         )
                         contexts.append(context)
-                        await page.get_by_text(
-                            "Question 1 of 11", exact=False
-                        ).wait_for()
+                        await page.locator(".music-progress").wait_for()
                         self.assertEqual(await page.locator(".music-step").count(), 11)
                         self.assertEqual(
                             await page.locator(".music-step--current").count(), 1
                         )
+                        if path == "/team/":
+                            self.assertEqual(
+                                await page.locator(
+                                    "#game-status .music-status"
+                                ).count(),
+                                0,
+                            )
+                            self.assertEqual(
+                                await page.get_by_text(
+                                    "Question 1 of 11", exact=False
+                                ).count(),
+                                0,
+                            )
+                        else:
+                            await page.get_by_text(
+                                "Question 1 of 11", exact=False
+                            ).wait_for()
                 finally:
                     for context in contexts:
                         await context.close()

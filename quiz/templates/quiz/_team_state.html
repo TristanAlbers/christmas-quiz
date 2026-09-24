@@ -4,26 +4,7 @@
     <strong class="state-badge state-{{ state.team_state|lower }}">{{ state.team_state }}</strong>
   </div>
   {% if state.run_id %}
-    {% if state.music %}
-      <div class="music-status" role="status">
-        <p class="eyebrow">Music Quiz</p>
-        {% if state.music.phase == 'question' %}
-          <h2>Question {{ state.music.question_number }} of {{ state.music.question_total }}</h2>
-          <p class="music-timer">{% widthratio state.music.question_elapsed_ms 1000 1 %} seconds</p>
-        {% else %}
-          <h2>Final Music scores</h2>
-          <p>Advent resumes in {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconds.</p>
-        {% endif %}
-        <div class="music-scores">
-          {% for score in state.music.scores %}
-            <strong>Team {{ score.team_id|upper }}: {{ score.score }}</strong>
-          {% endfor %}
-        </div>
-        {% if state.music.previous_winner_team_id %}
-          <p>Last winner: Team {{ state.music.previous_winner_team_id|upper }}</p>
-        {% endif %}
-      </div>
-    {% else %}
+    {% if not state.music %}
       <div class="inventory-strip" aria-label="Team resources">
         <div class="resource-card resource-card--coins"><span aria-hidden="true">✦</span><strong>{{ state.points }}</strong><span>points</span></div>
         <div class="resource-card resource-card--hint"><span class="hint-token" aria-hidden="true">?</span><strong>{{ state.hint_tokens }} Hint tokens</strong><span>available</span></div>

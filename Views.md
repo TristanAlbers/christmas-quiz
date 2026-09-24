@@ -15,7 +15,7 @@ The application should develop a coherent Christmas visual language incrementall
 Do not reduce a specified visual state to a raw text placeholder when this document describes a graphical representation. In particular:
 
 * puzzle progression should retain the Advent-calendar metaphor rather than being represented only as a percentage or text counter;
-* Music Quiz progression should be immediately visible as progress through 11 questions, using a progress bar or clear 11-step tracker in addition to the current question number;
+* Music Quiz progression should be immediately visible as progress through 11 questions using a progress bar or clear 11-step tracker; the public/TV overview also shows the current question number;
 * active Uno Reverse and available Hint tokens should be recognizable visual cards/tokens/badges rather than plain text prompts;
 * Skip is an immediate action under the current game rules, so it should be presented as a styled action when available, not as stored inventory.
 
@@ -160,10 +160,11 @@ This view should be optimized for phone usage.
 
 During Music Quiz it should show only information/actions needed for that mini-game. It should contain:
 
-* the same authoritative current-question state as the public Music view;
-* an obvious progress bar or 11-step tracker through the Music questions;
+* an authoritative 11-step tracker showing the current Music question;
 * the team's answer field and submission action;
 * concise result/rejection feedback needed for repeated attempts.
+
+The team status area should not duplicate the public Music overview: it should omit a separate `Question N of 11` heading, elapsed-question timer, team Music scores, previous-winner summary, and final-results countdown. Those status details belong on the shared public/TV overview.
 
 The answer control must remain mounted and usable across normal 500 ms polling until the authoritative question/context changes. Advancing to a new Music question is a valid context change that may replace the interaction pane.
 
