@@ -1,0 +1,67 @@
+name: Visual / interaction improvement
+description: Improve one screen, interaction, or responsive/polling behavior without bundling unrelated UI work.
+title: "UI: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep this focused on one surface or interaction. Visual work is correctness work in this project when it affects polling stability, usability, privacy, or the approved Christmas presentation.
+
+  - type: textarea
+    id: surface
+    attributes:
+      label: Surface / interaction
+      description: Which exact page, component, device context, or interaction needs improvement?
+      placeholder: "Admin package selector on tablet" 
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behavior
+      description: What currently looks or behaves incorrectly?
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired
+    attributes:
+      label: Desired behavior
+      description: What one observable UI/interaction outcome should this issue deliver?
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshot / reproduction / device notes
+      description: Add screenshots, viewport/device information, pointer/touch behavior, polling timing, or reproduction steps where useful.
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Include polling/focus/pointer stability and target-device checks when relevant.
+      placeholder: |
+        - [ ] ...
+        - [ ] The affected control remains stable through normal 500 ms polling.
+        - [ ] Focus/pointer/touch behavior remains usable on ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Explicitly out of scope
+      description: Related redesigns or other screens that should remain separate issues.
+
+  - type: checkboxes
+    id: atomic
+    attributes:
+      label: Scope check
+      options:
+        - label: This issue targets one coherent screen/interaction outcome and can be merged independently.
+          required: true
