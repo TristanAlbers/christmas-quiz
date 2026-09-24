@@ -106,9 +106,10 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
 
                     await page.locator("#answer-input").fill("red")
                     await page.locator(".answer-form .button-primary").click()
-                    await page.get_by_text(
-                        "Correct answer. Puzzle completed.", exact=True
-                    ).wait_for()
+                    await page.wait_for_function(
+                        """document.querySelector('#action-feedback')?.textContent
+                        === 'Correct answer. Puzzle completed.'"""
+                    )
                     await page.wait_for_timeout(700)
                     self.assertEqual(
                         await page.evaluate("window.__wrongAnswerEffects"), 2
