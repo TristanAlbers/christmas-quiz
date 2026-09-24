@@ -1,4 +1,4 @@
-<section class="status-card public-status" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}">
+<section class="status-card public-status" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
   <div class="status-row">
     <span class="eyebrow">Christmas Escape Room</span>
     <strong class="state-badge state-{{ state.global_state|lower }}">{{ state.global_state }}</strong>
@@ -31,10 +31,10 @@
     {% if state.global_state == 'FINISHED' %}<h1>The Advent race is complete</h1>{% elif state.global_state == 'PAUSED' %}<h1>Game paused</h1>{% else %}<h1>Advent Quiz in progress</h1>{% endif %}
     <p class="game-clock">Playing time: <strong>{% widthratio gameplay_elapsed_ms 1000 1 %} seconds</strong></p>
     {% if first_finisher_team_id %}
-      <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
-        <p class="eyebrow">{% if state.global_state == 'FINISHED' %}Final result{% else %}First finisher{% endif %}</p>
-        <h2>Team {{ first_finisher_team_id|upper }} finished first</h2>
-        <p>{% if state.global_state == 'FINISHED' %}Both teams completed the calendar.{% else %}The race continues for the other team.{% endif %}</p>
+      <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% else %} finish-banner--winner{% endif %}" role="status">
+        <p class="eyebrow">{% if state.global_state == 'FINISHED' %}Final result{% else %}Advent race winner{% endif %}</p>
+        <h2>{% if state.global_state == 'FINISHED' %}Team {{ first_finisher_team_id|upper }} finished first{% else %}Team {{ first_finisher_team_id|upper }} wins the Advent race!{% endif %}</h2>
+        <p>{% if state.global_state == 'FINISHED' %}Both teams completed the calendar.{% else %}The other team keeps playing until its calendar is complete.{% endif %}</p>
       </aside>
     {% endif %}
     <div class="public-calendar-grid">
