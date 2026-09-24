@@ -416,9 +416,9 @@ class PhaseTwoContentionTests(PhaseTwoSetup, TransactionTestCase):
 
 
 class MusicBoundaryTests(TestCase):
-    """Phase 2 must not open puzzle 13 before its mandatory Music trigger exists."""
+    """Legacy snapshots cannot complete puzzle 13 without Phase-4 Music data."""
 
-    def test_all_completion_routes_stop_before_puzzle_thirteen_atomically(self):
+    def test_all_completion_routes_stop_at_puzzle_thirteen_atomically(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             package = root / "games" / "thirteen-puzzles"
@@ -468,7 +468,7 @@ class MusicBoundaryTests(TestCase):
                 run_id = start_game(
                     admin, StartGame(str(uuid4()), "thirteen-puzzles")
                 ).run_id
-                for number in range(1, 12):
+                for number in range(1, 13):
                     self.assertEqual(
                         skip_current(
                             team,
@@ -476,7 +476,7 @@ class MusicBoundaryTests(TestCase):
                         ).outcome,
                         "completed",
                     )
-                self.assertEqual(get_team_state(team).current_number, 12)
+                self.assertEqual(get_team_state(team).current_number, 13)
                 before = (
                     get_team_state(team).points,
                     Attempt.objects.count(),
@@ -487,17 +487,17 @@ class MusicBoundaryTests(TestCase):
                     (
                         submit_answer,
                         team,
-                        SubmitAnswer(str(uuid4()), run_id, "a-12", "red"),
+                        SubmitAnswer(str(uuid4()), run_id, "a-13", "red"),
                     ),
                     (
                         skip_current,
                         team,
-                        TeamPuzzle(str(uuid4()), run_id, "a-12"),
+                        TeamPuzzle(str(uuid4()), run_id, "a-13"),
                     ),
                     (
                         force_complete_current,
                         admin,
-                        AdminPuzzle(str(uuid4()), run_id, "a", "a-12"),
+                        AdminPuzzle(str(uuid4()), run_id, "a", "a-13"),
                     ),
                 ):
                     with self.assertRaises(ApplicationError) as caught:
@@ -514,6 +514,6 @@ class MusicBoundaryTests(TestCase):
                 )
                 self.assertFalse(
                     PuzzleProgress.objects.get(
-                        run_id=run_id, team_id="a", number=12
+                        run_id=run_id, team_id="a", number=13
                     ).completed
                 )
