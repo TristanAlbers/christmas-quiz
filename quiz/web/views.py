@@ -97,6 +97,7 @@ def _team_context(
     feedback="",
     replace_pane=False,
     replace_actions=False,
+    update_resources=False,
 ):
     return {
         "state": state,
@@ -107,6 +108,7 @@ def _team_context(
         "feedback": feedback,
         "replace_pane": replace_pane,
         "replace_actions": replace_actions,
+        "update_resources": update_resources,
         "view_context": _question_context(state),
         "actions_context": _team_actions_context(state),
         "request_id": str(uuid.uuid4()),
@@ -268,6 +270,7 @@ def team_state(request):
             state,
             replace_pane=replace_pane,
             replace_actions=replace_actions,
+            update_resources=True,
         ),
     )
 
@@ -303,6 +306,7 @@ def team_answer(request):
             feedback=feedback,
             replace_pane=True,
             replace_actions=True,
+            update_resources=True,
         ),
     )
 
@@ -338,6 +342,7 @@ def team_music_answer(request):
             feedback=feedback,
             replace_pane=True,
             replace_actions=True,
+            update_resources=True,
         ),
     )
 
@@ -483,6 +488,7 @@ def team_action(request, action):
             feedback=feedback,
             replace_pane=True,
             replace_actions=True,
+            update_resources=True,
         ),
     )
 

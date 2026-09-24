@@ -4,13 +4,6 @@
     <strong class="state-badge state-{{ state.team_state|lower }}">{{ state.team_state }}</strong>
   </div>
   {% if state.run_id %}
-    {% if not state.music %}
-      <div class="team-resource-bar" aria-label="Team resources">
-        <div class="resource-card resource-card--coins"><span aria-hidden="true">✦</span><strong>{{ state.points }}</strong><span>points</span></div>
-        <div class="resource-card resource-card--hint"><span class="hint-token" aria-hidden="true">?</span><strong>{{ state.hint_tokens }} Hint tokens</strong><span>available</span></div>
-        <div class="resource-card resource-card--reverse{% if state.uno_reverse_active %} resource-card--active{% endif %}"><span class="reverse-mark" aria-hidden="true">↶</span><strong>Uno Reverse {% if state.uno_reverse_active %}active{% else %}inactive{% endif %}</strong><span>{% if state.uno_reverse_active %}Ready to reflect{% else %}Not held{% endif %}</span></div>
-      </div>
-    {% endif %}
     {% if first_finisher_team_id %}
       <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
         {% if state.global_state == 'FINISHED' %}
@@ -37,6 +30,9 @@
   {% endif %}
 </div>
 {% if feedback %}<p id="action-feedback" class="feedback" role="status" hx-swap-oob="outerHTML">{{ feedback }}</p>{% endif %}
+{% if update_resources and state.run_id and not state.music %}
+  {% include 'quiz/_team_resources.html' with oob=True %}
+{% endif %}
 {% if replace_actions %}
   {% include 'quiz/_team_actions.html' with oob=True %}
 {% endif %}

@@ -90,7 +90,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                     self.assertEqual(await tv.locator(".advent-door").count(), 50)
                     resources = team.locator(".team-resource-bar")
                     self.assertEqual(
-                        await resources.locator(".resource-card").count(), 3
+                        await resources.locator(".resource-card").count(), 4
                     )
                     self.assertTrue(
                         await resources.evaluate(

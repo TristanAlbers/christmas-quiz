@@ -60,12 +60,15 @@ input[name="answer"] { display: block; width: 100%; margin: .45rem 0 .85rem; }
 .control-stack form, .toolbar form { margin: 0; }
 .team-resource-bar, .admin-team-metrics { display: grid; gap: .65rem; margin: 1rem 0; }
 .team-resource-bar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.team-resource-bar #team-resource-values { display: contents; }
 .admin-team-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .resource-card, .admin-team-metrics > span { display: grid; align-content: center; min-height: 5.2rem; padding: .7rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--paper); text-align: center; }
 .resource-card > strong { font-size: 1.1rem; }
 .resource-card--hint { border-color: #dfbd52; background: #fff9dc; }
 .resource-card--reverse { border-color: #cfccd9; background: #f5f3fa; color: #6e6979; }
 .resource-card--reverse.resource-card--active { border-color: var(--berry); background: linear-gradient(145deg, #fff1f3, #ffe5b7); color: var(--berry-dark); box-shadow: inset 0 0 0 .12rem rgba(166,47,67,.15); }
+.resource-card--shop { width: 100%; color: var(--evergreen); }
+.cart-mark { font-size: 1.45rem; line-height: 1; }
 .hint-token { display: inline-grid; place-items: center; width: 1.65rem; height: 1.65rem; margin: 0 auto .2rem; border: .13rem solid #8d6709; border-radius: 50%; background: var(--gold-soft); color: #654700; font-weight: 900; }
 .reverse-mark { display: inline-block; color: var(--berry); font-size: 1.7rem; font-weight: 900; line-height: 1; }
 .mini-reverse { color: #756f7f; }
@@ -101,6 +104,11 @@ input[name="answer"] { display: block; width: 100%; margin: .45rem 0 .85rem; }
 .fragment-card { margin-top: 1rem; padding: .8rem; border-left: .3rem solid var(--gold); background: #fff9e5; }
 .fragment-card p { margin: .2rem 0 0; overflow-wrap: anywhere; }
 .shop-card { background: linear-gradient(145deg, #f4faf6, #fffdf7); }
+.shop-dialog { width: min(calc(100% - 1.5rem), 42rem); max-height: min(90vh, 46rem); padding: 0; overflow: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--paper); color: var(--ink); box-shadow: var(--shadow); }
+.shop-dialog::backdrop { background: rgba(6, 29, 23, .7); }
+.shop-dialog .shop-card { margin: 0; border: 0; }
+.shop-dialog__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+.shop-dialog__close { min-width: 2.75rem; padding: .35rem; border-color: var(--line); color: var(--ink); font-size: 1.6rem; line-height: 1; }
 .shop-item { display: grid; grid-template-rows: auto auto 1fr auto; gap: .35rem; min-width: 0; margin: 0; padding: .9rem; border: 1px solid var(--line); border-radius: .75rem; background: white; text-align: center; }
 .shop-item__icon { margin: 0 auto; }
 .shop-item--hint { border-color: #dfbd52; }

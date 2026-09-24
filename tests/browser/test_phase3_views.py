@@ -134,6 +134,9 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
             async with async_playwright() as playwright:
                 browser, context, page = await self._page_for(playwright, "/team/")
                 try:
+                    await page.get_by_role(
+                        "button", name="Shop Power-ups"
+                    ).click()
                     reverse_form = page.locator(
                         "form[action='/team/action/purchase-reverse/']"
                     )
@@ -143,7 +146,7 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     )
                     self.assertIn(
                         "Uno Reverse active",
-                        await page.locator(".state-panel-puzzle").inner_text(),
+                        await page.locator(".team-resource-bar").inner_text(),
                     )
                     self.assertEqual(await reverse_form.count(), 0)
                     state = await asyncio.to_thread(get_team_state, self.a)
