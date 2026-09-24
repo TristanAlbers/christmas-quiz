@@ -4,6 +4,15 @@
     <strong class="state-badge state-{{ state.team_state|lower }}">{{ state.team_state }}</strong>
   </div>
   {% if state.run_id %}
+    {% if not state.music and state.team_state == 'FREEZE' %}
+      <div class="freeze-message" role="status" aria-live="polite">
+        <p class="freeze-message__icon" aria-hidden="true">❄</p>
+        <p class="eyebrow">Ice lock active</p>
+        <h2>Your team is frozen</h2>
+        <p>Gameplay is unavailable. Your puzzle and Hint stay safely hidden until the server releases the freeze.</p>
+        <p class="freeze-timer" data-remaining-ms="{{ state.freeze_remaining_ms }}">{% widthratio state.freeze_remaining_ms 1000 1 %} seconds remaining</p>
+      </div>
+    {% else %}
     {% if not state.music %}
       <div class="team-resource-bar" aria-label="Team resources">
         <div class="resource-card resource-card--coins"><span aria-hidden="true">✦</span><strong>{{ state.points }}</strong><span>points</span></div>
@@ -22,16 +31,11 @@
         {% endif %}
       </aside>
     {% endif %}
-    {% if not state.music and state.team_state == 'FREEZE' %}
-      <div class="freeze-message" role="status">
-        <h2>Frozen</h2>
-        <p>Your puzzle and Hint are hidden until the server-authoritative timer expires.</p>
-        <p class="freeze-timer" data-remaining-ms="{{ state.freeze_remaining_ms }}">{% widthratio state.freeze_remaining_ms 1000 1 %} seconds remaining</p>
-      </div>
-    {% elif not state.music and state.global_state == 'PAUSED' %}
+    {% if not state.music and state.global_state == 'PAUSED' %}
       <div class="interruption-message"><h2>Game paused</h2><p>Your exact puzzle state and effect timers are preserved.</p></div>
     {% endif %}
     {% if not state.music and state.fragments %}<div class="fragment-card"><strong>Collected fragments</strong><p>{{ state.fragments|join:", " }}</p></div>{% endif %}
+    {% endif %}
   {% else %}
     <p>Waiting for an administrator to start the game.</p>
   {% endif %}
