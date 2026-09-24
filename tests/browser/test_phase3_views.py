@@ -161,6 +161,24 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         "form[action='/team/action/purchase-reverse/']"
                     )
                     await reverse_form.locator("button[type=submit]").click()
+                    activation = page.locator("#reverse-activation")
+                    await activation.wait_for(state="visible", timeout=5000)
+                    self.assertEqual(
+                        await activation.get_attribute("aria-label"),
+                        "Uno Reverse activated",
+                    )
+                    self.assertIn(
+                        "Uno Reverse activated!", await activation.inner_text()
+                    )
+                    activation_handle = await activation.element_handle()
+                    await page.wait_for_timeout(1100)
+                    self.assertTrue(
+                        await page.evaluate(
+                            "([node]) => node === "
+                            "document.querySelector('#reverse-activation')",
+                            [activation_handle],
+                        )
+                    )
                     await page.get_by_text("Uno Reverse active", exact=False).wait_for(
                         timeout=5000
                     )
@@ -171,6 +189,18 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     self.assertEqual(await reverse_form.count(), 0)
                     state = await asyncio.to_thread(get_team_state, self.a)
                     self.assertTrue(state.uno_reverse_active)
+
+                    await page.reload()
+                    activation = page.locator("#reverse-activation")
+                    self.assertTrue(
+                        "reverse-activation--idle"
+                        in (await activation.get_attribute("class") or "")
+                    )
+                    self.assertFalse(await activation.is_visible())
+                    self.assertIn(
+                        "Uno Reverse active",
+                        await page.locator(".team-resource-bar").inner_text(),
+                    )
 
                     await asyncio.to_thread(
                         freeze_opponent,
@@ -187,6 +217,44 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     self.assertFalse(state.uno_reverse_active)
                     self.assertEqual(attacker.team_state, "FREEZE")
                     self.assertEqual(await page.locator("#answer-input").count(), 1)
+                finally:
+                    await context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_reverse_activation_reduced_motion_keeps_static_feedback(self):
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser, context, page = await self._page_for(playwright, "/team/")
+                try:
+                    await page.emulate_media(reduced_motion="reduce")
+                    await page.get_by_role(
+                        "button", name="Shop Power-ups"
+                    ).click()
+                    reverse_form = page.locator(
+                        "form[action='/team/action/purchase-reverse/']"
+                    )
+                    await reverse_form.locator("button[type=submit]").click()
+                    activation = page.locator("#reverse-activation")
+                    await activation.wait_for(state="visible", timeout=5000)
+                    self.assertIn(
+                        "Uno Reverse activated!", await activation.inner_text()
+                    )
+                    self.assertEqual(
+                        await activation.evaluate(
+                            "el => getComputedStyle(el).animationName"
+                        ),
+                        "reverse-activation-reduced",
+                    )
+                    self.assertEqual(
+                        await page.locator(".reverse-activation__card").evaluate(
+                            "el => getComputedStyle(el).animationName"
+                        ),
+                        "none",
+                    )
                 finally:
                     await context.close()
                     await browser.close()
