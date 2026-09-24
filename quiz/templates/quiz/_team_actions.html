@@ -19,6 +19,7 @@
           <div><p class="eyebrow">Team shop</p><h2 id="team-shop-title">Power-ups</h2></div>
           <form method="dialog"><button class="shop-dialog__close" type="submit" aria-label="Close shop">×</button></form>
         </header>
+        <p id="shop-feedback" class="feedback" role="status">{% if feedback %}{{ feedback }}{% endif %}</p>
       <div class="action-grid">
       <form class="shop-item shop-item--hint" method="post" action="{% url 'team_action' 'purchase-hint' %}"
             hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit"
