@@ -127,9 +127,15 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await runner_up.wait_for(timeout=5000)
                     await overview.wait_for(timeout=5000)
 
-                    await team_a.get_by_text("You won the Advent race!").wait_for()
-                    await team_b.get_by_text("Team A got there first").wait_for()
-                    await tv.get_by_text("Team A wins!").wait_for()
+                    await winner.get_by_role(
+                        "heading", name="You won the Advent race!"
+                    ).wait_for()
+                    await runner_up.get_by_role(
+                        "heading", name="Team A got there first"
+                    ).wait_for()
+                    await overview.get_by_role(
+                        "heading", name="Team A wins!"
+                    ).wait_for()
                     await tv.get_by_text("Team A wins the Advent race!").wait_for()
 
                     self.assertTrue(
@@ -171,9 +177,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                                 "'endgame-celebration--visible')"
                             )
                         )
-                    await team_b.get_by_text(
-                        "Team A reached the finish first"
-                    ).wait_for()
+                    await team_b.get_by_text("Team A completed the calendar").wait_for()
                     await tv.get_by_text("Team A wins the Advent race!").wait_for()
                     self.assertEqual(await team_b.locator("#answer-input").count(), 1)
                 finally:
