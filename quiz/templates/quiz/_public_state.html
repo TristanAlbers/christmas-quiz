@@ -1,4 +1,4 @@
-<section class="status-card public-status" aria-live="polite">
+<section class="status-card public-status" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}">
   <div class="status-row">
     <span class="eyebrow">Christmas Escape Room</span>
     <strong class="state-badge state-{{ state.global_state|lower }}">{{ state.global_state }}</strong>

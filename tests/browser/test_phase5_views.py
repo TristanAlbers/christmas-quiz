@@ -187,6 +187,77 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
 
         asyncio.run(check())
 
+    def test_new_door_animates_once_and_correct_answer_celebrates_team(self):
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                team_context, team = await self._page(
+                    browser, "/team/", {"width": 390, "height": 844}, self.cookies["a"]
+                )
+                tv_context, tv = await self._page(
+                    browser, "/overview/", {"width": 1920, "height": 1080}
+                )
+                try:
+                    self.assertEqual(
+                        await tv.locator(".advent-door-opening-echo").count(), 0
+                    )
+                    await tv.evaluate(
+                        """window.__doorAnimations = 0;
+                        new MutationObserver(records => {
+                          for (const record of records) {
+                            for (const node of record.addedNodes) {
+                              if (node.classList?.contains(
+                                'advent-door-opening-echo'
+                              )) {
+                                window.__doorAnimations += 1;
+                              }
+                            }
+                          }
+                        }).observe(document.body, {childList: true});"""
+                    )
+
+                    self.assertEqual(
+                        await team.locator("#answer-input").count(),
+                        1,
+                        await team.content(),
+                    )
+                    await team.locator("#answer-input").fill("red")
+                    await team.locator(".answer-form .button-primary").click()
+                    completion = team.locator(
+                        ".door-completion:not(.door-completion--idle)"
+                    )
+                    await completion.wait_for()
+                    await tv.locator(".advent-door-opening-echo").wait_for(timeout=5000)
+                    self.assertEqual(await tv.evaluate("window.__doorAnimations"), 1)
+                    self.assertEqual(
+                        await tv.locator(
+                            '.advent-progress[data-team-id="a"] [data-door-number="1"]'
+                        ).get_attribute("aria-label"),
+                        "Door 1: completed",
+                    )
+                    self.assertEqual(
+                        await tv.locator(
+                            '.advent-progress[data-team-id="b"] [data-door-number="2"]'
+                        ).get_attribute("aria-label"),
+                        "Door 2: locked",
+                    )
+                    await tv.wait_for_timeout(2100)
+                    self.assertEqual(await tv.evaluate("window.__doorAnimations"), 1)
+
+                    await tv.reload()
+                    await tv.wait_for_timeout(800)
+                    self.assertEqual(
+                        await tv.locator(".advent-door-opening-echo").count(), 0
+                    )
+                finally:
+                    await team_context.close()
+                    await tv_context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
     def test_music_question_has_eleven_visible_steps_on_every_surface(self):
         for number in range(1, 14):
             force_complete_current(

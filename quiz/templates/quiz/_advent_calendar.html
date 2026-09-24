@@ -1,8 +1,11 @@
 <section class="advent-progress{% if progress.is_finished %} advent-progress--finished{% endif %}"
+         {% if team_id %}data-team-id="{{ team_id }}"{% endif %}
+         data-completed-count="{{ progress.completed_count }}"
          aria-label="{% if team_id %}Team {{ team_id|upper }} {% endif %}Advent calendar progress">
+  <span class="advent-progress__snow" aria-hidden="true"></span>
   <div class="advent-progress__header">
     <div>
-      <p class="eyebrow">Advent calendar</p>
+      <p class="eyebrow"{% if progress.is_finished %} style="color: #6f4f00;"{% endif %}>Advent calendar</p>
       {% if team_id %}<h2>Team {{ team_id|upper }}</h2>{% endif %}
     </div>
     <strong class="progress-count">{{ progress.completed_count }}/25</strong>
@@ -10,12 +13,19 @@
   <ol class="advent-calendar">
     {% for door in progress.doors %}
       <li class="advent-door advent-door--{{ door.status }}"
-          aria-label="Door {{ door.number }}: {{ door.status }}"
+          data-door-number="{{ door.number }}"
+          aria-label="Door {{ door.number }}: {% if door.status == 'future' %}locked{% else %}{{ door.status }}{% endif %}"
           {% if door.status == 'current' %}aria-current="step"{% endif %}>
-        <span class="advent-door__number">{{ door.number }}</span>
-        <span class="advent-door__status" aria-hidden="true">
-          {% if door.status == 'completed' %}✓{% elif door.status == 'current' %}Open{% else %}•{% endif %}
+        <span class="advent-door__reveal" aria-hidden="true">
+          <span class="advent-door__glow">{% if door.status == 'completed' %}★{% else %}✦{% endif %}</span>
+          {% if door.status == 'completed' %}<span class="advent-door__number advent-door__number--inside">{{ door.number }}</span>{% endif %}
         </span>
+        <span class="advent-door__flap" aria-hidden="true">
+          <span class="advent-door__wreath">✦</span>
+          <span class="advent-door__number">{{ door.number }}</span>
+          <span class="advent-door__knob"></span>
+        </span>
+        <span class="advent-door__status">{% if door.status == 'completed' %}<span class="visually-hidden">Completed</span>✓{% elif door.status == 'current' %}Current{% else %}Locked{% endif %}</span>
       </li>
     {% endfor %}
   </ol>
