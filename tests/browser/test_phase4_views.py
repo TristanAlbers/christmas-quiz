@@ -98,10 +98,9 @@ class PhaseFourBrowserTests(LiveServerTestCase):
                         await page.get_by_text(
                             "Question 2 of 11", exact=False
                         ).wait_for(timeout=5000)
-                    self.assertIn(
-                        "Team B1",
-                        await tv_page.locator("#overview-state").inner_text(),
-                    )
+                    overview = await tv_page.locator("#overview-state").inner_text()
+                    self.assertIn("Team B\n1", overview)
+                    self.assertIn("Last point: Team B", overview)
                     self.assertEqual(await a_page.locator("#answer-input").count(), 0)
                 finally:
                     await tv_context.close()
