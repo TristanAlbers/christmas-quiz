@@ -101,7 +101,9 @@ Prompt:
 
 ## Phase 6 — Challenge normal gameplay
 
-Prerequisite: phase 5 green; settle Challenge outcome/Reverse policy.
+Prerequisite: phase 5 green; preserve the settled phase 3 Challenge-loss policy:
+the Freeze applies directly to the challenged team and does not consume or
+redirect an active Uno Reverse, unless a higher-authority specification conflicts.
 
 Add one paid Challenge initiation opportunity per team and a shared Challenge puzzle. Attempts are unlimited and penalty-free; there is no deadline. First accepted correct answer wins. Challenge gives no Advent progression or normal point reward. If initiator wins, challenged team receives the specified Freeze on Advent return; if challenged team wins, resume without Freeze. Opportunity consumption and payment are atomic. Finished teams cannot participate.
 
