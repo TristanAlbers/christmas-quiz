@@ -1,0 +1,197 @@
+.endgame-celebration {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .25s ease, visibility .25s ease;
+}
+
+.endgame-celebration--visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.endgame-celebration__veil {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 248, 211, .28), transparent 34%),
+    linear-gradient(155deg, rgba(8, 49, 37, .84), rgba(77, 22, 34, .78));
+}
+
+.endgame-celebration__card {
+  position: relative;
+  z-index: 2;
+  width: min(92vw, 42rem);
+  padding: clamp(1.35rem, 4vw, 2.5rem);
+  border: .2rem solid #efc85b;
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgba(255, 253, 244, .98), rgba(255, 239, 184, .98));
+  box-shadow: 0 1.5rem 4rem rgba(9, 31, 24, .34), inset 0 0 0 .12rem rgba(255,255,255,.7);
+  color: #15392e;
+  text-align: center;
+  transform: translateY(1.2rem) scale(.94);
+}
+
+.endgame-celebration--visible .endgame-celebration__card {
+  animation: endgame-card-arrive .65s cubic-bezier(.17,.84,.32,1.18) forwards;
+}
+
+.endgame-celebration__card h2 {
+  margin: .25rem 0 .55rem;
+  color: #6b4710;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 7vw, 4.3rem);
+  line-height: 1.02;
+}
+
+.endgame-celebration__card p:last-child {
+  margin: .4rem auto 0;
+  max-width: 34rem;
+  font-size: clamp(1rem, 2.3vw, 1.25rem);
+}
+
+.endgame-celebration__eyebrow {
+  margin: 0;
+  color: #8a2739;
+  font-size: .8rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.endgame-celebration__icon {
+  display: block;
+  margin-bottom: .2rem;
+  font-size: clamp(3rem, 10vw, 6rem);
+  line-height: 1;
+  filter: drop-shadow(0 .25rem .25rem rgba(64,36,12,.18));
+}
+
+.endgame-celebration--overview-winner .endgame-celebration__card {
+  width: min(92vw, 52rem);
+  border-width: .3rem;
+}
+
+.endgame-celebration--overview-winner .endgame-celebration__card::before,
+.endgame-celebration--winner .endgame-celebration__card::before {
+  content: "★  ✦  ★";
+  display: block;
+  margin-bottom: .45rem;
+  color: #c69217;
+  font-size: clamp(1rem, 2.8vw, 1.5rem);
+  letter-spacing: .38em;
+}
+
+.endgame-celebration--runner-up {
+  place-items: start center;
+  padding-top: clamp(5.5rem, 18vh, 9rem);
+}
+
+.endgame-celebration--runner-up .endgame-celebration__veil {
+  background: linear-gradient(180deg, rgba(213, 235, 241, .56), rgba(213, 235, 241, 0) 62%);
+}
+
+.endgame-celebration--runner-up .endgame-celebration__card {
+  width: min(92vw, 34rem);
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border-color: #80afbb;
+  background: linear-gradient(145deg, rgba(248, 253, 254, .97), rgba(222, 239, 243, .97));
+  box-shadow: 0 .9rem 2.6rem rgba(26, 71, 81, .2);
+}
+
+.endgame-celebration--runner-up .endgame-celebration__card h2 {
+  color: #285d69;
+  font-size: clamp(1.55rem, 5vw, 2.5rem);
+}
+
+.endgame-celebration--runner-up .endgame-celebration__icon {
+  animation: endgame-rudolph-sigh 1.1s ease-in-out 2;
+}
+
+.endgame-celebration__snow {
+  position: absolute;
+  inset: 5% 0 auto;
+  color: rgba(255,255,255,.86);
+  font-size: clamp(1rem, 3vw, 2rem);
+  letter-spacing: clamp(.65rem, 4vw, 3.5rem);
+  text-align: center;
+  text-shadow: 0 0 .65rem rgba(255,255,255,.8);
+  animation: endgame-snow-drift 3.6s ease-in-out infinite alternate;
+}
+
+.endgame-confetti__piece {
+  position: absolute;
+  top: -8vh;
+  left: var(--confetti-left);
+  width: clamp(.38rem, .7vw, .65rem);
+  height: clamp(.7rem, 1.4vw, 1.1rem);
+  border-radius: .12rem;
+  background: #d8a62d;
+  opacity: .95;
+  transform: rotate(var(--confetti-rotate));
+  animation: endgame-confetti-fall var(--confetti-duration) linear var(--confetti-delay) forwards;
+}
+
+.endgame-confetti__piece:nth-child(4n+2) { background: #af3044; }
+.endgame-confetti__piece:nth-child(4n+3) { background: #176046; }
+.endgame-confetti__piece:nth-child(4n) { background: #f7f0dc; }
+
+.finish-banner--winner {
+  border-color: #c8961d;
+  background: linear-gradient(135deg, #fff4bd, #fffdf4);
+  box-shadow: inset 0 0 0 .12rem rgba(200,150,29,.12);
+}
+
+.finish-banner--winner h2 { color: #6b4710; }
+
+.finish-banner--runner-up {
+  border-color: #8ab5bf;
+  background: linear-gradient(135deg, #eef8fa, #fffdf7);
+}
+
+.finish-banner--runner-up h2 { color: #285d69; }
+
+@keyframes endgame-card-arrive {
+  0% { opacity: 0; transform: translateY(1.2rem) scale(.94); }
+  70% { opacity: 1; transform: translateY(-.25rem) scale(1.015); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes endgame-confetti-fall {
+  0% { transform: translate3d(0, -8vh, 0) rotate(var(--confetti-rotate)); }
+  100% { transform: translate3d(var(--confetti-drift), 118vh, 0) rotate(calc(var(--confetti-rotate) + 540deg)); }
+}
+
+@keyframes endgame-snow-drift {
+  from { transform: translateX(-1.2rem); opacity: .68; }
+  to { transform: translateX(1.2rem); opacity: 1; }
+}
+
+@keyframes endgame-rudolph-sigh {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  45% { transform: translateY(.25rem) rotate(-5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .endgame-celebration,
+  .endgame-celebration__card,
+  .endgame-celebration__snow,
+  .endgame-celebration__icon,
+  .endgame-confetti__piece {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .endgame-confetti__piece,
+  .endgame-celebration__snow {
+    display: none;
+  }
+}
