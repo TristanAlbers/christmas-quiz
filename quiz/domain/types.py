@@ -9,8 +9,13 @@ from typing import Literal
 
 CompletionRoute = Literal["correct_answer", "skip", "admin_force"]
 DomainErrorCode = Literal[
-    "disallowed_state", "stale_question", "prerequisite_violation", "invalid_input",
-    "insufficient_points", "no_hint_tokens", "already_active"
+    "disallowed_state",
+    "stale_question",
+    "prerequisite_violation",
+    "invalid_input",
+    "insufficient_points",
+    "no_hint_tokens",
+    "already_active",
 ]
 
 
@@ -47,3 +52,6 @@ class CompletionDecision:
     points_delta: int
     fragment_award: str | None
     progressed: bool
+    team_finished: bool
+    claim_first_finisher: bool
+    game_finished: bool

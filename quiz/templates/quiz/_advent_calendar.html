@@ -1,0 +1,23 @@
+<section class="advent-progress{% if progress.is_finished %} advent-progress--finished{% endif %}"
+         aria-label="{% if team_id %}Team {{ team_id|upper }} {% endif %}Advent calendar progress">
+  <div class="advent-progress__header">
+    <div>
+      <p class="eyebrow">Advent calendar</p>
+      {% if team_id %}<h2>Team {{ team_id|upper }}</h2>{% endif %}
+    </div>
+    <strong class="progress-count">{{ progress.completed_count }}/25</strong>
+  </div>
+  <ol class="advent-calendar">
+    {% for door in progress.doors %}
+      <li class="advent-door advent-door--{{ door.status }}"
+          aria-label="Door {{ door.number }}: {{ door.status }}"
+          {% if door.status == 'current' %}aria-current="step"{% endif %}>
+        <span class="advent-door__number">{{ door.number }}</span>
+        <span class="advent-door__status" aria-hidden="true">
+          {% if door.status == 'completed' %}✓{% elif door.status == 'current' %}Open{% else %}•{% endif %}
+        </span>
+      </li>
+    {% endfor %}
+  </ol>
+  {% if progress.is_finished %}<p class="calendar-complete">All 25 doors completed</p>{% endif %}
+</section>

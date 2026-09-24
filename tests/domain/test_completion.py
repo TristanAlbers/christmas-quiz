@@ -46,6 +46,9 @@ class CompletionTests(SimpleTestCase):
                 self.assertEqual(decision.points_delta, 3)
                 self.assertEqual(decision.fragment_award, "red bell")
                 self.assertTrue(decision.progressed)
+                self.assertFalse(decision.team_finished)
+                self.assertFalse(decision.claim_first_finisher)
+                self.assertFalse(decision.game_finished)
                 self.assertEqual(decision.state.points, 7)
                 self.assertEqual(decision.state.current_number, 2)
                 self.assertEqual(decision.state.completed_numbers, {1})
@@ -125,12 +128,94 @@ class CompletionTests(SimpleTestCase):
         self.assertEqual(result.state.global_state, "ADVENT_QUIZ")
         self.assertEqual(result.state.completed_numbers, {1, 2})
 
+    def test_puzzle_25_finishes_first_team_but_not_global_game(self):
+        before = state(
+            current_number=25,
+            completed_numbers=frozenset(range(1, 25)),
+            rewarded_numbers=frozenset(range(1, 25)),
+        )
+
+        for route in ("correct_answer", "skip", "admin_force"):
+            with self.subTest(route=route):
+                result = complete_puzzle(
+                    before,
+                    PuzzleCompletion(25, 7, "final star", None),
+                    route,
+                )
+                self.assertTrue(result.team_finished)
+                self.assertTrue(result.claim_first_finisher)
+                self.assertFalse(result.game_finished)
+                self.assertEqual(result.state.team_state, "FINISHED")
+                self.assertEqual(result.state.global_state, "ADVENT_QUIZ")
+                self.assertEqual(result.state.current_number, 25)
+                self.assertEqual(result.state.completed_numbers, set(range(1, 26)))
+                self.assertEqual(result.points_delta, 7)
+                self.assertEqual(result.fragment_award, "final star")
+                self.assertFalse(result.progressed)
+
+    def test_puzzle_25_finishes_global_game_when_other_team_finished(self):
+        before = state(
+            current_number=25,
+            completed_numbers=frozenset(range(1, 25)),
+        )
+
+        result = complete_puzzle(
+            before,
+            PuzzleCompletion(25, 0, None, None),
+            "correct_answer",
+            other_team_finished=True,
+        )
+
+        self.assertTrue(result.team_finished)
+        self.assertFalse(result.claim_first_finisher)
+        self.assertTrue(result.game_finished)
+        self.assertEqual(result.state.team_state, "FINISHED")
+        self.assertEqual(result.state.global_state, "FINISHED")
+
+    def test_puzzle_24_advances_without_finishing(self):
+        before = state(
+            current_number=24,
+            completed_numbers=frozenset(range(1, 24)),
+        )
+        result = complete_puzzle(
+            before, PuzzleCompletion(24, 0, None, 25), "correct_answer"
+        )
+
+        self.assertTrue(result.progressed)
+        self.assertFalse(result.team_finished)
+        self.assertEqual(result.state.current_number, 25)
+        self.assertEqual(result.state.team_state, "PUZZLE")
+
+    def test_finished_team_cannot_recomplete_final_puzzle(self):
+        before = state(
+            team_state="FINISHED",
+            current_number=25,
+            completed_numbers=frozenset(range(1, 26)),
+        )
+        with self.assertRaises(DomainError) as caught:
+            complete_puzzle(
+                before,
+                PuzzleCompletion(25, 0, None, None),
+                "admin_force",
+            )
+        self.assertEqual(caught.exception.code, "disallowed_state")
+
     def test_invalid_costs_or_next_number_are_rejected(self):
         for puzzle in (
             PuzzleCompletion(1, -1, None, 2),
             PuzzleCompletion(1, 1, None, 3),
+            PuzzleCompletion(25, 1, None, 26),
+            PuzzleCompletion(26, 1, None, None),
         ):
             with self.subTest(puzzle=puzzle):
                 with self.assertRaises(DomainError) as caught:
-                    complete_puzzle(state(), puzzle, "correct_answer")
+                    complete_puzzle(
+                        state(current_number=puzzle.number),
+                        puzzle,
+                        "correct_answer",
+                    )
                 self.assertEqual(caught.exception.code, "invalid_input")
+
+        with self.assertRaises(DomainError) as caught:
+            complete_puzzle(state(), PUZZLE_1, "correct_answer", other_team_finished=1)
+        self.assertEqual(caught.exception.code, "invalid_input")

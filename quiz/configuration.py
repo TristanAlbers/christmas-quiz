@@ -59,19 +59,21 @@ def _validate(config, package_id):
         "teams",
     }
     version = config.get("schema_version")
+    music_keys = {
+        "hint_cost",
+        "skip_cost",
+        "freeze_cost",
+        "uno_reverse_cost",
+        "music_question_reward",
+        "music_score_display_duration_ms",
+        "music_questions",
+    }
     versioned_keys = {
         1: set(),
         2: {"hint_cost", "skip_cost"},
         3: {"hint_cost", "skip_cost", "freeze_cost", "uno_reverse_cost"},
-        4: {
-            "hint_cost",
-            "skip_cost",
-            "freeze_cost",
-            "uno_reverse_cost",
-            "music_question_reward",
-            "music_score_display_duration_ms",
-            "music_questions",
-        },
+        4: music_keys,
+        5: music_keys,
     }
     required_keys = common_keys | versioned_keys.get(version, set())
     if (
@@ -85,9 +87,9 @@ def _validate(config, package_id):
     points = config["initial_points"]
     if type(points) is not int or points < 0:
         raise InvalidPackage("initial_points must be nonnegative integer")
-    if version in (2, 3, 4):
+    if version in (2, 3, 4, 5):
         price_keys = ["hint_cost", "skip_cost"]
-        if version in (3, 4):
+        if version in (3, 4, 5):
             price_keys.extend(["freeze_cost", "uno_reverse_cost"])
         for key in price_keys:
             if type(config[key]) is not int or config[key] < 0:
@@ -103,6 +105,8 @@ def _validate(config, package_id):
         puzzles = team["puzzles"]
         if not isinstance(puzzles, list) or len(puzzles) < 2 or len(puzzles) > 25:
             raise InvalidPackage("Each team needs 2 to 25 puzzles")
+        if version == 5 and len(puzzles) != 25:
+            raise InvalidPackage("Schema v5 requires exactly 25 puzzles per team")
         seen_ids = set()
         for number, puzzle in enumerate(puzzles, 1):
             if not isinstance(puzzle, dict) or set(puzzle) != {
@@ -153,7 +157,7 @@ def _validate(config, package_id):
                 raise InvalidPackage("media must be a list")
             for item in media:
                 referenced.add(str(_relative_path(item)))
-    if version == 4:
+    if version in (4, 5):
         reward = config["music_question_reward"]
         if type(reward) is not int or reward < 0:
             raise InvalidPackage("music_question_reward must be nonnegative integer")
@@ -399,7 +403,7 @@ def snapshot_music_audio_path(run, question_number):
         return None
     try:
         config = load_snapshot(run)
-        if config.get("schema_version") != 4:
+        if config.get("schema_version") not in (4, 5):
             return None
         question = config["music_questions"][question_number - 1]
         audio = question.get("audio")

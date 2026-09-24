@@ -137,7 +137,7 @@ class Phase31PackageDiscoveryTests(TestCase):
 class Phase31CompatibilityMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0003_phase3")
     migrate_to = ("quiz", "0004_retire_legacy_ready_runs")
-    latest_migration = ("quiz", "0005_phase4_music")
+    latest_migration = ("quiz", "0006_phase5_finish")
 
     def setUp(self):
         super().setUp()

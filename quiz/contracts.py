@@ -94,6 +94,26 @@ class MusicProjection:
 
 
 @dataclass(frozen=True)
+class AdventDoorProjection:
+    number: int
+    status: Literal["completed", "current", "future"]
+
+
+@dataclass(frozen=True)
+class AdventProgressProjection:
+    doors: tuple[AdventDoorProjection, ...]
+    completed_count: int
+    current_number: int | None
+    is_finished: bool
+
+
+@dataclass(frozen=True)
+class PublicTeamProgressProjection:
+    team_id: TeamId
+    advent_progress: AdventProgressProjection
+
+
+@dataclass(frozen=True)
 class TeamProjection:
     run_id: str | None
     global_state: str
@@ -111,6 +131,9 @@ class TeamProjection:
     uno_reverse_active: bool = False
     freeze_remaining_ms: int | None = None
     music: MusicProjection | None = None
+    advent_progress: AdventProgressProjection | None = None
+    first_finisher_team_id: TeamId | None = None
+    gameplay_elapsed_ms: int = 0
 
 
 @dataclass(frozen=True)
@@ -180,6 +203,7 @@ class AdminTeamProjection:
     hint_revealed: bool
     uno_reverse_active: bool = False
     freeze_remaining_ms: int | None = None
+    advent_progress: AdventProgressProjection | None = None
 
 
 @dataclass(frozen=True)
@@ -198,9 +222,14 @@ class AdminProjection:
     packages: tuple[PackageProjection, ...] = ()
     discovery_error: str | None = None
     music: MusicProjection | None = None
+    first_finisher_team_id: TeamId | None = None
+    gameplay_elapsed_ms: int = 0
 
 
 @dataclass(frozen=True)
 class PublicProjection:
     global_state: str
     music: MusicProjection | None = None
+    teams: tuple[PublicTeamProgressProjection, ...] = ()
+    first_finisher_team_id: TeamId | None = None
+    gameplay_elapsed_ms: int = 0

@@ -269,6 +269,34 @@ class AuditEvent(models.Model):
         raise ValueError("Audit events cannot be deleted")
 
 
+class FirstFinisher(models.Model):
+    """Immutable, one-per-run fact recording the first team to finish."""
+
+    run = models.OneToOneField(
+        Run,
+        on_delete=models.PROTECT,
+        related_name="first_finisher",
+    )
+    team_id = models.CharField(max_length=1)
+    finished_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(team_id__in=["a", "b"]),
+                name="valid_first_finisher_team",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            raise ValueError("First-finisher facts are immutable")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("First-finisher facts cannot be deleted")
+
+
 class MusicQuiz(models.Model):
     """Durable one-per-run Music trigger and recoverable interruption clock."""
 
