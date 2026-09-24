@@ -1,8 +1,25 @@
 <div id="team-actions"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
   <input id="actions-context" type="hidden" name="actions_context" value="{{ actions_context }}">
+  {% if state.run_id and not state.music %}
+    <div class="team-resource-bar" aria-label="Team resources">
+      {% include 'quiz/_team_resources.html' %}
+      {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
+        <button class="resource-card resource-card--shop" type="button"
+                aria-haspopup="dialog" aria-controls="team-shop-dialog"
+                onclick="document.getElementById('team-shop-dialog').showModal()">
+          <span class="cart-mark" aria-hidden="true">🛒</span><strong>Shop</strong><span>Power-ups</span>
+        </button>
+      {% endif %}
+    </div>
+  {% endif %}
   {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
-    <section class="action-card shop-card" aria-labelledby="team-shop-title">
-      <p class="eyebrow">Team shop</p><h2 id="team-shop-title">Power-ups</h2>
+    <dialog id="team-shop-dialog" class="shop-dialog" aria-labelledby="team-shop-title">
+      <section class="shop-card">
+        <header class="shop-dialog__header">
+          <div><p class="eyebrow">Team shop</p><h2 id="team-shop-title">Power-ups</h2></div>
+          <form method="dialog"><button class="shop-dialog__close" type="submit" aria-label="Close shop">×</button></form>
+        </header>
+        <p id="shop-feedback" class="feedback" role="status">{% if feedback %}{{ feedback }}{% endif %}</p>
       <div class="action-grid">
       <form class="shop-item shop-item--hint" method="post" action="{% url 'team_action' 'purchase-hint' %}"
             hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit"
@@ -36,6 +53,7 @@
         </form>
       {% endif %}
       </div>
-    </section>
+      </section>
+    </dialog>
   {% endif %}
 </div>

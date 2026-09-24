@@ -97,10 +97,27 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                 )
                 try:
                     await page.get_by_text("Demo A1", exact=False).wait_for()
+                    launcher = page.get_by_role("button", name="Shop Power-ups")
+                    await launcher.focus()
+                    await page.keyboard.press("Enter")
+                    shop = page.locator("#team-shop-dialog")
+                    await shop.wait_for(state="visible")
+                    self.assertTrue(await shop.evaluate("el => el.open"))
+                    await page.keyboard.press("Escape")
+                    await shop.wait_for(state="hidden")
+                    self.assertTrue(
+                        await launcher.evaluate("el => document.activeElement === el")
+                    )
+                    await launcher.click()
                     await self._watch_swaps(page, "game-status")
                     button = page.get_by_role("button", name="Buy Hint (1)")
                     await button.scroll_into_view_if_needed()
-                    await button.evaluate("el => window.__pressedButton = el")
+                    await button.evaluate(
+                        """el => {
+                            window.__pressedButton = el;
+                            window.__openShop = el.closest('dialog');
+                        }"""
+                    )
                     box = await button.bounding_box()
                     self.assertIsNotNone(box)
                     pointer_x = box["x"] + box["width"] / 2
@@ -122,6 +139,11 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         await button.evaluate("el => window.__pressedButton === el")
                     )
                     self.assertTrue(
+                        await shop.evaluate(
+                            "el => window.__openShop === el && el.open"
+                        )
+                    )
+                    self.assertTrue(
                         await button.evaluate(
                             """(el, point) =>
                                 document.elementFromPoint(point.x, point.y) === el""",
@@ -133,6 +155,11 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         page.locator(".resource-card--hint")
                         .filter(has_text="1 Hint tokens")
                         .wait_for(timeout=5000)
+                    )
+                    self.assertTrue(
+                        await page.locator("#team-shop-dialog").evaluate(
+                            "el => el.open"
+                        )
                     )
                 finally:
                     await context.close()

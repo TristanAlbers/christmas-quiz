@@ -32,8 +32,10 @@
       const status = event.detail.xhr.status;
       const isAction = event.detail.elt.closest('form') !== null;
       if (isAction && status >= 400 && status < 500) {
-        document.getElementById('action-feedback').textContent =
-          'Action rejected: ' + event.detail.xhr.responseText;
+        const message = 'Action rejected: ' + event.detail.xhr.responseText;
+        document.getElementById('action-feedback').textContent = message;
+        const shopFeedback = document.getElementById('shop-feedback');
+        if (shopFeedback) shopFeedback.textContent = message;
       } else {
         document.getElementById('connection-status').textContent =
           'Connection trouble. Retrying…';
@@ -44,6 +46,20 @@
     });
     document.body.addEventListener('htmx:afterRequest', function (event) {
       if (event.detail.successful) document.getElementById('connection-status').textContent = '';
+    });
+    let reopenShop = false;
+    document.body.addEventListener('htmx:oobBeforeSwap', function (event) {
+      if (event.detail.target.id === 'team-actions') {
+        const shop = document.getElementById('team-shop-dialog');
+        reopenShop = Boolean(shop && shop.open);
+      }
+    });
+    document.body.addEventListener('htmx:oobAfterSwap', function (event) {
+      if (event.detail.target.id === 'team-actions' && reopenShop) {
+        const shop = document.getElementById('team-shop-dialog');
+        if (shop) shop.showModal();
+        reopenShop = false;
+      }
     });
   </script>
 </body>
