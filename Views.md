@@ -82,7 +82,7 @@ Target: `team`
 
 This view should be optimized for phone usage, with tablet compatibility.
 
-The team Puzzle View intentionally does **not** show the persistent 25-door Advent calendar/progression grid. Overall Advent progression is shown on the shared/general overview (and may also be shown in the administrative view), while the team screen stays focused on the current puzzle and the resources/actions the team can use.
+The team Puzzle View intentionally does **not** show the persistent 25-door Advent calendar/progression grid. Overall Advent progression is shown on both the shared/general overview and the administrative view, while the team screen stays focused on the current puzzle and the resources/actions the team can use.
 
 It should represent:
 

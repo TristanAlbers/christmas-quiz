@@ -22,7 +22,7 @@ Phase 4 is complete and MUST NOT be reimplemented. See `docs/phase-4-contract.md
 
 Completed backend phases still leave presentation debt. Retire it incrementally, beginning with Phase 5 unless a separate UI-only repair is explicitly authorized:
 - coherent reusable Christmas shell/visual language;
-- Advent-calendar progression rather than text/percentage alone;
+- Advent-calendar progression on the admin and public/TV surfaces rather than text/percentage alone;
 - prominent 11-step Music progress;
 - visual Hint-token and Uno-Reverse treatment;
 - styled immediate Skip;
@@ -59,7 +59,8 @@ Prerequisite: Phase 4 green.
 Goal: extend demo data to 25 puzzles per team, preserve strict prerequisites, support cumulative fragments/final puzzle, persist the first finisher, keep the second team playable, and enter global `FINISHED` only after both teams complete puzzle 25.
 
 UI acceptance:
-- team/admin/public progression uses Advent-calendar completed/current/future states;
+- admin/public progression uses Advent-calendar completed/current/future states;
+- the team Puzzle View omits the persistent 25-door grid and keeps resources/status above the current puzzle and answer interaction;
 - concise `N/25`/percentage may supplement, never replace, the Advent representation;
 - first-finisher/finished states are obvious without private-state leakage;
 - inherited UI debt above is retired on affected surfaces.
@@ -70,7 +71,7 @@ Gate:
 - concurrent final answers produce one durable first-finisher record;
 - no duplicate rewards/fragments; restart/reload preserves outcome;
 - finished teams cannot resume normal actions;
-- phone/tablet/TV progression/finish UI is polling-stable;
+- phone/tablet/TV puzzle, progression, and finish UI is polling-stable;
 - inherited UI debt is retired or explicitly deferred with separate user approval.
 
 Stage packets:
@@ -78,7 +79,7 @@ Stage packets:
 - **B — game_engine:** implement pure progression/finish rules and focused deterministic tests.
 - **C — persistence_security:** implement durable first-finisher state, atomic final-answer race, constraints/recovery/idempotency, and support only the approved coarse public progression.
 - **D — integrator:** wire 25-puzzle application journeys, projections, stable HTMX boundaries, demo data/docs and focused integration tests; never expose private puzzle content/balances/hints/inventory/fragments/hidden effects publicly.
-- **E — ui_experience:** implement Advent-calendar team/admin/public progression, finished states, responsive Christmas presentation, Music 11-step tracker, visual Hint/Reverse, styled Skip and polling-safe interactions with focused browser tests.
+- **E — ui_experience:** implement Advent-calendar admin/public progression, a focused team current-puzzle layout, finished states, responsive Christmas presentation, Music 11-step tracker, visual Hint/Reverse, styled Skip and polling-safe interactions with focused browser tests.
 - **F — test_invariants:** review full journey, finish race, duplicate effects, recovery, finished-team legality, public/privacy boundary, inherited UI acceptance and polling/browser gaps.
 
 ## Phase 6 — Challenge normal gameplay
@@ -122,7 +123,7 @@ Stage packets:
 - **B — game_engine (conditional):** only if a new declarative validator/rule has real domain semantics; otherwise report intentionally skipped.
 - **C — persistence_security:** implement assigned package validation/media/security/snapshot work and focused tests.
 - **D — integrator:** implement remaining projection/media/package-authoring integration, stable HTMX boundaries/docs and focused integration tests.
-- **E — ui_experience:** complete/refine team/admin/TV, Advent calendar, shop/sabotage, fragments/audit, media/operator interaction, disabled/rejected states, package-authoring UX, keyboard/touch and polling browser regressions.
+- **E — ui_experience:** complete/refine team/admin/TV, admin/public Advent calendars, the focused team puzzle layout, shop/sabotage, fragments/audit, media/operator interaction, disabled/rejected states, package-authoring UX, keyboard/touch and polling browser regressions.
 - **F — test_invariants:** review Views/product-decision traceability, leakage, polling/media races, keyboard/touch, package round-trip/validation and snapshot stability.
 
 ## Phase 8 — explicit emergency recovery controls

@@ -22,11 +22,11 @@ The same principle applies to puzzle answers, progression, points, active effect
 
 ## Main Game Loop
 
-The quizzes should be visually set in an advent calendar, with dates going up from 1 to 25. Starting at 1 that specific box will open and a question should appear. This question is related to the puzzle. How the puzzles look exactly will be discussed later, but it is important to note that this could also be a hint or a sound, it doesn't only need to be text. There should also be an option to submit an answer.
+Overall puzzle progression should use an Advent calendar with dates from 1 to 25 on the shared public/TV overview and administrative view. The team Puzzle View instead concentrates on the current event/door and intentionally does not render the persistent 25-door progression grid. Starting at 1, the current event should present its question. How the puzzles look exactly will be discussed later, but it is important to note that this could also be a hint or a sound; it does not only need to be text. There should also be an option to submit an answer.
 
 The type of answer is fully dependent on the quiz question. This could be a number, but could also be a string or another appropriate format.
 
-When the correct answer is submitted by the players, the next box in the advent calendar will open and the next question will appear.
+When the correct answer is submitted by the players, the next event/door becomes current and its question appears. The overview and administrative Advent calendars should reflect that progression.
 
 Each team should have its own independent progression through the 25 puzzles. Team A solving a puzzle has no effect on Team B's progression through its own puzzles.
 
@@ -414,7 +414,7 @@ The application should ideally be developed in stages:
 2. Team authentication and strict team isolation
 3. Game and puzzle data model
 4. Puzzle import/configuration system
-5. Basic team advent-calendar interface
+5. Basic team current-puzzle interface
 6. Answer submission and progression
 7. Persistent game state
 8. Admin/Game Master interface
