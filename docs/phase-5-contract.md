@@ -101,9 +101,11 @@ label. Motion respects reduced-motion preferences.
 ## UI and polling acceptance
 
 Team/admin target phone and tablet; public overview targets desktop/TV. Affected
-surfaces establish one coherent readable Christmas shell and render actual
-25-door Advent calendars with distinct completed/current/future and finished
-states. They also retire inherited debt: a scannable 11-step Music tracker,
+surfaces establish one coherent readable Christmas shell. Admin and public
+surfaces render actual 25-door Advent calendars with distinct completed/current/
+future and finished states. The team Puzzle View does not render that persistent
+grid: it groups resources/status above the current puzzle and answer interaction.
+The surfaces also retire inherited debt: a scannable 11-step Music tracker,
 visual Hint-token and active-Reverse badges/cards, and a clearly styled immediate
 Skip action. Decoration must preserve contrast, touch targets, clarity, and
 privacy.
@@ -118,11 +120,13 @@ the continuing team's still-valid answer input. Commands retain `replace`, polls
 retain `drop`, and context values are rendering hints, never authorization.
 
 Focused browser acceptance uses representative 390x844 phone, 768x1024 tablet,
-and 1920x1080 TV viewports. It proves 25 doors and clear finish states without
-overflow/private leakage; continuing-team input node identity, focus, value, and
-caret survive first-finisher polls; pointer-down/poll/pointer-up remains reliable
-for a still-legal action; finish removes stale controls; Music shows 11 steps;
-and Hint/Reverse/Skip have the required visual semantics.
+and 1920x1080 TV viewports. It proves 25 doors on admin/public surfaces and clear
+finish states without overflow/private leakage; the team surface omits the grid
+and places resources above the current puzzle interaction; continuing-team input
+node identity, focus, value, and caret survive first-finisher polls; pointer-down/
+poll/pointer-up remains reliable for a still-legal action; finish removes stale
+controls; Music shows 11 steps; and Hint/Reverse/Skip have the required visual
+semantics.
 
 ## Ownership, edit order, and gate
 

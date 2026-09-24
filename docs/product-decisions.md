@@ -10,6 +10,14 @@ The UI should develop a coherent Christmas visual language incrementally instead
 
 Polling stability is part of correctness. Under the 500 ms HTMX polling architecture, controls that remain semantically valid must not be recreated in a way that loses focus, caret, native selection, hover/press state, touch interaction, or clicks. Browser regression coverage should exercise these interaction boundaries where relevant.
 
+## 2026-09-24 — team Puzzle View stays focused on the current puzzle
+
+The team Puzzle View intentionally does **not** render the persistent 25-door Advent progression grid. The Advent-calendar metaphor remains required wherever overall puzzle progression is presented: the shared public/TV overview and the administrative view both show the two teams' progression. On the team phone/tablet, the current puzzle is the active event/door experience without a separate persistent progression surface.
+
+The team view groups its resource and status controls above the current-puzzle interaction, with the answer field below that resource area. This keeps the current puzzle and its usable actions prominent on a phone while avoiding a large duplicate overview.
+
+This is a presentation decision only. Each team's independent sequential progression remains backend-authoritative, the authenticated team projection may retain its own progress data for state coordination, and all isolation, completion, recovery, and polling-stability requirements remain unchanged.
+
 ## 2026-09-24 — public Advent progression is approved
 
 The shared public/TV overview may expose **coarse Advent progression for both teams** so viewers can follow the race. The approved public progression fields are limited to information needed to render the progression metaphor, such as:

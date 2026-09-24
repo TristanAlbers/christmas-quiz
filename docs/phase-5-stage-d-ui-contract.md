@@ -50,7 +50,10 @@ legacy `current_number == 25`, has no `question`, and has
 The 500 ms state endpoints and stable synchronization containers are unchanged.
 Polls continue to use `drop`; command responses continue to use `replace`.
 
-- Read-only clocks, calendars, and finish banners belong in normal poll targets.
+- Read-only clocks, admin/public calendars, and finish banners belong in normal
+  poll targets. The team projection retains `advent_progress` for state
+  coordination, but the team Puzzle View does not render the persistent 25-door
+  calendar.
 - The answer pane context does not include first-finisher identity. Learning
   that the opponent finished therefore does not recreate the continuing team's
   still-valid answer input.
@@ -61,6 +64,7 @@ Polls continue to use `drop`; command responses continue to use `replace`.
 - Public progress and finish labels are read-only and may update normally;
   current Music audio retains its separate context boundary.
 
-Stage E owns templates, styling, responsive Advent/Music treatment, stable
-finish labels, reduced-motion behavior, and focused browser acceptance. It
-must not infer legality from these context strings or projection fields.
+Stage E owns templates, styling, responsive admin/public Advent and team
+current-puzzle treatment, stable finish labels, reduced-motion behavior, and
+focused browser acceptance. It must not infer legality from these context
+strings or projection fields.
