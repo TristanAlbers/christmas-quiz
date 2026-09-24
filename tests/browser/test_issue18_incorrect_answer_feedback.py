@@ -91,18 +91,24 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         "Incorrect answer. Try again.",
                         await page.locator("#action-feedback").inner_text(),
                     )
-                    self.assertEqual(await page.evaluate("window.__wrongAnswerEffects"), 1)
+                    self.assertEqual(
+                        await page.evaluate("window.__wrongAnswerEffects"), 1
+                    )
                     self.assertEqual(await page.locator("#answer-input").count(), 1)
                     self.assertTrue(await page.locator("#answer-input").is_enabled())
 
                     await page.wait_for_timeout(1300)
-                    self.assertEqual(await page.evaluate("window.__wrongAnswerEffects"), 1)
+                    self.assertEqual(
+                        await page.evaluate("window.__wrongAnswerEffects"), 1
+                    )
 
                     await page.locator("#answer-input").fill("blue")
                     await page.locator(".answer-form .button-primary").click()
                     await page.wait_for_function("window.__wrongAnswerEffects === 2")
                     await page.wait_for_timeout(700)
-                    self.assertEqual(await page.evaluate("window.__wrongAnswerEffects"), 2)
+                    self.assertEqual(
+                        await page.evaluate("window.__wrongAnswerEffects"), 2
+                    )
 
                     await page.locator("#answer-input").fill("red")
                     await page.locator(".answer-form .button-primary").click()
@@ -110,7 +116,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         "Correct answer. Puzzle completed.", exact=True
                     ).wait_for()
                     await page.wait_for_timeout(700)
-                    self.assertEqual(await page.evaluate("window.__wrongAnswerEffects"), 2)
+                    self.assertEqual(
+                        await page.evaluate("window.__wrongAnswerEffects"), 2
+                    )
                 finally:
                     await context.close()
                     await browser.close()
