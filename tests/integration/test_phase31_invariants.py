@@ -25,6 +25,7 @@ from quiz.application import (
     start_game,
     submit_answer,
 )
+from quiz.configuration import load_snapshot
 from quiz.contracts import (
     Actor,
     AdminPoints,
@@ -220,7 +221,13 @@ class Phase31LifecycleTests(TransactionTestCase):
         self.assertEqual(Run.objects.filter(active=True).count(), 1)
         run = Run.objects.get(active=True)
         self.assertEqual(TeamRun.objects.filter(run=run).count(), 2)
-        self.assertEqual(PuzzleProgress.objects.filter(run=run).count(), 4)
+        config = load_snapshot(run)
+        expected_progress = sum(
+            len(config["teams"][team_id]["puzzles"]) for team_id in ("a", "b")
+        )
+        self.assertEqual(
+            PuzzleProgress.objects.filter(run=run).count(), expected_progress
+        )
         self.assertEqual(StartReceipt.objects.filter(run=run).count(), 1)
 
     def test_start_request_retry_survives_reset_and_source_unavailability(self):
