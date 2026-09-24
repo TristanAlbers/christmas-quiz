@@ -1,0 +1,95 @@
+.incorrect-answer-effect {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.incorrect-answer-effect--idle {
+  display: none;
+}
+
+.incorrect-answer-effect--active {
+  background: radial-gradient(circle at center, rgba(255, 244, 226, .18), rgba(166, 47, 67, .18) 58%, rgba(117, 32, 50, .08));
+  animation: incorrect-answer-overlay 1.75s ease both;
+}
+
+.incorrect-answer-effect__card {
+  display: grid;
+  justify-items: center;
+  gap: .22rem;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 1rem 1.15rem 1.1rem;
+  border: .2rem solid var(--berry);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #fff8e8, #fff 70%);
+  color: var(--berry-dark);
+  box-shadow: 0 1.3rem 3.5rem rgba(95, 24, 39, .32), inset 0 0 0 .12rem rgba(214, 166, 44, .28);
+  text-align: center;
+  animation: incorrect-answer-shake .62s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+.incorrect-answer-effect__card strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.55rem;
+}
+
+.incorrect-answer-effect__card > span:last-child {
+  max-width: 16rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.incorrect-answer-effect__santa {
+  font-size: 3rem;
+  line-height: 1;
+  filter: drop-shadow(0 .18rem .2rem rgba(68, 20, 28, .2));
+}
+
+@keyframes incorrect-answer-overlay {
+  0% {
+    opacity: 0;
+  }
+  8%, 82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes incorrect-answer-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  18% { transform: translateX(-.65rem) rotate(-1.2deg); }
+  36% { transform: translateX(.55rem) rotate(1deg); }
+  54% { transform: translateX(-.38rem) rotate(-.7deg); }
+  72% { transform: translateX(.24rem) rotate(.4deg); }
+  88% { transform: translateX(-.1rem); }
+}
+
+@keyframes incorrect-answer-reduced {
+  0%, 99% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .incorrect-answer-effect--active {
+    background: rgba(166, 47, 67, .12);
+    animation: incorrect-answer-reduced 1.75s steps(1, end) !important;
+  }
+
+  .incorrect-answer-effect__card {
+    animation: none !important;
+    transform: none !important;
+  }
+}
