@@ -13,9 +13,9 @@
     return;
   }
 
-  let stateNode = document.getElementById("overview-audio-state");
   let armed = false;
   let sourceKey = "";
+  let stateSignature = "";
   let playGeneration = 0;
   let soundCheckGeneration = 0;
   let checkingSound = false;
@@ -42,6 +42,16 @@
       audioUrl: node.dataset.audioUrl || "",
       runId: node.dataset.runId || "",
     };
+  }
+
+  function signatureFor(state) {
+    return [
+      state.runId,
+      state.globalState,
+      state.phase,
+      state.questionNumber,
+      state.audioUrl,
+    ].join("|");
   }
 
   function isActiveMusicQuestion(state) {
@@ -72,11 +82,15 @@
     }
   }
 
-  function setNotEnabled(detail = "Enable sound once during setup so Music Quiz tracks can start reliably.") {
-    setStatus("not-enabled", "Sound not enabled", detail, "🔔 Enable sound");
+  function setNotEnabled(
+    detail = "Enable sound once during setup so Music Quiz tracks can start reliably."
+  ) {
+    setStatus("not-enabled", "Sound not enabled", detail, "Enable sound");
   }
 
-  function setReady(detail = "Sound is armed for the TV. Music will start automatically when a track becomes current.") {
+  function setReady(
+    detail = "Sound is armed for the TV. Music will start automatically when a track becomes current."
+  ) {
     setStatus("ready", "Sound ready", detail, "Test sound");
   }
 
@@ -242,7 +256,7 @@
     if (saved) {
       restorePlayer(saved);
     }
-    reconcile();
+    reconcile(currentState());
   }
 
   async function runSoundCheck() {
@@ -292,12 +306,10 @@
     }
   }
 
-  function reconcile() {
+  function reconcile(state) {
     if (checkingSound) {
       cancelSoundCheck(true);
     }
-
-    const state = currentState();
 
     if (isPausedMusicQuestion(state)) {
       cancelPendingPlay();
@@ -305,7 +317,9 @@
       if (armed) {
         setPaused();
       } else {
-        setNotEnabled("Music is paused. Enable sound now so the TV is ready when the game resumes.");
+        setNotEnabled(
+          "Music is paused. Enable sound now so the TV is ready when the game resumes."
+        );
       }
       return;
     }
@@ -329,7 +343,9 @@
       if (armed) {
         setReady("Sound is armed. No audio file is packaged for this Music question.");
       } else {
-        setNotEnabled("No audio file is packaged for this question, but you can still arm TV sound for later tracks.");
+        setNotEnabled(
+          "No audio file is packaged for this question, but you can still arm TV sound for later tracks."
+        );
       }
       return;
     }
@@ -340,6 +356,16 @@
       return;
     }
     void playCurrentTrack();
+  }
+
+  function syncState(force = false) {
+    const state = currentState();
+    const nextSignature = signatureFor(state);
+    if (!force && nextSignature === stateSignature) {
+      return;
+    }
+    stateSignature = nextSignature;
+    reconcile(state);
   }
 
   action.addEventListener("click", () => {
@@ -374,15 +400,10 @@
     setPlaybackError();
   });
 
-  const observer = new MutationObserver(() => {
-    const nextStateNode = document.getElementById("overview-audio-state");
-    if (nextStateNode === stateNode) {
-      return;
-    }
-    stateNode = nextStateNode;
-    reconcile();
-  });
+  const observer = new MutationObserver(() => syncState());
   observer.observe(liveOverview, { childList: true, subtree: true });
+  liveOverview.addEventListener("htmx:afterSettle", () => syncState());
+  liveOverview.addEventListener("htmx:oobAfterSwap", () => syncState());
 
-  reconcile();
+  syncState(true);
 })();
