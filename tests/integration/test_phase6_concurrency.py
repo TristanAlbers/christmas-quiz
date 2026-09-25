@@ -215,10 +215,10 @@ class PhaseSixProductionCommandRaceTests(TransactionTestCase):
         self.assertTrue(challenge.freeze_applied)
         self.assertEqual(loser.activity_state, "FREEZE")
         self.assertEqual(loser.freeze_started_gameplay_ms, 15_000)
-        self.assertEqual(
-            ChallengeAttempt.objects.filter(challenge=challenge, is_correct=True).count(),
-            1,
-        )
+        correct_attempts = ChallengeAttempt.objects.filter(
+            challenge=challenge, is_correct=True
+        ).count()
+        self.assertEqual(correct_attempts, 1)
         self.assertEqual(
             CommandReceipt.objects.filter(
                 run_id=self.run_id, action="submit_challenge_answer"
@@ -240,7 +240,8 @@ class PhaseSixProductionCommandRaceTests(TransactionTestCase):
         )
         loser.refresh_from_db()
         self.assertEqual(loser.freeze_started_gameplay_ms, 15_000)
-        self.assertEqual(ChallengeAttempt.objects.filter(challenge=challenge).count(), 1)
+        attempts = ChallengeAttempt.objects.filter(challenge=challenge).count()
+        self.assertEqual(attempts, 1)
 
     def test_challenged_win_allows_other_team_to_start_distinct_second_challenge(self):
         self.assertEqual(self._initiate("a", str(uuid4())), "challenge_started")
