@@ -89,9 +89,12 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
         config = json.loads(config_path.read_text())
         audio_root = package / "music"
         audio_root.mkdir()
+        audio_bytes = (
+            Path(settings.BASE_DIR) / "quiz" / "static" / "quiz" / "sound-check.wav"
+        ).read_bytes()
         for number, question in enumerate(config["music_questions"], 1):
-            question["audio"] = f"music/question-{number}.mp3"
-            (audio_root / f"question-{number}.mp3").write_bytes(b"ID3 issue-9 test")
+            question["audio"] = f"music/question-{number}.wav"
+            (audio_root / f"question-{number}.wav").write_bytes(audio_bytes)
         config_path.write_text(json.dumps(config, indent=2))
 
         scope = override_settings(
