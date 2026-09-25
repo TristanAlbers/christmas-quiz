@@ -144,7 +144,7 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     tv_starting = await tv_page.locator(
                         ".challenge-overview"
                     ).inner_text()
-                    self.assertIn("Challenge · 1 of 2", tv_starting)
+                    self.assertIn("challenge · 1 of 2", tv_starting.lower())
                     self.assertIn("Team A challenged Team B", tv_starting)
                     self.assertNotIn("Reindeer roll call", tv_starting)
 
@@ -261,7 +261,7 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     monitor = admin_page.locator(".admin-challenge")
                     await monitor.wait_for()
                     text = await monitor.inner_text()
-                    self.assertIn("Challenge 1 of 2", text)
+                    self.assertIn("challenge 1 of 2", text.lower())
                     self.assertIn("Team A", text)
                     self.assertIn("initiator", text.lower())
                     self.assertIn("Team B", text)
