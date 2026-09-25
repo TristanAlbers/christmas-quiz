@@ -54,6 +54,21 @@
     <span>Your game state has advanced.</span>
   </div>
 {% endif %}
+{% if feedback == 'Uno Reverse purchased and armed.' %}
+  <div id="reverse-purchase" class="reverse-purchase" role="status" aria-live="assertive" hx-swap-oob="outerHTML">
+    <div class="reverse-purchase__burst" aria-hidden="true"></div>
+    <div class="reverse-purchase__card" aria-hidden="true">
+      <span class="reverse-purchase__label">UNO</span>
+      <span class="reverse-purchase__symbol">↶</span>
+      <span class="reverse-purchase__label reverse-purchase__label--bottom">REVERSE</span>
+    </div>
+    <div class="reverse-purchase__copy">
+      <p class="eyebrow">Purchase successful</p>
+      <strong>Uno Reverse armed!</strong>
+      <span>Your next incoming Freeze will be reflected.</span>
+    </div>
+  </div>
+{% endif %}
 {% if presentation_event %}
   <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}" hx-swap-oob="outerHTML">
   {% include 'quiz/_team_event.html' with event=presentation_event %}
