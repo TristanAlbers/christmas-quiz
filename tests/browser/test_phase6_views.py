@@ -17,6 +17,7 @@ from quiz.application import (
     submit_challenge_answer,
 )
 from quiz.contracts import Actor, RunCommand, StartGame, SubmitChallengeAnswer
+from quiz.domain.phase6 import CHALLENGE_GRACE_PERIOD_MS
 from quiz.models import AccountRole, Challenge, Run, TeamRun
 
 
@@ -66,9 +67,16 @@ class PhaseSixBrowserTests(LiveServerTestCase):
         return context, page
 
     async def _finish_grace_period(self):
+        challenge = await asyncio.to_thread(
+            Challenge.objects.get,
+            run_id=self.run_id,
+            status="active",
+        )
         await asyncio.to_thread(
             Run.objects.filter(pk=self.run_id).update,
-            gameplay_elapsed_ms=15_000,
+            gameplay_elapsed_ms=(
+                challenge.started_gameplay_ms + CHALLENGE_GRACE_PERIOD_MS
+            ),
             advent_clock_anchor=None,
         )
 
@@ -147,6 +155,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertIn("challenge · 1 of 2", tv_starting.lower())
                     self.assertIn("Team A challenged Team B", tv_starting)
                     self.assertNotIn("Reindeer roll call", tv_starting)
+                    self.assertEqual(
+                        await tv_page.locator(".public-calendar-grid").count(), 0
+                    )
 
                     await self._finish_grace_period()
                     for page in (a_page, b_page):
@@ -219,6 +230,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await tv_page.locator(".challenge-overview").count(), 0
                     )
+                    self.assertEqual(
+                        await tv_page.locator(".public-calendar-grid").count(), 1
+                    )
                     for page in (a_page, b_page, tv_page):
                         self.assertTrue(
                             await page.evaluate(
@@ -270,6 +284,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     await tv_page.locator(".challenge-overview--starting").wait_for(
                         timeout=5000
                     )
+                    self.assertEqual(
+                        await tv_page.locator(".public-calendar-grid").count(), 0
+                    )
 
                     await self._finish_grace_period()
                     await b_page.locator("#challenge-answer-input").wait_for(
@@ -320,6 +337,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     ).wait_for(timeout=5000)
                     self.assertEqual(
                         await tv_page.locator(".challenge-overview").count(), 0
+                    )
+                    self.assertEqual(
+                        await tv_page.locator(".public-calendar-grid").count(), 1
                     )
                     for page in (b_page, admin_page, tv_page):
                         self.assertTrue(

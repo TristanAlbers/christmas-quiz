@@ -81,7 +81,9 @@ def challenge_grace_remaining_ms(
         current_gameplay_ms
     ):
         raise DomainError("invalid_input")
-    elapsed = max(0, current_gameplay_ms - started_gameplay_ms)
+    if current_gameplay_ms < started_gameplay_ms:
+        raise DomainError("invalid_input")
+    elapsed = current_gameplay_ms - started_gameplay_ms
     return max(0, CHALLENGE_GRACE_PERIOD_MS - elapsed)
 
 
@@ -134,19 +136,20 @@ def challenge_eligibility(
     value is invalid configuration: Challenge can never become affordable or
     unaffordable because it is always free.
     """
-    if type(challenge_active) is not bool or cost != 0:
+    if type(challenge_active) is not bool or type(cost) is not int or cost != 0:
         raise DomainError("invalid_input")
     initiator, challenged = _validated_teams(
         initiator, challenged, current_gameplay_ms
     )
     if (
         global_state != "ADVENT_QUIZ"
-        or challenge_active
         or initiator.activity_state != "PUZZLE"
     ):
         return ChallengeEligibility(False, "game_unavailable")
     if not initiator.opportunity_available:
         return ChallengeEligibility(False, "opportunity_spent")
+    if challenge_active:
+        return ChallengeEligibility(False, "game_unavailable")
     if challenged.activity_state != "PUZZLE":
         return ChallengeEligibility(False, "opponent_unavailable")
     return ChallengeEligibility(True, None)
@@ -162,17 +165,17 @@ def initiate_challenge(
     cost: int = 0,
 ) -> ChallengeStartDecision:
     """Consume the free one-use opportunity and enter Challenge activity."""
-    if type(challenge_active) is not bool or cost != 0:
+    if type(challenge_active) is not bool or type(cost) is not int or cost != 0:
         raise DomainError("invalid_input")
     initiator, challenged = _validated_teams(
         initiator, challenged, current_gameplay_ms
     )
     if global_state != "ADVENT_QUIZ" or initiator.activity_state != "PUZZLE":
         raise DomainError("disallowed_state")
-    if challenge_active or challenged.activity_state != "PUZZLE":
-        raise DomainError("challenge_unavailable")
     if not initiator.opportunity_available:
         raise DomainError("challenge_spent")
+    if challenge_active or challenged.activity_state != "PUZZLE":
+        raise DomainError("challenge_unavailable")
 
     return ChallengeStartDecision(
         initiator=replace(

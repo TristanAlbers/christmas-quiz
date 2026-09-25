@@ -120,6 +120,16 @@ class ChallengeEligibilityTests(SimpleTestCase):
                 self.assertFalse(decision.can_initiate)
                 self.assertEqual(decision.reason, reason)
 
+    def test_spent_opportunity_remains_the_reason_during_later_challenge(self):
+        decision = challenge_eligibility(
+            **eligibility_args(
+                challenge_active=True,
+                initiator=team("a", opportunity_available=False),
+            )
+        )
+        self.assertFalse(decision.can_initiate)
+        self.assertEqual(decision.reason, "opportunity_spent")
+
 
 class ChallengeInitiationTests(SimpleTestCase):
     def test_start_consumes_only_opportunity_and_never_points(self):
@@ -184,6 +194,18 @@ class ChallengeInitiationTests(SimpleTestCase):
                     code,
                 )
 
+    def test_spent_opportunity_wins_over_transient_unavailability(self):
+        self.assertEqual(
+            error_code(
+                initiate_challenge,
+                **eligibility_args(
+                    challenge_active=True,
+                    initiator=team("a", opportunity_available=False),
+                ),
+            ),
+            "challenge_spent",
+        )
+
 
 class ChallengeGracePeriodTests(SimpleTestCase):
     def test_grace_period_counts_down_on_gameplay_time(self):
@@ -202,6 +224,10 @@ class ChallengeGracePeriodTests(SimpleTestCase):
         )
         self.assertEqual(
             error_code(challenge_grace_remaining_ms, 0, -1),
+            "invalid_input",
+        )
+        self.assertEqual(
+            error_code(challenge_grace_remaining_ms, 1, 0),
             "invalid_input",
         )
 
@@ -306,6 +332,7 @@ class ChallengeInputValidationTests(SimpleTestCase):
         for changes in (
             {"cost": -1},
             {"cost": 1},
+            {"cost": 0.0},
             {"cost": True},
             {"current_gameplay_ms": -1},
             {"initiator": team("a", points=-1)},
