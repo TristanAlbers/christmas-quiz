@@ -167,10 +167,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gameplay-event {
-    animation: gameplay-event-lifecycle var(--event-duration) steps(1, end) forwards !important;
-  }
-
   .gameplay-event__wash {
     display: none;
   }

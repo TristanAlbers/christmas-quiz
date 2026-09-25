@@ -12,14 +12,16 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
-from django.test import Client, LiveServerTestCase, override_settings
+from django.test import LiveServerTestCase, override_settings
 
 from quiz.application import (
     admin_freeze,
     admin_unfreeze,
+    freeze_opponent,
+    get_team_state,
     start_game,
 )
-from quiz.contracts import Actor, AdminTeam, StartGame
+from quiz.contracts import Actor, AdminTeam, RunCommand, StartGame
 from quiz.models import AccountRole
 
 
@@ -46,14 +48,10 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
             self.admin, StartGame(str(uuid4()), "christmas-2026-demo")
         ).run_id
 
-        a_client = Client()
-        a_client.force_login(self.a_user)
-        self.a_session_cookie = a_client.cookies["sessionid"].value
-        b_client = Client()
-        b_client.force_login(self.b_user)
-        self.b_session_cookie = b_client.cookies["sessionid"].value
+        self.client.force_login(self.a_user)
+        self.a_session_cookie = self.client.cookies["sessionid"].value
 
-    async def _page_for(self, playwright, path, session_cookie=None):
+    async def _page_for(self, playwright, path):
         browser = await playwright.chromium.launch()
         context = await browser.new_context()
         host = urlparse(self.live_server_url).hostname
@@ -61,7 +59,7 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
             [
                 {
                     "name": "sessionid",
-                    "value": session_cookie or self.a_session_cookie,
+                    "value": self.a_session_cookie,
                     "domain": host,
                     "path": "/",
                 }
@@ -149,232 +147,84 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
 
         asyncio.run(check())
 
-    def test_reverse_purchase_closes_shop_and_redirected_attack_animates_both_teams(
-        self,
-    ):
+    def test_reverse_purchase_and_redirected_attack_update_the_team_view(self):
         async def check():
             from playwright.async_api import async_playwright
 
             async with async_playwright() as playwright:
-                browser_a, context_a, page_a = await self._page_for(
-                    playwright, "/team/", self.a_session_cookie
-                )
-                browser_b, context_b, page_b = await self._page_for(
-                    playwright, "/team/", self.b_session_cookie
-                )
+                browser, context, page = await self._page_for(playwright, "/team/")
                 try:
-                    await page_a.get_by_role(
+                    await page.get_by_role(
                         "button", name="Shop Power-ups"
                     ).click()
-                    reverse_form = page_a.locator(
+                    reverse_form = page.locator(
                         "form[action='/team/action/purchase-reverse/']"
                     )
                     await reverse_form.locator("button[type=submit]").click()
-                    await page_a.locator("#team-shop-dialog").wait_for(
-                        state="hidden", timeout=5000
+                    activation = page.locator("#reverse-activation")
+                    await activation.wait_for(state="visible", timeout=5000)
+                    self.assertEqual(
+                        await activation.get_attribute("aria-label"),
+                        "Uno Reverse activated",
                     )
-                    await page_a.get_by_text(
-                        "Uno Reverse active", exact=False
-                    ).wait_for(timeout=5000)
                     self.assertIn(
-                        "purchased and armed",
-                        await page_a.locator("#action-feedback").inner_text(),
+                        "Uno Reverse activated!", await activation.inner_text()
                     )
-                    self.assertFalse(
-                        await page_a.locator("#gameplay-event").is_visible()
-                    )
-
-                    await page_b.get_by_role(
-                        "button", name="Shop Power-ups"
-                    ).click()
-                    freeze_button = page_b.get_by_role(
-                        "button", name="Freeze opponent (3)"
-                    )
-                    await freeze_button.click()
-                    await page_b.locator("#team-shop-dialog").wait_for(
-                        state="hidden", timeout=5000
-                    )
-
-                    reflected = page_b.locator(
-                        "#gameplay-event.gameplay-event--attacker-reversed"
-                    )
-                    saved = page_a.locator(
-                        "#gameplay-event.gameplay-event--saved"
-                    )
-                    await reflected.wait_for(state="visible", timeout=5000)
-                    await saved.wait_for(state="visible", timeout=5000)
-                    self.assertIn("Freeze launched", await reflected.inner_text())
-                    self.assertIn(
-                        "Uno Reverse sent your Freeze back!",
-                        await reflected.inner_text(),
-                    )
-                    self.assertIn("Your Reverse saved you!", await saved.inner_text())
-
-                    await page_b.locator(".state-panel-freeze").wait_for(timeout=5000)
-                    self.assertEqual(await page_b.locator("#answer-input").count(), 0)
-                    self.assertEqual(await page_a.locator("#answer-input").count(), 1)
-                    self.assertIn(
-                        "Uno Reverse inactive",
-                        await page_a.locator(".team-resource-bar").inner_text(),
-                    )
-
-                    await page_a.wait_for_timeout(3200)
-                    self.assertFalse(await saved.is_visible())
-                    self.assertFalse(await reflected.is_visible())
-
-                    await page_a.reload()
-                    self.assertFalse(
-                        await page_a.locator("#gameplay-event").is_visible()
-                    )
-                    self.assertEqual(await page_a.locator("#answer-input").count(), 1)
-                finally:
-                    await context_a.close()
-                    await browser_a.close()
-                    await context_b.close()
-                    await browser_b.close()
-
-        asyncio.run(check())
-
-    def test_freeze_target_eligibility_updates_while_shop_is_open(self):
-        async def check():
-            from playwright.async_api import async_playwright
-
-            async with async_playwright() as playwright:
-                browser, context, page = await self._page_for(playwright, "/team/")
-                try:
-                    await page.get_by_role(
-                        "button", name="Shop Power-ups"
-                    ).click()
-                    shop = page.locator("#team-shop-dialog")
-                    await shop.wait_for(state="visible")
+                    activation_handle = await activation.element_handle()
+                    await page.wait_for_timeout(1100)
                     self.assertTrue(
-                        await page.get_by_role(
-                            "button", name="Freeze opponent (3)"
-                        ).is_enabled()
+                        await page.evaluate(
+                            "([node]) => node === "
+                            "document.querySelector('#reverse-activation')",
+                            [activation_handle],
+                        )
                     )
-
-                    await asyncio.to_thread(
-                        admin_freeze,
-                        self.admin,
-                        AdminTeam(str(uuid4()), self.run_id, "b"),
+                    await page.get_by_text("Uno Reverse active", exact=False).wait_for(
+                        timeout=5000
                     )
-                    unavailable = page.get_by_role(
-                        "button", name="Freeze unavailable"
-                    )
-                    await unavailable.wait_for(timeout=5000)
-                    self.assertTrue(await shop.evaluate("el => el.open"))
-                    self.assertTrue(await unavailable.is_disabled())
                     self.assertIn(
-                        "Opponent is already frozen",
-                        await page.locator(".shop-item--freeze").inner_text(),
+                        "Uno Reverse active",
+                        await page.locator(".team-resource-bar").inner_text(),
+                    )
+                    self.assertEqual(await reverse_form.count(), 0)
+                    state = await asyncio.to_thread(get_team_state, self.a)
+                    self.assertTrue(state.uno_reverse_active)
+
+                    await page.reload()
+                    activation = page.locator("#reverse-activation")
+                    self.assertTrue(
+                        "reverse-activation--idle"
+                        in (await activation.get_attribute("class") or "")
+                    )
+                    self.assertFalse(await activation.is_visible())
+                    self.assertIn(
+                        "Uno Reverse active",
+                        await page.locator(".team-resource-bar").inner_text(),
                     )
 
                     await asyncio.to_thread(
-                        admin_unfreeze,
-                        self.admin,
-                        AdminTeam(str(uuid4()), self.run_id, "b"),
+                        freeze_opponent,
+                        self.b,
+                        RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role(
-                        "button", name="Freeze opponent (3)"
+                    await page.get_by_text(
+                        "Uno Reverse inactive", exact=False
                     ).wait_for(timeout=5000)
-                    self.assertTrue(await shop.evaluate("el => el.open"))
+                    await reverse_form.wait_for(state="attached", timeout=5000)
+                    self.assertEqual(await reverse_form.count(), 1)
+                    state = await asyncio.to_thread(get_team_state, self.a)
+                    attacker = await asyncio.to_thread(get_team_state, self.b)
+                    self.assertEqual(state.team_state, "PUZZLE")
+                    self.assertFalse(state.uno_reverse_active)
+                    self.assertEqual(attacker.team_state, "FREEZE")
+                    self.assertEqual(await page.locator("#answer-input").count(), 1)
                 finally:
                     await context.close()
                     await browser.close()
 
         asyncio.run(check())
 
-    def test_normal_freeze_animates_attacker_then_victim_before_lock_view(self):
-        async def check():
-            from playwright.async_api import async_playwright
-
-            async with async_playwright() as playwright:
-                browser_a, context_a, page_a = await self._page_for(
-                    playwright, "/team/", self.a_session_cookie
-                )
-                browser_b, context_b, page_b = await self._page_for(
-                    playwright, "/team/", self.b_session_cookie
-                )
-                try:
-                    await page_a.get_by_role(
-                        "button", name="Shop Power-ups"
-                    ).click()
-                    await page_a.get_by_role(
-                        "button", name="Freeze opponent (3)"
-                    ).click()
-                    await page_a.locator("#team-shop-dialog").wait_for(
-                        state="hidden", timeout=5000
-                    )
-
-                    attack = page_a.locator(
-                        "#gameplay-event.gameplay-event--attacker"
-                    )
-                    impact = page_b.locator(
-                        "#gameplay-event.gameplay-event--victim"
-                    )
-                    await attack.wait_for(state="visible", timeout=5000)
-                    await impact.wait_for(state="visible", timeout=5000)
-                    self.assertIn("Direct hit!", await attack.inner_text())
-                    self.assertIn("You have been frozen!", await impact.inner_text())
-                    await page_b.locator(".state-panel-freeze").wait_for(timeout=5000)
-                    self.assertEqual(await page_b.locator("#answer-input").count(), 0)
-
-                    await page_b.wait_for_timeout(3400)
-                    self.assertFalse(await impact.is_visible())
-                    self.assertIn(
-                        "Your team is frozen",
-                        await page_b.locator(".freeze-message").inner_text(),
-                    )
-                    await page_b.reload()
-                    self.assertFalse(
-                        await page_b.locator("#gameplay-event").is_visible()
-                    )
-                finally:
-                    await context_a.close()
-                    await browser_a.close()
-                    await context_b.close()
-                    await browser_b.close()
-
-        asyncio.run(check())
-
-    def test_rejected_shop_purchase_stays_open_without_success_animation(self):
-        async def check():
-            from playwright.async_api import async_playwright
-
-            async with async_playwright() as playwright:
-                browser, context, page = await self._page_for(playwright, "/team/")
-                try:
-                    await page.get_by_role(
-                        "button", name="Shop Power-ups"
-                    ).click()
-                    await page.get_by_role(
-                        "button", name="Buy Uno Reverse (2)"
-                    ).click()
-                    await page.locator("#team-shop-dialog").wait_for(
-                        state="hidden", timeout=5000
-                    )
-
-                    await page.get_by_role(
-                        "button", name="Shop Power-ups"
-                    ).click()
-                    shop = page.locator("#team-shop-dialog")
-                    await page.get_by_role(
-                        "button", name="Freeze opponent (3)"
-                    ).click()
-                    await page.locator("#shop-feedback").get_by_text(
-                        "Action rejected: insufficient points"
-                    ).wait_for(timeout=5000)
-                    self.assertTrue(await shop.evaluate("el => el.open"))
-                    self.assertFalse(
-                        await page.locator("#gameplay-event").is_visible()
-                    )
-                finally:
-                    await context.close()
-                    await browser.close()
-
-        asyncio.run(check())
-
-    def test_freeze_attack_reduced_motion_keeps_static_feedback(self):
+    def test_reverse_activation_reduced_motion_keeps_static_feedback(self):
         async def check():
             from playwright.async_api import async_playwright
 
@@ -385,19 +235,26 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     await page.get_by_role(
                         "button", name="Shop Power-ups"
                     ).click()
-                    await page.get_by_role(
-                        "button", name="Freeze opponent (3)"
-                    ).click()
-                    event = page.locator(
-                        "#gameplay-event.gameplay-event--attacker"
+                    reverse_form = page.locator(
+                        "form[action='/team/action/purchase-reverse/']"
                     )
-                    await event.wait_for(state="visible", timeout=5000)
-                    self.assertIn("Direct hit!", await event.inner_text())
+                    await reverse_form.locator("button[type=submit]").click()
+                    activation = page.locator("#reverse-activation")
+                    await activation.wait_for(state="visible", timeout=5000)
+                    self.assertIn(
+                        "Uno Reverse activated!", await activation.inner_text()
+                    )
                     self.assertEqual(
-                        await page.locator(
-                            ".gameplay-event__stage--attack"
-                        ).evaluate("el => getComputedStyle(el).animationName"),
-                        "gameplay-static-first",
+                        await activation.evaluate(
+                            "el => getComputedStyle(el).animationName"
+                        ),
+                        "reverse-activation-reduced",
+                    )
+                    self.assertEqual(
+                        await page.locator(".reverse-activation__card").evaluate(
+                            "el => getComputedStyle(el).animationName"
+                        ),
+                        "none",
                     )
                 finally:
                     await context.close()

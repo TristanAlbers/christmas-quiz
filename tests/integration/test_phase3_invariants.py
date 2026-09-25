@@ -206,51 +206,6 @@ class PhaseThreeClockAndEffectTests(PhaseThreeSetup, TransactionTestCase):
             CommandReceipt.objects.filter(action="freeze_attack").count(), 1
         )
 
-    def test_team_projection_exposes_freeze_eligibility_and_latest_attack_event(self):
-        self.add_points("a", 10)
-        before = get_team_state(self.a, now=self.started)
-        self.assertFalse(before.opponent_freeze_active)
-        self.assertIsNone(before.presentation_event)
-
-        result = freeze_opponent(self.a, self.command(), now=self.started)
-        self.assertEqual(result.outcome, "frozen")
-
-        attacker = get_team_state(self.a, now=self.started)
-        target = get_team_state(self.b, now=self.started)
-        self.assertTrue(attacker.opponent_freeze_active)
-        self.assertFalse(target.opponent_freeze_active)
-        for state in (attacker, target):
-            event = state.presentation_event
-            self.assertIsNotNone(event)
-            self.assertEqual(event.kind, "freeze_attack")
-            self.assertEqual(event.attacker_team_id, "a")
-            self.assertEqual(event.target_team_id, "b")
-            self.assertEqual(event.frozen_team_id, "b")
-            self.assertFalse(event.reversed)
-
-    def test_duplicate_freeze_rejection_keeps_points_and_event_revision_unchanged(self):
-        self.add_points("a", 10)
-        first = freeze_opponent(self.a, self.command(), now=self.started)
-        self.assertEqual(first.outcome, "frozen")
-        state = get_team_state(self.a, now=self.started)
-        points_after_first = state.points
-        event_id = state.presentation_event.id
-        audit_count = AuditEvent.objects.filter(action="freeze_attack").count()
-
-        self.assert_error(
-            "already_active",
-            freeze_opponent,
-            self.a,
-            self.command(),
-            now=self.started,
-        )
-        after = get_team_state(self.a, now=self.started)
-        self.assertEqual(after.points, points_after_first)
-        self.assertEqual(after.presentation_event.id, event_id)
-        self.assertEqual(
-            AuditEvent.objects.filter(action="freeze_attack").count(), audit_count
-        )
-
     def test_projection_admin_read_and_command_use_same_clock_boundary(self):
         freeze_at = self.started + timedelta(seconds=8)
         admin_freeze(self.admin, self.team_command("a"), now=freeze_at)

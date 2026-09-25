@@ -38,6 +38,7 @@ from quiz.contracts import (
     SubmitMusicAnswer,
     TeamPuzzle,
 )
+from quiz.web.team_presentation import get_team_presentation_state
 
 ERROR_STATUS = {
     "unauthenticated": 401,
@@ -78,22 +79,22 @@ def _question_context(state):
     )
 
 
-def _team_actions_context(state):
+def _team_actions_context(state, presentation):
     return ":".join(
         (
             state.run_id or "",
             state.global_state,
             state.team_state,
             "1" if state.uno_reverse_active else "0",
-            "1" if state.opponent_freeze_active else "0",
+            "1" if presentation.opponent_freeze_active else "0",
             state.first_finisher_team_id or "",
             state.music.phase if state.music else "",
         )
     )
 
 
-def _team_event_context(state):
-    event = state.presentation_event
+def _team_event_context(presentation):
+    event = presentation.event
     return str(event.id) if event is not None else ""
 
 
@@ -106,7 +107,12 @@ def _team_context(
     update_resources=False,
     presentation_event=None,
     viewer_team_id="",
+    presentation=None,
 ):
+    if presentation is None:
+        presentation = get_team_presentation_state(
+            state.run_id, viewer_team_id, state.gameplay_elapsed_ms
+        )
     return {
         "state": state,
         "advent_progress": state.advent_progress,
@@ -118,8 +124,9 @@ def _team_context(
         "replace_actions": replace_actions,
         "update_resources": update_resources,
         "view_context": _question_context(state),
-        "actions_context": _team_actions_context(state),
-        "event_context": _team_event_context(state),
+        "actions_context": _team_actions_context(state, presentation),
+        "event_context": _team_event_context(presentation),
+        "opponent_freeze_active": presentation.opponent_freeze_active,
         "presentation_event": presentation_event,
         "viewer_team_id": viewer_team_id,
         "request_id": str(uuid.uuid4()),
@@ -273,10 +280,16 @@ def team_state(request):
     except ApplicationError as exc:
         return _error(exc)
     replace_pane = request.GET.get("view_context") != _question_context(state)
-    replace_actions = request.GET.get("actions_context") != _team_actions_context(state)
+    presentation = get_team_presentation_state(
+        state.run_id, actor.team_id, state.gameplay_elapsed_ms
+    )
+    replace_actions = (
+        request.GET.get("actions_context")
+        != _team_actions_context(state, presentation)
+    )
     presentation_event = (
-        state.presentation_event
-        if request.GET.get("event_context") != _team_event_context(state)
+        presentation.event
+        if request.GET.get("event_context") != _team_event_context(presentation)
         else None
     )
     return render(
@@ -289,6 +302,7 @@ def team_state(request):
             update_resources=True,
             presentation_event=presentation_event,
             viewer_team_id=actor.team_id,
+            presentation=presentation,
         ),
     )
 
@@ -500,12 +514,15 @@ def team_action(request, action):
             "purchase-reverse": "Uno Reverse purchased and armed.",
         }[action]
     )
+    presentation = get_team_presentation_state(
+        state.run_id, actor.team_id, state.gameplay_elapsed_ms
+    )
     presentation_event = None
     if (
         action == "freeze"
-        and request.POST.get("event_context") != _team_event_context(state)
+        and request.POST.get("event_context") != _team_event_context(presentation)
     ):
-        presentation_event = state.presentation_event
+        presentation_event = presentation.event
     response = render(
         request,
         "quiz/_team_state.html",
@@ -517,10 +534,11 @@ def team_action(request, action):
             update_resources=True,
             presentation_event=presentation_event,
             viewer_team_id=actor.team_id,
+            presentation=presentation,
         ),
     )
     if action in {"purchase-hint", "freeze", "purchase-reverse"}:
-        response["HX-Trigger"] = "shopPurchaseSucceeded"
+        response["HX-Trigger-After-Swap"] = "shopPurchaseSucceeded"
     return response
 
 
