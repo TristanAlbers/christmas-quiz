@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
-from django.test import LiveServerTestCase, override_settings
+from django.test import Client, LiveServerTestCase, override_settings
 
 from quiz.application import (
     admin_freeze,
@@ -46,10 +46,12 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
             self.admin, StartGame(str(uuid4()), "christmas-2026-demo")
         ).run_id
 
-        self.client.force_login(self.a_user)
-        self.a_session_cookie = self.client.cookies["sessionid"].value
-        self.client.force_login(self.b_user)
-        self.b_session_cookie = self.client.cookies["sessionid"].value
+        a_client = Client()
+        a_client.force_login(self.a_user)
+        self.a_session_cookie = a_client.cookies["sessionid"].value
+        b_client = Client()
+        b_client.force_login(self.b_user)
+        self.b_session_cookie = b_client.cookies["sessionid"].value
 
     async def _page_for(self, playwright, path, session_cookie=None):
         browser = await playwright.chromium.launch()
