@@ -313,6 +313,7 @@ class PhaseFiveApplicationTests(TestCase):
             {
                 "global_state",
                 "music",
+                "challenge",
                 "teams",
                 "first_finisher_team_id",
                 "gameplay_elapsed_ms",

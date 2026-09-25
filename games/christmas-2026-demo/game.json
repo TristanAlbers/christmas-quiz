@@ -1,11 +1,28 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "package_id": "christmas-2026-demo",
   "initial_points": 3,
   "hint_cost": 1,
   "skip_cost": 2,
   "freeze_cost": 3,
   "uno_reverse_cost": 2,
+  "challenge_cost": 0,
+  "challenge_puzzles": {
+    "a": {
+      "id": "challenge-a-reindeer",
+      "title": "Reindeer roll call",
+      "body": "Which reindeer is famous for having a glowing red nose?",
+      "validator": {"type": "text_exact", "answer": "rudolph"},
+      "media": []
+    },
+    "b": {
+      "id": "challenge-b-five-gifts",
+      "title": "The fifth day",
+      "body": "How many golden rings are given on the fifth day of Christmas?",
+      "validator": {"type": "number_exact", "answer": "5"},
+      "media": []
+    }
+  },
   "music_question_reward": 2,
   "music_score_display_duration_ms": 60000,
   "teams": {

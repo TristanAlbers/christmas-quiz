@@ -12,6 +12,11 @@ urlpatterns = [
     path("team/state/", views.team_state, name="team_state"),
     path("team/answer/", views.team_answer, name="team_answer"),
     path("team/music-answer/", views.team_music_answer, name="team_music_answer"),
+    path(
+        "team/challenge-answer/",
+        views.team_challenge_answer,
+        name="team_challenge_answer",
+    ),
     path("team/action/<str:action>/", views.team_action, name="team_action"),
     path("admin-game/", views.admin_game, name="admin_game"),
     path("admin-game/state/", views.admin_state, name="admin_state"),
@@ -23,6 +28,11 @@ urlpatterns = [
         "music/audio/<uuid:run_id>/",
         music_media_views.current_music_audio,
         name="current_music_audio",
+    ),
+    path(
+        "media/<uuid:run_id>/challenge/<uuid:challenge_id>/<path:asset_path>/",
+        media_views.challenge_media,
+        name="challenge_media",
     ),
     path(
         "media/<uuid:run_id>/<str:team_id>/<path:asset_path>/",

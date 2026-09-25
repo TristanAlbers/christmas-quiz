@@ -375,7 +375,7 @@ class PhaseFourConfigurationTests(TestCase):
 class PhaseFourMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0004_retire_legacy_ready_runs")
     migrate_to = ("quiz", "0005_phase4_music")
-    latest_migration = ("quiz", "0006_phase5_finish")
+    latest_migration = ("quiz", "0007_phase6_challenge")
 
     def setUp(self):
         super().setUp()

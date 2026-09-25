@@ -14,6 +14,7 @@ from quiz.application import (
     get_admin_state,
     get_public_state,
     get_team_state,
+    initiate_challenge,
     pause_game,
     provide_hint,
     purchase_hint,
@@ -23,6 +24,7 @@ from quiz.application import (
     skip_current,
     start_game,
     submit_answer,
+    submit_challenge_answer,
     submit_music_answer,
     use_hint,
 )
@@ -35,6 +37,7 @@ from quiz.contracts import (
     RunCommand,
     StartGame,
     SubmitAnswer,
+    SubmitChallengeAnswer,
     SubmitMusicAnswer,
     TeamPuzzle,
 )
@@ -52,6 +55,10 @@ ERROR_STATUS = {
     "insufficient_points": 409,
     "no_hint_tokens": 409,
     "already_active": 409,
+    "challenge_spent": 409,
+    "challenge_unavailable": 409,
+    "challenge_starting": 409,
+    "stale_challenge": 409,
 }
 
 
@@ -65,6 +72,7 @@ def _question_context(state):
     question_id = state.question.id if state.question else ""
     hint_revealed = "1" if state.question and state.question.hint is not None else "0"
     music = state.music
+    challenge = state.challenge
     return ":".join(
         (
             state.run_id or "",
@@ -75,6 +83,10 @@ def _question_context(state):
             music.phase if music else "",
             music.question_id or "" if music else "",
             str(music.question_number or "") if music else "",
+            challenge.status if challenge else "",
+            challenge.phase if challenge else "",
+            challenge.id if challenge else "",
+            challenge.question.id if challenge and challenge.question else "",
         )
     )
 
@@ -92,6 +104,10 @@ def _team_actions_context(state, presentation=None):
             "1" if opponent_freeze_active else "0",
             state.first_finisher_team_id or "",
             state.music.phase if state.music else "",
+            "1" if state.challenge_available else "0",
+            str(state.challenge_cost if state.challenge_cost is not None else ""),
+            "1" if state.can_initiate_challenge else "0",
+            state.challenge_ineligible_reason or "",
         )
     )
 
@@ -139,14 +155,25 @@ def _team_context(
         "freeze_request_id": str(uuid.uuid4()),
         "reverse_request_id": str(uuid.uuid4()),
         "music_request_id": str(uuid.uuid4()),
+        "challenge_request_id": str(uuid.uuid4()),
+        "challenge_answer_request_id": str(uuid.uuid4()),
     }
 
 
 def _admin_global_context(state):
     music_phase = state.music.phase if state.music else ""
     music_question = str(state.music.question_number or "") if state.music else ""
+    challenge_phase = state.challenge.phase if state.challenge else ""
+    challenge_id = state.challenge.id if state.challenge else ""
     return ":".join(
-        (state.run_id or "", state.global_state, music_phase, music_question)
+        (
+            state.run_id or "",
+            state.global_state,
+            music_phase,
+            music_question,
+            challenge_phase,
+            challenge_id,
+        )
     )
 
 
@@ -170,6 +197,7 @@ def _admin_team_context(state, team_id):
             team.activity_state,
             team.current_question_id or "",
             "1" if team.hint_revealed else "0",
+            "1" if team.challenge_available else "0",
         )
     )
 
@@ -202,6 +230,7 @@ def _admin_context(
         "packages": state.packages,
         "discovery_error": state.discovery_error,
         "music": state.music,
+        "challenge": state.challenge,
         "first_finisher_team_id": state.first_finisher_team_id,
         "gameplay_elapsed_ms": state.gameplay_elapsed_ms,
         "has_startable_packages": any(item.startable for item in state.packages),
@@ -385,14 +414,49 @@ def team_music_answer(request):
 
 
 @never_cache
+@require_POST
+def team_challenge_answer(request):
+    try:
+        actor = actor_for_user(request.user)
+        result = submit_challenge_answer(
+            actor,
+            SubmitChallengeAnswer(
+                request_id=request.POST.get("request_id", ""),
+                run_id=request.POST.get("run_id", ""),
+                challenge_id=request.POST.get("challenge_id", ""),
+                question_id=request.POST.get("question_id", ""),
+                answer=request.POST.get("answer", ""),
+            ),
+        )
+    except ApplicationError as exc:
+        return _error(exc)
+    if not request.headers.get("HX-Request"):
+        return redirect("team")
+    feedback = (
+        "Challenge won. The result is final."
+        if result.outcome == "won"
+        else "Incorrect Challenge answer. Keep trying."
+    )
+    resolved = result.outcome == "won"
+    return render(
+        request,
+        "quiz/_team_state.html",
+        _team_context(
+            result.state,
+            feedback=feedback,
+            replace_pane=resolved,
+            replace_actions=resolved,
+            update_resources=resolved,
+            viewer_team_id=actor.team_id,
+        ),
+    )
+
+
+@never_cache
 @require_GET
 def overview(request):
     state = get_public_state()
-    return render(
-        request,
-        "quiz/overview.html",
-        _public_context(state),
-    )
+    return render(request, "quiz/overview.html", _public_context(state))
 
 
 @never_cache
@@ -495,6 +559,8 @@ def team_action(request, action):
             result = freeze_opponent(actor, RunCommand(**base))
         elif action == "purchase-reverse":
             result = purchase_uno_reverse(actor, RunCommand(**base))
+        elif action == "challenge":
+            result = initiate_challenge(actor, RunCommand(**base))
         else:
             return HttpResponse(status=404)
         state = get_team_state(actor)
@@ -515,6 +581,7 @@ def team_action(request, action):
                 else "The opposing team is frozen."
             ),
             "purchase-reverse": "Uno Reverse purchased and armed.",
+            "challenge": "Challenge starting. Gather around!",
         }[action]
     )
     presentation = get_team_presentation_state(
@@ -540,7 +607,7 @@ def team_action(request, action):
             presentation=presentation,
         ),
     )
-    if action in {"purchase-hint", "freeze", "purchase-reverse"}:
+    if action in {"purchase-hint", "freeze", "purchase-reverse", "challenge"}:
         response["HX-Trigger-After-Swap"] = "shopPurchaseSucceeded"
     return response
 
@@ -566,14 +633,7 @@ def admin_action(request, action):
                 delta = int(request.POST.get("delta", ""))
             except (TypeError, ValueError) as exc:
                 raise ApplicationError("invalid_input") from exc
-            adjust_points(
-                actor,
-                AdminPoints(
-                    **base,
-                    team_id=team_id,
-                    delta=delta,
-                ),
-            )
+            adjust_points(actor, AdminPoints(**base, team_id=team_id, delta=delta))
         elif action in ("force-complete", "provide-hint"):
             command = AdminPuzzle(
                 **base,
@@ -598,7 +658,9 @@ def admin_action(request, action):
         return redirect("admin_game")
 
     state = get_admin_state(actor)
-    global_change = action in ("pause", "resume", "reset") or bool(state.music)
+    global_change = action in ("pause", "resume", "reset") or bool(
+        state.music or state.challenge
+    )
     return render(
         request,
         "quiz/_admin_state.html",

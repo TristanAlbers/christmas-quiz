@@ -35,6 +35,30 @@
   </section>
 {% endif %}
 
+{% if challenge %}
+  <section class="admin-challenge admin-challenge--{{ challenge.status }}" aria-label="Challenge monitor">
+    <div class="status-row">
+      <div><p class="eyebrow">Challenge {{ challenge.challenge_number }} of 2 · free one-use race</p><h2>Christmas Challenge</h2></div>
+      <strong class="state-badge">{{ challenge.phase|upper }}</strong>
+    </div>
+    <div class="admin-challenge__route" aria-label="Challenge teams">
+      <span>Team {{ challenge.initiator_team_id|upper }} <small>initiator</small></span>
+      <b aria-hidden="true">⚔</b>
+      <span>Team {{ challenge.challenged_team_id|upper }} <small>challenged</small></span>
+    </div>
+    <p><strong>No points charged</strong> · Puzzle {{ challenge.question_id }}</p>
+    {% if challenge.status == 'active' %}
+      {% if challenge.phase == 'starting' %}
+        <p class="admin-challenge__outcome">Gathering period: {% widthratio challenge.grace_remaining_ms 1000 1 %} seconds remaining. The puzzle and answer controls stay hidden until zero.</p>
+      {% else %}
+        <p class="admin-challenge__outcome">Puzzle is live. Waiting for the first server-accepted correct answer. Admin monitoring has no resolve or cancel control.</p>
+      {% endif %}
+    {% else %}
+      <p class="admin-challenge__outcome"><strong>Team {{ challenge.winner_team_id|upper }} won.</strong> {% if challenge.freeze_applied %}The challenged team received a direct five-minute Freeze.{% else %}No Freeze was applied.{% endif %}</p>
+    {% endif %}
+  </section>
+{% endif %}
+
 {% if global_state == 'READY' %}
   {% if discovery_error %}
     <p role="alert">Package discovery failed: {{ discovery_error }}</p>
@@ -66,7 +90,7 @@
           <h2>Team {{ control.team.team_id|upper }}</h2>
           <strong class="state-badge">{{ control.team.activity_state }}</strong>
         </div>
-        <div class="admin-team-metrics"><span>{{ control.team.points }} points</span><span><b class="hint-token" aria-hidden="true">?</b> {{ control.team.hint_tokens }} Hint token{{ control.team.hint_tokens|pluralize }}</span><span class="mini-reverse{% if control.team.uno_reverse_active %} mini-reverse--active{% endif %}">↶ Reverse {% if control.team.uno_reverse_active %}active{% else %}inactive{% endif %}</span></div>
+        <div class="admin-team-metrics"><span>{{ control.team.points }} points</span><span><b class="hint-token" aria-hidden="true">?</b> {{ control.team.hint_tokens }} Hint token{{ control.team.hint_tokens|pluralize }}</span><span class="mini-reverse{% if control.team.uno_reverse_active %} mini-reverse--active{% endif %}">↶ Reverse {% if control.team.uno_reverse_active %}active{% else %}inactive{% endif %}</span><span class="mini-challenge{% if control.team.challenge_available %} mini-challenge--available{% endif %}">★ Challenge {% if control.team.challenge_available %}available{% else %}used{% endif %}</span></div>
         {% if control.team.advent_progress %}{% include 'quiz/_advent_calendar.html' with progress=control.team.advent_progress team_id=control.team.team_id %}{% endif %}
         {% if control.team.freeze_remaining_ms != None %}
           <p class="freeze-timer" data-remaining-ms="{{ control.team.freeze_remaining_ms }}">Freeze remaining: {% widthratio control.team.freeze_remaining_ms 1000 1 %} seconds</p>

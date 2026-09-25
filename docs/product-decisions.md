@@ -53,3 +53,15 @@ During the Music Quiz, team phone views should keep only the interaction and pro
 The shared public/TV Music overview remains the place for the full question-number, timer, score, winner, and final-results status presentation. This specifically refines the earlier Music visual requirement: the phrase "in addition to the question number" applies to the public/TV overview, while the team phone view may use the 11-step tracker by itself for question progress.
 
 This is presentation-only. It does not change Music Quiz state, scoring, answer legality, progression, polling architecture, or backend projections.
+
+## 2026-09-25 — Challenge is free, distinct per team, staged, and public while active
+
+Challenge is a once-per-team game action and **never costs points**. Starting it consumes only the initiating team's single Challenge opportunity. Point balance and affordability are not part of Challenge eligibility, initiation, retry, resolution, cancellation, or presentation.
+
+A run can therefore contain at most two normally initiated Challenges: one initiated by Team A and one initiated by Team B. The package supplies a separate Challenge puzzle for each initiating team. Those two puzzles must have distinct identities, and a Challenge question must never be reused by another Challenge in the same run. Both teams still race on the same puzzle within one individual Challenge.
+
+Starting a Challenge enters a server-authoritative **15-second** gathering/grace period before the puzzle becomes answerable. The puzzle and its media remain hidden during that period. The grace period uses Advent gameplay time, so Pause stops the countdown and Resume continues it. Refresh, reconnect, or process restart must recover the same remaining start period. Once it expires, both teams receive the puzzle through the normal synchronized polling path and unlimited penalty-free attempts begin.
+
+While a Challenge is active, the shared public/TV overview switches from the Advent-calendar overview to a dedicated Challenge overview, analogous to the Music Quiz takeover. It may show the Challenge number within the two possible opportunities, initiating/challenged teams, gathering countdown, and—after the grace period—the shared Challenge title/body and first-correct-wins status. It must never expose correct answers, submitted attempts, balances, Hint/Reverse state, Freeze/private effects, private team state, or Challenge media unless separately approved.
+
+These decisions intentionally override older Phase 6 wording that described a paid Challenge, one reusable shared package puzzle, immediate answer availability, or complete Challenge absence from the public/TV overview. All other Challenge outcome, atomicity, recovery, isolation, and polling-stability rules remain unchanged.
