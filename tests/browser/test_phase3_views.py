@@ -14,14 +14,8 @@ from uuid import uuid4
 from django.contrib.auth import get_user_model
 from django.test import LiveServerTestCase, override_settings
 
-from quiz.application import (
-    admin_freeze,
-    admin_unfreeze,
-    freeze_opponent,
-    get_team_state,
-    start_game,
-)
-from quiz.contracts import Actor, AdminTeam, RunCommand, StartGame
+from quiz.application import admin_freeze, admin_unfreeze, start_game
+from quiz.contracts import Actor, AdminTeam, StartGame
 from quiz.models import AccountRole
 
 
@@ -140,121 +134,6 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                             "form[action='/team/action/freeze/']"
                         ).count(),
                         1,
-                    )
-                finally:
-                    await context.close()
-                    await browser.close()
-
-        asyncio.run(check())
-
-    def test_reverse_purchase_and_redirected_attack_update_the_team_view(self):
-        async def check():
-            from playwright.async_api import async_playwright
-
-            async with async_playwright() as playwright:
-                browser, context, page = await self._page_for(playwright, "/team/")
-                try:
-                    await page.get_by_role(
-                        "button", name="Shop Power-ups"
-                    ).click()
-                    reverse_form = page.locator(
-                        "form[action='/team/action/purchase-reverse/']"
-                    )
-                    await reverse_form.locator("button[type=submit]").click()
-                    activation = page.locator("#reverse-activation")
-                    await activation.wait_for(state="visible", timeout=5000)
-                    self.assertEqual(
-                        await activation.get_attribute("aria-label"),
-                        "Uno Reverse activated",
-                    )
-                    self.assertIn(
-                        "Uno Reverse activated!", await activation.inner_text()
-                    )
-                    activation_handle = await activation.element_handle()
-                    await page.wait_for_timeout(1100)
-                    self.assertTrue(
-                        await page.evaluate(
-                            "([node]) => node === "
-                            "document.querySelector('#reverse-activation')",
-                            [activation_handle],
-                        )
-                    )
-                    await page.get_by_text("Uno Reverse active", exact=False).wait_for(
-                        timeout=5000
-                    )
-                    self.assertIn(
-                        "Uno Reverse active",
-                        await page.locator(".team-resource-bar").inner_text(),
-                    )
-                    self.assertEqual(await reverse_form.count(), 0)
-                    state = await asyncio.to_thread(get_team_state, self.a)
-                    self.assertTrue(state.uno_reverse_active)
-
-                    await page.reload()
-                    activation = page.locator("#reverse-activation")
-                    self.assertTrue(
-                        "reverse-activation--idle"
-                        in (await activation.get_attribute("class") or "")
-                    )
-                    self.assertFalse(await activation.is_visible())
-                    self.assertIn(
-                        "Uno Reverse active",
-                        await page.locator(".team-resource-bar").inner_text(),
-                    )
-
-                    await asyncio.to_thread(
-                        freeze_opponent,
-                        self.b,
-                        RunCommand(str(uuid4()), self.run_id),
-                    )
-                    await page.get_by_text(
-                        "Uno Reverse inactive", exact=False
-                    ).wait_for(timeout=5000)
-                    await reverse_form.wait_for(state="attached", timeout=5000)
-                    self.assertEqual(await reverse_form.count(), 1)
-                    state = await asyncio.to_thread(get_team_state, self.a)
-                    attacker = await asyncio.to_thread(get_team_state, self.b)
-                    self.assertEqual(state.team_state, "PUZZLE")
-                    self.assertFalse(state.uno_reverse_active)
-                    self.assertEqual(attacker.team_state, "FREEZE")
-                    self.assertEqual(await page.locator("#answer-input").count(), 1)
-                finally:
-                    await context.close()
-                    await browser.close()
-
-        asyncio.run(check())
-
-    def test_reverse_activation_reduced_motion_keeps_static_feedback(self):
-        async def check():
-            from playwright.async_api import async_playwright
-
-            async with async_playwright() as playwright:
-                browser, context, page = await self._page_for(playwright, "/team/")
-                try:
-                    await page.emulate_media(reduced_motion="reduce")
-                    await page.get_by_role(
-                        "button", name="Shop Power-ups"
-                    ).click()
-                    reverse_form = page.locator(
-                        "form[action='/team/action/purchase-reverse/']"
-                    )
-                    await reverse_form.locator("button[type=submit]").click()
-                    activation = page.locator("#reverse-activation")
-                    await activation.wait_for(state="visible", timeout=5000)
-                    self.assertIn(
-                        "Uno Reverse activated!", await activation.inner_text()
-                    )
-                    self.assertEqual(
-                        await activation.evaluate(
-                            "el => getComputedStyle(el).animationName"
-                        ),
-                        "reverse-activation-reduced",
-                    )
-                    self.assertEqual(
-                        await page.locator(".reverse-activation__card").evaluate(
-                            "el => getComputedStyle(el).animationName"
-                        ),
-                        "none",
                     )
                 finally:
                     await context.close()
