@@ -80,10 +80,17 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
 
                     await page.locator("#answer-input").fill("green")
                     await page.locator(".answer-form .button-primary").click()
-                    await page.locator(
+                    effect = page.locator(
                         "#incorrect-answer-effect.incorrect-answer-effect--active"
-                    ).wait_for()
+                    )
+                    await effect.wait_for()
                     await page.wait_for_function("window.__wrongAnswerEffects === 1")
+                    self.assertEqual(
+                        await effect.evaluate(
+                            "el => getComputedStyle(el).animationDuration"
+                        ),
+                        "2.75s",
+                    )
                     self.assertIn(
                         "Incorrect answer. Try again.",
                         await page.locator("#action-feedback").inner_text(),
@@ -109,6 +116,19 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     await page.wait_for_function(
                         """document.querySelector('#action-feedback')?.textContent
                         === 'Correct answer. Puzzle completed.'"""
+                    )
+                    completion = page.locator(
+                        "#door-completion:not(.door-completion--idle)"
+                    )
+                    await completion.wait_for(state="visible", timeout=5000)
+                    self.assertEqual(
+                        await completion.evaluate(
+                            "el => getComputedStyle(el).animationDuration"
+                        ),
+                        "3s",
+                    )
+                    self.assertFalse(
+                        await page.locator("#incorrect-answer-effect").is_visible()
                     )
                     await page.wait_for_timeout(700)
                     self.assertEqual(
@@ -145,7 +165,7 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         await effect.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "1.75s",
+                        "2.75s",
                     )
                     self.assertIn(
                         "Incorrect answer. Try again.",

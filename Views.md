@@ -109,7 +109,7 @@ This view should be optimized for phone usage.
 
 It should use the same established visual language as the Puzzle View, but clearly communicate the frozen state and the remaining timer. Private underlying puzzle/hint content must not merely be blurred behind the freeze overlay; it should not be present in the rendered private content while frozen.
 
-Nothing should be interactable from this view.
+Nothing should be interactable from this view. When a player Freeze caused this state, the persistent ice-lock view is revealed after the corresponding transient attacked/Reverse-reflected presentation finishes; authoritative interaction restrictions apply immediately even while that presentation is still covering the page.
 
 ## Shop View
 
@@ -123,7 +123,9 @@ The shop should present purchasable gameplay elements as deliberate cards/items 
 * Hint token purchases;
 * the immediate Skip action/cost where this is exposed through the shop flow.
 
-Costs, availability, disabled states, and rejection feedback should be visually clear. Purchasing must remain backend-authoritative.
+Costs, availability, disabled states, and rejection feedback should be visually clear. Purchasing must remain backend-authoritative. The phone overlay must have comfortable internal padding and spacing; successful shop purchases close the overlay before transient gameplay feedback starts, while rejected purchases keep it open so the rejection remains readable.
+
+Buying Uno Reverse only arms the private Reverse indicator. The major Reverse presentation occurs later, only when an authoritative player Freeze actually triggers it. A successful Freeze purchase is presented as a major attack event rather than a quiet balance/state update.
 
 ## Sabotage View
 
@@ -136,7 +138,10 @@ It should contain:
 * the ability to buy/send a Freeze where legal;
 * Challenge initiation where legal;
 * clear availability/cost/disabled/rejected states;
-* no private information about the other team's inventory or state beyond explicitly approved public/interaction fields.
+* no private information about the other team's inventory or state beyond explicitly approved public/interaction fields;
+* player Freeze is visibly unavailable while the opponent already has an active Freeze, with the backend remaining authoritative for stale/direct attempts.
+
+For a normal player Freeze, the attacker first sees a positive Freeze-launch animation, then the target sees a negative impact presentation before the target's persistent Freeze View is revealed. If the target had an armed Uno Reverse, the attack animation still completes first; the attacker then sees a negative reflected-Reverse presentation, the protected target sees a positive Reverse-saved presentation, and the attacker is the team that ends in the persistent Freeze View. These transient effects must play once per newly observed authoritative event and must not be inferred merely from a durable `FREEZE` or Reverse-active flag.
 
 ## Generic Music Challenge View
 

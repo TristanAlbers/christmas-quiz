@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
-  <link rel="stylesheet" href="{% static 'quiz/uno-reverse.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/freeze-attack.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/endgame-celebration.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/feedback-timing.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'quiz/endgame-celebration.js' %}"></script>
 </head>
@@ -21,9 +22,10 @@
     <section id="live-game" aria-label="Current game">
       <p id="connection-status" role="status"></p>
       <p id="action-feedback" class="feedback" role="status"></p>
+      <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}">
       <div id="poller" hx-get="{% url 'team_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
-           hx-sync="#live-game:drop" hx-include="#view-context, #actions-context"
+           hx-sync="#live-game:drop" hx-include="#view-context, #actions-context, #event-context"
            hx-target="#game-status" hx-swap="innerHTML"></div>
       <div id="game-status" aria-live="polite">
         {% include 'quiz/_team_state.html' with replace_pane=False replace_actions=False %}
@@ -34,7 +36,8 @@
   </main>
   <div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true"></div>
   <div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--idle" aria-hidden="true"></div>
-  <div id="reverse-activation" class="reverse-activation reverse-activation--idle" aria-hidden="true"></div>
+  <div id="reverse-purchase" class="reverse-purchase reverse-purchase--idle" aria-hidden="true"></div>
+  <div id="gameplay-event" class="gameplay-event gameplay-event--idle" aria-hidden="true"></div>
   {% include 'quiz/_endgame_celebration.html' %}
   <script>
     document.body.addEventListener('htmx:responseError', function (event) {
@@ -69,6 +72,11 @@
         if (shop) shop.showModal();
         reopenShop = false;
       }
+    });
+    document.body.addEventListener('shopPurchaseSucceeded', function () {
+      const shop = document.getElementById('team-shop-dialog');
+      if (shop && shop.open) shop.close();
+      reopenShop = false;
     });
   </script>
 </body>

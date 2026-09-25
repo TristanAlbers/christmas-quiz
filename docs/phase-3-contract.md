@@ -54,6 +54,8 @@ administrative intervention deterministic when there is no paying attacker.
 Admin Freeze/unfreeze is permitted in `ADVENT_QUIZ` or `PAUSED`; a Freeze applied
 while paused starts at the stopped gameplay-clock value.
 
+A player Freeze attack is rejected with `already_active` when its opposing target already has an active Freeze; the rejected attack does not charge points or write a successful command/event.
+
 A team purchase of Uno Reverse immediately deducts the snapshotted
 `uno_reverse_cost` and activates its single durable Reverse. A second purchase
 while active is rejected. It remains active until a valid player Freeze attack

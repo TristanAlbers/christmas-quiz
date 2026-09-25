@@ -38,6 +38,7 @@
 </div>
 {% if feedback %}<p id="action-feedback" class="feedback" role="status" hx-swap-oob="outerHTML">{{ feedback }}</p>{% endif %}
 {% if feedback == 'Incorrect answer. Try again.' %}
+  <div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true" hx-swap-oob="outerHTML"></div>
   <div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--active" aria-hidden="true" hx-swap-oob="outerHTML">
     <div class="incorrect-answer-effect__card">
       <span class="incorrect-answer-effect__santa" aria-hidden="true">🎅</span>
@@ -47,6 +48,7 @@
   </div>
 {% endif %}
 {% if feedback == 'Correct answer. Puzzle completed.' %}
+  <div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--idle" aria-hidden="true" hx-swap-oob="outerHTML"></div>
   <div id="door-completion" class="door-completion" role="status" aria-label="Puzzle completed" hx-swap-oob="outerHTML">
     <div class="door-completion__sparkles" aria-hidden="true">✦ · ✧ · ✦</div>
     <div class="door-completion__door" aria-hidden="true"><span>✓</span><i></i></div>
@@ -54,19 +56,24 @@
     <span>Your game state has advanced.</span>
   </div>
 {% endif %}
-{% if feedback == 'Uno Reverse activated.' %}
-  <div id="reverse-activation" class="reverse-activation" role="status" aria-live="assertive" aria-label="Uno Reverse activated" hx-swap-oob="outerHTML">
-    <div class="reverse-activation__burst" aria-hidden="true"></div>
-    <div class="reverse-activation__card" aria-hidden="true">
-      <span class="reverse-activation__label">UNO</span>
-      <span class="reverse-activation__symbol">↶</span>
-      <span class="reverse-activation__label reverse-activation__label--bottom">REVERSE</span>
+{% if feedback == 'Uno Reverse purchased and armed.' %}
+  <div id="reverse-purchase" class="reverse-purchase" role="status" aria-live="assertive" hx-swap-oob="outerHTML">
+    <div class="reverse-purchase__burst" aria-hidden="true"></div>
+    <div class="reverse-purchase__card" aria-hidden="true">
+      <span class="reverse-purchase__label">UNO</span>
+      <span class="reverse-purchase__symbol">↶</span>
+      <span class="reverse-purchase__label reverse-purchase__label--bottom">REVERSE</span>
     </div>
-    <div class="reverse-activation__copy">
-      <strong>Uno Reverse activated!</strong>
-      <span>The next incoming Freeze will be reflected.</span>
+    <div class="reverse-purchase__copy">
+      <p class="eyebrow">Purchase successful</p>
+      <strong>Uno Reverse armed!</strong>
+      <span>Your next incoming Freeze will be reflected.</span>
     </div>
   </div>
+{% endif %}
+{% if presentation_event %}
+  <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}" hx-swap-oob="outerHTML">
+  {% include 'quiz/_team_event.html' with event=presentation_event %}
 {% endif %}
 {% if update_resources and state.run_id and not state.music and state.team_state != 'FREEZE' %}
   {% include 'quiz/_team_resources.html' with oob=True %}
