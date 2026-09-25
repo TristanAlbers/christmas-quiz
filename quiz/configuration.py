@@ -504,7 +504,9 @@ def snapshot_challenge_media_path(
     """Return post-grace Challenge media to an authorized participant/admin."""
     if (
         not run.active
-        or run.global_state != "ADVENT_QUIZ"
+        # Pause preserves an active Challenge's already-revealed answer context.
+        # The serving view separately enforces the gameplay-time grace period.
+        or run.global_state not in ("ADVENT_QUIZ", "PAUSED")
         or challenge.run_id != run.pk
         or challenge.status != "active"
         or (
