@@ -79,14 +79,17 @@ def _question_context(state):
     )
 
 
-def _team_actions_context(state, presentation):
+def _team_actions_context(state, presentation=None):
+    opponent_freeze_active = (
+        presentation.opponent_freeze_active if presentation is not None else False
+    )
     return ":".join(
         (
             state.run_id or "",
             state.global_state,
             state.team_state,
             "1" if state.uno_reverse_active else "0",
-            "1" if presentation.opponent_freeze_active else "0",
+            "1" if opponent_freeze_active else "0",
             state.first_finisher_team_id or "",
             state.music.phase if state.music else "",
         )
