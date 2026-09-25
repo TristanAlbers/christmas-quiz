@@ -141,7 +141,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         "Gather around — the Challenge is about to begin",
                         exact=True,
                     ).wait_for(timeout=5000)
-                    tv_starting = await tv_page.locator(".challenge-overview").inner_text()
+                    tv_starting = await tv_page.locator(
+                        ".challenge-overview"
+                    ).inner_text()
                     self.assertIn("Challenge · 1 of 2", tv_starting)
                     self.assertIn("Team A challenged Team B", tv_starting)
                     self.assertNotIn("Reindeer roll call", tv_starting)
@@ -279,7 +281,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     await tv_page.get_by_text("Reindeer roll call", exact=True).wait_for(
                         timeout=5000
                     )
-                    tv_text = (await tv_page.locator(".challenge-overview").inner_text())
+                    tv_text = await tv_page.locator(
+                        ".challenge-overview"
+                    ).inner_text()
                     self.assertIn("Team A challenged Team B", tv_text)
                     self.assertNotIn("rudolph", tv_text.lower())
                     self.assertNotIn("challenge-a-reindeer", tv_text)
@@ -308,7 +312,8 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         timeout=5000
                     )
                     self.assertIn(
-                        "direct five-minute Freeze", await monitor.inner_text()
+                        "direct five-minute Freeze",
+                        await monitor.inner_text(),
                     )
                     await tv_page.get_by_text(
                         "Advent Quiz in progress", exact=True
