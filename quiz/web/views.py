@@ -85,10 +85,16 @@ def _team_actions_context(state):
             state.global_state,
             state.team_state,
             "1" if state.uno_reverse_active else "0",
+            "1" if state.opponent_freeze_active else "0",
             state.first_finisher_team_id or "",
             state.music.phase if state.music else "",
         )
     )
+
+
+def _team_event_context(state):
+    event = state.presentation_event
+    return str(event.id) if event is not None else ""
 
 
 def _team_context(
@@ -98,6 +104,8 @@ def _team_context(
     replace_pane=False,
     replace_actions=False,
     update_resources=False,
+    presentation_event=None,
+    viewer_team_id="",
 ):
     return {
         "state": state,
@@ -111,6 +119,9 @@ def _team_context(
         "update_resources": update_resources,
         "view_context": _question_context(state),
         "actions_context": _team_actions_context(state),
+        "event_context": _team_event_context(state),
+        "presentation_event": presentation_event,
+        "viewer_team_id": viewer_team_id,
         "request_id": str(uuid.uuid4()),
         "purchase_request_id": str(uuid.uuid4()),
         "use_request_id": str(uuid.uuid4()),
@@ -248,7 +259,7 @@ def team(request):
         if exc.code == "unauthenticated":
             return redirect("login")
         return _error(exc)
-    context = _team_context(state)
+    context = _team_context(state, viewer_team_id=actor.team_id)
     context["team_name"] = actor.team_id.upper()
     return render(request, "quiz/team.html", context)
 
@@ -263,6 +274,11 @@ def team_state(request):
         return _error(exc)
     replace_pane = request.GET.get("view_context") != _question_context(state)
     replace_actions = request.GET.get("actions_context") != _team_actions_context(state)
+    presentation_event = (
+        state.presentation_event
+        if request.GET.get("event_context") != _team_event_context(state)
+        else None
+    )
     return render(
         request,
         "quiz/_team_state.html",
@@ -271,6 +287,8 @@ def team_state(request):
             replace_pane=replace_pane,
             replace_actions=replace_actions,
             update_resources=True,
+            presentation_event=presentation_event,
+            viewer_team_id=actor.team_id,
         ),
     )
 
@@ -307,6 +325,7 @@ def team_answer(request):
             replace_pane=True,
             replace_actions=True,
             update_resources=True,
+            viewer_team_id=actor.team_id,
         ),
     )
 
@@ -343,6 +362,7 @@ def team_music_answer(request):
             replace_pane=True,
             replace_actions=True,
             update_resources=True,
+            viewer_team_id=actor.team_id,
         ),
     )
 
@@ -477,10 +497,16 @@ def team_action(request, action):
                 if result.outcome == "reversed"
                 else "The opposing team is frozen."
             ),
-            "purchase-reverse": "Uno Reverse activated.",
+            "purchase-reverse": "Uno Reverse purchased and armed.",
         }[action]
     )
-    return render(
+    presentation_event = None
+    if (
+        action == "freeze"
+        and request.POST.get("event_context") != _team_event_context(state)
+    ):
+        presentation_event = state.presentation_event
+    response = render(
         request,
         "quiz/_team_state.html",
         _team_context(
@@ -489,8 +515,13 @@ def team_action(request, action):
             replace_pane=True,
             replace_actions=True,
             update_resources=True,
+            presentation_event=presentation_event,
+            viewer_team_id=actor.team_id,
         ),
     )
+    if action in {"purchase-hint", "freeze", "purchase-reverse"}:
+        response["HX-Trigger"] = "shopPurchaseSucceeded"
+    return response
 
 
 @never_cache
