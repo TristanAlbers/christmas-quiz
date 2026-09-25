@@ -29,10 +29,31 @@ class Issue31FreezeBrowserTests(Issue31BrowserCase):
                     self.assertIn(
                         "you have been frozen!", (await victim.inner_text()).lower()
                     )
-                    animation = await attacker.locator(
+                    attacker_stage = attacker.locator(
                         ".gameplay-event__stage--attack"
-                    ).evaluate("el => getComputedStyle(el).animationName")
+                    )
+                    animation = await attacker_stage.evaluate(
+                        "el => getComputedStyle(el).animationName"
+                    )
                     self.assertEqual(animation, "gameplay-static-first")
+                    self.assertEqual(
+                        await attacker.evaluate(
+                            "el => getComputedStyle(el).animationDuration"
+                        ),
+                        "4.5s",
+                    )
+                    self.assertEqual(
+                        await attacker_stage.evaluate(
+                            "el => getComputedStyle(el).animationDuration"
+                        ),
+                        "4.2s",
+                    )
+                    self.assertEqual(
+                        await victim.evaluate(
+                            "el => getComputedStyle(el).animationDuration"
+                        ),
+                        "5.6s",
+                    )
                     await b.locator(".state-panel-freeze").wait_for(timeout=5000)
                     self.assertEqual(await b.locator("#answer-input").count(), 0)
                     await b.reload()
