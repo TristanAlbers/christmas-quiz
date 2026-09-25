@@ -40,6 +40,7 @@ from quiz.contracts import (
     StartResult,
     SubmitAnswer,
     SubmitMusicAnswer,
+    TeamPresentationEvent,
     TeamProjection,
     TeamPuzzle,
 )
@@ -317,6 +318,35 @@ def _reconcile_expired_freezes(run: Run, gameplay_ms: int) -> None:
             team.save(update_fields=["activity_state", "freeze_started_gameplay_ms"])
 
 
+def _latest_team_presentation_event(run: Run) -> TeamPresentationEvent | None:
+    event = (
+        AuditEvent.objects.filter(run=run, action="freeze_attack")
+        .order_by("-id")
+        .only("id", "team_id", "changes")
+        .first()
+    )
+    if event is None or event.team_id not in {"a", "b"}:
+        return None
+    changes = event.changes or {}
+    target_team_id = changes.get("target_team")
+    frozen_team_id = changes.get("frozen_team")
+    reversed_attack = changes.get("reversed")
+    if (
+        target_team_id not in {"a", "b"}
+        or frozen_team_id not in {"a", "b"}
+        or type(reversed_attack) is not bool
+    ):
+        return None
+    return TeamPresentationEvent(
+        id=event.id,
+        kind="freeze_attack",
+        attacker_team_id=event.team_id,
+        target_team_id=target_team_id,
+        frozen_team_id=frozen_team_id,
+        reversed=reversed_attack,
+    )
+
+
 def _advent_progress(team: TeamRun, completed: tuple[int, ...]):
     completed_set = set(completed)
     is_finished = team.activity_state == "FINISHED"
@@ -356,10 +386,15 @@ def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
         return TeamProjection(None, "READY", "READY", 0, None, (), (), None)
     now = _server_now(now)
     team = TeamRun.objects.get(run=run, team_id=team_id)
+    opponent_id = "b" if team_id == "a" else "a"
+    opponent = TeamRun.objects.get(run=run, team_id=opponent_id)
     config = load_snapshot(run)
     global_state, gameplay_ms, music, timing = _effective_run_state(run, config, now)
     effective = reconcile_freeze(
         team.activity_state, team.freeze_started_gameplay_ms, gameplay_ms
+    )
+    opponent_effective = reconcile_freeze(
+        opponent.activity_state, opponent.freeze_started_gameplay_ms, gameplay_ms
     )
     remaining = (
         freeze_remaining_ms(effective.freeze_started_ms, gameplay_ms)
@@ -420,6 +455,8 @@ def _projection(run: Run | None, team_id: str, now=None) -> TeamProjection:
         advent_progress=_advent_progress(team, completed),
         first_finisher_team_id=_first_finisher_team_id(run),
         gameplay_elapsed_ms=gameplay_ms,
+        opponent_freeze_active=opponent_effective.activity_state == "FREEZE",
+        presentation_event=_latest_team_presentation_event(run),
     )
 
 
@@ -443,6 +480,10 @@ def _restore_team_projection(value: dict) -> TeamProjection:
             AdventDoorProjection(**door) for door in advent["doors"]
         )
         data["advent_progress"] = AdventProgressProjection(**advent)
+    if data.get("presentation_event") is not None:
+        data["presentation_event"] = TeamPresentationEvent(
+            **data["presentation_event"]
+        )
     return TeamProjection(**data)
 
 
