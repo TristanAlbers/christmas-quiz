@@ -22,7 +22,6 @@ from quiz.application import (
 from quiz.contracts import Actor, AdminPuzzle, RunCommand, StartGame, SubmitMusicAnswer
 from quiz.models import AccountRole
 
-
 MEDIA_STUB = r"""
 window.__mediaCalls = [];
 window.__rejectMediaPlay = false;
