@@ -274,7 +274,10 @@ def _validate(config, package_id):
                 referenced.add(str(_relative_path(audio)))
     if version == 6:
         challenge_puzzles = config["challenge_puzzles"]
-        if not isinstance(challenge_puzzles, dict) or set(challenge_puzzles) != {"a", "b"}:
+        if (
+            not isinstance(challenge_puzzles, dict)
+            or set(challenge_puzzles) != {"a", "b"}
+        ):
             raise InvalidPackage(
                 "Challenge requires distinct puzzles for initiators a and b"
             )
