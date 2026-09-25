@@ -19,13 +19,7 @@ from quiz.application import (
     start_game,
     submit_music_answer,
 )
-from quiz.contracts import (
-    Actor,
-    AdminPuzzle,
-    RunCommand,
-    StartGame,
-    SubmitMusicAnswer,
-)
+from quiz.contracts import Actor, AdminPuzzle, RunCommand, StartGame, SubmitMusicAnswer
 from quiz.models import AccountRole
 
 
