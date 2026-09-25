@@ -117,7 +117,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         """document.querySelector('#action-feedback')?.textContent
                         === 'Correct answer. Puzzle completed.'"""
                     )
-                    completion = page.locator("#door-completion:not(.door-completion--idle)")
+                    completion = page.locator(
+                        "#door-completion:not(.door-completion--idle)"
+                    )
                     await completion.wait_for(state="visible", timeout=5000)
                     self.assertEqual(
                         await completion.evaluate(
@@ -125,7 +127,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         ),
                         "4.5s",
                     )
-                    self.assertFalse(await page.locator("#incorrect-answer-effect").is_visible())
+                    self.assertFalse(
+                        await page.locator("#incorrect-answer-effect").is_visible()
+                    )
                     await page.wait_for_timeout(700)
                     self.assertEqual(
                         await page.evaluate("window.__wrongAnswerEffects"), 2
