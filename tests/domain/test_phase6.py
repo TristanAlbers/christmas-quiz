@@ -5,8 +5,10 @@ from dataclasses import fields, replace
 from django.test import SimpleTestCase
 
 from quiz.domain.phase6 import (
+    CHALLENGE_GRACE_PERIOD_MS,
     ChallengeTeamState,
     challenge_eligibility,
+    challenge_grace_remaining_ms,
     initiate_challenge,
     resolve_challenge_answer,
 )
@@ -38,7 +40,7 @@ def eligibility_args(**changes):
         "initiator": team("a"),
         "challenged": team("b"),
         "current_gameplay_ms": 100_000,
-        "cost": 7,
+        "cost": 0,
     }
     original.update(changes)
     return original
@@ -50,8 +52,8 @@ def answer_args(**changes):
         "challenge_status": "active",
         "current_challenge_id": "challenge-1",
         "submitted_challenge_id": "challenge-1",
-        "current_question_id": "shared-challenge",
-        "submitted_question_id": "shared-challenge",
+        "current_question_id": "challenge-a",
+        "submitted_question_id": "challenge-a",
         "validator_type": "text_exact",
         "expected_answer": "mistletoe",
         "submitted_answer": "Mistletoe",
@@ -70,8 +72,10 @@ def answer_args(**changes):
 
 
 class ChallengeEligibilityTests(SimpleTestCase):
-    def test_eligible_requires_two_effective_puzzle_teams_and_affordability(self):
-        decision = challenge_eligibility(**eligibility_args())
+    def test_eligible_requires_two_effective_puzzle_teams_but_not_points(self):
+        decision = challenge_eligibility(
+            **eligibility_args(initiator=team("a", points=0))
+        )
         self.assertTrue(decision.can_initiate)
         self.assertIsNone(decision.reason)
 
@@ -97,7 +101,6 @@ class ChallengeEligibilityTests(SimpleTestCase):
                 {"initiator": team("a", opportunity_available=False)},
                 "opportunity_spent",
             ),
-            ({"initiator": team("a", points=6)}, "insufficient_points"),
             (
                 {
                     "challenged": team(
@@ -119,24 +122,26 @@ class ChallengeEligibilityTests(SimpleTestCase):
 
 
 class ChallengeInitiationTests(SimpleTestCase):
-    def test_start_atomically_describes_cost_opportunity_and_both_states(self):
-        original_target = team("b", points=2, opportunity_available=True)
+    def test_start_consumes_only_opportunity_and_never_points(self):
         decision = initiate_challenge(
-            **eligibility_args(challenged=original_target)
+            **eligibility_args(
+                initiator=team("a", points=0),
+                challenged=team("b", points=2),
+            )
         )
-        self.assertEqual(decision.points_delta, -7)
+        self.assertEqual(decision.points_delta, 0)
         self.assertTrue(decision.opportunity_consumed)
-        self.assertEqual(decision.initiator.points, 3)
+        self.assertEqual(decision.initiator.points, 0)
         self.assertFalse(decision.initiator.opportunity_available)
         self.assertEqual(decision.initiator.activity_state, "CHALLENGE")
         self.assertEqual(decision.challenged.activity_state, "CHALLENGE")
         self.assertEqual(decision.challenged.points, 2)
         self.assertTrue(decision.challenged.opportunity_available)
 
-    def test_either_team_can_initiate_and_only_that_team_spends(self):
+    def test_either_team_can_initiate_and_only_that_opportunity_is_spent(self):
         decision = initiate_challenge(
             **eligibility_args(
-                initiator=team("b", points=7),
+                initiator=team("b", points=0),
                 challenged=team("a", points=11, opportunity_available=False),
             )
         )
@@ -171,7 +176,6 @@ class ChallengeInitiationTests(SimpleTestCase):
                 {"initiator": team("a", opportunity_available=False)},
                 "challenge_spent",
             ),
-            ({"initiator": team("a", points=6)}, "insufficient_points"),
         )
         for changes, code in cases:
             with self.subTest(changes=changes):
@@ -179,6 +183,27 @@ class ChallengeInitiationTests(SimpleTestCase):
                     error_code(initiate_challenge, **eligibility_args(**changes)),
                     code,
                 )
+
+
+class ChallengeGracePeriodTests(SimpleTestCase):
+    def test_grace_period_counts_down_on_gameplay_time(self):
+        self.assertEqual(
+            challenge_grace_remaining_ms(100_000, 100_000),
+            CHALLENGE_GRACE_PERIOD_MS,
+        )
+        self.assertEqual(challenge_grace_remaining_ms(100_000, 105_000), 10_000)
+        self.assertEqual(challenge_grace_remaining_ms(100_000, 115_000), 0)
+        self.assertEqual(challenge_grace_remaining_ms(100_000, 130_000), 0)
+
+    def test_grace_period_rejects_invalid_clock_values(self):
+        self.assertEqual(
+            error_code(challenge_grace_remaining_ms, -1, 0),
+            "invalid_input",
+        )
+        self.assertEqual(
+            error_code(challenge_grace_remaining_ms, 0, -1),
+            "invalid_input",
+        )
 
 
 class ChallengeAnswerTests(SimpleTestCase):
@@ -277,9 +302,10 @@ class ChallengeAnswerTests(SimpleTestCase):
 
 
 class ChallengeInputValidationTests(SimpleTestCase):
-    def test_invalid_cost_team_or_clock_values_are_rejected(self):
+    def test_nonzero_cost_team_or_clock_values_are_rejected(self):
         for changes in (
             {"cost": -1},
+            {"cost": 1},
             {"cost": True},
             {"current_gameplay_ms": -1},
             {"initiator": team("a", points=-1)},
