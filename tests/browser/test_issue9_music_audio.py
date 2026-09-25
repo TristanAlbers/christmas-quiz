@@ -287,8 +287,53 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     await page.get_by_role("heading", name="Playback error").wait_for()
                     self.assertTrue(await retry.is_visible())
 
+                    load_count = await page.evaluate(
+                        "window.__mediaCalls"
+                        ".filter(call => call.kind === 'load').length"
+                    )
                     await page.get_by_role("button", name="Retry sound").click()
                     await page.get_by_role("heading", name="Playing").wait_for()
+                    self.assertGreater(
+                        await page.evaluate(
+                            "window.__mediaCalls"
+                            ".filter(call => call.kind === 'load').length"
+                        ),
+                        load_count,
+                    )
+
+                    await asyncio.to_thread(
+                        pause_game,
+                        self.admin,
+                        RunCommand(str(uuid4()), self.run_id),
+                    )
+                    await page.get_by_role("heading", name="Paused").wait_for()
+                    await page.get_by_role("button", name="Test sound").click()
+                    await page.wait_for_timeout(750)
+
+                    # Restoring a question source while the backend is paused
+                    # can fail because that URL is intentionally unavailable.
+                    await page.locator("#music-player").dispatch_event("error")
+                    await page.get_by_role("heading", name="Playback error").wait_for()
+                    load_count = await page.evaluate(
+                        "window.__mediaCalls"
+                        ".filter(call => call.kind === 'load').length"
+                    )
+
+                    await asyncio.to_thread(
+                        resume_game,
+                        self.admin,
+                        RunCommand(str(uuid4()), self.run_id),
+                    )
+                    await page.get_by_role("heading", name="Playing").wait_for(
+                        timeout=5000
+                    )
+                    self.assertGreater(
+                        await page.evaluate(
+                            "window.__mediaCalls"
+                            ".filter(call => call.kind === 'load').length"
+                        ),
+                        load_count,
+                    )
                 finally:
                     await context.close()
                     await browser.close()
