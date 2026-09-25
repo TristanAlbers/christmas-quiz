@@ -5,7 +5,6 @@ from dataclasses import asdict, replace
 from django.db import OperationalError
 from django.urls import reverse
 
-from quiz import _application_core as core
 from quiz.contracts import (
     AdminChallengeProjection,
     ChallengeAnswerResult,
@@ -18,6 +17,8 @@ from quiz.contracts import (
 from quiz.domain.phase6 import challenge_grace_remaining_ms
 from quiz.models import Challenge, ChallengeAttempt, CommandReceipt, Run, TeamRun
 from quiz.persistence import immediate_transaction, is_busy_error, read_snapshot
+
+from . import _application_core as core
 
 
 # The legacy core predates the amended two-puzzle Phase-6 contract and reads a
