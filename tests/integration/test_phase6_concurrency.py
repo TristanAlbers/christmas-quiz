@@ -266,7 +266,7 @@ class PhaseSixProductionCommandRaceTests(TransactionTestCase):
 
         self.assertEqual(
             self._initiate("a", str(uuid4()), second_start),
-            "disallowed_state",
+            "challenge_spent",
         )
         self.assertEqual(
             self._answer(
