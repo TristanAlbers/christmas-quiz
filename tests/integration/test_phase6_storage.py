@@ -48,6 +48,19 @@ def _music_question(number):
     }
 
 
+def _challenge_puzzle(team_id):
+    return {
+        "id": f"challenge-{team_id}",
+        "title": f"Christmas Challenge {team_id.upper()}",
+        "body": f"Solve the {team_id.upper()} challenge clue",
+        "validator": {
+            "type": "text_exact",
+            "answer": f"mistletoe-{team_id}",
+        },
+        "media": [f"challenge/{team_id}.png"],
+    }
+
+
 def phase6_config(package_id="phase6"):
     return {
         "schema_version": 6,
@@ -57,7 +70,7 @@ def phase6_config(package_id="phase6"):
         "skip_cost": 2,
         "freeze_cost": 3,
         "uno_reverse_cost": 4,
-        "challenge_cost": 7,
+        "challenge_cost": 0,
         "music_question_reward": 5,
         "music_score_display_duration_ms": 10_000,
         "teams": {
@@ -69,26 +82,24 @@ def phase6_config(package_id="phase6"):
             for team_id in ("a", "b")
         },
         "music_questions": [_music_question(number) for number in range(1, 12)],
-        "challenge_puzzle": {
-            "id": "shared-challenge",
-            "title": "Christmas Challenge",
-            "body": "Solve the shared clue",
-            "validator": {"type": "text_exact", "answer": "mistletoe"},
-            "media": ["challenge/clue.png"],
+        "challenge_puzzles": {
+            team_id: _challenge_puzzle(team_id) for team_id in ("a", "b")
         },
     }
 
 
 def write_package(root, config):
     package = root / config["package_id"]
-    (package / "challenge").mkdir(parents=True)
-    (package / "challenge" / "clue.png").write_bytes(b"challenge-media")
+    challenge_dir = package / "challenge"
+    challenge_dir.mkdir(parents=True)
+    (challenge_dir / "a.png").write_bytes(b"challenge-media-a")
+    (challenge_dir / "b.png").write_bytes(b"challenge-media-b")
     (package / "game.json").write_text(json.dumps(config))
     return package
 
 
 class PhaseSixConfigurationTests(TestCase):
-    def test_v6_challenge_data_and_media_are_validated_and_pinned(self):
+    def test_v6_two_challenge_puzzles_and_media_are_validated_and_pinned(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             games = root / "games"
@@ -99,29 +110,58 @@ class PhaseSixConfigurationTests(TestCase):
                 QUIZ_SNAPSHOT_ROOT=root / "snapshots",
             ):
                 staged = stage_snapshot("phase6")
-                config["challenge_cost"] = 99
+                config["challenge_puzzles"]["a"]["title"] = "Changed later"
                 (package / "game.json").write_text(json.dumps(config))
-                (package / "challenge" / "clue.png").unlink()
+                (package / "challenge" / "a.png").unlink()
 
                 pinned = load_snapshot(staged.path)
-                pinned_media = (
-                    Path(staged.path) / "media" / "challenge" / "clue.png"
-                )
+                pinned_a = Path(staged.path) / "media" / "challenge" / "a.png"
+                pinned_b = Path(staged.path) / "media" / "challenge" / "b.png"
 
-            self.assertEqual(pinned["challenge_cost"], 7)
-            self.assertEqual(pinned["challenge_puzzle"]["id"], "shared-challenge")
-            self.assertEqual(pinned_media.read_bytes(), b"challenge-media")
+            self.assertEqual(pinned["challenge_cost"], 0)
+            self.assertEqual(pinned["challenge_puzzles"]["a"]["id"], "challenge-a")
+            self.assertEqual(pinned["challenge_puzzles"]["b"]["id"], "challenge-b")
+            self.assertEqual(pinned_a.read_bytes(), b"challenge-media-a")
+            self.assertEqual(pinned_b.read_bytes(), b"challenge-media-b")
 
-    def test_v6_rejects_invalid_cost_question_shape_validator_and_media(self):
+    def test_v6_rejects_nonzero_cost_invalid_questions_and_media(self):
         mutations = (
-            lambda config: config.update(challenge_cost=-1),
-            lambda config: config["challenge_puzzle"].update(reward_points=5),
-            lambda config: config["challenge_puzzle"].update(id="not valid"),
-            lambda config: config["challenge_puzzle"]["validator"].update(
+            lambda config: config.update(challenge_cost=1),
+            lambda config: config["challenge_puzzles"]["a"].update(reward_points=5),
+            lambda config: config["challenge_puzzles"]["a"].update(id="not valid"),
+            lambda config: config["challenge_puzzles"]["a"]["validator"].update(
                 type="contains"
             ),
-            lambda config: config["challenge_puzzle"].update(
+            lambda config: config["challenge_puzzles"]["a"].update(
                 media=["../private.png"]
+            ),
+        )
+        for mutate in mutations:
+            with self.subTest(mutate=mutate), TemporaryDirectory() as directory:
+                root = Path(directory)
+                games = root / "games"
+                config = phase6_config()
+                mutate(config)
+                write_package(games, config)
+                with (
+                    override_settings(
+                        QUIZ_GAMES_ROOT=games,
+                        QUIZ_SNAPSHOT_ROOT=root / "snapshots",
+                    ),
+                    self.assertRaises(InvalidPackage),
+                ):
+                    stage_snapshot("phase6")
+
+    def test_v6_rejects_reused_challenge_id_or_equivalent_question(self):
+        mutations = (
+            lambda config: config["challenge_puzzles"]["b"].update(
+                id=config["challenge_puzzles"]["a"]["id"]
+            ),
+            lambda config: config["challenge_puzzles"].update(
+                b={
+                    **config["challenge_puzzles"]["a"],
+                    "id": "different-id-same-question",
+                }
             ),
         )
         for mutate in mutations:
@@ -171,17 +211,45 @@ class PhaseSixPersistenceTests(TransactionTestCase):
             "run": self.run,
             "initiator_team_id": "a",
             "challenged_team_id": "b",
-            "question_id": "shared-challenge",
-            "paid_cost": 7,
+            "question_id": "challenge-a",
+            "paid_cost": 0,
+            "started_gameplay_ms": 0,
         }
         values.update(changes)
         return Challenge.objects.create(**values)
 
-    def test_schema_guards_active_pair_cost_request_and_first_correct_attempt(self):
+    def _resolve(self, challenge, winner_team_id="a"):
+        attempt = ChallengeAttempt.objects.create(
+            challenge=challenge,
+            actor=self.users[winner_team_id],
+            team_id=winner_team_id,
+            request_id=uuid4(),
+            question_id=challenge.question_id,
+            is_correct=True,
+        )
+        challenge.status = "resolved"
+        challenge.winner_team_id = winner_team_id
+        challenge.freeze_applied = winner_team_id == challenge.initiator_team_id
+        challenge.winning_attempt = attempt
+        challenge.resolved_at = timezone.now()
+        challenge.save(
+            update_fields=[
+                "status",
+                "winner_team_id",
+                "freeze_applied",
+                "winning_attempt",
+                "resolved_at",
+            ]
+        )
+        return attempt
+
+    def test_schema_guards_active_pair_zero_cost_clock_and_first_correct_attempt(self):
         challenge = self._challenge()
         invalid_writes = (
             lambda: self._challenge(
-                initiator_team_id="b", challenged_team_id="a"
+                initiator_team_id="b",
+                challenged_team_id="a",
+                question_id="challenge-b",
             ),
             lambda: Challenge.objects.create(
                 run=Run.objects.create(
@@ -193,8 +261,37 @@ class PhaseSixPersistenceTests(TransactionTestCase):
                 ),
                 initiator_team_id="a",
                 challenged_team_id="a",
-                question_id="shared-challenge",
-                paid_cost=7,
+                question_id="challenge-invalid-pair",
+                paid_cost=0,
+                started_gameplay_ms=0,
+            ),
+            lambda: Challenge.objects.create(
+                run=Run.objects.create(
+                    active=False,
+                    global_state="ADVENT_QUIZ",
+                    package_id="invalid-cost",
+                    snapshot_path="/tmp/invalid-cost",
+                    snapshot_digest="c" * 64,
+                ),
+                initiator_team_id="a",
+                challenged_team_id="b",
+                question_id="challenge-invalid-cost",
+                paid_cost=1,
+                started_gameplay_ms=0,
+            ),
+            lambda: Challenge.objects.create(
+                run=Run.objects.create(
+                    active=False,
+                    global_state="ADVENT_QUIZ",
+                    package_id="invalid-clock",
+                    snapshot_path="/tmp/invalid-clock",
+                    snapshot_digest="d" * 64,
+                ),
+                initiator_team_id="a",
+                challenged_team_id="b",
+                question_id="challenge-invalid-clock",
+                paid_cost=0,
+                started_gameplay_ms=-1,
             ),
         )
         for write in invalid_writes:
@@ -208,7 +305,7 @@ class PhaseSixPersistenceTests(TransactionTestCase):
             actor=self.users["a"],
             team_id="a",
             request_id=request_id,
-            question_id="shared-challenge",
+            question_id="challenge-a",
             is_correct=True,
         )
         duplicate_writes = (
@@ -217,7 +314,7 @@ class PhaseSixPersistenceTests(TransactionTestCase):
                 actor=self.users["b"],
                 team_id="b",
                 request_id=uuid4(),
-                question_id="shared-challenge",
+                question_id="challenge-a",
                 is_correct=True,
             ),
             lambda: ChallengeAttempt.objects.create(
@@ -225,7 +322,7 @@ class PhaseSixPersistenceTests(TransactionTestCase):
                 actor=self.users["a"],
                 team_id="a",
                 request_id=request_id,
-                question_id="shared-challenge",
+                question_id="challenge-a",
                 is_correct=False,
             ),
         )
@@ -253,6 +350,33 @@ class PhaseSixPersistenceTests(TransactionTestCase):
         with self.assertRaisesRegex(ValueError, "immutable"):
             winning.save()
 
+    def test_each_team_can_initiate_once_but_questions_cannot_be_reused(self):
+        first = self._challenge()
+        self._resolve(first)
+
+        invalid_writes = (
+            lambda: self._challenge(question_id="challenge-a-second"),
+            lambda: self._challenge(
+                initiator_team_id="b",
+                challenged_team_id="a",
+                question_id="challenge-a",
+            ),
+        )
+        for write in invalid_writes:
+            with self.subTest(write=write), self.assertRaises(IntegrityError):
+                with immediate_transaction():
+                    write()
+
+        second = self._challenge(
+            initiator_team_id="b",
+            challenged_team_id="a",
+            question_id="challenge-b",
+            started_gameplay_ms=15_000,
+        )
+        self.assertEqual(second.initiator_team_id, "b")
+        self.assertEqual(second.question_id, "challenge-b")
+        self.assertEqual(Challenge.objects.filter(run=self.run).count(), 2)
+
     def test_result_pairing_rejects_wrong_freeze_semantics(self):
         challenge = self._challenge()
         attempt = ChallengeAttempt.objects.create(
@@ -260,7 +384,7 @@ class PhaseSixPersistenceTests(TransactionTestCase):
             actor=self.users["b"],
             team_id="b",
             request_id=uuid4(),
-            question_id="shared-challenge",
+            question_id="challenge-a",
             is_correct=True,
         )
         with self.assertRaises(IntegrityError):
@@ -273,7 +397,7 @@ class PhaseSixPersistenceTests(TransactionTestCase):
                     resolved_at=timezone.now(),
                 )
 
-    def test_initiation_facts_roll_back_together(self):
+    def test_initiation_facts_roll_back_together_without_spending_points(self):
         request_id = uuid4()
         with self.assertRaisesRegex(RuntimeError, "force rollback"):
             with immediate_transaction():
@@ -281,11 +405,10 @@ class PhaseSixPersistenceTests(TransactionTestCase):
                     team.activity_state = "CHALLENGE"
                     fields = ["activity_state"]
                     if team.team_id == "a":
-                        team.points -= 7
                         team.challenge_available = False
-                        fields.extend(["points", "challenge_available"])
+                        fields.append("challenge_available")
                     team.save(update_fields=fields)
-                self._challenge()
+                self._challenge(started_gameplay_ms=1234)
                 CommandReceipt.objects.create(
                     run=self.run,
                     actor=self.users["a"],
@@ -314,26 +437,23 @@ class PhaseSixPersistenceTests(TransactionTestCase):
         self.assertFalse(CommandReceipt.objects.exists())
         self.assertFalse(AuditEvent.objects.exists())
 
-    def test_active_context_payment_and_receipt_survive_restart(self):
+    def test_active_context_free_opportunity_and_receipt_survive_restart(self):
         request_id = uuid4()
         initiator = self.teams["a"]
         challenged = self.teams["b"]
         with immediate_transaction():
-            initiator.points = 3
             initiator.challenge_available = False
             initiator.activity_state = "CHALLENGE"
-            initiator.save(
-                update_fields=["points", "challenge_available", "activity_state"]
-            )
+            initiator.save(update_fields=["challenge_available", "activity_state"])
             challenged.activity_state = "CHALLENGE"
             challenged.save(update_fields=["activity_state"])
-            challenge = self._challenge()
+            challenge = self._challenge(started_gameplay_ms=8_000)
             CommandReceipt.objects.create(
                 run=self.run,
                 actor=self.users["a"],
                 request_id=request_id,
                 action="initiate_challenge",
-                payload_digest="d" * 64,
+                payload_digest="e" * 64,
                 result={
                     "outcome": "challenge_started",
                     "challenge_id": str(challenge.pk),
@@ -345,8 +465,9 @@ class PhaseSixPersistenceTests(TransactionTestCase):
         recovered = Challenge.objects.get(pk=challenge.pk)
         recovered_initiator = TeamRun.objects.get(run=self.run, team_id="a")
         self.assertEqual(recovered.status, "active")
-        self.assertEqual(recovered.paid_cost, 7)
-        self.assertEqual(recovered_initiator.points, 3)
+        self.assertEqual(recovered.paid_cost, 0)
+        self.assertEqual(recovered.started_gameplay_ms, 8_000)
+        self.assertEqual(recovered_initiator.points, 10)
         self.assertFalse(recovered_initiator.challenge_available)
         self.assertEqual(recovered_initiator.activity_state, "CHALLENGE")
         self.assertTrue(
@@ -372,7 +493,7 @@ class PhaseSixMigrationTests(TransactionTestCase):
             global_state="ADVENT_QUIZ",
             package_id="phase5-existing",
             snapshot_path="/persistent/phase5",
-            snapshot_digest="e" * 64,
+            snapshot_digest="f" * 64,
         )
         self.run_id = run.pk
         OldTeamRun.objects.bulk_create(
