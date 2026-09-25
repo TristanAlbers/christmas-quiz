@@ -1,0 +1,51 @@
+{% if viewer_team_id == event.attacker_team_id %}
+  {% if event.reversed %}
+    <div id="gameplay-event" class="gameplay-event gameplay-event--attacker-reversed" role="status" aria-live="assertive" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
+      <div class="gameplay-event__wash" aria-hidden="true"></div>
+      <section class="gameplay-event__stage gameplay-event__stage--attack">
+        <span class="gameplay-event__icon gameplay-event__icon--snow" aria-hidden="true">❄</span>
+        <p class="eyebrow">Freeze launched</p>
+        <strong>Your ice attack is on its way!</strong>
+        <span>The full Freeze cost has been committed.</span>
+      </section>
+      <section class="gameplay-event__stage gameplay-event__stage--reverse-bad">
+        <span class="gameplay-event__reverse-card" aria-hidden="true">↶</span>
+        <p class="eyebrow">Reflected!</p>
+        <strong>Uno Reverse sent your Freeze back!</strong>
+        <span>Your opponent was protected. Your own team is now frozen.</span>
+      </section>
+    </div>
+  {% else %}
+    <div id="gameplay-event" class="gameplay-event gameplay-event--attacker" role="status" aria-live="assertive" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
+      <div class="gameplay-event__wash" aria-hidden="true"></div>
+      <section class="gameplay-event__stage gameplay-event__stage--attack">
+        <span class="gameplay-event__icon gameplay-event__icon--snow" aria-hidden="true">❄</span>
+        <p class="eyebrow">Freeze launched</p>
+        <strong>Direct hit!</strong>
+        <span>Your opponent has been frozen.</span>
+      </section>
+    </div>
+  {% endif %}
+{% elif viewer_team_id == event.target_team_id %}
+  {% if event.reversed %}
+    <div id="gameplay-event" class="gameplay-event gameplay-event--saved" role="status" aria-live="assertive" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
+      <div class="gameplay-event__wash" aria-hidden="true"></div>
+      <section class="gameplay-event__stage gameplay-event__stage--reverse-good">
+        <span class="gameplay-event__reverse-card" aria-hidden="true">↶</span>
+        <p class="eyebrow">Uno Reverse!</p>
+        <strong>Your Reverse saved you!</strong>
+        <span>The incoming Freeze was reflected back to the attacking team.</span>
+      </section>
+    </div>
+  {% else %}
+    <div id="gameplay-event" class="gameplay-event gameplay-event--victim" role="status" aria-live="assertive" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
+      <div class="gameplay-event__wash" aria-hidden="true"></div>
+      <section class="gameplay-event__stage gameplay-event__stage--impact">
+        <span class="gameplay-event__icon gameplay-event__icon--impact" aria-hidden="true">❄</span>
+        <p class="eyebrow">Incoming attack</p>
+        <strong>You have been frozen!</strong>
+        <span>The ice lock takes over as this impact finishes.</span>
+      </section>
+    </div>
+  {% endif %}
+{% endif %}
