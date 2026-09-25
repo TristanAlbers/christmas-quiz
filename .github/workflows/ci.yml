@@ -29,7 +29,18 @@ jobs:
         run: docker build --target dev --tag christmas-quiz-ci .
 
       - name: Lint Python
-        run: docker run --rm christmas-quiz-ci python -m ruff check .
+        run: |
+          set +e
+          docker run --rm christmas-quiz-ci python -m ruff check . 2>&1 | tee ruff-output.txt
+          status=${PIPESTATUS[0]}
+          exit "$status"
+
+      - name: Upload Ruff diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruff-diagnostics
+          path: ruff-output.txt
 
       - name: Django system check
         run: >-
