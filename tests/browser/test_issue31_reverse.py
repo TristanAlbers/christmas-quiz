@@ -21,6 +21,16 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                         "purchased and armed",
                         await a.locator("#action-feedback").inner_text(),
                     )
+                    purchase = a.locator("#reverse-purchase.reverse-purchase")
+                    await purchase.wait_for(state="visible", timeout=5000)
+                    self.assertIn("Purchase successful", await purchase.inner_text())
+                    self.assertIn("Uno Reverse armed!", await purchase.inner_text())
+                    self.assertEqual(
+                        await purchase.evaluate(
+                            "el => getComputedStyle(el).animationDuration"
+                        ),
+                        "4.5s",
+                    )
                     self.assertFalse(await a.locator("#gameplay-event").is_visible())
 
                     await b.get_by_role("button", name="Shop Power-ups").click()
@@ -35,11 +45,18 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     self.assertIn("freeze launched", reflected_text)
                     self.assertIn("reflected!", reflected_text)
                     self.assertIn("Your Reverse saved you!", await saved.inner_text())
+                    self.assertEqual(
+                        await reflected.evaluate(
+                            "el => getComputedStyle(el).animationDuration"
+                        ),
+                        "5.6s",
+                    )
                     await b.locator(".state-panel-freeze").wait_for(timeout=5000)
                     self.assertEqual(await b.locator("#answer-input").count(), 0)
                     self.assertEqual(await a.locator("#answer-input").count(), 1)
                     await a.reload()
                     self.assertFalse(await a.locator("#gameplay-event").is_visible())
+                    self.assertFalse(await a.locator("#reverse-purchase").is_visible())
                 finally:
                     await ca.close()
                     await ba.close()
