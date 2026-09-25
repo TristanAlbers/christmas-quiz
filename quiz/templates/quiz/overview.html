@@ -9,16 +9,18 @@
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/advent-calendar.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/endgame-celebration.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/music-audio.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'quiz/advent-calendar.js' %}"></script>
   <script defer src="{% static 'quiz/endgame-celebration.js' %}"></script>
+  <script defer src="{% static 'quiz/music-audio.js' %}"></script>
 </head>
 <body class="game-page game-page--overview" data-endgame-surface="overview">
   <main class="app-shell app-shell-wide public-overview">
     <div id="live-overview" aria-label="Public game overview">
       <div id="overview-poller" hx-get="{% url 'overview_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
-           hx-sync="#live-overview:drop" hx-include="#overview-audio .poll-context"
+           hx-sync="#live-overview:drop" hx-include="#overview-audio-state .poll-context"
            hx-target="#overview-state"
            hx-swap="innerHTML"></div>
       <div id="overview-state">{% include 'quiz/_public_state.html' %}</div>
