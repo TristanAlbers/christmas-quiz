@@ -157,7 +157,8 @@ class PhaseSixApplicationTests(TestCase):
         self.assertFalse(challenge.freeze_applied)
         self.assertEqual(won.state.challenge.status, "resolved")
         self.assertIsNone(won.state.challenge.question)
-        self.assertIsNone(get_public_state(now=GRACE_END + timedelta(seconds=1)).challenge)
+        public_after = get_public_state(now=GRACE_END + timedelta(seconds=1))
+        self.assertIsNone(public_after.challenge)
         self.assertEqual(
             set(
                 TeamRun.objects.filter(run_id=self.run_id).values_list(
@@ -187,7 +188,8 @@ class PhaseSixApplicationTests(TestCase):
         second_active = second_start + timedelta(seconds=15)
         b_state = get_team_state(self.b, now=second_active)
         self.assertEqual(b_state.challenge.question.id, "challenge-b-five-gifts")
-        self.assertEqual(get_public_state(now=second_active).challenge.challenge_number, 2)
+        public_second = get_public_state(now=second_active)
+        self.assertEqual(public_second.challenge.challenge_number, 2)
 
         with self.assertRaises(ApplicationError) as spent:
             self.initiate(self.a, now=second_active)
