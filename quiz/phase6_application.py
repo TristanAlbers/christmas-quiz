@@ -5,7 +5,7 @@ from dataclasses import asdict, replace
 from django.db import OperationalError
 from django.urls import reverse
 
-import quiz._application_core as core
+from quiz import _application_core as core
 from quiz.contracts import (
     AdminChallengeProjection,
     ChallengeAnswerResult,
