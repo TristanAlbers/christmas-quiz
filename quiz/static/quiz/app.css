@@ -136,17 +136,23 @@ input[name="answer"] { display: block; width: 100%; margin: .45rem 0 .85rem; }
 .answer-form { padding-top: .9rem; border-top: 1px solid var(--line); }
 .fragment-card { margin-top: 1rem; padding: .8rem; border-left: .3rem solid var(--gold); background: #fff9e5; }
 .fragment-card p { margin: .2rem 0 0; overflow-wrap: anywhere; }
-.shop-card { background: linear-gradient(145deg, #f4faf6, #fffdf7); }
+.shop-card { padding: clamp(1.25rem, 4vw, 2rem); background: linear-gradient(145deg, #f4faf6, #fffdf7); }
 .shop-dialog { width: min(calc(100% - 1.5rem), 42rem); max-height: min(90vh, 46rem); padding: 0; overflow: auto; border: 1px solid var(--line); border-radius: 1rem; background: var(--paper); color: var(--ink); box-shadow: var(--shadow); }
 .shop-dialog::backdrop { background: rgba(6, 29, 23, .7); }
 .shop-dialog .shop-card { margin: 0; border: 0; }
+.shop-dialog .action-grid { gap: 1rem; }
+.shop-dialog #shop-feedback { margin: .35rem 0 1rem; }
 .shop-dialog__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
 .shop-dialog__close { min-width: 2.75rem; padding: .35rem; border-color: var(--line); color: var(--ink); font-size: 1.6rem; line-height: 1; }
-.shop-item { display: grid; grid-template-rows: auto auto 1fr auto; gap: .35rem; min-width: 0; margin: 0; padding: .9rem; border: 1px solid var(--line); border-radius: .75rem; background: white; text-align: center; }
+.shop-item { display: grid; grid-template-rows: auto auto 1fr auto; gap: .55rem; min-width: 0; margin: 0; padding: 1.1rem; border: 1px solid var(--line); border-radius: .75rem; background: white; text-align: center; }
 .shop-item__icon { margin: 0 auto; }
 .shop-item--hint { border-color: #dfbd52; }
 .shop-item--reverse { border-color: #d6a9b1; }
 .shop-item--freeze { border-color: #89b7c3; }
+.shop-item--unavailable { border-style: dashed; background: #f4f7f7; }
+.shop-item--unavailable button:disabled { cursor: not-allowed; }
+.shop-item__availability { color: var(--muted); font-weight: 700; }
+.freeze-shop-mark { color: #176685; font-size: 2rem; line-height: 1; }
 .music-status, .music-stage { margin: 1rem 0; padding: clamp(1rem, 4vw, 2rem); border: 1px solid #a889c5; border-radius: .95rem; background: linear-gradient(145deg, #f7efff, #eef7ff); }
 .music-scores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .music-scores > * { padding: .75rem; border-radius: .65rem; background: white; }
