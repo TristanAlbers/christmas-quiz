@@ -175,6 +175,10 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     player = page.locator("#music-player")
                     self.assertIn("q=1", await player.get_attribute("src"))
 
+                    # Complete the stubbed media-load lifecycle before simulating
+                    # elapsed playback so the controller's start-at-zero callback
+                    # cannot race the artificial playhead value below.
+                    await player.dispatch_event("loadedmetadata")
                     await player.evaluate("(el) => { el.currentTime = 12.5; }")
                     play_count = await page.evaluate(
                         "window.__mediaCalls"
