@@ -48,6 +48,16 @@ def _music_question(number):
     }
 
 
+def _challenge_puzzle(team_id, answer):
+    return {
+        "id": f"challenge-{team_id}",
+        "title": f"Christmas Challenge {team_id.upper()}",
+        "body": f"Solve Challenge {team_id.upper()}",
+        "validator": {"type": "number_exact", "answer": answer},
+        "media": [],
+    }
+
+
 def _phase6_config(answer):
     return {
         "schema_version": 6,
@@ -57,7 +67,7 @@ def _phase6_config(answer):
         "skip_cost": 2,
         "freeze_cost": 3,
         "uno_reverse_cost": 4,
-        "challenge_cost": 7,
+        "challenge_cost": 0,
         "music_question_reward": 5,
         "music_score_display_duration_ms": 10_000,
         "teams": {
@@ -67,12 +77,9 @@ def _phase6_config(answer):
             for team_id in ("a", "b")
         },
         "music_questions": [_music_question(number) for number in range(1, 12)],
-        "challenge_puzzle": {
-            "id": "shared-challenge",
-            "title": "Christmas Challenge",
-            "body": "Solve it",
-            "validator": {"type": "number_exact", "answer": answer},
-            "media": [],
+        "challenge_puzzles": {
+            "a": _challenge_puzzle("a", answer),
+            "b": _challenge_puzzle("b", "42"),
         },
     }
 
@@ -174,8 +181,9 @@ class ChallengeWinnerInvariantTests(TransactionTestCase):
             run=run,
             initiator_team_id="a",
             challenged_team_id="b",
-            question_id="shared-challenge",
-            paid_cost=7,
+            question_id="challenge-a",
+            paid_cost=0,
+            started_gameplay_ms=0,
         )
 
     def _attempt(self, challenge, *, actor, team_id, correct):
@@ -184,7 +192,7 @@ class ChallengeWinnerInvariantTests(TransactionTestCase):
             actor=actor,
             team_id=team_id,
             request_id=uuid4(),
-            question_id="shared-challenge",
+            question_id=challenge.question_id,
             is_correct=correct,
         )
 
