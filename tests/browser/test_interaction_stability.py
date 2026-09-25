@@ -156,7 +156,10 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         .filter(has_text="1 Hint tokens")
                         .wait_for(timeout=5000)
                     )
-                    self.assertTrue(
+                    await page.locator("#team-shop-dialog").wait_for(
+                        state="hidden", timeout=5000
+                    )
+                    self.assertFalse(
                         await page.locator("#team-shop-dialog").evaluate(
                             "el => el.open"
                         )
