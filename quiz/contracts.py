@@ -114,6 +114,16 @@ class PublicTeamProgressProjection:
 
 
 @dataclass(frozen=True)
+class TeamPresentationEvent:
+    id: int
+    kind: Literal["freeze_attack"]
+    attacker_team_id: TeamId
+    target_team_id: TeamId
+    frozen_team_id: TeamId
+    reversed: bool
+
+
+@dataclass(frozen=True)
 class TeamProjection:
     run_id: str | None
     global_state: str
@@ -134,6 +144,8 @@ class TeamProjection:
     advent_progress: AdventProgressProjection | None = None
     first_finisher_team_id: TeamId | None = None
     gameplay_elapsed_ms: int = 0
+    opponent_freeze_active: bool = False
+    presentation_event: TeamPresentationEvent | None = None
 
 
 @dataclass(frozen=True)
