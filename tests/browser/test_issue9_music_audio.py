@@ -155,7 +155,8 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                 try:
                     self.assertEqual(await page.locator("#music-player").count(), 1)
                     await page.evaluate(
-                        "window.__issue9Player = document.querySelector('#music-player')"
+                        "window.__issue9Player = "
+                        "document.querySelector('#music-player')"
                     )
 
                     await page.get_by_role("button", name="Enable sound").click()
@@ -171,7 +172,8 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     )
                     self.assertTrue(
                         await page.evaluate(
-                            "window.__issue9Player === document.querySelector('#music-player')"
+                            "window.__issue9Player === "
+                            "document.querySelector('#music-player')"
                         )
                     )
                     player = page.locator("#music-player")
@@ -179,19 +181,24 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
 
                     await player.evaluate("(el) => { el.currentTime = 12.5; }")
                     play_count = await page.evaluate(
-                        "window.__mediaCalls.filter(call => call.kind === 'play').length"
+                        "window.__mediaCalls"
+                        ".filter(call => call.kind === 'play').length"
                     )
                     await page.wait_for_timeout(1200)
                     self.assertEqual(
                         await page.evaluate(
-                            "window.__mediaCalls.filter(call => call.kind === 'play').length"
+                            "window.__mediaCalls"
+                            ".filter(call => call.kind === 'play').length"
                         ),
                         play_count,
                     )
-                    self.assertEqual(await player.evaluate("(el) => el.currentTime"), 12.5)
+                    self.assertEqual(
+                        await player.evaluate("(el) => el.currentTime"), 12.5
+                    )
                     self.assertTrue(
                         await page.evaluate(
-                            "window.__issue9Player === document.querySelector('#music-player')"
+                            "window.__issue9Player === "
+                            "document.querySelector('#music-player')"
                         )
                     )
 
@@ -200,18 +207,26 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         self.admin,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role("heading", name="Paused").wait_for(timeout=5000)
+                    await page.get_by_role("heading", name="Paused").wait_for(
+                        timeout=5000
+                    )
                     paused_src = await player.get_attribute("src")
-                    self.assertEqual(await player.evaluate("(el) => el.currentTime"), 12.5)
+                    self.assertEqual(
+                        await player.evaluate("(el) => el.currentTime"), 12.5
+                    )
 
                     await asyncio.to_thread(
                         resume_game,
                         self.admin,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role("heading", name="Playing").wait_for(timeout=5000)
+                    await page.get_by_role("heading", name="Playing").wait_for(
+                        timeout=5000
+                    )
                     self.assertEqual(await player.get_attribute("src"), paused_src)
-                    self.assertEqual(await player.evaluate("(el) => el.currentTime"), 12.5)
+                    self.assertEqual(
+                        await player.evaluate("(el) => el.currentTime"), 12.5
+                    )
 
                     await asyncio.to_thread(self._answer_music, 1)
                     await page.get_by_text("Question 2 of 11", exact=False).wait_for(
@@ -222,7 +237,8 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     )
                     self.assertTrue(
                         await page.evaluate(
-                            "window.__issue9Player === document.querySelector('#music-player')"
+                            "window.__issue9Player === "
+                            "document.querySelector('#music-player')"
                         )
                     )
                     self.assertIn("q=2", await player.get_attribute("src"))
@@ -260,9 +276,8 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     await page.evaluate("window.__rejectMediaPlay = true")
                     await page.get_by_role("button", name="Enable sound").click()
                     await page.get_by_role("heading", name="Sound blocked").wait_for()
-                    self.assertTrue(
-                        await page.get_by_role("button", name="Retry sound").is_visible()
-                    )
+                    retry = page.get_by_role("button", name="Retry sound")
+                    self.assertTrue(await retry.is_visible())
 
                     await page.evaluate("window.__rejectMediaPlay = false")
                     await page.get_by_role("button", name="Retry sound").click()
@@ -270,9 +285,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
 
                     await page.locator("#music-player").dispatch_event("error")
                     await page.get_by_role("heading", name="Playback error").wait_for()
-                    self.assertTrue(
-                        await page.get_by_role("button", name="Retry sound").is_visible()
-                    )
+                    self.assertTrue(await retry.is_visible())
 
                     await page.get_by_role("button", name="Retry sound").click()
                     await page.get_by_role("heading", name="Playing").wait_for()
