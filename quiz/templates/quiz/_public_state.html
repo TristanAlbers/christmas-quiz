@@ -25,6 +25,25 @@
         <p class="music-winner">Last point: Team {{ state.music.previous_winner_team_id|upper }}</p>
       {% endif %}
     </div>
+  {% elif state.challenge %}
+    <div class="music-stage challenge-overview challenge-overview--{{ state.challenge.phase }}">
+      <p class="eyebrow">Christmas Challenge · {{ state.challenge.challenge_number }} of 2</p>
+      <h1>Team {{ state.challenge.initiator_team_id|upper }} challenged Team {{ state.challenge.challenged_team_id|upper }}</h1>
+      <div class="admin-challenge__route" aria-label="Challenge teams">
+        <span>Team {{ state.challenge.initiator_team_id|upper }} <small>initiator</small></span>
+        <b aria-hidden="true">⚔</b>
+        <span>Team {{ state.challenge.challenged_team_id|upper }} <small>challenged</small></span>
+      </div>
+      {% if state.challenge.phase == 'starting' %}
+        <h2>Gather around — the Challenge is about to begin</h2>
+        <p>The puzzle is hidden until the starting period ends so both teams get the same start.</p>
+        <p class="music-timer challenge-start-timer" data-remaining-ms="{{ state.challenge.grace_remaining_ms }}">Starts in {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconds</p>
+      {% else %}
+        <h2>{{ state.challenge.title }}</h2>
+        <p class="challenge-stage__question">{{ state.challenge.body }}</p>
+        <p class="challenge-stage__rules">First correct answer accepted by the server wins. Attempts are unlimited and penalty-free.</p>
+      {% endif %}
+    </div>
   {% elif state.global_state == 'READY' %}
     <h1>Waiting for the Game Master</h1>
   {% else %}

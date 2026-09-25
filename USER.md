@@ -130,8 +130,14 @@ preserve the winner, finish state, rewards, fragments, and audit history.
 The gameplay clock is persisted. Pause preserves remaining Freeze time across
 refresh, disconnect, and restart. Unexpected downtime while the persisted state
 is `ADVENT_QUIZ` counts as gameplay time; downtime while persistently `PAUSED`
-does not. Client countdown values never authorize expiry. Challenge is not
-implemented yet.
+does not. Client countdown values never authorize expiry.
+
+Each team has one paid Challenge opportunity during normal Advent play. Both
+teams receive the same snapshotted Challenge puzzle and may answer repeatedly
+without penalty; the first accepted correct answer wins. If the initiating team
+wins, the challenged team receives a direct five-minute Freeze. If the
+challenged team wins, neither team is frozen. Challenge never awards points or
+advances Advent progress, and pause/restart preserves an active Challenge.
 
 ## Add or edit packages before Start
 
@@ -143,12 +149,13 @@ The package is declarative data; it cannot execute Python code. Credentials
 belong in `.env`, never in a package. Rich authoring/import/export tools are not
 implemented yet.
 
-The phase 5 top level requires exactly `schema_version: 5`, `package_id`,
+The current top level requires exactly `schema_version: 6`, `package_id`,
 `initial_points`, `hint_cost`, `skip_cost`, `freeze_cost`,
 `uno_reverse_cost`, `music_question_reward`,
-`music_score_display_duration_ms`, `teams`, and `music_questions`. Prices and
-rewards are nonnegative integers; the display duration is positive. Existing
-version 1–4 snapshots remain readable and retain their original behavior.
+`music_score_display_duration_ms`, `challenge_cost`, `challenge_puzzle`,
+`teams`, and `music_questions`. Prices and rewards are nonnegative integers;
+the display duration is positive. Existing version 1–5 snapshots remain
+readable and retain their original behavior.
 `teams` requires exactly `a` and `b`. Each team has exactly 25 puzzles numbered
 sequentially from 1. Each puzzle requires `id`, `number`,
 `title`, `body`, `validator`, `reward_points`, `hint`, `fragment`, and `media`.
@@ -161,6 +168,12 @@ relative paths within the package. The supplied demo's private images are
 unique `id`, `number`, nonempty `title` and `body`, a supported `validator`, and
 optional `audio` (`null` or a safe package-relative path). Music audio is copied
 into the immutable run snapshot just like private puzzle media.
+
+`challenge_puzzle` contains one shared `id`, nonempty `title` and `body`, a
+supported `validator`, and a `media` list. It deliberately has no reward, Hint,
+or fragment fields. `challenge_cost` is a nonnegative integer. Challenge media
+is copied into the run snapshot and is served only to active participants and
+administrators.
 
 The supported validators are:
 

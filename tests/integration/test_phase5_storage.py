@@ -226,6 +226,7 @@ class PhaseFivePersistenceTests(TransactionTestCase):
 class PhaseFiveMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0005_phase4_music")
     migrate_to = ("quiz", "0006_phase5_finish")
+    latest_migration = ("quiz", "0007_phase6_challenge")
 
     def setUp(self):
         super().setUp()
@@ -245,7 +246,7 @@ class PhaseFiveMigrationTests(TransactionTestCase):
         self.apps = executor.loader.project_state([self.migrate_to]).apps
 
     def tearDown(self):
-        MigrationExecutor(connection).migrate([self.migrate_to])
+        MigrationExecutor(connection).migrate([self.latest_migration])
         super().tearDown()
 
     def test_migration_preserves_existing_run_and_adds_claim_storage(self):

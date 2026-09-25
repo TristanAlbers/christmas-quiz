@@ -25,6 +25,47 @@
       <h2>Music Quiz complete</h2>
       <p>Final scores are on screen. Advent resumes automatically.</p>
     {% endif %}
+  {% elif state.challenge and state.challenge.status == 'active' %}
+    <section class="challenge-stage challenge-stage--{{ state.challenge.phase }}" aria-labelledby="challenge-question-title">
+      <div class="challenge-stage__header">
+        <div>
+          <p class="eyebrow">{% if state.challenge.phase == 'starting' %}Challenge gathering period{% else %}Live shared race{% endif %}</p>
+          <h2 id="challenge-question-title">{% if state.challenge.phase == 'starting' %}Gather around — Challenge starting{% else %}{{ state.challenge.question.title }}{% endif %}</h2>
+        </div>
+        <span class="challenge-role challenge-role--{{ state.challenge.role }}">
+          {% if state.challenge.role == 'initiator' %}You started this Challenge{% else %}You were challenged{% endif %}
+        </span>
+      </div>
+      {% if state.challenge.phase == 'starting' %}
+        <p class="challenge-stage__rules">The puzzle stays hidden until both teams have had time to gather. Nobody can answer early.</p>
+        <p class="music-timer challenge-start-timer" data-remaining-ms="{{ state.challenge.grace_remaining_ms }}">
+          {% if state.global_state == 'PAUSED' %}Paused with {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconds remaining{% else %}Starts in {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconds{% endif %}
+        </p>
+      {% else %}
+        <p class="challenge-stage__rules">First server-accepted correct answer wins. Attempts are unlimited and penalty-free.</p>
+        <p class="challenge-stage__question">{{ state.challenge.question.body }}</p>
+        {% for media_url in state.challenge.question.media_urls %}
+          <img class="puzzle-image challenge-image" src="{{ media_url }}" alt="Private Challenge clue">
+        {% endfor %}
+        {% if state.global_state == 'ADVENT_QUIZ' %}
+          <form class="answer-form challenge-answer-form" method="post" action="{% url 'team_challenge_answer' %}"
+                hx-post="{% url 'team_challenge_answer' %}" hx-trigger="submit"
+                hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+                hx-target="#game-status" hx-swap="innerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="run_id" value="{{ state.run_id }}">
+            <input type="hidden" name="challenge_id" value="{{ state.challenge.id }}">
+            <input type="hidden" name="question_id" value="{{ state.challenge.question.id }}">
+            <input type="hidden" name="request_id" value="{{ challenge_answer_request_id }}">
+            <label for="challenge-answer-input">Challenge answer</label>
+            <input id="challenge-answer-input" name="answer" autocomplete="off" required>
+            <button class="button-challenge" type="submit">Submit Challenge answer</button>
+          </form>
+        {% else %}
+          <div class="challenge-paused" role="status"><strong>Challenge paused</strong><span>Your answer control returns when the game resumes. Nobody can win while paused.</span></div>
+        {% endif %}
+      {% endif %}
+    </section>
   {% elif state.team_state == 'FREEZE' %}
     <div class="freeze-surface" aria-hidden="true">
       <span class="freeze-surface__crystal freeze-surface__crystal--one">❄</span>

@@ -1,8 +1,8 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture; phases 1–3.1 validated and phase-4 integration
-implemented. Independent phase-4 invariant review and the unchanged CI gate are
-still required before its final completion record.
+Status: approved architecture through the Phase 6 Stage A contract. Phase
+implementation and validation status is tracked by `implementation_plan.md` and
+the phase contracts.
 
 Phase 2 implementation decisions are recorded in
 [`phase-2-contract.md`](phase-2-contract.md): one durable Hint reveal per
@@ -27,6 +27,17 @@ Phase 4 Music decisions are recorded in
 creates one durable interruption, Music has a clock separate from Advent,
 intentional Music pause stops its question/final-result timing, active Music
 downtime counts, and only Music scores/current shared content are public.
+
+Phase 5 finish decisions are recorded in
+[`phase-5-contract.md`](phase-5-contract.md): teams finish independently at
+puzzle 25, one durable first-finisher fact is claimed atomically, and global
+`FINISHED` occurs only when both teams finish. Approved public progress remains
+coarse Advent-door state only.
+
+Phase 6 Challenge decisions are recorded in
+[`phase-6-contract.md`](phase-6-contract.md): one paid opportunity per team,
+shared snapshotted content, first accepted correct transaction wins, and an
+initiator win applies direct Freeze without consuming or redirecting Reverse.
 
 This document records implementation choices. Game behavior remains governed by
 `christmas-2026-game-rules-state-semantics.md`, followed by `Design.md`, `Views.md`,
@@ -504,14 +515,13 @@ contracts and exact file ownership are in `docs/contracts-first-slice.md`.
 
 ## Decisions still deferred
 
-There is no known blocking phase-4 ambiguity. Do not implement Challenge,
-25-puzzle finish behavior, or polished calendars before their planned milestones
-without explicit reprioritization.
+There is no known blocking Phase 6 Challenge ambiguity. The Stage A contract
+does not authorize its later implementation stages, which remain gated on the
+Phase 5 green prerequisite and separate user authorization.
 
-- Public TV progression: normative section 15 treats progression as private and
-  identifies Music scores as an explicit shared exception; `Views.md` requests
-  public percentages. Ask for an explicit allowed public projection before that
-  feature; never expose full team state to satisfy the display requirement.
+- Public TV progression is settled by `docs/product-decisions.md` and Phase 5:
+  only coarse Advent doors/count and already-authorized finish facts are public.
+  Challenge state/content/results remain private.
 - Server-downtime accounting is settled for phase 3: persisted `ADVENT_QUIZ`
   downtime counts, while persisted `PAUSED` downtime does not.
 - Reset/READY/package-selection lifecycle is settled for phase 3.1 in
