@@ -54,19 +54,9 @@
     <span>Your game state has advanced.</span>
   </div>
 {% endif %}
-{% if feedback == 'Uno Reverse activated.' %}
-  <div id="reverse-activation" class="reverse-activation" role="status" aria-live="assertive" aria-label="Uno Reverse activated" hx-swap-oob="outerHTML">
-    <div class="reverse-activation__burst" aria-hidden="true"></div>
-    <div class="reverse-activation__card" aria-hidden="true">
-      <span class="reverse-activation__label">UNO</span>
-      <span class="reverse-activation__symbol">↶</span>
-      <span class="reverse-activation__label reverse-activation__label--bottom">REVERSE</span>
-    </div>
-    <div class="reverse-activation__copy">
-      <strong>Uno Reverse activated!</strong>
-      <span>The next incoming Freeze will be reflected.</span>
-    </div>
-  </div>
+{% if presentation_event %}
+  <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}" hx-swap-oob="outerHTML">
+  {% include 'quiz/_team_event.html' with event=presentation_event %}
 {% endif %}
 {% if update_resources and state.run_id and not state.music and state.team_state != 'FREEZE' %}
   {% include 'quiz/_team_resources.html' with oob=True %}
