@@ -5,3 +5,6 @@ exclude = ["quiz/migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["quiz", "tests"]
