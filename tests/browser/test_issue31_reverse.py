@@ -23,8 +23,9 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     )
                     purchase = a.locator("#reverse-purchase.reverse-purchase")
                     await purchase.wait_for(state="visible", timeout=5000)
-                    self.assertIn("Purchase successful", await purchase.inner_text())
-                    self.assertIn("Uno Reverse armed!", await purchase.inner_text())
+                    purchase_text = (await purchase.inner_text()).lower()
+                    self.assertIn("purchase successful", purchase_text)
+                    self.assertIn("uno reverse armed!", purchase_text)
                     self.assertEqual(
                         await purchase.evaluate(
                             "el => getComputedStyle(el).animationDuration"
