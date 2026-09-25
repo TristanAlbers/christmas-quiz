@@ -165,9 +165,9 @@
     return `${state.audioUrl}${separator}q=${encodeURIComponent(state.questionNumber)}`;
   }
 
-  function loadQuestion(state) {
+  function loadQuestion(state, force = false) {
     const desiredKey = `${state.runId}:${state.questionNumber}`;
-    if (sourceKey === desiredKey) {
+    if (!force && sourceKey === desiredKey) {
       return;
     }
     cancelPendingPlay();
@@ -372,7 +372,7 @@
     const state = currentState();
     if (isActiveMusicQuestion(state) && state.audioUrl) {
       armed = true;
-      loadQuestion(state);
+      loadQuestion(state, panel.dataset.soundState === "error");
       void playCurrentTrack();
       return;
     }
@@ -397,6 +397,10 @@
       cancelPendingPlay();
       player.pause();
     }
+    // A failed media element cannot be trusted merely because its logical
+    // question key is unchanged. Invalidate the key so retry, or a later
+    // resume after a paused sound check, requests a fresh resource.
+    sourceKey = "";
     setPlaybackError();
   });
 
