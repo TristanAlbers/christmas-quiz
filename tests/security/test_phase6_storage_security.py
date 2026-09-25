@@ -37,8 +37,9 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                     run=run,
                     initiator_team_id="a",
                     challenged_team_id="b",
-                    question_id="shared-challenge",
-                    paid_cost=7,
+                    question_id="challenge-a",
+                    paid_cost=0,
+                    started_gameplay_ms=0,
                 )
 
                 participant = snapshot_challenge_media_path(
@@ -46,14 +47,21 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                     challenge,
                     actor_role="team",
                     actor_team_id="a",
-                    relative_path="challenge/clue.png",
+                    relative_path="challenge/a.png",
+                )
+                opponent = snapshot_challenge_media_path(
+                    run,
+                    challenge,
+                    actor_role="team",
+                    actor_team_id="b",
+                    relative_path="challenge/a.png",
                 )
                 admin = snapshot_challenge_media_path(
                     run,
                     challenge,
                     actor_role="admin",
                     actor_team_id=None,
-                    relative_path="challenge/clue.png",
+                    relative_path="challenge/a.png",
                 )
                 denied = (
                     snapshot_challenge_media_path(
@@ -61,26 +69,27 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                         challenge,
                         actor_role="team",
                         actor_team_id=None,
-                        relative_path="challenge/clue.png",
+                        relative_path="challenge/a.png",
                     ),
                     snapshot_challenge_media_path(
                         run,
                         challenge,
                         actor_role="public",
                         actor_team_id=None,
-                        relative_path="challenge/clue.png",
+                        relative_path="challenge/a.png",
                     ),
                     snapshot_challenge_media_path(
                         run,
                         challenge,
                         actor_role="team",
                         actor_team_id="a",
-                        relative_path="a-1.png",
+                        relative_path="challenge/b.png",
                     ),
                 )
 
-                self.assertEqual(participant.read_bytes(), b"challenge-media")
-                self.assertEqual(admin.read_bytes(), b"challenge-media")
+                self.assertEqual(participant.read_bytes(), b"challenge-media-a")
+                self.assertEqual(opponent.read_bytes(), b"challenge-media-a")
+                self.assertEqual(admin.read_bytes(), b"challenge-media-a")
                 self.assertEqual(denied, (None, None, None))
 
                 run.global_state = "PAUSED"
@@ -90,7 +99,7 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                         challenge,
                         actor_role="team",
                         actor_team_id="a",
-                        relative_path="challenge/clue.png",
+                        relative_path="challenge/a.png",
                     )
                 )
                 run.global_state = "ADVENT_QUIZ"
@@ -101,11 +110,11 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                         challenge,
                         actor_role="team",
                         actor_team_id="a",
-                        relative_path="challenge/clue.png",
+                        relative_path="challenge/a.png",
                     )
                 )
 
-    def test_wrong_run_and_question_never_authorize_media(self):
+    def test_wrong_run_question_or_initiator_slot_never_authorizes_media(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             games = root / "games"
@@ -132,8 +141,9 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                     run=run,
                     initiator_team_id="a",
                     challenged_team_id="b",
-                    question_id="shared-challenge",
-                    paid_cost=7,
+                    question_id="challenge-a",
+                    paid_cost=0,
+                    started_gameplay_ms=0,
                 )
 
                 self.assertIsNone(
@@ -142,7 +152,16 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                         challenge,
                         actor_role="admin",
                         actor_team_id=None,
-                        relative_path="challenge/clue.png",
+                        relative_path="challenge/a.png",
+                    )
+                )
+                self.assertIsNone(
+                    snapshot_challenge_media_path(
+                        run,
+                        challenge,
+                        actor_role="admin",
+                        actor_team_id=None,
+                        relative_path="challenge/b.png",
                     )
                 )
                 challenge.question_id = "fabricated-question"
@@ -152,6 +171,6 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                         challenge,
                         actor_role="admin",
                         actor_team_id=None,
-                        relative_path="challenge/clue.png",
+                        relative_path="challenge/a.png",
                     )
                 )
