@@ -1,0 +1,189 @@
+.gameplay-event {
+  --event-duration: 1.45s;
+  position: fixed;
+  z-index: 95;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  overflow: hidden;
+  pointer-events: auto;
+  background:
+    radial-gradient(circle at center, rgba(240, 252, 255, .96), rgba(174, 221, 235, .93) 46%, rgba(33, 84, 105, .94));
+  text-align: center;
+  animation: gameplay-event-lifecycle var(--event-duration) linear forwards;
+}
+
+.gameplay-event--idle {
+  display: none;
+}
+
+.gameplay-event--attacker-reversed,
+.gameplay-event--saved,
+.gameplay-event--victim {
+  --event-duration: 3.15s;
+}
+
+.gameplay-event__wash {
+  position: absolute;
+  inset: -20%;
+  opacity: .5;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.75) 0 .15rem, transparent .18rem 1.7rem),
+    conic-gradient(from 40deg, transparent, rgba(255,255,255,.5), transparent 24%);
+  animation: gameplay-event-wash 1.2s ease-out both;
+}
+
+.gameplay-event__stage {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  gap: .38rem;
+  justify-items: center;
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1.35rem 1.15rem;
+  border: 2px solid rgba(255,255,255,.88);
+  border-radius: 1.1rem;
+  background: rgba(255,255,255,.96);
+  color: #153c49;
+  box-shadow: 0 1.4rem 4rem rgba(10, 47, 62, .32);
+  opacity: 0;
+}
+
+.gameplay-event__stage strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.45rem, 6vw, 2.25rem);
+  line-height: 1.08;
+}
+
+.gameplay-event__stage > span:last-child {
+  max-width: 25rem;
+  color: #466773;
+}
+
+.gameplay-event__icon,
+.gameplay-event__reverse-card {
+  display: grid;
+  place-items: center;
+  width: clamp(5.6rem, 25vw, 8rem);
+  aspect-ratio: 1;
+  margin-bottom: .25rem;
+  font-size: clamp(3.5rem, 15vw, 5.4rem);
+  line-height: 1;
+}
+
+.gameplay-event__icon--snow {
+  color: #16769b;
+  text-shadow: 0 0 1rem rgba(76, 188, 229, .75);
+}
+
+.gameplay-event__icon--impact {
+  border: .24rem solid #9acddd;
+  border-radius: 50%;
+  color: #176685;
+  background: radial-gradient(circle, #fff 0 30%, #d9f3fb 31% 66%, #8cc6d9 67%);
+  box-shadow: 0 0 0 .8rem rgba(255,255,255,.38), 0 0 2.2rem rgba(40,112,140,.45);
+}
+
+.gameplay-event__reverse-card {
+  aspect-ratio: 5 / 7;
+  width: clamp(5rem, 21vw, 7rem);
+  border: .26rem solid #f4dc78;
+  border-radius: .9rem;
+  background: linear-gradient(145deg, #bd3650, #752032 68%, #4e1423);
+  color: white;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 .13rem rgba(255,255,255,.42), 0 1rem 2rem rgba(72,18,34,.3);
+}
+
+.gameplay-event__stage--attack {
+  animation: freeze-attack-stage 1.3s cubic-bezier(.2,.78,.2,1) both;
+}
+
+.gameplay-event__stage--impact,
+.gameplay-event__stage--reverse-good,
+.gameplay-event__stage--reverse-bad {
+  animation: gameplay-second-stage 1.55s 1.35s cubic-bezier(.2,.78,.2,1) both;
+}
+
+.gameplay-event__stage--reverse-good {
+  border-color: #6bb98d;
+  background: linear-gradient(145deg, #f4fff8, #e1f7e8);
+  color: #145637;
+  box-shadow: 0 1.4rem 4rem rgba(16, 92, 57, .26);
+}
+
+.gameplay-event__stage--reverse-bad {
+  border-color: #d98a98;
+  background: linear-gradient(145deg, #fff7f8, #ffe7eb);
+  color: #7d2033;
+  box-shadow: 0 1.4rem 4rem rgba(117,32,50,.28);
+}
+
+.gameplay-event__stage--impact {
+  border-color: #80b7ca;
+  background: linear-gradient(145deg, #f7fdff, #dff4fb);
+}
+
+.gameplay-event--attacker .gameplay-event__stage--attack {
+  animation-duration: 1.4s;
+}
+
+@keyframes gameplay-event-lifecycle {
+  0%, 92% { opacity: 1; visibility: visible; pointer-events: auto; }
+  100% { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+@keyframes gameplay-event-wash {
+  0% { transform: scale(.72) rotate(-12deg); opacity: .15; }
+  55% { opacity: .62; }
+  100% { transform: scale(1.15) rotate(12deg); opacity: .38; }
+}
+
+@keyframes freeze-attack-stage {
+  0% { opacity: 0; transform: translateX(-26vw) scale(.66) rotate(-12deg); }
+  28% { opacity: 1; }
+  65% { opacity: 1; transform: translateX(0) scale(1.07) rotate(3deg); }
+  88% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(24vw) scale(.84) rotate(10deg); }
+}
+
+@keyframes gameplay-second-stage {
+  0% { opacity: 0; transform: scale(.7); }
+  20% { opacity: 1; transform: scale(1.08); }
+  76% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(.96); }
+}
+
+@keyframes gameplay-static-first {
+  0%, 88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes gameplay-static-second {
+  0%, 15% { opacity: 0; }
+  16%, 88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gameplay-event {
+    animation: gameplay-event-lifecycle var(--event-duration) steps(1, end) forwards !important;
+  }
+
+  .gameplay-event__wash {
+    display: none;
+  }
+
+  .gameplay-event__stage--attack {
+    animation: gameplay-static-first 1.3s steps(1, end) both !important;
+    transform: none;
+  }
+
+  .gameplay-event__stage--impact,
+  .gameplay-event__stage--reverse-good,
+  .gameplay-event__stage--reverse-bad {
+    animation: gameplay-static-second 1.55s 1.35s steps(1, end) both !important;
+    transform: none;
+  }
+}
