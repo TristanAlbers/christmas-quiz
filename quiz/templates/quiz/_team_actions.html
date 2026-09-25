@@ -42,14 +42,22 @@
         </form>
       {% endif %}
       {% if state.freeze_cost != None and state.first_finisher_team_id == None %}
-        <form class="shop-item shop-item--freeze" method="post" action="{% url 'team_action' 'freeze' %}"
+        <form class="shop-item shop-item--freeze{% if state.opponent_freeze_active %} shop-item--unavailable{% endif %}" method="post" action="{% url 'team_action' 'freeze' %}"
               hx-post="{% url 'team_action' 'freeze' %}" hx-trigger="submit"
               hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-              hx-target="#game-status" hx-swap="innerHTML">
+              hx-include="#event-context" hx-target="#game-status" hx-swap="innerHTML">
           {% csrf_token %}
           <input type="hidden" name="run_id" value="{{ state.run_id }}">
           <input type="hidden" name="request_id" value="{{ freeze_request_id }}">
-          <span class="shop-item__icon" aria-hidden="true">❄</span><strong>Freeze</strong><span>Temporarily stop the other team.</span><button type="submit">Freeze opponent ({{ state.freeze_cost }})</button>
+          <span class="shop-item__icon freeze-shop-mark" aria-hidden="true">❄</span>
+          <strong>Freeze</strong>
+          {% if state.opponent_freeze_active %}
+            <span class="shop-item__availability">Opponent is already frozen. Freeze becomes available again after they thaw.</span>
+            <button type="submit" disabled>Freeze unavailable</button>
+          {% else %}
+            <span>Launch a major ice attack and temporarily lock the other team.</span>
+            <button type="submit">Freeze opponent ({{ state.freeze_cost }})</button>
+          {% endif %}
         </form>
       {% endif %}
       </div>
