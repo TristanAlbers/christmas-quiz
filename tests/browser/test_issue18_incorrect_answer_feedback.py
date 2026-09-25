@@ -89,7 +89,7 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         await effect.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "4.5s",
+                        "2.75s",
                     )
                     self.assertIn(
                         "Incorrect answer. Try again.",
@@ -125,7 +125,7 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         await completion.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "4.5s",
+                        "3s",
                     )
                     self.assertFalse(
                         await page.locator("#incorrect-answer-effect").is_visible()
@@ -165,7 +165,7 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         await effect.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "4.5s",
+                        "2.75s",
                     )
                     self.assertIn(
                         "Incorrect answer. Try again.",

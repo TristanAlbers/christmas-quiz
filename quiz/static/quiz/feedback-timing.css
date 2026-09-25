@@ -1,20 +1,24 @@
 :root {
-  --transient-feedback-duration: 4.5s;
-  --freeze-sequence-duration: 5.6s;
+  --incorrect-feedback-duration: 2.75s;
+  --transient-feedback-duration: 3s;
+  --freeze-sequence-duration: 4s;
+  --freeze-launch-duration: 2.75s;
+  --freeze-sequence-first-stage-duration: 1.7s;
+  --freeze-sequence-second-stage-duration: 2.3s;
 }
 
-/* Keep answer feedback readable long enough to understand the result. */
+/* Keep answer feedback readable without making the quiz feel sluggish. */
 .incorrect-answer-effect--active {
-  animation-duration: var(--transient-feedback-duration);
+  animation-duration: var(--incorrect-feedback-duration);
 }
 
 .door-completion {
   animation-duration: var(--transient-feedback-duration);
 }
 
-/* Let the physical Advent-door movement breathe without making it as slow as the text card. */
+/* Keep the physical door motion brisk inside the overall completion feedback. */
 .advent-door--opening .advent-door__flap {
-  animation-duration: 2.4s;
+  animation-duration: 1.8s;
 }
 
 .advent-door-opening-echo {
@@ -37,18 +41,18 @@
 }
 
 .gameplay-event--attacker .gameplay-event__stage--attack {
-  animation-duration: 4.2s;
+  animation-duration: var(--freeze-launch-duration);
 }
 
 .gameplay-event--attacker-reversed .gameplay-event__stage--attack {
-  animation-duration: 2.35s;
+  animation-duration: var(--freeze-sequence-first-stage-duration);
 }
 
 .gameplay-event__stage--impact,
 .gameplay-event__stage--reverse-good,
 .gameplay-event__stage--reverse-bad {
-  animation-duration: 3s;
-  animation-delay: 2.35s;
+  animation-duration: var(--freeze-sequence-second-stage-duration);
+  animation-delay: var(--freeze-sequence-first-stage-duration);
 }
 
 /* Purchase confirmation is deliberately distinct from a later Reverse activation. */
@@ -80,7 +84,7 @@
     0 0 0 .8rem rgba(255, 255, 255, .3),
     0 0 0 1.65rem rgba(166, 47, 67, .11),
     0 0 4rem rgba(214, 166, 44, .42);
-  animation: reverse-purchase-burst 2.2s cubic-bezier(.18, .8, .26, 1) both;
+  animation: reverse-purchase-burst 1.45s cubic-bezier(.18, .8, .26, 1) both;
 }
 
 .reverse-purchase__card {
@@ -102,7 +106,7 @@
     inset 0 0 0 .16rem rgba(255, 255, 255, .42),
     0 1.4rem 3.4rem rgba(72, 18, 34, .38);
   transform-style: preserve-3d;
-  animation: reverse-purchase-card 3.9s cubic-bezier(.2, .78, .2, 1) both;
+  animation: reverse-purchase-card 2.65s cubic-bezier(.2, .78, .2, 1) both;
 }
 
 .reverse-purchase__card::before {
@@ -137,7 +141,7 @@
   font-size: clamp(3.7rem, 16vw, 5.2rem);
   line-height: 1;
   text-shadow: 0 .08rem 0 #fff, 0 0 .7rem rgba(255, 255, 255, .85);
-  animation: reverse-purchase-symbol 1.8s .25s cubic-bezier(.24, .76, .24, 1) both;
+  animation: reverse-purchase-symbol 1.25s .15s cubic-bezier(.24, .76, .24, 1) both;
 }
 
 .reverse-purchase__copy {
@@ -200,7 +204,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .incorrect-answer-effect--active {
-    animation: incorrect-answer-reduced var(--transient-feedback-duration) steps(1, end) !important;
+    animation: incorrect-answer-reduced var(--incorrect-feedback-duration) steps(1, end) !important;
   }
 
   .door-completion {
@@ -212,17 +216,17 @@
   }
 
   .gameplay-event--attacker .gameplay-event__stage--attack {
-    animation: gameplay-static-first 4.2s steps(1, end) both !important;
+    animation: gameplay-static-first var(--freeze-launch-duration) steps(1, end) both !important;
   }
 
   .gameplay-event--attacker-reversed .gameplay-event__stage--attack {
-    animation: gameplay-static-first 2.35s steps(1, end) both !important;
+    animation: gameplay-static-first var(--freeze-sequence-first-stage-duration) steps(1, end) both !important;
   }
 
   .gameplay-event__stage--impact,
   .gameplay-event__stage--reverse-good,
   .gameplay-event__stage--reverse-bad {
-    animation: gameplay-static-second 3s 2.35s steps(1, end) both !important;
+    animation: gameplay-static-second var(--freeze-sequence-second-stage-duration) var(--freeze-sequence-first-stage-duration) steps(1, end) both !important;
   }
 
   .reverse-purchase {

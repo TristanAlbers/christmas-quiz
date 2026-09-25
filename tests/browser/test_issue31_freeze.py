@@ -40,19 +40,19 @@ class Issue31FreezeBrowserTests(Issue31BrowserCase):
                         await attacker.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "4.5s",
+                        "3s",
                     )
                     self.assertEqual(
                         await attacker_stage.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "4.2s",
+                        "2.75s",
                     )
                     self.assertEqual(
                         await victim.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "5.6s",
+                        "4s",
                     )
                     await b.locator(".state-panel-freeze").wait_for(timeout=5000)
                     self.assertEqual(await b.locator("#answer-input").count(), 0)

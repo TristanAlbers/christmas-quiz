@@ -30,7 +30,7 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                         await purchase.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "4.5s",
+                        "3s",
                     )
                     self.assertFalse(await a.locator("#gameplay-event").is_visible())
 
@@ -50,7 +50,7 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                         await reflected.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "5.6s",
+                        "4s",
                     )
                     await b.locator(".state-panel-freeze").wait_for(timeout=5000)
                     self.assertEqual(await b.locator("#answer-input").count(), 0)
