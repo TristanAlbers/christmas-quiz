@@ -328,6 +328,8 @@ def submit_challenge_answer(
                         }
                     },
                 )
+            if run.global_state != "ADVENT_QUIZ":
+                raise core.ApplicationError("disallowed_state")
             gameplay_ms = core._gameplay_ms(run, now)
             core._reconcile_expired_freezes(run, gameplay_ms)
             challenge = Challenge.objects.filter(
