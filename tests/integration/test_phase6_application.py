@@ -1,7 +1,6 @@
 """Focused Phase 6 application, projection, route, and HTMX-boundary checks."""
 
 import tempfile
-from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -34,11 +33,13 @@ from quiz.models import (
     ChallengeAttempt,
     CommandReceipt,
     PuzzleProgress,
+    Run,
     TeamRun,
 )
 from quiz.web.views import _question_context, _team_actions_context
 
 NOW = datetime(2026, 12, 24, 18, 0, tzinfo=timezone.utc)
+GRACE_END = NOW + timedelta(seconds=15)
 
 
 class PhaseSixApplicationTests(TestCase):
@@ -73,23 +74,24 @@ class PhaseSixApplicationTests(TestCase):
             now=now,
         )
 
-    def answer(self, actor, challenge, answer, *, request_id=None, now=NOW):
+    def answer(self, actor, challenge, answer, *, request_id=None, now=GRACE_END):
         return submit_challenge_answer(
             actor,
             SubmitChallengeAnswer(
                 request_id or str(uuid4()),
                 self.run_id,
                 str(challenge.id),
-                "shared-challenge",
+                challenge.question_id,
                 answer,
             ),
             now=now,
         )
 
-    def test_projection_start_retry_wrong_attempt_and_challenged_win(self):
+    def test_free_start_grace_retry_wrong_attempt_and_challenged_win(self):
+        TeamRun.objects.filter(run_id=self.run_id, team_id="a").update(points=0)
         initial = get_team_state(self.a, now=NOW)
         self.assertTrue(initial.challenge_available)
-        self.assertEqual(initial.challenge_cost, 2)
+        self.assertEqual(initial.challenge_cost, 0)
         self.assertTrue(initial.can_initiate_challenge)
         self.assertIsNone(initial.challenge_ineligible_reason)
 
@@ -98,23 +100,42 @@ class PhaseSixApplicationTests(TestCase):
         retry = self.initiate(self.a, request_id=request_id)
         self.assertEqual(started, retry)
         challenge = Challenge.objects.get(run_id=self.run_id)
+        self.assertEqual(challenge.question_id, "challenge-a-reindeer")
+        self.assertEqual(challenge.paid_cost, 0)
         a_row = TeamRun.objects.get(run_id=self.run_id, team_id="a")
-        self.assertEqual(a_row.points, 1)
+        self.assertEqual(a_row.points, 0)
         self.assertFalse(a_row.challenge_available)
         self.assertEqual(
             CommandReceipt.objects.filter(action="initiate_challenge").count(), 1
         )
 
-        a_state = get_team_state(self.a, now=NOW)
-        b_state = get_team_state(self.b, now=NOW)
-        self.assertEqual(a_state.challenge.role, "initiator")
-        self.assertEqual(b_state.challenge.role, "challenged")
-        self.assertEqual(a_state.challenge.question.id, "shared-challenge")
-        self.assertFalse(a_state.can_initiate_challenge)
-        self.assertEqual(a_state.challenge_ineligible_reason, "game_unavailable")
+        a_starting = get_team_state(self.a, now=NOW)
+        b_starting = get_team_state(self.b, now=NOW)
+        self.assertEqual(a_starting.challenge.role, "initiator")
+        self.assertEqual(b_starting.challenge.role, "challenged")
+        self.assertEqual(a_starting.challenge.phase, "starting")
+        self.assertIsNone(a_starting.challenge.question)
+        self.assertEqual(a_starting.challenge.grace_remaining_ms, 15_000)
+        public_starting = get_public_state(now=NOW)
+        self.assertEqual(public_starting.challenge.phase, "starting")
+        self.assertIsNone(public_starting.challenge.title)
+        self.assertIsNone(public_starting.challenge.body)
+
+        with self.assertRaises(ApplicationError) as early:
+            self.answer(self.b, challenge, "rudolph", now=NOW + timedelta(seconds=14))
+        self.assertEqual(early.exception.code, "challenge_starting")
+        self.assertFalse(ChallengeAttempt.objects.exists())
+
+        b_active = get_team_state(self.b, now=GRACE_END)
+        self.assertEqual(b_active.challenge.phase, "active")
+        self.assertEqual(b_active.challenge.question.id, "challenge-a-reindeer")
+        public_active = get_public_state(now=GRACE_END)
+        self.assertEqual(public_active.challenge.phase, "active")
+        self.assertEqual(public_active.challenge.title, "Reindeer roll call")
+        self.assertIn("glowing red nose", public_active.challenge.body)
 
         wrong_id = str(uuid4())
-        before_context = _question_context(b_state)
+        before_context = _question_context(b_active)
         wrong = self.answer(self.b, challenge, "wrong", request_id=wrong_id)
         wrong_retry = self.answer(self.b, challenge, "wrong", request_id=wrong_id)
         self.assertEqual(wrong.outcome, "incorrect")
@@ -124,13 +145,19 @@ class PhaseSixApplicationTests(TestCase):
             ChallengeAttempt.objects.filter(challenge=challenge).count(), 1
         )
 
-        won = self.answer(self.b, challenge, "santa", now=NOW + timedelta(seconds=5))
+        won = self.answer(
+            self.b,
+            challenge,
+            "rudolph",
+            now=GRACE_END + timedelta(seconds=1),
+        )
         self.assertEqual(won.outcome, "won")
         challenge.refresh_from_db()
         self.assertEqual(challenge.winner_team_id, "b")
         self.assertFalse(challenge.freeze_applied)
         self.assertEqual(won.state.challenge.status, "resolved")
         self.assertIsNone(won.state.challenge.question)
+        self.assertIsNone(get_public_state(now=GRACE_END + timedelta(seconds=1)).challenge)
         self.assertEqual(
             set(
                 TeamRun.objects.filter(run_id=self.run_id).values_list(
@@ -145,27 +172,43 @@ class PhaseSixApplicationTests(TestCase):
             ).exists()
         )
 
+    def test_each_team_can_initiate_once_with_a_different_question(self):
+        self.initiate(self.a)
+        first = Challenge.objects.get(run_id=self.run_id)
+        self.answer(self.b, first, "rudolph")
+
+        second_start = GRACE_END + timedelta(seconds=1)
+        self.initiate(self.b, now=second_start)
+        second = Challenge.objects.get(run_id=self.run_id, initiator_team_id="b")
+        self.assertEqual(second.question_id, "challenge-b-five-gifts")
+        self.assertNotEqual(first.question_id, second.question_id)
+        self.assertEqual(Challenge.objects.filter(run_id=self.run_id).count(), 2)
+
+        second_active = second_start + timedelta(seconds=15)
+        b_state = get_team_state(self.b, now=second_active)
+        self.assertEqual(b_state.challenge.question.id, "challenge-b-five-gifts")
+        self.assertEqual(get_public_state(now=second_active).challenge.challenge_number, 2)
+
+        with self.assertRaises(ApplicationError) as spent:
+            self.initiate(self.a, now=second_active)
+        self.assertEqual(spent.exception.code, "challenge_spent")
+
     def test_initiator_win_applies_direct_freeze_and_preserves_reverse(self):
         TeamRun.objects.filter(run_id=self.run_id, team_id="b").update(
             reverse_active=True
         )
         self.initiate(self.a)
         challenge = Challenge.objects.get(run_id=self.run_id)
-        result = self.answer(
-            self.a,
-            challenge,
-            "santa",
-            now=NOW + timedelta(seconds=12),
-        )
+        result = self.answer(self.a, challenge, "rudolph", now=GRACE_END)
         self.assertEqual(result.outcome, "won")
         b_row = TeamRun.objects.get(run_id=self.run_id, team_id="b")
         self.assertEqual(b_row.activity_state, "FREEZE")
-        self.assertEqual(b_row.freeze_started_gameplay_ms, 12_000)
+        self.assertEqual(b_row.freeze_started_gameplay_ms, 15_000)
         self.assertTrue(b_row.reverse_active)
         self.assertEqual(result.state.challenge.winner_team_id, "a")
         self.assertTrue(result.state.challenge.freeze_applied)
 
-    def test_pause_resume_preserves_active_challenge_and_rejects_answer(self):
+    def test_pause_resume_freezes_grace_clock_and_rejects_answer(self):
         self.initiate(self.a)
         challenge = Challenge.objects.get(run_id=self.run_id)
         pause_game(
@@ -176,30 +219,41 @@ class PhaseSixApplicationTests(TestCase):
         paused = get_team_state(self.a, now=NOW + timedelta(minutes=2))
         self.assertEqual(paused.global_state, "PAUSED")
         self.assertEqual(paused.challenge.status, "active")
+        self.assertEqual(paused.challenge.phase, "starting")
+        self.assertEqual(paused.challenge.grace_remaining_ms, 12_000)
         with self.assertRaises(ApplicationError) as rejected:
-            self.answer(self.a, challenge, "santa", now=NOW + timedelta(minutes=2))
+            self.answer(self.a, challenge, "rudolph", now=NOW + timedelta(minutes=2))
         self.assertEqual(rejected.exception.code, "disallowed_state")
         self.assertFalse(ChallengeAttempt.objects.exists())
+        resume_time = NOW + timedelta(minutes=2)
         resume_game(
             self.admin,
             RunCommand(str(uuid4()), self.run_id),
-            now=NOW + timedelta(minutes=2),
+            now=resume_time,
         )
-        self.assertEqual(get_team_state(self.a).team_state, "CHALLENGE")
+        resumed = get_team_state(self.a, now=resume_time)
+        self.assertEqual(resumed.team_state, "CHALLENGE")
+        self.assertEqual(resumed.challenge.grace_remaining_ms, 12_000)
+        active = get_team_state(self.a, now=resume_time + timedelta(seconds=12))
+        self.assertEqual(active.challenge.phase, "active")
 
-    def test_admin_monitoring_fields_and_no_public_challenge_data(self):
+    def test_admin_and_public_monitoring_fields(self):
         self.initiate(self.a)
         admin = get_admin_state(self.admin, now=NOW)
         self.assertEqual(admin.challenge.status, "active")
+        self.assertEqual(admin.challenge.phase, "starting")
         self.assertEqual(admin.challenge.initiator_team_id, "a")
-        self.assertEqual(admin.challenge.paid_cost, 2)
+        self.assertEqual(admin.challenge.paid_cost, 0)
+        self.assertEqual(admin.challenge.challenge_number, 1)
         team_a = next(team for team in admin.teams if team.team_id == "a")
         self.assertFalse(team_a.challenge_available)
-        public = asdict(get_public_state(now=NOW))
-        self.assertNotIn("challenge", public)
-        self.assertNotIn("shared-challenge", str(public))
+        public = get_public_state(now=NOW)
+        self.assertIsNotNone(public.challenge)
+        self.assertEqual(public.challenge.initiator_team_id, "a")
+        self.assertEqual(public.challenge.challenged_team_id, "b")
+        self.assertEqual(public.challenge.grace_remaining_ms, 15_000)
 
-    def test_routes_keep_wrong_answer_context_and_guard_media(self):
+    def test_routes_reject_grace_answers_then_keep_wrong_answer_context(self):
         client = Client()
         client.force_login(self.a_user)
         response = client.post(
@@ -209,21 +263,40 @@ class PhaseSixApplicationTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         challenge = Challenge.objects.get(run_id=self.run_id)
-        state = get_team_state(self.a)
+
         response = client.post(
             reverse("team_challenge_answer"),
             {
                 "request_id": str(uuid4()),
                 "run_id": self.run_id,
                 "challenge_id": challenge.id,
-                "question_id": "shared-challenge",
+                "question_id": challenge.question_id,
+                "answer": "wrong",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertContains(response, "challenge starting", status_code=409)
+
+        Run.objects.filter(pk=self.run_id).update(
+            gameplay_elapsed_ms=15_000,
+            advent_clock_anchor=None,
+        )
+        state = get_team_state(self.a, now=NOW)
+        response = client.post(
+            reverse("team_challenge_answer"),
+            {
+                "request_id": str(uuid4()),
+                "run_id": self.run_id,
+                "challenge_id": challenge.id,
+                "question_id": challenge.question_id,
                 "answer": "wrong",
             },
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'id="question-pane"')
-        current = get_team_state(self.a)
+        current = get_team_state(self.a, now=NOW)
         self.assertEqual(_question_context(current), _question_context(state))
         self.assertEqual(
             _team_actions_context(current), _team_actions_context(state)
