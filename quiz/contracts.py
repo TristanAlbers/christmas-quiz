@@ -1,4 +1,4 @@
-"""Small immutable boundary values for the first game slice."""
+"""Small immutable boundary values for the persisted game application."""
 
 from dataclasses import dataclass
 from typing import Literal
@@ -17,6 +17,10 @@ ErrorCode = Literal[
     "insufficient_points",
     "no_hint_tokens",
     "already_active",
+    "challenge_spent",
+    "challenge_unavailable",
+    "challenge_starting",
+    "stale_challenge",
 ]
 
 
@@ -57,6 +61,15 @@ class SubmitAnswer:
 class SubmitMusicAnswer:
     request_id: str
     run_id: str
+    question_id: str
+    answer: str
+
+
+@dataclass(frozen=True)
+class SubmitChallengeAnswer:
+    request_id: str
+    run_id: str
+    challenge_id: str
     question_id: str
     answer: str
 
@@ -108,6 +121,38 @@ class AdventProgressProjection:
 
 
 @dataclass(frozen=True)
+class ChallengeQuestionProjection:
+    id: str
+    title: str
+    body: str
+    media_urls: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class TeamChallengeProjection:
+    id: str
+    status: Literal["active", "resolved"]
+    role: Literal["initiator", "challenged"]
+    phase: Literal["starting", "active", "resolved"] = "active"
+    grace_remaining_ms: int | None = None
+    question: ChallengeQuestionProjection | None = None
+    winner_team_id: TeamId | None = None
+    freeze_applied: bool = False
+
+
+@dataclass(frozen=True)
+class PublicChallengeProjection:
+    id: str
+    phase: Literal["starting", "active"]
+    challenge_number: int
+    initiator_team_id: TeamId
+    challenged_team_id: TeamId
+    grace_remaining_ms: int | None = None
+    title: str | None = None
+    body: str | None = None
+
+
+@dataclass(frozen=True)
 class PublicTeamProgressProjection:
     team_id: TeamId
     advent_progress: AdventProgressProjection
@@ -134,6 +179,11 @@ class TeamProjection:
     advent_progress: AdventProgressProjection | None = None
     first_finisher_team_id: TeamId | None = None
     gameplay_elapsed_ms: int = 0
+    challenge_available: bool = False
+    challenge_cost: int | None = None
+    can_initiate_challenge: bool = False
+    challenge_ineligible_reason: str | None = None
+    challenge: TeamChallengeProjection | None = None
 
 
 @dataclass(frozen=True)
@@ -144,6 +194,12 @@ class AnswerResult:
 
 @dataclass(frozen=True)
 class MusicAnswerResult:
+    outcome: Literal["incorrect", "won"]
+    state: TeamProjection
+
+
+@dataclass(frozen=True)
+class ChallengeAnswerResult:
     outcome: Literal["incorrect", "won"]
     state: TeamProjection
 
@@ -204,6 +260,22 @@ class AdminTeamProjection:
     uno_reverse_active: bool = False
     freeze_remaining_ms: int | None = None
     advent_progress: AdventProgressProjection | None = None
+    challenge_available: bool = False
+
+
+@dataclass(frozen=True)
+class AdminChallengeProjection:
+    id: str
+    status: Literal["active", "resolved"]
+    initiator_team_id: TeamId
+    challenged_team_id: TeamId
+    question_id: str
+    paid_cost: int
+    phase: Literal["starting", "active", "resolved"] = "active"
+    grace_remaining_ms: int | None = None
+    challenge_number: int = 1
+    winner_team_id: TeamId | None = None
+    freeze_applied: bool = False
 
 
 @dataclass(frozen=True)
@@ -224,6 +296,7 @@ class AdminProjection:
     music: MusicProjection | None = None
     first_finisher_team_id: TeamId | None = None
     gameplay_elapsed_ms: int = 0
+    challenge: AdminChallengeProjection | None = None
 
 
 @dataclass(frozen=True)
@@ -233,3 +306,4 @@ class PublicProjection:
     teams: tuple[PublicTeamProgressProjection, ...] = ()
     first_finisher_team_id: TeamId | None = None
     gameplay_elapsed_ms: int = 0
+    challenge: PublicChallengeProjection | None = None

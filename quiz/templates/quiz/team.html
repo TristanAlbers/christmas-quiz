@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Christmas Quiz · Team {{ team_name }}</title>
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze-attack.css' %}">
@@ -40,6 +41,23 @@
   <div id="gameplay-event" class="gameplay-event gameplay-event--idle" aria-hidden="true"></div>
   {% include 'quiz/_endgame_celebration.html' %}
   <script>
+    function freshRequestId() {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+      }
+      const bytes = new Uint8Array(16);
+      if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        window.crypto.getRandomValues(bytes);
+      } else {
+        for (let index = 0; index < bytes.length; index += 1) {
+          bytes[index] = Math.floor(Math.random() * 256);
+        }
+      }
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0'));
+      return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`;
+    }
     document.body.addEventListener('htmx:responseError', function (event) {
       const status = event.detail.xhr.status;
       const isAction = event.detail.elt.closest('form') !== null;
@@ -58,6 +76,11 @@
     });
     document.body.addEventListener('htmx:afterRequest', function (event) {
       if (event.detail.successful) document.getElementById('connection-status').textContent = '';
+      const challengeForm = event.detail.elt.closest('.challenge-answer-form');
+      if (challengeForm && event.detail.successful) {
+        const requestId = challengeForm.querySelector('input[name="request_id"]');
+        if (requestId) requestId.value = freshRequestId();
+      }
     });
     let reopenShop = false;
     document.body.addEventListener('htmx:oobBeforeSwap', function (event) {

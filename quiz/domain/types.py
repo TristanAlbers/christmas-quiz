@@ -16,6 +16,9 @@ DomainErrorCode = Literal[
     "insufficient_points",
     "no_hint_tokens",
     "already_active",
+    "challenge_spent",
+    "challenge_unavailable",
+    "stale_challenge",
 ]
 
 

@@ -5,3 +5,9 @@ exclude = ["quiz/migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"quiz/phase6_application.py" = ["I001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["quiz", "tests"]

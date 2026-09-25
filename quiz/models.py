@@ -72,6 +72,7 @@ class TeamRun(models.Model):
     hint_tokens = models.IntegerField(default=0)
     freeze_started_gameplay_ms = models.BigIntegerField(null=True, blank=True)
     reverse_active = models.BooleanField(default=False)
+    challenge_available = models.BooleanField(default=True)
 
     class Meta:
         constraints = [
@@ -295,6 +296,135 @@ class FirstFinisher(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError("First-finisher facts cannot be deleted")
+
+
+class Challenge(models.Model):
+    """Durable free Challenge context and its eventual winning result."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(Run, on_delete=models.PROTECT, related_name="challenges")
+    initiator_team_id = models.CharField(max_length=1)
+    challenged_team_id = models.CharField(max_length=1)
+    question_id = models.CharField(max_length=100)
+    # Kept for the unmerged Phase-6 storage shape; the invariant is exactly zero.
+    paid_cost = models.PositiveIntegerField(default=0)
+    started_gameplay_ms = models.BigIntegerField()
+    status = models.CharField(max_length=8, default="active")
+    winner_team_id = models.CharField(max_length=1, null=True, blank=True)
+    freeze_applied = models.BooleanField(default=False)
+    winning_attempt = models.OneToOneField(
+        "ChallengeAttempt",
+        on_delete=models.PROTECT,
+        related_name="winning_challenge",
+        null=True,
+        blank=True,
+    )
+    started_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run"],
+                condition=Q(status="active"),
+                name="one_active_challenge_per_run",
+            ),
+            models.UniqueConstraint(
+                fields=["run", "initiator_team_id"],
+                name="one_challenge_per_initiator",
+            ),
+            models.UniqueConstraint(
+                fields=["run", "question_id"],
+                name="unique_challenge_question_per_run",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(initiator_team_id="a", challenged_team_id="b")
+                    | Q(initiator_team_id="b", challenged_team_id="a")
+                ),
+                name="valid_challenge_team_pair",
+            ),
+            models.CheckConstraint(
+                condition=Q(paid_cost=0),
+                name="challenge_cost_always_zero",
+            ),
+            models.CheckConstraint(
+                condition=Q(started_gameplay_ms__gte=0),
+                name="challenge_start_gameplay_nonnegative",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        status="active",
+                        winner_team_id__isnull=True,
+                        freeze_applied=False,
+                        winning_attempt__isnull=True,
+                        resolved_at__isnull=True,
+                    )
+                    | (
+                        Q(
+                            status="resolved",
+                            winner_team_id__isnull=False,
+                            winning_attempt__isnull=False,
+                            resolved_at__isnull=False,
+                        )
+                        & (
+                            Q(
+                                winner_team_id=models.F("initiator_team_id"),
+                                freeze_applied=True,
+                            )
+                            | Q(
+                                winner_team_id=models.F("challenged_team_id"),
+                                freeze_applied=False,
+                            )
+                        )
+                    )
+                ),
+                name="valid_challenge_result_state",
+            ),
+        ]
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Challenge facts cannot be deleted")
+
+
+class ChallengeAttempt(models.Model):
+    """Append-only accepted attempt for a snapshotted Challenge question."""
+
+    challenge = models.ForeignKey(
+        Challenge, on_delete=models.PROTECT, related_name="attempts"
+    )
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    team_id = models.CharField(max_length=1)
+    request_id = models.UUIDField()
+    question_id = models.CharField(max_length=100)
+    is_correct = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["actor", "request_id"],
+                name="unique_challenge_attempt_request",
+            ),
+            models.UniqueConstraint(
+                fields=["challenge"],
+                condition=Q(is_correct=True),
+                name="unique_correct_challenge_attempt",
+            ),
+            models.CheckConstraint(
+                condition=Q(team_id__in=["a", "b"]),
+                name="valid_challenge_attempt_team",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            raise ValueError("Challenge attempts are immutable")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Challenge attempts cannot be deleted")
 
 
 class MusicQuiz(models.Model):
