@@ -153,9 +153,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         await page.locator("#challenge-answer-input").wait_for(
                             timeout=5000
                         )
-                    await tv_page.get_by_text("Reindeer roll call", exact=True).wait_for(
-                        timeout=5000
-                    )
+                    await tv_page.get_by_text(
+                        "Reindeer roll call", exact=True
+                    ).wait_for(timeout=5000)
                     tv_live = await tv_page.locator(".challenge-overview").inner_text()
                     self.assertIn("glowing red nose", tv_live)
                     self.assertIn("First correct answer", tv_live)
@@ -278,9 +278,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     await admin_page.get_by_text(
                         "Puzzle is live.", exact=False
                     ).wait_for(timeout=5000)
-                    await tv_page.get_by_text("Reindeer roll call", exact=True).wait_for(
-                        timeout=5000
-                    )
+                    await tv_page.get_by_text(
+                        "Reindeer roll call", exact=True
+                    ).wait_for(timeout=5000)
                     tv_text = await tv_page.locator(
                         ".challenge-overview"
                     ).inner_text()
