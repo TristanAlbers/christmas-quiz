@@ -77,7 +77,7 @@ def challenge_media(request, run_id, challenge_id, asset_path):
         try:
             run = Run.objects.get(pk=run_id, active=True)
             challenge = Challenge.objects.get(pk=challenge_id, run=run)
-            config = load_snapshot(run)
+            load_snapshot(run)
             gameplay_ms = effective_gameplay_ms(
                 run.gameplay_elapsed_ms,
                 run.advent_clock_anchor,
