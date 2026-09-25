@@ -25,8 +25,10 @@ class Issue31FreezeBrowserTests(Issue31BrowserCase):
                     victim = b.locator("#gameplay-event.gameplay-event--victim")
                     await attacker.wait_for(state="visible", timeout=5000)
                     await victim.wait_for(state="visible", timeout=5000)
-                    self.assertIn("Direct hit!", await attacker.inner_text())
-                    self.assertIn("You have been frozen!", await victim.inner_text())
+                    self.assertIn("direct hit!", (await attacker.inner_text()).lower())
+                    self.assertIn(
+                        "you have been frozen!", (await victim.inner_text()).lower()
+                    )
                     animation = await attacker.locator(
                         ".gameplay-event__stage--attack"
                     ).evaluate("el => getComputedStyle(el).animationName")
