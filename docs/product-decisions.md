@@ -65,3 +65,11 @@ Starting a Challenge enters a server-authoritative **15-second** gathering/grace
 While a Challenge is active, the shared public/TV overview switches from the Advent-calendar overview to a dedicated Challenge overview, analogous to the Music Quiz takeover. It may show the Challenge number within the two possible opportunities, initiating/challenged teams, gathering countdown, and—after the grace period—the shared Challenge title/body and first-correct-wins status. It must never expose correct answers, submitted attempts, balances, Hint/Reverse state, Freeze/private effects, private team state, or Challenge media unless separately approved.
 
 These decisions intentionally override older Phase 6 wording that described a paid Challenge, one reusable shared package puzzle, immediate answer availability, or complete Challenge absence from the public/TV overview. All other Challenge outcome, atomicity, recovery, isolation, and polling-stability rules remain unchanged.
+
+## 2026-09-27 — puzzle 25 cannot be skipped by players
+
+Puzzle 25 is the final, game-winning puzzle and is an explicit exception to the generic player Skip rule. A player Skip request targeting the authoritative current puzzle 25 must be rejected before cost deduction or canonical completion. This remains true for stale/direct requests and for puzzle 25 becoming current again after administrative recovery/reopening.
+
+Correct-answer completion of puzzle 25 continues through the normal canonical completion pipeline, including first-finisher and global-finish semantics. Administrator force completion remains a separate privileged completion route and is unchanged. Puzzles 1–24 keep the existing paid Skip behavior.
+
+The team UI must not expose an enabled Skip action on puzzle 25. It may retain the visual action position as an explicitly disabled final-puzzle control, but frontend state is never the enforcement boundary.
