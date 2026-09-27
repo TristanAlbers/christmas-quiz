@@ -21,7 +21,6 @@ concurrency:
 
 env:
   CI_IMAGE: christmas-quiz-ci
-  CI_CACHE_SCOPE: christmas-quiz-dev
 
 jobs:
   fast-tests:
@@ -33,18 +32,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Build development test image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: dev
-          load: true
-          tags: ${{ env.CI_IMAGE }}
-          cache-from: type=gha,scope=${{ env.CI_CACHE_SCOPE }}
-          cache-to: type=gha,mode=max,scope=${{ env.CI_CACHE_SCOPE }}
+        run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Lint Python
         run: docker run --rm $CI_IMAGE python -m ruff check .
@@ -82,7 +71,6 @@ jobs:
 
   browser-tests:
     name: Browser tests (${{ matrix.shard }})
-    needs: fast-tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -113,17 +101,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Restore development test image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: dev
-          load: true
-          tags: ${{ env.CI_IMAGE }}
-          cache-from: type=gha,scope=${{ env.CI_CACHE_SCOPE }}
+      - name: Build development test image
+        run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Run browser shard
         run: >-
