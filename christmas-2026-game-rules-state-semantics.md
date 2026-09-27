@@ -109,6 +109,8 @@ After completion, the exact previous team states resume.
 
 The Music Quiz triggers immediately when **any team completes puzzle 13**. Normal completion, Skip and admin force completion all count. The trigger occurs only once per game; reopening/recompleting puzzle 13 does not trigger it again.
 
+The trigger begins a 60-second `gathering` subphase on the existing Music clock. Advent is already suspended throughout gathering, and neither team can see or answer question 1 until 60,000 active Music milliseconds have elapsed. Pause freezes gathering; recovery and active downtime follow the existing Music-clock policy. The Music sequence is `gathering` → question 1 → questions 2–11 → final results; gathering is not a separate global state.
+
 It has 11 questions. For each question:
 
 - both teams may submit answers;
@@ -117,11 +119,11 @@ It has 11 questions. For each question:
 - there is no time limit;
 - the first valid correct answer accepted by the server wins;
 - later answers are rejected because the question is already resolved;
-- the next question starts immediately.
+- after a winner, the next question starts immediately (questions 2–11).
 
 The correct team receives a globally configured number of points, added directly to its normal point balance.
 
-The Music Quiz may display an upward elapsed-time counter, but it has no countdown/deadline.
+Music questions have no countdown or deadline. The shared TV may show the issue-#44 cosmetic `0:00`–`3:00` player-style bar; it does not use track duration or playback position and has no effect on question timing.
 
 After question 11, show the final score for a configurable duration (approximately 1–3 minutes by default), then return to Advent Quiz.
 
@@ -1076,10 +1078,13 @@ Do not make the normal game architecture unnecessarily complicated to optimize f
 - It triggers only once.
 - Underlying team states survive it.
 - Freeze timers pause during it.
+- A 60-second Music-clock gathering subphase precedes question 1.
+- Pause freezes gathering and recovery does not restart it.
 - First valid correct answer wins.
 - Simultaneous correct answers resolve atomically.
 - Configured points are awarded.
-- Questions advance immediately.
+- Questions 2–11 advance immediately after the preceding winner.
+- Active questions remain unlimited; the TV's three-minute bar is cosmetic.
 - Advent gameplay resumes after the final result display.
 
 ### Freeze

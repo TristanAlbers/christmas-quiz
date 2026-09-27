@@ -180,9 +180,9 @@ class PhaseFiveApplicationTests(TestCase):
             submit_music_answer(
                 actor,
                 SubmitMusicAnswer(str(uuid4()), self.run_id, f"music-{number}", answer),
-                now=NOW + timedelta(seconds=5 + number),
+                now=NOW + timedelta(seconds=65 + number),
             )
-        resumed_at = NOW + timedelta(seconds=76)
+        resumed_at = NOW + timedelta(seconds=136)
         self.answer(self.b, "b", 13, now=resumed_at)
         return resumed_at
 

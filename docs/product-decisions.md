@@ -73,3 +73,11 @@ Puzzle 25 is the final, game-winning puzzle and is an explicit exception to the 
 Correct-answer completion of puzzle 25 continues through the normal canonical completion pipeline, including first-finisher and global-finish semantics. Administrator force completion remains a separate privileged completion route and is unchanged. Puzzles 1–24 keep the existing paid Skip behavior.
 
 The team UI must not expose an enabled Skip action on puzzle 25. It may retain the visual action position as an explicitly disabled final-puzzle control, but frontend state is never the enforcement boundary.
+
+## 2026-09-27 — Music opens with a gathering period
+
+Issue #44 adds a fixed 60-second, server-authoritative gathering period before Music question 1. Gathering is a Music subphase: the global state becomes `MUSIC_QUIZ` and Advent gameplay is suspended as soon as puzzle 13 triggers Music. Pause freezes the Music clock, while refresh, reconnect, process restart, and active downtime recover from that same clock and do not restart gathering.
+
+At 60,000 active Music milliseconds question 1 becomes available. Questions 2–11 still begin immediately after the preceding first-correct winner. Active Music questions remain unlimited in duration.
+
+On the shared TV, an active question uses a decorative player-style progress bar labelled from `0:00` to `3:00`. The three-minute endpoint is not a deadline and does not advance, expire, or restrict a question. The bar does not inspect or represent the real audio duration or playback position.

@@ -10,6 +10,7 @@ from django.db import connections
 from django.test import TransactionTestCase
 from django.utils import timezone
 
+from quiz import _application_core as core
 from quiz.models import (
     AccountRole,
     AuditEvent,
@@ -56,6 +57,7 @@ class PhaseFourSQLiteRaceTests(TransactionTestCase):
             run=run,
             phase="question",
             current_question_number=1,
+            current_question_started_ms=0,
             music_clock_anchor=timezone.now(),
         )
         MusicScore.objects.bulk_create(
@@ -255,8 +257,7 @@ class PhaseFourSQLiteRaceTests(TransactionTestCase):
                 current.save(update_fields=["global_state", "advent_clock_anchor"])
                 MusicQuiz.objects.create(
                     run=current,
-                    phase="question",
-                    current_question_number=1,
+                    phase="gathering",
                     music_clock_anchor=timezone.now(),
                 )
                 MusicScore.objects.create(run=current, team_id="a")
@@ -288,3 +289,39 @@ class PhaseFourSQLiteRaceTests(TransactionTestCase):
             PuzzleProgress.objects.filter(run=run, number=13, completed=True).count(),
             1,
         )
+
+    def test_boundary_reconciliation_initializes_question_one_once(self):
+        Run.objects.filter(active=True).update(active=False)
+        observed_at = timezone.now()
+        run = Run.objects.create(
+            global_state="MUSIC_QUIZ",
+            package_id="phase4",
+            snapshot_path="/tmp/pinned",
+            snapshot_digest="c" * 64,
+            gameplay_elapsed_ms=123,
+            advent_clock_anchor=None,
+        )
+        MusicQuiz.objects.create(
+            run=run,
+            phase="gathering",
+            music_elapsed_ms=60_000,
+            music_clock_anchor=observed_at,
+        )
+        config = {"music_score_display_duration_ms": 1_000}
+
+        def reconcile():
+            with immediate_transaction():
+                current = Run.objects.get(pk=run.pk)
+                return core._persist_music_timing(current, config, observed_at)
+
+        first, second = self._compete(reconcile, reconcile)
+        self.assertEqual((first, second), ("question_started", None))
+        music = MusicQuiz.objects.get(run=run)
+        self.assertEqual(music.phase, "question")
+        self.assertEqual(music.current_question_number, 1)
+        self.assertEqual(music.current_question_started_ms, 60_000)
+        self.assertEqual(music.music_elapsed_ms, 60_000)
+        self.assertEqual(music.music_clock_anchor, observed_at)
+        self.assertFalse(AuditEvent.objects.filter(run=run).exists())
+        self.assertFalse(MusicAttempt.objects.filter(run=run).exists())
+        self.assertFalse(MusicQuestionResult.objects.filter(run=run).exists())

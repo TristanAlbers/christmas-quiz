@@ -1,5 +1,6 @@
 """End-to-end application invariant for the complete 11-question Music round."""
 
+from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -15,7 +16,13 @@ from quiz.application import (
     submit_music_answer,
 )
 from quiz.contracts import Actor, AdminPuzzle, StartGame, SubmitMusicAnswer
-from quiz.models import AccountRole, MusicQuestionResult, MusicScore, TeamRun
+from quiz.models import (
+    AccountRole,
+    MusicQuestionResult,
+    MusicQuiz,
+    MusicScore,
+    TeamRun,
+)
 
 
 class PhaseFourFullMusicJourneyTests(TransactionTestCase):
@@ -62,6 +69,10 @@ class PhaseFourFullMusicJourneyTests(TransactionTestCase):
         )
         before_a = TeamRun.objects.get(run_id=self.run_id, team_id="a").points
         before_b = TeamRun.objects.get(run_id=self.run_id, team_id="b").points
+        music_started_at = MusicQuiz.objects.get(
+            run_id=self.run_id
+        ).music_clock_anchor
+        answer_time = music_started_at + timedelta(seconds=60)
 
         for number, answer in enumerate(answers, start=1):
             actor = self.a if number % 2 else self.b
@@ -70,6 +81,7 @@ class PhaseFourFullMusicJourneyTests(TransactionTestCase):
                 SubmitMusicAnswer(
                     str(uuid4()), self.run_id, f"music-{number}", answer
                 ),
+                now=answer_time,
             )
             self.assertEqual(result.outcome, "won")
             if number < 11:
@@ -97,12 +109,16 @@ class PhaseFourFullMusicJourneyTests(TransactionTestCase):
             before_b + 10,
         )
 
-        public = get_public_state()
+        public = get_public_state(now=answer_time)
         self.assertEqual(public.global_state, "MUSIC_QUIZ")
         self.assertEqual(public.music.phase, "final_results")
         self.assertEqual(
             [(item.team_id, item.score) for item in public.music.scores],
             [("a", 6), ("b", 5)],
         )
-        self.assertEqual(get_team_state(self.a).music.phase, "final_results")
-        self.assertEqual(get_team_state(self.b).music.phase, "final_results")
+        self.assertEqual(
+            get_team_state(self.a, now=answer_time).music.phase, "final_results"
+        )
+        self.assertEqual(
+            get_team_state(self.b, now=answer_time).music.phase, "final_results"
+        )

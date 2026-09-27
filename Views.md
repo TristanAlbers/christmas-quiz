@@ -157,12 +157,14 @@ It should contain:
 
 * an obvious progress bar or 11-step tracker showing progress through the 11 Music questions;
 * the current question number;
-* a timer for the active question that starts from 0 and counts up;
+* for an active question, a player-style progress bar labelled `0:00` and `3:00`, visually capped at three minutes but without deadline semantics;
 * each participating team's current Music score;
 * the approved shared audio/playback interaction once that workflow is settled;
 * a clearly distinct final-results state for the configured results-display duration.
 
 Music progression should not be conveyed only as a text string such as `Question 4 of 11`; the current position must be visually scannable from across the room.
+
+During the issue-#44 gathering subphase, the public/TV view shows a clear 60-second preparation countdown and Music scores, but no question-1 title, body, audio, or answer interaction. The countdown uses authoritative remaining Music time supplied by the server. Refresh and Pause must retain the correct remaining value. The active-question player bar is cosmetic: it does not use the audio element's duration or playhead and reaching `3:00` does not expire or advance the question.
 
 ## Puzzle Music Challenge View
 
@@ -175,6 +177,8 @@ During Music Quiz it should show only information/actions needed for that mini-g
 * an authoritative 11-step tracker showing the current Music question;
 * the team's answer field and submission action;
 * concise result/rejection feedback needed for repeated attempts.
+
+During gathering, the team view shows a concise preparation state and authoritative remaining time. It shows no question-1 details, audio, or answer controls. When question 1 becomes effective, the normal minimal Music interaction replaces that preparation state.
 
 The team status area should not duplicate the public Music overview: it should omit a separate `Question N of 11` heading, elapsed-question timer, team Music scores, previous-winner summary, and final-results countdown. Those status details belong on the shared public/TV overview.
 

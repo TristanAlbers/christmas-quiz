@@ -314,7 +314,7 @@ def submit_challenge_answer(
             config = _load_snapshot_compatible(run)
             if config.get("schema_version") != 6:
                 raise core.ApplicationError("disallowed_state")
-            if core._persist_music_timing(run, config, now):
+            if core._persist_music_timing(run, config, now) == "completed":
                 core._event(
                     run,
                     actor,
