@@ -18,13 +18,16 @@
 {% if music %}
   <section class="music-status" aria-label="Music Quiz status">
     <p class="eyebrow">Music Quiz</p>
-    {% if music.phase == 'question' %}
-      <h2>Question {{ music.question_number }} of {{ music.question_total }}</h2>
+    {% if music.phase == 'gathering' %}
+      <h2>Muziekquiz begint zo</h2>
+      <p class="music-timer">Nog {% widthratio music.gathering_remaining_ms 1000 1 %} seconden</p>
+    {% elif music.phase == 'question' %}
+      <h2>Vraag {{ music.question_number }} van {{ music.question_total }}</h2>
       <p>{{ music.title }} — {{ music.body }}</p>
       <p class="music-timer">{% widthratio music.question_elapsed_ms 1000 1 %} seconds</p>
     {% else %}
-      <h2>Final Music scores</h2>
-      <p>Advent resumes in {% widthratio music.final_results_remaining_ms 1000 1 %} seconds.</p>
+      <h2>Eindstand muziekquiz</h2>
+      <p>De Adventquiz gaat verder over {% widthratio music.final_results_remaining_ms 1000 1 %} seconden.</p>
     {% endif %}
     <div class="music-scores">
       {% for score in music.scores %}

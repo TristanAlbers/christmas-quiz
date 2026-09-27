@@ -11,6 +11,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import LiveServerTestCase, override_settings
+from django.utils import timezone
 
 from quiz.application import (
     force_complete_current,
@@ -20,7 +21,7 @@ from quiz.application import (
     submit_music_answer,
 )
 from quiz.contracts import Actor, AdminPuzzle, RunCommand, StartGame, SubmitMusicAnswer
-from quiz.models import AccountRole
+from quiz.models import AccountRole, MusicQuiz
 
 MEDIA_STUB = r"""
 window.__mediaCalls = [];
@@ -134,6 +135,12 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
             ),
         )
 
+    def _finish_gathering(self):
+        MusicQuiz.objects.filter(run_id=self.run_id).update(
+            music_elapsed_ms=60_000,
+            music_clock_anchor=timezone.now(),
+        )
+
     async def _overview_page(self, browser):
         context = await browser.new_context()
         await context.add_init_script(MEDIA_STUB)
@@ -160,7 +167,18 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     await page.wait_for_timeout(750)
 
                     await asyncio.to_thread(self._start_music)
-                    await page.get_by_text("Question 1 of 11", exact=False).wait_for(
+                    await page.get_by_text("Maak je klaar!", exact=True).wait_for(
+                        timeout=5000
+                    )
+                    self.assertIsNone(
+                        await page.locator("#music-player").get_attribute("src")
+                    )
+                    self.assertEqual(
+                        await page.get_by_role("heading", name="Playing").count(), 0
+                    )
+
+                    await asyncio.to_thread(self._finish_gathering)
+                    await page.get_by_text("Vraag 1 van 11", exact=False).wait_for(
                         timeout=5000
                     )
                     await page.get_by_role("heading", name="Playing").wait_for(
@@ -229,7 +247,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     )
 
                     await asyncio.to_thread(self._answer_music, 1)
-                    await page.get_by_text("Question 2 of 11", exact=False).wait_for(
+                    await page.get_by_text("Vraag 2 van 11", exact=False).wait_for(
                         timeout=5000
                     )
                     await page.get_by_role("heading", name="Playing").wait_for(
@@ -246,9 +264,9 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
 
                     for number in range(2, 12):
                         await asyncio.to_thread(self._answer_music, number)
-                    await page.get_by_text("Final Music scores", exact=False).wait_for(
-                        timeout=5000
-                    )
+                    await page.get_by_text(
+                        "Eindstand muziekquiz", exact=False
+                    ).wait_for(timeout=5000)
                     await page.get_by_role("heading", name="Sound ready").wait_for(
                         timeout=5000
                     )
@@ -263,6 +281,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
 
     def test_blocked_and_failed_playback_stays_actionable(self):
         self._start_music()
+        self._finish_gathering()
 
         async def check():
             from playwright.async_api import async_playwright
@@ -271,7 +290,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                 browser = await playwright.chromium.launch()
                 context, page = await self._overview_page(browser)
                 try:
-                    await page.get_by_text("Question 1 of 11", exact=False).wait_for()
+                    await page.get_by_text("Vraag 1 van 11", exact=False).wait_for()
                     self.assertEqual(await page.locator("#music-player").count(), 1)
                     await page.evaluate("window.__rejectMediaPlay = true")
                     await page.get_by_role("button", name="Enable sound").click()

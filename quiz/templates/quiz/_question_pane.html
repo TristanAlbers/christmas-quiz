@@ -2,7 +2,15 @@
   <input id="view-context" type="hidden" name="view_context" value="{{ view_context }}">
   {% if state.music %}
     {% include 'quiz/_music_progress.html' with music=state.music %}
-    {% if state.music.phase == 'question' %}
+    {% if state.music.phase == 'gathering' %}
+      <section class="music-gathering music-gathering--team" aria-labelledby="music-gathering-title">
+        <span class="music-gathering__note" aria-hidden="true">♫</span>
+        <p class="eyebrow">Muziekquiz</p>
+        <h2 id="music-gathering-title">Maak je klaar voor de muziekquiz</h2>
+        <p>Verzamel je team. Vraag 1 verschijnt zodra de voorbereiding voorbij is.</p>
+        {% if state.global_state == 'PAUSED' %}<p class="music-paused-message">Gepauzeerd · de tijd staat stil</p>{% endif %}
+      </section>
+    {% elif state.music.phase == 'question' %}
       <h2>{{ state.music.title }}</h2>
       <p>{{ state.music.body }}</p>
       {% if state.global_state == 'MUSIC_QUIZ' %}
@@ -14,16 +22,16 @@
           <input type="hidden" name="run_id" value="{{ state.run_id }}">
           <input type="hidden" name="question_id" value="{{ state.music.question_id }}">
           <input type="hidden" name="request_id" value="{{ music_request_id }}">
-          <label for="music-answer-input">Song answer</label>
+          <label for="music-answer-input">Antwoord</label>
           <input id="music-answer-input" name="answer" autocomplete="off" required>
-          <button type="submit">Submit Music answer</button>
+          <button type="submit">Antwoord insturen</button>
         </form>
       {% else %}
-        <p>The Music Quiz is paused. Your answer field will return on resume.</p>
+        <p>De muziekquiz is gepauzeerd. Na hervatten kun je weer antwoorden.</p>
       {% endif %}
     {% else %}
-      <h2>Music Quiz complete</h2>
-      <p>Final scores are on screen. Advent resumes automatically.</p>
+      <h2>Eindstand muziekquiz</h2>
+      <p>De eindstand staat op het grote scherm. De Adventquiz gaat automatisch verder.</p>
     {% endif %}
   {% elif state.challenge and state.challenge.status == 'active' %}
     <section class="challenge-stage challenge-stage--{{ state.challenge.phase }}" aria-labelledby="challenge-question-title">
