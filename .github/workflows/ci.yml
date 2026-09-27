@@ -19,9 +19,12 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CI_IMAGE: christmas-quiz-ci
+
 jobs:
-  quality-and-tests:
-    name: Quality and tests
+  fast-tests:
+    name: Quality and fast tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -30,10 +33,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build development test image
-        run: docker build --target dev --tag christmas-quiz-ci .
+        run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Lint Python
-        run: docker run --rm christmas-quiz-ci python -m ruff check .
+        run: docker run --rm $CI_IMAGE python -m ruff check .
 
       - name: Django system check
         run: >-
@@ -41,7 +44,7 @@ jobs:
           -e DJANGO_SECRET_KEY=ci-only-not-used-in-production
           -e DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
           -e DJANGO_DEBUG=false
-          christmas-quiz-ci
+          $CI_IMAGE
           python manage.py check
 
       - name: Check for missing migrations
@@ -50,15 +53,84 @@ jobs:
           -e DJANGO_SECRET_KEY=ci-only-not-used-in-production
           -e DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
           -e DJANGO_DEBUG=false
-          christmas-quiz-ci
+          $CI_IMAGE
           python manage.py makemigrations --check --dry-run
 
-      - name: Run complete test suite
+      - name: Run domain, integration, and security tests
         run: >-
           docker run --rm
+          -e DJANGO_SETTINGS_MODULE=config.test_settings
           -e DJANGO_SECRET_KEY=ci-only-not-used-in-production
           -e DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
           -e DJANGO_DEBUG=false
           -e TEST_DATABASE_PATH=/tmp/christmas-quiz-tests.sqlite3
-          christmas-quiz-ci
-          python manage.py test --verbosity 2
+          $CI_IMAGE
+          python manage.py test
+          tests.domain tests.integration tests.security
+          --verbosity 2 --timing --durations 20
+
+  browser-tests:
+    name: Browser tests (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: sync-feedback
+            tests: >-
+              tests.browser.test_live_sync
+              tests.browser.test_issue18_incorrect_answer_feedback
+              tests.browser.test_phase31_views
+              tests.browser.test_phase3_views
+          - shard: music-calendar
+            tests: >-
+              tests.browser.test_phase5_views
+              tests.browser.test_issue9_music_audio
+              tests.browser.test_issue44_music_gathering
+              tests.browser.test_issue31_reverse
+          - shard: effects-challenge
+            tests: >-
+              tests.browser.test_endgame_celebrations
+              tests.browser.test_interaction_stability
+              tests.browser.test_phase6_views
+              tests.browser.test_phase4_views
+              tests.browser.test_issue31_freeze
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build development test image
+        run: docker build --target dev --tag $CI_IMAGE .
+
+      - name: Run browser shard
+        run: >-
+          docker run --rm
+          -e DJANGO_SETTINGS_MODULE=config.test_settings
+          -e DJANGO_SECRET_KEY=ci-only-not-used-in-production
+          -e DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+          -e DJANGO_DEBUG=false
+          -e TEST_DATABASE_PATH=/tmp/christmas-quiz-browser.sqlite3
+          $CI_IMAGE
+          python manage.py test
+          ${{ matrix.tests }}
+          --verbosity 2 --timing --durations 20
+
+  quality-and-tests:
+    name: Quality and tests
+    if: always()
+    needs:
+      - fast-tests
+      - browser-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Verify required test jobs
+        env:
+          FAST_RESULT: ${{ needs.fast-tests.result }}
+          BROWSER_RESULT: ${{ needs.browser-tests.result }}
+        run: |
+          test "$FAST_RESULT" = "success"
+          test "$BROWSER_RESULT" = "success"
