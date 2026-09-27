@@ -7,6 +7,12 @@ on:
   pull_request:
     branches:
       - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - converted_to_draft
+      - ready_for_review
 
 permissions:
   contents: read
