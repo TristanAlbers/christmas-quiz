@@ -100,13 +100,17 @@ def pay_skip(
     *,
     other_team_finished: bool = False,
 ) -> CompletionDecision:
-    """Complete via the canonical route, charging from the pre-reward balance.
+    """Complete a skippable puzzle via the canonical route after charging cost.
 
-    The application must reject puzzle 13 until its mandatory Music trigger can
+    Puzzle 25 is deliberately excluded: final-puzzle completion must come from a
+    correct answer or the separate administrator force-completion route. The
+    application must also reject puzzle 13 until its mandatory Music trigger can
     run atomically; the same guard applies to answer and admin completion routes.
     """
     if not _nonnegative(cost):
         raise DomainError("invalid_input")
+    if puzzle.number == 25:
+        raise DomainError("disallowed_state")
     decision = complete_puzzle(
         state,
         puzzle,
