@@ -91,7 +91,7 @@
         <button class="button-hint" type="submit"><span class="hint-token" aria-hidden="true">?</span> Use Hint token</button>
       </form>
     {% endif %}
-    {% if state.skip_cost != None %}
+    {% if state.skip_cost != None and state.current_number != 25 %}
       <form class="skip-action" method="post" action="{% url 'team_action' 'skip' %}"
             hx-post="{% url 'team_action' 'skip' %}" hx-trigger="submit"
             hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
