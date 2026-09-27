@@ -261,18 +261,20 @@ Use **completed** consistently. Avoid treating “solved”, “finished”, “
 
 # 6. Canonical puzzle completion
 
-There are three completion routes:
+There are three completion routes in general:
 
 1. Correct answer.
 2. Player Skip.
 3. Admin force completion.
 
-All use the same completion pipeline:
+**Puzzle 25 is the explicit exception to route 2.** A player Skip request targeting the authoritative current puzzle 25 MUST be rejected before cost deduction and before entering canonical completion. Correct-answer and administrator force-completion routes remain valid on puzzle 25.
+
+All accepted completion routes use the same completion pipeline:
 
 ```mermaid
 flowchart TD
     A["Correct answer"] --> C["Canonical completion"]
-    B["Skip"] --> C
+    B["Legal Skip (puzzles 1-24)"] --> C
     D["Admin force completion"] --> C
     C --> R["Mark completed"]
     R --> P["Award configured points"]
@@ -290,9 +292,9 @@ Completion may:
 - advance the team;
 - trigger global events such as the one-time Music Quiz.
 
-A Skip counts as successful completion.
+A legal Skip on puzzles 1–24 counts as successful completion.
 
-Admin force completion counts as successful completion.
+Admin force completion counts as successful completion, including on puzzle 25.
 
 Standard puzzles normally award a configurable amount of points/coins.
 
@@ -303,6 +305,8 @@ A puzzle may be completed again after admin reopening.
 A repeated completion MUST NOT duplicate completion rewards or fragments already awarded for that puzzle.
 
 The implementation should distinguish the current completion status from historical completion/reward events.
+
+If puzzle 25 becomes current again after administrative reopening/recovery, player Skip remains illegal; reopening does not make the final puzzle skippable.
 
 ---
 
@@ -372,18 +376,18 @@ An admin-provided hint immediately reveals the hint and does not consume a token
 
 A Skip is not a persistent puzzle-specific item.
 
-It is an action that completes the current puzzle.
+It is an action that completes the current puzzle **only for puzzles 1–24**. Puzzle 25 MUST reject player Skip authoritatively, including direct, stale, reconnect, and reopened-final-puzzle requests.
 
 ```mermaid
 flowchart LR
-    BUY["Buy / activate Skip"] --> COST["Atomic cost deduction"]
+    BUY["Buy / activate legal Skip"] --> COST["Atomic cost deduction"]
     COST --> COMPLETE["Canonical completion"]
     COMPLETE --> REWARD["Completion rewards"]
     REWARD --> FRAGMENT["Fragments/effects"]
     FRAGMENT --> NEXT["Advance"]
 ```
 
-A Skip:
+A legal Skip on puzzles 1–24:
 
 - cannot make points negative;
 - counts as completion;
@@ -391,6 +395,8 @@ A Skip:
 - awards fragments;
 - may trigger completion events;
 - triggers the Music Quiz when completing puzzle 13 if it has not happened yet.
+
+For puzzle 25, rejection MUST occur before any point deduction, completion/reward/fragment/effect write, first-finisher transition, winner transition, global `FINISHED` transition, or successful Skip/completion audit event.
 
 ---
 
@@ -627,6 +633,8 @@ Arrival at the browser is not authoritative.
 
 The database/transaction boundary determines the accepted ordering.
 
+A request racing around progression from puzzle 24 to puzzle 25 is evaluated against authoritative transaction-time state. Once puzzle 25 is authoritative/current, player Skip MUST fail without side effects even if a client still displays stale puzzle-24 Skip HTML.
+
 ---
 
 # 17. Admin / Game Master semantics
@@ -666,6 +674,8 @@ Admin point changes MUST record previous balance, delta and new balance.
 Admin Freeze behaves exactly like normal Freeze.
 
 Admin-provided hint reveals immediately without consuming a token.
+
+Admin force completion of puzzle 25 remains permitted and uses the canonical completion pipeline; the no-Skip exception applies only to player Skip.
 
 Admin full reset:
 
@@ -722,6 +732,8 @@ Important event fields should include:
 - related Challenge/Music Quiz identifier where applicable.
 
 The event log is history/audit data, not the live game state.
+
+Rejected puzzle-25 player Skip attempts MUST NOT create an audit event that falsely records a successful Skip or completion.
 
 ---
 
@@ -839,6 +851,8 @@ sequenceDiagram
 
 The first-finisher record is persistent.
 
+Puzzle 25 completion in this sequence may come from a correct team answer or administrator force completion, but never from player Skip.
+
 ---
 
 # 23. Hard invariants
@@ -870,6 +884,7 @@ The first-finisher record is persistent.
 10. Hints persist until consumed.
 11. Uno Reverse persists until triggered/removed.
 12. Fragments persist as team state.
+13. Player Skip is illegal whenever the authoritative current puzzle is 25.
 
 ## Security
 
@@ -920,6 +935,8 @@ Validate
 → evaluate global triggers
 → log
 ```
+
+Player Skip validation MUST reject puzzle 25 before entering this completion sequence.
 
 ### Purchase
 
@@ -1035,11 +1052,13 @@ Do not make the normal game architecture unnecessarily complicated to optimize f
 - Correct answer advances.
 - Wrong answer does not advance.
 - Sequential prerequisites are enforced.
-- Skip uses canonical completion.
-- Admin force completion uses canonical completion.
+- Skip uses canonical completion on puzzles 1–24.
+- Player Skip of puzzle 25 is rejected atomically with no cost/reward/progress/winner side effects.
+- Stale/direct/reopened-final-puzzle Skip attempts cannot bypass the puzzle-25 rule.
+- Admin force completion uses canonical completion, including puzzle 25.
 - Completion rewards are configurable.
 - Re-completion does not duplicate rewards/fragments.
-- Puzzle 25 completes the team.
+- Puzzle 25 completes the team through a legal completion route.
 
 ### Global completion
 
