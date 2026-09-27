@@ -204,6 +204,8 @@ def _music_timing(run: Run, config: dict, now):
             run.gameplay_elapsed_ms,
             run.advent_clock_anchor,
         ),
+        current_question_number=music.current_question_number,
+        current_question_started_ms=music.current_question_started_ms,
         final_results_started_ms=music.final_results_started_ms,
         final_results_duration_ms=config["music_score_display_duration_ms"],
         now=now,
@@ -223,11 +225,25 @@ def _effective_run_state(run: Run, config: dict, now):
     return timing.global_state, gameplay_ms, music, timing
 
 
-def _persist_music_timing(run: Run, config: dict, now) -> bool:
-    """Persist a logically expired final display inside an existing writer."""
+def _persist_music_timing(run: Run, config: dict, now) -> str | None:
+    """Persist a logical Music boundary inside an existing writer."""
     music, timing = _music_timing(run, config, now)
-    if music is None or timing.phase != "completed" or music.phase == "completed":
-        return False
+    if music is None:
+        return None
+    if music.phase == "gathering" and timing.phase == "question":
+        music.phase = timing.phase
+        music.current_question_number = timing.current_question_number
+        music.current_question_started_ms = timing.current_question_started_ms
+        music.save(
+            update_fields=[
+                "phase",
+                "current_question_number",
+                "current_question_started_ms",
+            ]
+        )
+        return "question_started"
+    if timing.phase != "completed" or music.phase == "completed":
+        return None
     run.global_state = timing.global_state
     run.pause_resume_target = None
     run.gameplay_elapsed_ms = timing.advent_clock.accumulated_ms
@@ -244,7 +260,15 @@ def _persist_music_timing(run: Run, config: dict, now) -> bool:
     music.music_elapsed_ms = timing.music_clock.accumulated_ms
     music.music_clock_anchor = timing.music_clock.anchor
     music.save(update_fields=["phase", "music_elapsed_ms", "music_clock_anchor"])
-    return True
+    return "completed"
+
+
+def effective_music_question_number(run: Run, config: dict, now) -> int | None:
+    """Return the read-only effective Music question allowed at ``now``."""
+    _music, timing = _music_timing(run, config, now)
+    if timing is None or timing.phase != "question":
+        return None
+    return timing.current_question_number
 
 
 def _music_projection(run, config, music, timing, now, *, consumer):
@@ -255,7 +279,7 @@ def _music_projection(run, config, music, timing, now, *, consumer):
         for row in MusicScore.objects.filter(run=run).order_by("team_id")
     )
     question_id = None
-    question_number = music.current_question_number
+    question_number = timing.current_question_number
     title = None
     body = None
     elapsed_ms = None
@@ -266,7 +290,7 @@ def _music_projection(run, config, music, timing, now, *, consumer):
             question_id = question["id"]
         title = question["title"]
         body = question["body"]
-        phase_started_ms = music.current_question_started_ms
+        phase_started_ms = timing.current_question_started_ms
         elapsed_ms = music_phase_elapsed_ms(
             effective_music_ms(
                 timing.music_clock.accumulated_ms,
@@ -289,6 +313,7 @@ def _music_projection(run, config, music, timing, now, *, consumer):
         title=title,
         body=body,
         scores=scores,
+        gathering_remaining_ms=timing.gathering_remaining_ms,
         question_elapsed_ms=elapsed_ms,
         final_results_remaining_ms=timing.final_results_remaining_ms,
         previous_winner_team_id=music.previous_winner_team,
@@ -699,9 +724,9 @@ def _start_music_if_needed(run, actor, request_id, config, now) -> bool:
     )
     MusicQuiz.objects.create(
         run=run,
-        phase="question",
-        current_question_number=1,
-        current_question_started_ms=0,
+        phase=decision.phase,
+        current_question_number=decision.current_question_number,
+        current_question_started_ms=decision.current_question_started_ms,
         music_elapsed_ms=decision.music_clock.accumulated_ms,
         music_clock_anchor=decision.music_clock.anchor,
     )
@@ -1155,7 +1180,7 @@ def submit_answer(actor: Actor, command: SubmitAnswer, *, now=None) -> AnswerRes
             if run is None:
                 raise ApplicationError("stale_run")
             config = load_snapshot(run)
-            if _persist_music_timing(run, config, now):
+            if _persist_music_timing(run, config, now) == "completed":
                 _event(
                     run,
                     actor,
@@ -1510,7 +1535,7 @@ def submit_challenge_answer(
             config = load_snapshot(run)
             if config.get("schema_version") != 6:
                 raise ApplicationError("disallowed_state")
-            if _persist_music_timing(run, config, now):
+            if _persist_music_timing(run, config, now) == "completed":
                 _event(
                     run,
                     actor,
@@ -1631,7 +1656,7 @@ def _perform(actor, command, action, role, payload, apply, *, now=None):
                 return prior
             run = _active_run(run_id)
             config = load_snapshot(run)
-            if _persist_music_timing(run, config, now):
+            if _persist_music_timing(run, config, now) == "completed":
                 _event(
                     run,
                     actor,

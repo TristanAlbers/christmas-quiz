@@ -9,10 +9,11 @@ from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.test import Client, LiveServerTestCase, override_settings
+from django.utils import timezone
 
 from quiz.application import force_complete_current, start_game
 from quiz.contracts import Actor, AdminPuzzle, StartGame
-from quiz.models import AccountRole, PuzzleProgress, TeamRun
+from quiz.models import AccountRole, MusicQuiz, PuzzleProgress, TeamRun
 
 
 class PhaseFiveBrowserTests(LiveServerTestCase):
@@ -63,6 +64,12 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
             completed=True, reward_awarded=True, completion_route="admin_force"
         )
         TeamRun.objects.filter(run_id=self.run_id).update(current_number=25, points=10)
+
+    def _finish_music_gathering(self):
+        MusicQuiz.objects.filter(run_id=self.run_id).update(
+            music_elapsed_ms=60_000,
+            music_clock_anchor=timezone.now(),
+        )
 
     def test_responsive_calendars_finish_states_and_live_interaction_stability(self):
         self._put_both_teams_on_door_25()
@@ -287,7 +294,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         await page.locator(".music-progress").wait_for()
                         self.assertEqual(await page.locator(".music-step").count(), 11)
                         self.assertEqual(
-                            await page.locator(".music-step--current").count(), 1
+                            await page.locator(".music-step--current").count(), 0
                         )
                         if path == "/team/":
                             self.assertEqual(
@@ -298,14 +305,37 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                             )
                             self.assertEqual(
                                 await page.get_by_text(
-                                    "Question 1 of 11", exact=False
+                                    "Maak je klaar voor de muziekquiz", exact=False
                                 ).count(),
-                                0,
+                                1,
                             )
                         else:
                             await page.get_by_text(
-                                "Question 1 of 11", exact=False
+                                "Muziekquiz begint zo", exact=False
                             ).wait_for()
+
+                    await asyncio.to_thread(self._finish_music_gathering)
+                    for context in contexts:
+                        page = context.pages[0]
+                        await page.locator(".music-step--current").wait_for(
+                            timeout=5000
+                        )
+                        self.assertEqual(
+                            await page.locator(".music-step--current").count(), 1
+                        )
+                    self.assertEqual(
+                        await contexts[0]
+                        .pages[0]
+                        .get_by_text("Vraag 1 van 11", exact=False)
+                        .count(),
+                        0,
+                    )
+                    for context in contexts[1:]:
+                        await (
+                            context.pages[0]
+                            .get_by_text("Vraag 1 van 11", exact=False)
+                            .wait_for()
+                        )
                 finally:
                     for context in contexts:
                         await context.close()

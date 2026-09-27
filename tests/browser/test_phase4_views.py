@@ -9,10 +9,11 @@ from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.test import Client, LiveServerTestCase, override_settings
+from django.utils import timezone
 
 from quiz.application import force_complete_current, start_game
 from quiz.contracts import Actor, AdminPuzzle, StartGame
-from quiz.models import AccountRole
+from quiz.models import AccountRole, MusicQuiz
 
 
 class PhaseFourBrowserTests(LiveServerTestCase):
@@ -64,6 +65,12 @@ class PhaseFourBrowserTests(LiveServerTestCase):
         await page.goto(f"{self.live_server_url}/team/")
         return context, page
 
+    def _finish_gathering(self):
+        MusicQuiz.objects.filter(run_id=self.run_id).update(
+            music_elapsed_ms=60_000,
+            music_clock_anchor=timezone.now(),
+        )
+
     def test_both_teams_and_tv_advance_without_replacing_active_input(self):
         async def check():
             from playwright.async_api import async_playwright
@@ -82,8 +89,14 @@ class PhaseFourBrowserTests(LiveServerTestCase):
                         self.assertEqual(
                             await page.locator(
                                 ".music-step[aria-current='step']"
-                            ).inner_text(),
-                            "1",
+                            ).count(),
+                            0,
+                        )
+                        await page.get_by_text(
+                            "Maak je klaar voor de muziekquiz", exact=True
+                        ).wait_for()
+                        self.assertEqual(
+                            await page.locator("#music-answer-input").count(), 0
                         )
                         self.assertEqual(
                             await page.locator("#game-status .music-status").count(), 0
@@ -94,9 +107,19 @@ class PhaseFourBrowserTests(LiveServerTestCase):
                         self.assertEqual(
                             await page.locator("#game-status .music-scores").count(), 0
                         )
-                    await tv_page.get_by_text(
-                        "Question 1 of 11", exact=False
-                    ).wait_for()
+                    await tv_page.get_by_text("Maak je klaar!", exact=True).wait_for()
+                    self.assertEqual(
+                        await tv_page.locator(".music-player-progress").count(), 0
+                    )
+
+                    await asyncio.to_thread(self._finish_gathering)
+                    for page in (a_page, b_page):
+                        await page.locator(
+                            ".music-step[aria-current='step']", has_text="1"
+                        ).wait_for(timeout=5000)
+                    await tv_page.get_by_text("Vraag 1 van 11", exact=False).wait_for(
+                        timeout=5000
+                    )
 
                     field = a_page.locator("#music-answer-input")
                     await field.fill("still typing")
@@ -109,9 +132,7 @@ class PhaseFourBrowserTests(LiveServerTestCase):
 
                     b_field = b_page.locator("#music-answer-input")
                     await b_field.fill("jingle bells")
-                    await b_page.get_by_role(
-                        "button", name="Submit Music answer"
-                    ).click()
+                    await b_page.get_by_role("button", name="Antwoord insturen").click()
                     for page in (a_page, b_page):
                         await page.locator(
                             ".music-step[aria-current='step']", has_text="2"
@@ -122,12 +143,12 @@ class PhaseFourBrowserTests(LiveServerTestCase):
                         self.assertEqual(
                             await page.locator("#game-status .music-status").count(), 0
                         )
-                    await tv_page.get_by_text(
-                        "Question 2 of 11", exact=False
-                    ).wait_for(timeout=5000)
+                    await tv_page.get_by_text("Vraag 2 van 11", exact=False).wait_for(
+                        timeout=5000
+                    )
                     overview = await tv_page.locator("#overview-state").inner_text()
                     self.assertIn("Team B\n1", overview)
-                    self.assertIn("Last point: Team B", overview)
+                    self.assertIn("Laatste punt: Team B", overview)
                     self.assertEqual(await a_page.locator("#answer-input").count(), 0)
                 finally:
                     await tv_context.close()

@@ -480,6 +480,7 @@ class PhaseSixPersistenceTests(TransactionTestCase):
 class PhaseSixMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0006_phase5_finish")
     migrate_to = ("quiz", "0007_phase6_challenge")
+    latest_migration = ("quiz", "0008_issue44_music_gathering")
 
     def setUp(self):
         super().setUp()
@@ -507,7 +508,7 @@ class PhaseSixMigrationTests(TransactionTestCase):
         self.apps = executor.loader.project_state([self.migrate_to]).apps
 
     def tearDown(self):
-        MigrationExecutor(connection).migrate([self.migrate_to])
+        MigrationExecutor(connection).migrate([self.latest_migration])
         super().tearDown()
 
     def test_existing_teams_gain_one_available_opportunity_and_empty_history(self):

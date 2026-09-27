@@ -164,8 +164,8 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             "jingle bells",
         )
 
-        first = submit_music_answer(self.b, command, now=NOW + timedelta(seconds=2))
-        retry = submit_music_answer(self.b, command, now=NOW + timedelta(seconds=20))
+        first = submit_music_answer(self.b, command, now=NOW + timedelta(seconds=61))
+        retry = submit_music_answer(self.b, command, now=NOW + timedelta(seconds=80))
         self.assertEqual(first.outcome, "won")
         self.assertEqual(retry.outcome, first.outcome)
         self.assertEqual(first.state.music.question_id, "music-2")
@@ -234,7 +234,7 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
             AuditEvent.objects.filter(run_id=self.run_id).count(),
         )
 
-        state = get_team_state(self.b, now=NOW + timedelta(seconds=2))
+        state = get_team_state(self.b, now=NOW + timedelta(seconds=62))
         self.assertIsNone(state.question)
         self.assert_error(
             "disallowed_state",
@@ -283,7 +283,7 @@ class PhaseFourIndependentInvariantTests(TransactionTestCase):
         TeamRun.objects.filter(run_id=self.run_id, team_id="b").update(
             activity_state="FREEZE", freeze_started_gameplay_ms=0
         )
-        state = get_team_state(self.b, now=NOW + timedelta(seconds=2))
+        state = get_team_state(self.b, now=NOW + timedelta(seconds=62))
 
         html = render_to_string(
             "quiz/_question_pane.html",

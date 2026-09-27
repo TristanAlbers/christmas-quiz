@@ -1,11 +1,13 @@
 """Security checks for the centralized current-Music-audio boundary."""
 
 import json
+from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from django.http import Http404
 from django.test import RequestFactory, TestCase, override_settings
+from django.utils import timezone
 
 from quiz.configuration import stage_snapshot
 from quiz.models import MusicQuiz, Run
@@ -96,6 +98,8 @@ class PhaseFourMusicAudioSecurityTests(TestCase):
             run=self.run,
             phase="question",
             current_question_number=1,
+            current_question_started_ms=0,
+            music_clock_anchor=timezone.now(),
         )
         self.factory = RequestFactory()
 
@@ -111,6 +115,42 @@ class PhaseFourMusicAudioSecurityTests(TestCase):
         self.assertEqual(self._content(response), b"current-audio")
         self.assertIn("no-store", response["Cache-Control"])
         self.assertNotIn(b"future-audio", b"current-audio")
+
+    def test_gathering_audio_uses_effective_clock_without_persisting_transition(self):
+        request = self.factory.get("/music/audio/")
+        MusicQuiz.objects.filter(pk=self.music.pk).update(
+            phase="gathering",
+            current_question_number=None,
+            current_question_started_ms=None,
+            music_elapsed_ms=0,
+            music_clock_anchor=timezone.now() - timedelta(seconds=55),
+        )
+        with self.assertRaises(Http404):
+            current_music_audio(request, self.run.pk)
+
+        MusicQuiz.objects.filter(pk=self.music.pk).update(
+            music_clock_anchor=timezone.now() - timedelta(seconds=75)
+        )
+        response = current_music_audio(request, self.run.pk)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._content(response), b"current-audio")
+        self.music.refresh_from_db()
+        self.assertEqual(self.music.phase, "gathering")
+        self.assertIsNone(self.music.current_question_number)
+
+    def test_paused_gathering_never_exposes_question_one_audio(self):
+        Run.objects.filter(pk=self.run.pk).update(
+            global_state="PAUSED", pause_resume_target="MUSIC_QUIZ"
+        )
+        MusicQuiz.objects.filter(pk=self.music.pk).update(
+            phase="gathering",
+            current_question_number=None,
+            current_question_started_ms=None,
+            music_elapsed_ms=59_999,
+            music_clock_anchor=None,
+        )
+        with self.assertRaises(Http404):
+            current_music_audio(self.factory.get("/music/audio/"), self.run.pk)
 
     def test_paused_completed_inactive_and_wrong_run_audio_are_not_shareable(self):
         request = self.factory.get("/music/audio/")
@@ -132,6 +172,7 @@ class PhaseFourMusicAudioSecurityTests(TestCase):
                         current_question_number=None,
                         current_question_started_ms=None,
                         final_results_started_ms=0,
+                        music_clock_anchor=None,
                     ),
                 ),
             ),
@@ -152,6 +193,8 @@ class PhaseFourMusicAudioSecurityTests(TestCase):
                     current_question_number=1,
                     current_question_started_ms=0,
                     final_results_started_ms=None,
+                    music_elapsed_ms=0,
+                    music_clock_anchor=timezone.now(),
                 )
                 mutate()
                 with self.assertRaises(Http404):

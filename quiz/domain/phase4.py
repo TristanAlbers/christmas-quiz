@@ -15,8 +15,9 @@ from .phase3 import GameplayClock, effective_gameplay_ms
 from .types import DomainError
 
 MUSIC_QUESTION_TOTAL = 11
+MUSIC_GATHERING_DURATION_MS = 60_000
 
-MusicPhase = Literal["question", "final_results", "completed"]
+MusicPhase = Literal["gathering", "question", "final_results", "completed"]
 MusicAnswerOutcome = Literal["incorrect", "won"]
 
 
@@ -49,6 +50,9 @@ class MusicStartDecision:
     music_clock: MusicClock | None
     underlying_teams: tuple[UnderlyingTeamState, ...]
     pause_resume_target: str | None
+    phase: MusicPhase | None
+    current_question_number: int | None
+    current_question_started_ms: int | None
 
 
 @dataclass(frozen=True)
@@ -84,6 +88,9 @@ class MusicTimingDecision:
     phase: MusicPhase
     music_clock: MusicClock
     advent_clock: GameplayClock
+    current_question_number: int | None
+    current_question_started_ms: int | None
+    gathering_remaining_ms: int | None
     final_results_started_ms: int | None
     final_results_remaining_ms: int | None
     logical_transition_at: datetime | None
@@ -219,6 +226,9 @@ def begin_music_interruption(
             music_clock=None,
             underlying_teams=teams,
             pause_resume_target=None,
+            phase=None,
+            current_question_number=None,
+            current_question_started_ms=None,
         )
 
     reconciled_advent = GameplayClock(
@@ -234,6 +244,9 @@ def begin_music_interruption(
         music_clock=MusicClock(0, now),
         underlying_teams=teams,
         pause_resume_target=None,
+        phase="gathering",
+        current_question_number=None,
+        current_question_started_ms=None,
     )
 
 
@@ -397,16 +410,18 @@ def reconcile_music_timing(
     phase: str,
     music_clock: MusicClock,
     advent_clock: GameplayClock,
+    current_question_number: int | None,
+    current_question_started_ms: int | None,
     final_results_started_ms: int | None,
     final_results_duration_ms: int,
     now: datetime,
 ) -> MusicTimingDecision:
-    """Project or persist final-display expiry at its logical wall-clock instant.
+    """Reconcile Music subphase timing at its logical clock boundary.
 
     Active Music downtime counts because its anchor remains present.  A Music
-    pause has no anchor and therefore consumes no display duration.  On expiry,
-    Advent is anchored at the logical expiry instant rather than at this call's
-    later observation time.
+    pause has no anchor and therefore consumes no gathering or display
+    duration.  Logical transitions use the clock boundary rather than this
+    call's potentially later observation time.
     """
     if not isinstance(music_clock, MusicClock):
         raise DomainError("invalid_input")
@@ -421,6 +436,8 @@ def reconcile_music_timing(
             or pause_resume_target is not None
             or music_clock.anchor is not None
             or advent_clock.anchor is None
+            or current_question_number is not None
+            or current_question_started_ms is not None
             or not _nonnegative_int(final_results_started_ms)
         ):
             raise DomainError("invalid_input")
@@ -429,6 +446,9 @@ def reconcile_music_timing(
             phase="completed",
             music_clock=music_clock,
             advent_clock=advent_clock,
+            current_question_number=None,
+            current_question_started_ms=None,
+            gathering_remaining_ms=None,
             final_results_started_ms=final_results_started_ms,
             final_results_remaining_ms=0,
             logical_transition_at=None,
@@ -448,20 +468,74 @@ def reconcile_music_timing(
     current_music_ms = effective_music_ms(
         music_clock.accumulated_ms, music_clock.anchor, now
     )
+    if phase == "gathering":
+        if (
+            current_question_number is not None
+            or current_question_started_ms is not None
+            or final_results_started_ms is not None
+        ):
+            raise DomainError("invalid_input")
+        remaining_ms = max(
+            0, MUSIC_GATHERING_DURATION_MS - current_music_ms
+        )
+        if remaining_ms > 0 or global_state == "PAUSED":
+            return MusicTimingDecision(
+                global_state=global_state,
+                phase="gathering",
+                music_clock=music_clock,
+                advent_clock=advent_clock,
+                current_question_number=None,
+                current_question_started_ms=None,
+                gathering_remaining_ms=remaining_ms,
+                final_results_started_ms=None,
+                final_results_remaining_ms=None,
+                logical_transition_at=None,
+            )
+
+        until_question_ms = max(
+            0, MUSIC_GATHERING_DURATION_MS - music_clock.accumulated_ms
+        )
+        logical_start = music_clock.anchor + timedelta(
+            milliseconds=until_question_ms
+        )
+        return MusicTimingDecision(
+            global_state="MUSIC_QUIZ",
+            phase="question",
+            music_clock=music_clock,
+            advent_clock=advent_clock,
+            current_question_number=1,
+            current_question_started_ms=MUSIC_GATHERING_DURATION_MS,
+            gathering_remaining_ms=None,
+            final_results_started_ms=None,
+            final_results_remaining_ms=None,
+            logical_transition_at=logical_start,
+        )
     if phase == "question":
-        if final_results_started_ms is not None:
+        if (
+            not _positive_int(current_question_number)
+            or current_question_number > MUSIC_QUESTION_TOTAL
+            or not _nonnegative_int(current_question_started_ms)
+            or current_question_started_ms > current_music_ms
+            or final_results_started_ms is not None
+        ):
             raise DomainError("invalid_input")
         return MusicTimingDecision(
             global_state=global_state,
             phase="question",
             music_clock=music_clock,
             advent_clock=advent_clock,
+            current_question_number=current_question_number,
+            current_question_started_ms=current_question_started_ms,
+            gathering_remaining_ms=None,
             final_results_started_ms=None,
             final_results_remaining_ms=None,
             logical_transition_at=None,
         )
-    if phase != "final_results" or not _nonnegative_int(
-        final_results_started_ms
+    if (
+        phase != "final_results"
+        or current_question_number is not None
+        or current_question_started_ms is not None
+        or not _nonnegative_int(final_results_started_ms)
     ):
         raise DomainError("invalid_input")
     if final_results_started_ms > current_music_ms:
@@ -477,6 +551,9 @@ def reconcile_music_timing(
             phase="final_results",
             music_clock=music_clock,
             advent_clock=advent_clock,
+            current_question_number=None,
+            current_question_started_ms=None,
+            gathering_remaining_ms=None,
             final_results_started_ms=final_results_started_ms,
             final_results_remaining_ms=remaining_ms,
             logical_transition_at=None,
@@ -493,6 +570,9 @@ def reconcile_music_timing(
         phase="completed",
         music_clock=MusicClock(expires_at_music_ms, None),
         advent_clock=GameplayClock(advent_clock.accumulated_ms, logical_expiry),
+        current_question_number=None,
+        current_question_started_ms=None,
+        gathering_remaining_ms=None,
         final_results_started_ms=final_results_started_ms,
         final_results_remaining_ms=0,
         logical_transition_at=logical_expiry,

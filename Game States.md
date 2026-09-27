@@ -28,7 +28,7 @@ ADVENT_QUIZ --> FINISHED
 |**Ready**| No active game is being played. Administrators can choose an available game package and start a new run. Teams wait for the game master.|
 |**Advent Quiz**| This is the normal puzzle / quiz game. Team states during this period are described below.|
 |**Paused**| Should only be triggerable by an admin. Essentially pauses all gameplay and moves to a special state. No interactions are possible. When leaving this state everything should be returned to as it was before entering this state. E.g. if a team was in the 3rd minute of waiting out a 5 minute freeze, when they return they should only have to wait 2 minutes.|
-|**Music Quiz**| The Music Quiz begins immediately when either team completes puzzle 13. The other team's current Advent Quiz state is suspended regardless of its current puzzle. This is a seperate gamemode, no interactables or quiz progression can be made here. There are some "points" that can be earned. All gameplay timers, including Freeze timers, are suspended while the global game is in **Music Quiz**|
+|**Music Quiz**| The Music Quiz begins immediately when either team completes puzzle 13. The other team's current Advent Quiz state is suspended regardless of its current puzzle. This is a seperate gamemode, no interactables or quiz progression can be made here. There are some "points" that can be earned. All gameplay timers, including Freeze timers, are suspended while the global game is in **Music Quiz**. The later issue-#44 refinement begins this global state with a 60-second Music gathering subphase before question 1.|
 |**Finished**| When the last puzzle had been reached the team reaches the finished state. They are unable to move from this state back to the **Ready** state, only administrators should be allowed to perform this. |
 
 ## Team Activity States
@@ -54,6 +54,8 @@ end
 > All gameplay timers are authoritative on the backend. Clients may display countdowns, but must never determine whether a timer has expired. Timers must survive browser refreshes, client disconnects, and application restarts.
 
 > All gameplay timers, including Freeze timers, are suspended while the global game is in Paused or Music Quiz. Their remaining duration is preserved and continues when normal Advent Quiz gameplay resumes.
+
+> Music gathering is a subphase of **Music Quiz**, not another global state. Its sequence is `gathering` → questions 1–11 → final results. It uses the existing Music clock, so Pause freezes its remaining time and recovery does not restart it. Question 1 is hidden and cannot be answered during gathering; questions 2–11 begin immediately after the previous winner.
 
 |State  | Description   |
 |---    |---            |

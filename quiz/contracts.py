@@ -93,13 +93,14 @@ class MusicScoreProjection:
 
 @dataclass(frozen=True)
 class MusicProjection:
-    phase: Literal["question", "final_results"]
+    phase: Literal["gathering", "question", "final_results"]
     question_id: str | None
     question_number: int | None
     question_total: int
     title: str | None
     body: str | None
     scores: tuple[MusicScoreProjection, ...]
+    gathering_remaining_ms: int | None = None
     question_elapsed_ms: int | None = None
     final_results_remaining_ms: int | None = None
     previous_winner_team_id: TeamId | None = None
