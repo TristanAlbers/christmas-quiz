@@ -138,7 +138,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     )
                     self.assertEqual(await page.locator("#answer-input").count(), 1)
                     self.assertTrue(await page.locator("#answer-input").is_enabled())
-                    await effect.evaluate("el => { window.__firstWrongAnswerEffect = el; }")
+                    await effect.evaluate(
+                        "el => { window.__firstWrongAnswerEffect = el; }"
+                    )
 
                     await self._wait_for_poll_swaps(page)
                     self.assertEqual(
