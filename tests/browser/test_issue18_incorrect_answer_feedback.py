@@ -58,23 +58,10 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
         await page.goto(f"{self.live_server_url}/team/")
         return context, page
 
-    async def _install_presentation_probe(self, page):
+    async def _install_poll_probe(self, page):
         await page.evaluate(
             """() => {
-                window.__wrongAnswerPresentations = 0;
                 window.__gameStatusSwaps = 0;
-
-                document.body.addEventListener('htmx:oobAfterSwap', event => {
-                  const target = event.detail.target;
-                  const effect = document.getElementById('incorrect-answer-effect');
-                  if (
-                    target?.id === 'incorrect-answer-effect' &&
-                    effect?.classList.contains('incorrect-answer-effect--active')
-                  ) {
-                    window.__wrongAnswerPresentations += 1;
-                  }
-                });
-
                 const gameStatus = document.getElementById('game-status');
                 const gameStatusObserver = new MutationObserver(records => {
                   if (records.some(record => record.type === 'childList')) {
@@ -94,6 +81,22 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
             timeout=5000,
         )
 
+    async def _submit_answer(self, page, answer):
+        form = page.locator(".answer-form")
+        action = await form.get_attribute("hx-post")
+        self.assertIsNotNone(action)
+        action_path = urlparse(action).path
+
+        await page.locator("#answer-input").fill(answer)
+        async with page.expect_response(
+            lambda response: response.request.method == "POST"
+            and urlparse(response.url).path == action_path
+        ) as response_info:
+            await page.locator(".answer-form .button-primary").click()
+        response = await response_info.value
+        self.assertEqual(response.status, 200)
+        return await response.text()
+
     def test_wrong_submission_triggers_once_per_post_and_polling_does_not_replay(self):
         async def check():
             from playwright.async_api import async_playwright
@@ -102,23 +105,26 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                 browser = await playwright.chromium.launch()
                 context, page = await self._page(browser)
                 try:
-                    await self._install_presentation_probe(page)
+                    await self._install_poll_probe(page)
                     await page.locator("#incorrect-answer-effect").evaluate(
                         "el => { window.__initialWrongAnswerEffect = el; }"
                     )
 
-                    await page.locator("#answer-input").fill("green")
-                    await page.locator(".answer-form .button-primary").click()
+                    first_response = await self._submit_answer(page, "green")
+                    self.assertEqual(
+                        first_response.count('id="incorrect-answer-effect"'), 1
+                    )
+                    self.assertIn(
+                        "incorrect-answer-effect--active", first_response
+                    )
                     effect = page.locator(
                         "#incorrect-answer-effect.incorrect-answer-effect--active"
                     )
                     await effect.wait_for()
-                    await page.wait_for_function(
-                        "window.__wrongAnswerPresentations === 1"
-                    )
                     self.assertFalse(
-                        await effect.evaluate(
-                            "el => window.__initialWrongAnswerEffect === el"
+                        await page.evaluate(
+                            """document.getElementById('incorrect-answer-effect')
+                            === window.__initialWrongAnswerEffect"""
                         )
                     )
                     self.assertEqual(
@@ -144,9 +150,6 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     )
 
                     await self._wait_for_poll_swaps(page)
-                    self.assertEqual(
-                        await page.evaluate("window.__wrongAnswerPresentations"), 1
-                    )
                     self.assertTrue(
                         await page.evaluate(
                             """document.getElementById('incorrect-answer-effect')
@@ -154,10 +157,12 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         )
                     )
 
-                    await page.locator("#answer-input").fill("blue")
-                    await page.locator(".answer-form .button-primary").click()
-                    await page.wait_for_function(
-                        "window.__wrongAnswerPresentations === 2"
+                    second_response = await self._submit_answer(page, "blue")
+                    self.assertEqual(
+                        second_response.count('id="incorrect-answer-effect"'), 1
+                    )
+                    self.assertIn(
+                        "incorrect-answer-effect--active", second_response
                     )
                     await page.wait_for_function(
                         """() => {
@@ -178,9 +183,6 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     )
 
                     await self._wait_for_poll_swaps(page)
-                    self.assertEqual(
-                        await page.evaluate("window.__wrongAnswerPresentations"), 2
-                    )
                     self.assertTrue(
                         await page.evaluate(
                             """document.getElementById('incorrect-answer-effect')
@@ -188,8 +190,13 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         )
                     )
 
-                    await page.locator("#answer-input").fill("red")
-                    await page.locator(".answer-form .button-primary").click()
+                    correct_response = await self._submit_answer(page, "red")
+                    self.assertEqual(
+                        correct_response.count('id="incorrect-answer-effect"'), 1
+                    )
+                    self.assertIn(
+                        "incorrect-answer-effect--idle", correct_response
+                    )
                     await page.wait_for_function(
                         """document.querySelector('#action-feedback')?.textContent
                         === 'Correct answer. Puzzle completed.'"""
@@ -197,6 +204,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     await page.wait_for_function(
                         """() => document.getElementById('incorrect-answer-effect')
                         !== window.__secondWrongAnswerEffect"""
+                    )
+                    await page.locator("#incorrect-answer-effect").evaluate(
+                        "el => { window.__clearedWrongAnswerEffect = el; }"
                     )
                     completion = page.locator(
                         "#door-completion:not(.door-completion--idle)"
@@ -211,9 +221,13 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     self.assertFalse(
                         await page.locator("#incorrect-answer-effect").is_visible()
                     )
+
                     await self._wait_for_poll_swaps(page)
-                    self.assertEqual(
-                        await page.evaluate("window.__wrongAnswerPresentations"), 2
+                    self.assertTrue(
+                        await page.evaluate(
+                            """document.getElementById('incorrect-answer-effect')
+                            === window.__clearedWrongAnswerEffect"""
+                        )
                     )
                 finally:
                     await context.close()
