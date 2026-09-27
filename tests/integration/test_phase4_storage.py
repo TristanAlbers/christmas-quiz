@@ -1,6 +1,7 @@
 """Focused phase-4 schema, snapshot, rollback, and restart checks."""
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -106,11 +107,21 @@ class PhaseFourSchemaTests(TransactionTestCase):
             run=self.run, team_id="b", activity_state="PUZZLE", points=10
         )
 
+    def _create_run(self, suffix):
+        return Run.objects.create(
+            active=False,
+            global_state="MUSIC_QUIZ",
+            package_id=f"phase4-{suffix}",
+            snapshot_path=f"/tmp/unused-{suffix}",
+            snapshot_digest=suffix[0] * 64,
+        )
+
     def test_music_schema_defends_trigger_score_phase_and_winner_uniqueness(self):
         MusicQuiz.objects.create(
             run=self.run,
             phase="question",
             current_question_number=1,
+            current_question_started_ms=0,
             music_clock_anchor=timezone.now(),
         )
         self.assertEqual(self.run.music_quiz.current_question_started_ms, 0)
@@ -136,7 +147,7 @@ class PhaseFourSchemaTests(TransactionTestCase):
 
         invalid_writes = (
             lambda: MusicQuiz.objects.create(
-                run=self.run, phase="question", current_question_number=1
+                run=self.run, phase="gathering"
             ),
             lambda: MusicScore.objects.create(run=self.run, team_id="a"),
             lambda: MusicScore.objects.filter(run=self.run, team_id="a").update(
@@ -163,6 +174,252 @@ class PhaseFourSchemaTests(TransactionTestCase):
             with self.subTest(write=write), self.assertRaises(IntegrityError):
                 with immediate_transaction():
                     write()
+
+    def test_music_attempt_and_result_uniqueness_remain_enforced(self):
+        request_id = uuid4()
+        first_attempt = MusicAttempt.objects.create(
+            run=self.run,
+            team_id="a",
+            actor=self.user,
+            request_id=request_id,
+            question_number=1,
+            question_id="music-1",
+            is_correct=True,
+        )
+        with self.assertRaises(IntegrityError):
+            with immediate_transaction():
+                MusicAttempt.objects.create(
+                    run=self.run,
+                    team_id="a",
+                    actor=self.user,
+                    request_id=request_id,
+                    question_number=2,
+                    question_id="music-2",
+                    is_correct=False,
+                )
+        with self.assertRaises(IntegrityError):
+            with immediate_transaction():
+                MusicAttempt.objects.create(
+                    run=self.run,
+                    team_id="b",
+                    actor=self.user,
+                    request_id=uuid4(),
+                    question_number=1,
+                    question_id="music-1",
+                    is_correct=True,
+                )
+
+        MusicQuestionResult.objects.create(
+            run=self.run,
+            question_number=1,
+            question_id="music-1",
+            winner_team_id="a",
+            reward_points=5,
+            winning_attempt=first_attempt,
+        )
+        second_attempt = MusicAttempt.objects.create(
+            run=self.run,
+            team_id="b",
+            actor=self.user,
+            request_id=uuid4(),
+            question_number=2,
+            question_id="music-2",
+            is_correct=True,
+        )
+        third_attempt = MusicAttempt.objects.create(
+            run=self.run,
+            team_id="b",
+            actor=self.user,
+            request_id=uuid4(),
+            question_number=3,
+            question_id="music-3",
+            is_correct=True,
+        )
+        duplicate_results = (
+            {
+                "question_number": 1,
+                "question_id": "music-2",
+                "winning_attempt": second_attempt,
+            },
+            {
+                "question_number": 3,
+                "question_id": "music-1",
+                "winning_attempt": third_attempt,
+            },
+        )
+        for result in duplicate_results:
+            with self.subTest(result=result), self.assertRaises(IntegrityError):
+                with immediate_transaction():
+                    MusicQuestionResult.objects.create(
+                        run=self.run,
+                        winner_team_id="b",
+                        reward_points=5,
+                        **result,
+                    )
+
+    def test_gathering_shape_is_valid_and_marker_hybrids_are_rejected(self):
+        gathering = MusicQuiz.objects.create(
+            run=self.run,
+            phase="gathering",
+            current_question_number=None,
+            current_question_started_ms=None,
+            final_results_started_ms=None,
+            music_elapsed_ms=12_345,
+            music_clock_anchor=datetime(2026, 9, 27, 18, 0, tzinfo=UTC),
+        )
+        self.assertEqual(
+            (
+                gathering.phase,
+                gathering.current_question_number,
+                gathering.current_question_started_ms,
+                gathering.final_results_started_ms,
+            ),
+            ("gathering", None, None, None),
+        )
+
+        invalid_shapes = (
+            {"current_question_number": 1},
+            {"current_question_started_ms": 0},
+            {"final_results_started_ms": 60_000},
+        )
+        for index, markers in enumerate(invalid_shapes):
+            with self.subTest(markers=markers), self.assertRaises(IntegrityError):
+                with immediate_transaction():
+                    MusicQuiz.objects.create(
+                        run=self._create_run(f"gathering-invalid-{index}"),
+                        phase="gathering",
+                        **markers,
+                    )
+
+    def test_question_shape_requires_explicit_valid_number_and_start_marker(self):
+        invalid_shapes = (
+            {},
+            {"current_question_number": 0, "current_question_started_ms": 0},
+            {"current_question_number": 12, "current_question_started_ms": 0},
+            {"current_question_number": 1},
+            {"current_question_number": 1, "current_question_started_ms": -1},
+            {
+                "current_question_number": 1,
+                "current_question_started_ms": 0,
+                "final_results_started_ms": 1,
+            },
+        )
+        for index, markers in enumerate(invalid_shapes):
+            with self.subTest(markers=markers), self.assertRaises(IntegrityError):
+                with immediate_transaction():
+                    MusicQuiz.objects.create(
+                        run=self._create_run(f"question-invalid-{index}"),
+                        phase="question",
+                        **markers,
+                    )
+
+        question = MusicQuiz.objects.create(
+            run=self.run,
+            phase="question",
+            current_question_number=11,
+            current_question_started_ms=180_000,
+        )
+        self.assertEqual(question.current_question_started_ms, 180_000)
+
+    def test_final_results_and_completed_shapes_remain_constrained(self):
+        final_results = MusicQuiz.objects.create(
+            run=self.run,
+            phase="final_results",
+            final_results_started_ms=660_000,
+            music_clock_anchor=datetime(2026, 9, 27, 18, 10, tzinfo=UTC),
+        )
+        completed = MusicQuiz.objects.create(
+            run=self._create_run("completed-valid"),
+            phase="completed",
+            final_results_started_ms=670_000,
+            music_clock_anchor=None,
+        )
+        self.assertEqual(final_results.phase, "final_results")
+        self.assertEqual(completed.phase, "completed")
+
+        invalid_shapes = (
+            ("final_results", {}),
+            (
+                "final_results",
+                {
+                    "current_question_number": 11,
+                    "final_results_started_ms": 660_000,
+                },
+            ),
+            ("final_results", {"final_results_started_ms": -1}),
+            ("completed", {}),
+            ("completed", {"final_results_started_ms": -1}),
+            (
+                "completed",
+                {
+                    "final_results_started_ms": 670_000,
+                    "music_clock_anchor": datetime(
+                        2026, 9, 27, 18, 11, tzinfo=UTC
+                    ),
+                },
+            ),
+        )
+        for index, (phase, markers) in enumerate(invalid_shapes):
+            with (
+                self.subTest(phase=phase, markers=markers),
+                self.assertRaises(IntegrityError),
+            ):
+                with immediate_transaction():
+                    MusicQuiz.objects.create(
+                        run=self._create_run(f"results-invalid-{index}"),
+                        phase=phase,
+                        **markers,
+                    )
+
+    def test_active_gathering_survives_recovery_without_side_effects(self):
+        anchor = datetime(2026, 9, 27, 18, 0, tzinfo=UTC)
+        MusicQuiz.objects.create(
+            run=self.run,
+            phase="gathering",
+            music_elapsed_ms=12_345,
+            music_clock_anchor=anchor,
+        )
+
+        connections.close_all()
+
+        recovered = MusicQuiz.objects.get(run_id=self.run.pk)
+        self.assertEqual(
+            (
+                recovered.phase,
+                recovered.current_question_number,
+                recovered.current_question_started_ms,
+                recovered.final_results_started_ms,
+                recovered.music_elapsed_ms,
+                recovered.music_clock_anchor,
+            ),
+            ("gathering", None, None, None, 12_345, anchor),
+        )
+        self.assertFalse(MusicScore.objects.filter(run_id=self.run.pk).exists())
+        self.assertFalse(MusicAttempt.objects.filter(run_id=self.run.pk).exists())
+        self.assertFalse(
+            MusicQuestionResult.objects.filter(run_id=self.run.pk).exists()
+        )
+
+    def test_paused_gathering_survives_recovery_with_clock_frozen(self):
+        self.run.global_state = "PAUSED"
+        self.run.pause_resume_target = "MUSIC_QUIZ"
+        self.run.save(update_fields=["global_state", "pause_resume_target"])
+        MusicQuiz.objects.create(
+            run=self.run,
+            phase="gathering",
+            music_elapsed_ms=45_678,
+            music_clock_anchor=None,
+        )
+
+        connections.close_all()
+
+        recovered = MusicQuiz.objects.get(run_id=self.run.pk)
+        self.assertEqual(recovered.phase, "gathering")
+        self.assertEqual(recovered.music_elapsed_ms, 45_678)
+        self.assertIsNone(recovered.music_clock_anchor)
+        self.assertIsNone(recovered.current_question_number)
+        self.assertIsNone(recovered.current_question_started_ms)
+        self.assertIsNone(recovered.final_results_started_ms)
 
     def test_pause_target_pairing_and_music_phase_consistency_are_constrained(self):
         invalid = (
@@ -214,6 +471,7 @@ class PhaseFourSchemaTests(TransactionTestCase):
                     run=self.run,
                     phase="question",
                     current_question_number=1,
+                    current_question_started_ms=0,
                     music_clock_anchor=timezone.now(),
                 )
                 MusicScore.objects.create(run=self.run, team_id="a")
@@ -375,7 +633,7 @@ class PhaseFourConfigurationTests(TestCase):
 class PhaseFourMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0004_retire_legacy_ready_runs")
     migrate_to = ("quiz", "0005_phase4_music")
-    latest_migration = ("quiz", "0007_phase6_challenge")
+    latest_migration = ("quiz", "0008_issue44_music_gathering")
 
     def setUp(self):
         super().setUp()
@@ -424,4 +682,50 @@ class PhaseFourMigrationTests(TransactionTestCase):
         )
         self.assertIsNone(
             MigratedRun.objects.get(pk=self.advent_id).pause_resume_target
+        )
+
+    def test_pre_gathering_question_row_survives_migration_without_rewriting(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate([("quiz", "0007_phase6_challenge")])
+        pre_gathering_apps = executor.loader.project_state(
+            [("quiz", "0007_phase6_challenge")]
+        ).apps
+        RunAt0007 = pre_gathering_apps.get_model("quiz", "Run")
+        MusicQuizAt0007 = pre_gathering_apps.get_model("quiz", "MusicQuiz")
+        anchor = datetime(2026, 9, 27, 18, 30, tzinfo=UTC)
+        run = RunAt0007.objects.create(
+            active=False,
+            global_state="MUSIC_QUIZ",
+            package_id="pre-gathering-question",
+            snapshot_path="/persistent/pre-gathering-question",
+            snapshot_digest="d" * 64,
+        )
+        MusicQuizAt0007.objects.create(
+            run=run,
+            phase="question",
+            current_question_number=7,
+            current_question_started_ms=321_000,
+            music_elapsed_ms=345_678,
+            music_clock_anchor=anchor,
+            final_results_started_ms=None,
+            previous_winner_team="b",
+        )
+
+        executor = MigrationExecutor(connection)
+        executor.migrate([self.latest_migration])
+        migrated_apps = executor.loader.project_state([self.latest_migration]).apps
+        MigratedMusicQuiz = migrated_apps.get_model("quiz", "MusicQuiz")
+        migrated = MigratedMusicQuiz.objects.get(run_id=run.pk)
+
+        self.assertEqual(
+            (
+                migrated.phase,
+                migrated.current_question_number,
+                migrated.current_question_started_ms,
+                migrated.music_elapsed_ms,
+                migrated.music_clock_anchor,
+                migrated.final_results_started_ms,
+                migrated.previous_winner_team,
+            ),
+            ("question", 7, 321_000, 345_678, anchor, None, "b"),
         )

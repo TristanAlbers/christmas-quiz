@@ -433,9 +433,7 @@ class MusicQuiz(models.Model):
     run = models.OneToOneField(Run, on_delete=models.PROTECT, related_name="music_quiz")
     phase = models.CharField(max_length=16)
     current_question_number = models.PositiveSmallIntegerField(null=True, blank=True)
-    current_question_started_ms = models.BigIntegerField(
-        default=0, null=True, blank=True
-    )
+    current_question_started_ms = models.BigIntegerField(null=True, blank=True)
     music_elapsed_ms = models.BigIntegerField(default=0)
     music_clock_anchor = models.DateTimeField(null=True, blank=True)
     final_results_started_ms = models.BigIntegerField(null=True, blank=True)
@@ -460,6 +458,12 @@ class MusicQuiz(models.Model):
             models.CheckConstraint(
                 condition=(
                     Q(
+                        phase="gathering",
+                        current_question_number__isnull=True,
+                        current_question_started_ms__isnull=True,
+                        final_results_started_ms__isnull=True,
+                    )
+                    | Q(
                         phase="question",
                         current_question_number__isnull=False,
                         current_question_number__gte=1,
