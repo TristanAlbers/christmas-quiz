@@ -62,6 +62,14 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
         await page.evaluate(
             """() => {
                 window.__gameStatusSwaps = 0;
+                window.__incorrectAnswerOobSwaps = 0;
+
+                document.body.addEventListener('htmx:oobBeforeSwap', event => {
+                  if (event.detail.target?.id === 'incorrect-answer-effect') {
+                    window.__incorrectAnswerOobSwaps += 1;
+                  }
+                });
+
                 const gameStatus = document.getElementById('game-status');
                 const gameStatusObserver = new MutationObserver(records => {
                   if (records.some(record => record.type === 'childList')) {
@@ -121,6 +129,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         "#incorrect-answer-effect.incorrect-answer-effect--active"
                     )
                     await effect.wait_for()
+                    self.assertEqual(
+                        await page.evaluate("window.__incorrectAnswerOobSwaps"), 1
+                    )
                     self.assertFalse(
                         await page.evaluate(
                             """document.getElementById('incorrect-answer-effect')
@@ -150,6 +161,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     )
 
                     await self._wait_for_poll_swaps(page)
+                    self.assertEqual(
+                        await page.evaluate("window.__incorrectAnswerOobSwaps"), 1
+                    )
                     self.assertTrue(
                         await page.evaluate(
                             """document.getElementById('incorrect-answer-effect')
@@ -175,6 +189,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                             );
                         }"""
                     )
+                    self.assertEqual(
+                        await page.evaluate("window.__incorrectAnswerOobSwaps"), 2
+                    )
                     second_effect = page.locator(
                         "#incorrect-answer-effect.incorrect-answer-effect--active"
                     )
@@ -183,6 +200,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     )
 
                     await self._wait_for_poll_swaps(page)
+                    self.assertEqual(
+                        await page.evaluate("window.__incorrectAnswerOobSwaps"), 2
+                    )
                     self.assertTrue(
                         await page.evaluate(
                             """document.getElementById('incorrect-answer-effect')
@@ -205,6 +225,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         """() => document.getElementById('incorrect-answer-effect')
                         !== window.__secondWrongAnswerEffect"""
                     )
+                    self.assertEqual(
+                        await page.evaluate("window.__incorrectAnswerOobSwaps"), 3
+                    )
                     await page.locator("#incorrect-answer-effect").evaluate(
                         "el => { window.__clearedWrongAnswerEffect = el; }"
                     )
@@ -223,6 +246,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     )
 
                     await self._wait_for_poll_swaps(page)
+                    self.assertEqual(
+                        await page.evaluate("window.__incorrectAnswerOobSwaps"), 3
+                    )
                     self.assertTrue(
                         await page.evaluate(
                             """document.getElementById('incorrect-answer-effect')
