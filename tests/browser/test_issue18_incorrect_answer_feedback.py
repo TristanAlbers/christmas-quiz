@@ -63,24 +63,17 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
             """() => {
                 window.__wrongAnswerPresentations = 0;
                 window.__gameStatusSwaps = 0;
-                window.__lastWrongAnswerEffect = null;
 
-                const effectObserver = new MutationObserver(records => {
-                  for (const record of records) {
-                    for (const node of record.addedNodes) {
-                      if (
-                        node.nodeType === Node.ELEMENT_NODE &&
-                        node.id === 'incorrect-answer-effect' &&
-                        node.classList.contains('incorrect-answer-effect--active')
-                      ) {
-                        window.__wrongAnswerPresentations += 1;
-                        window.__lastWrongAnswerEffect = node;
-                      }
-                    }
+                document.body.addEventListener('htmx:oobAfterSwap', event => {
+                  const target = event.detail.target;
+                  const effect = document.getElementById('incorrect-answer-effect');
+                  if (
+                    target?.id === 'incorrect-answer-effect' &&
+                    effect?.classList.contains('incorrect-answer-effect--active')
+                  ) {
+                    window.__wrongAnswerPresentations += 1;
                   }
                 });
-                effectObserver.observe(document.body, {childList: true});
-                window.__wrongAnswerEffectObserver = effectObserver;
 
                 const gameStatus = document.getElementById('game-status');
                 const gameStatusObserver = new MutationObserver(records => {
@@ -110,6 +103,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                 context, page = await self._page(browser)
                 try:
                     await self._install_presentation_probe(page)
+                    await page.locator("#incorrect-answer-effect").evaluate(
+                        "el => { window.__initialWrongAnswerEffect = el; }"
+                    )
 
                     await page.locator("#answer-input").fill("green")
                     await page.locator(".answer-form .button-primary").click()
@@ -119,6 +115,11 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     await effect.wait_for()
                     await page.wait_for_function(
                         "window.__wrongAnswerPresentations === 1"
+                    )
+                    self.assertFalse(
+                        await effect.evaluate(
+                            "el => window.__initialWrongAnswerEffect === el"
+                        )
                     )
                     self.assertEqual(
                         await effect.evaluate(
@@ -147,8 +148,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         await page.evaluate("window.__wrongAnswerPresentations"), 1
                     )
                     self.assertTrue(
-                        await effect.evaluate(
-                            "el => window.__firstWrongAnswerEffect === el"
+                        await page.evaluate(
+                            """document.getElementById('incorrect-answer-effect')
+                            === window.__firstWrongAnswerEffect"""
                         )
                     )
 
@@ -157,14 +159,19 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     await page.wait_for_function(
                         "window.__wrongAnswerPresentations === 2"
                     )
+                    await page.wait_for_function(
+                        """() => {
+                          const effect = document.getElementById(
+                            'incorrect-answer-effect'
+                          );
+                          return effect !== window.__firstWrongAnswerEffect &&
+                            effect.classList.contains(
+                              'incorrect-answer-effect--active'
+                            );
+                        }"""
+                    )
                     second_effect = page.locator(
                         "#incorrect-answer-effect.incorrect-answer-effect--active"
-                    )
-                    await second_effect.wait_for()
-                    self.assertFalse(
-                        await second_effect.evaluate(
-                            "el => window.__firstWrongAnswerEffect === el"
-                        )
                     )
                     await second_effect.evaluate(
                         "el => { window.__secondWrongAnswerEffect = el; }"
@@ -175,8 +182,9 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         await page.evaluate("window.__wrongAnswerPresentations"), 2
                     )
                     self.assertTrue(
-                        await second_effect.evaluate(
-                            "el => window.__secondWrongAnswerEffect === el"
+                        await page.evaluate(
+                            """document.getElementById('incorrect-answer-effect')
+                            === window.__secondWrongAnswerEffect"""
                         )
                     )
 
@@ -185,6 +193,10 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     await page.wait_for_function(
                         """document.querySelector('#action-feedback')?.textContent
                         === 'Correct answer. Puzzle completed.'"""
+                    )
+                    await page.wait_for_function(
+                        """() => document.getElementById('incorrect-answer-effect')
+                        !== window.__secondWrongAnswerEffect"""
                     )
                     completion = page.locator(
                         "#door-completion:not(.door-completion--idle)"
