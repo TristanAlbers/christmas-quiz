@@ -93,7 +93,7 @@ class PhaseFourBrowserTests(LiveServerTestCase):
                             0,
                         )
                         await page.get_by_text(
-                            "Maak je klaar voor de muziekquiz", exact=True
+                            "Maak je klaar voor de Muziek Quiz", exact=True
                         ).wait_for()
                         self.assertEqual(
                             await page.locator("#music-answer-input").count(), 0

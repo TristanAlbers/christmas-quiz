@@ -123,7 +123,7 @@ It has 11 questions. For each question:
 
 The correct team receives a globally configured number of points, added directly to its normal point balance.
 
-Music questions have no countdown or deadline. The shared TV may show the issue-#44 cosmetic `0:00`–`3:00` player-style bar; it does not use track duration or playback position and has no effect on question timing.
+Music questions have no countdown or deadline. The shared TV may show the issue-#44 cosmetic player-style bar on a fixed three-minute scale without visible endpoint labels; it does not use track duration or playback position and has no effect on question timing.
 
 After question 11, show the final score for a configurable duration (approximately 1–3 minutes by default), then return to Advent Quiz.
 

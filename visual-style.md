@@ -195,7 +195,7 @@ Voorbeelden:
 
 - `KERST ESCAPE ROOM · 2026`
 - `PUZZEL 7 VAN 25`
-- `MUZIEKQUIZ`
+- `MUZIEK QUIZ`
 - `TEAM A`
 
 Gebruik spaarzaam.
@@ -344,7 +344,7 @@ Belangrijk:
 - freeze-status is expliciet met tekst;
 - kleur alleen is onvoldoende.
 
-### Muziekquiz
+### Muziek Quiz
 
 Mag visueel meer podiumachtig zijn:
 

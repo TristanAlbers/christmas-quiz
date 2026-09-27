@@ -112,7 +112,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     )
                     for team in (team_a, team_b):
                         await team.get_by_text(
-                            "Maak je klaar voor de muziekquiz", exact=True
+                            "Maak je klaar voor de Muziek Quiz", exact=True
                         ).wait_for()
                         self.assertEqual(
                             await team.locator("#music-answer-input").count(), 0
@@ -154,10 +154,20 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     progress = tv.locator(".music-player-progress progress")
                     self.assertLess(int(await progress.get_attribute("value")), 2_000)
                     self.assertEqual(
-                        await tv.locator(
-                            ".music-player-progress > span"
-                        ).all_inner_texts(),
-                        ["0:00", "3:00"],
+                        await progress.get_attribute("aria-label"),
+                        "Voortgang Muziek Quiz",
+                    )
+                    self.assertEqual(
+                        await tv.get_by_text("0:00", exact=True).count(), 0
+                    )
+                    self.assertEqual(
+                        await tv.get_by_text("3:00", exact=True).count(), 0
+                    )
+                    self.assertEqual(
+                        await tv.get_by_text("Muziek Quiz", exact=True).count(), 1
+                    )
+                    self.assertEqual(
+                        await tv.get_by_text("Muziekquiz", exact=True).count(), 0
                     )
 
                     await asyncio.to_thread(self._set_music_time, 150_000)

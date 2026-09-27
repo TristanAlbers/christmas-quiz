@@ -157,14 +157,14 @@ It should contain:
 
 * an obvious progress bar or 11-step tracker showing progress through the 11 Music questions;
 * the current question number;
-* for an active question, a player-style progress bar labelled `0:00` and `3:00`, visually capped at three minutes but without deadline semantics;
+* for an active question, a large player-style progress bar on a fixed three-minute scale, without visible endpoint time labels and without deadline semantics;
 * each participating team's current Music score;
 * the approved shared audio/playback interaction once that workflow is settled;
 * a clearly distinct final-results state for the configured results-display duration.
 
 Music progression should not be conveyed only as a text string such as `Question 4 of 11`; the current position must be visually scannable from across the room.
 
-During the issue-#44 gathering subphase, the public/TV view shows a clear 60-second preparation countdown and Music scores, but no question-1 title, body, audio, or answer interaction. The countdown uses authoritative remaining Music time supplied by the server. Refresh and Pause must retain the correct remaining value. The active-question player bar is cosmetic: it does not use the audio element's duration or playhead and reaching `3:00` does not expire or advance the question.
+During the issue-#44 gathering subphase, the public/TV view shows a clear 60-second preparation countdown and Music scores, but no question-1 title, body, audio, or answer interaction. The countdown uses authoritative remaining Music time supplied by the server. Refresh and Pause must retain the correct remaining value. The active-question player bar is cosmetic: it does not use the audio element’s duration or playhead, and filling the fixed three-minute visual scale does not expire or advance the question. Player-facing Dutch copy uses `Muziek Quiz` as the mode name.
 
 ## Puzzle Music Challenge View
 
