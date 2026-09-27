@@ -187,23 +187,23 @@ class SkipRulesTests(SimpleTestCase):
         self.assertEqual(result.state.points, 5)
         self.assertIsNone(result.fragment_award)
 
-    def test_skip_of_puzzle_25_uses_canonical_global_finish_decision(self):
+    def test_skip_rejects_puzzle_25_before_canonical_completion(self):
         before = completion_state(
             current_number=25,
             points=10,
             completed_numbers=frozenset(range(1, 25)),
         )
 
-        result = pay_skip(
-            before,
-            PuzzleCompletion(25, 2, "last", None),
-            3,
-            other_team_finished=True,
+        self.assertEqual(
+            error_code(
+                pay_skip,
+                before,
+                PuzzleCompletion(25, 2, "last", None),
+                3,
+                True,
+            ),
+            "disallowed_state",
         )
-
-        self.assertTrue(result.team_finished)
-        self.assertTrue(result.game_finished)
-        self.assertFalse(result.claim_first_finisher)
-        self.assertEqual(result.state.team_state, "FINISHED")
-        self.assertEqual(result.state.global_state, "FINISHED")
-        self.assertEqual(result.state.points, 9)
+        self.assertEqual(before.current_number, 25)
+        self.assertEqual(before.points, 10)
+        self.assertNotIn(25, before.completed_numbers)
