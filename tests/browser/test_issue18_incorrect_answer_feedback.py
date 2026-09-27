@@ -77,7 +77,7 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
         baseline = await page.evaluate("window.__gameStatusSwaps")
         await page.wait_for_function(
             "([baseline, count]) => window.__gameStatusSwaps >= baseline + count",
-            [baseline, count],
+            arg=[baseline, count],
             timeout=5000,
         )
 
