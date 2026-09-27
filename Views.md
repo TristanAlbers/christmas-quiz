@@ -37,7 +37,7 @@ It should:
 
 * list all discoverable game packages under the configured `games/` root;
 * identify each package by at least its package ID;
-* show whether the package is currently valid enough to be started;
+* show whether each package is currently valid enough to be started;
 * show a concise actionable validation error for an invalid package instead of silently hiding it;
 * allow an administrator to select one valid package and start a new run;
 * make clear that starting creates a new game and that source-package changes do not affect an already-running game;
@@ -97,6 +97,8 @@ It should represent:
 * access to a **Shop View**;
 * access to a **Sabotage View**.
 
+Puzzle 25 is the explicit final-puzzle exception: player Skip is not available. The layout may keep the Skip position as a clearly disabled control with concise Dutch-facing explanation, but no usable Skip form/action may be exposed. Correct-answer submission remains available and administrator force completion is unaffected.
+
 The team resource/status controls should be grouped above the current puzzle interaction so the answer field sits below that resource area and remains prominent on a phone.
 
 The current answer input and other controls must survive normal polling without losing focus, caret position, selection, hover/press state, or clicks.
@@ -121,7 +123,9 @@ The shop should present purchasable gameplay elements as deliberate cards/items 
 
 * an Uno Reverse purchase;
 * Hint token purchases;
-* the immediate Skip action/cost where this is exposed through the shop flow.
+* the immediate Skip action/cost where this is exposed through the shop flow and where Skip is legal for the current puzzle.
+
+Puzzle 25 must never expose an enabled Shop/alternate Skip entry point. Any such UI is only a convenience projection of the backend rule; stale or crafted requests remain backend-rejected.
 
 Costs, availability, disabled states, and rejection feedback should be visually clear. Purchasing must remain backend-authoritative. The phone overlay must have comfortable internal padding and spacing; successful shop purchases close the overlay before transient gameplay feedback starts, while rejected purchases keep it open so the rejection remains readable.
 

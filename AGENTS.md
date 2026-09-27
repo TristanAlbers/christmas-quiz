@@ -100,6 +100,8 @@ A handoff reports changed files, decisions/assumptions, focused validation, unre
 
 Use a short-lived branch from current `main` for non-trivial work. Preserve unrelated changes. Do not implement on `main`, merge, enable auto-merge, alter branch protection, or delete branches unless the user asks. The primary thread owns branch/commit/push/PR lifecycle.
 
+For feature/issue implementation, open the PR as a **draft** while changes are still being made. GitHub Actions must run for draft PR creation and subsequent pushes, and CI is the implementation gate before review. Mark the PR ready for review only after required CI is green. If review findings require code changes, return the PR to draft before pushing those fixes, re-establish green CI, and then mark it ready again. This keeps Codex review from being triggered repeatedly on known-incomplete work.
+
 ## Maintenance rule
 
 Keep instructions progressively disclosed:
