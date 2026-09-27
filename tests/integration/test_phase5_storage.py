@@ -226,7 +226,7 @@ class PhaseFivePersistenceTests(TransactionTestCase):
 class PhaseFiveMigrationTests(TransactionTestCase):
     migrate_from = ("quiz", "0005_phase4_music")
     migrate_to = ("quiz", "0006_phase5_finish")
-    latest_migration = ("quiz", "0007_phase6_challenge")
+    latest_migration = ("quiz", "0008_issue44_music_gathering")
 
     def setUp(self):
         super().setUp()
