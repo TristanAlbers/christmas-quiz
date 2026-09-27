@@ -81,3 +81,7 @@ Issue #44 adds a fixed 60-second, server-authoritative gathering period before M
 At 60,000 active Music milliseconds question 1 becomes available. Questions 2–11 still begin immediately after the preceding first-correct winner. Active Music questions remain unlimited in duration.
 
 On the shared TV, an active question uses a decorative player-style progress bar labelled from `0:00` to `3:00`. The three-minute endpoint is not a deadline and does not advance, expire, or restrict a question. The bar does not inspect or represent the real audio duration or playback position.
+
+## 2026-09-27 — Music Quiz display refinement
+
+Player-facing Dutch copy names the mode `Muziek Quiz` as two words. On the shared TV, the active-question progress bar is a large visual element on the same fixed three-minute scale, without visible endpoint time labels. Its full state remains cosmetic: it does not advance or restrict the question and remains independent of audio duration and playback position.

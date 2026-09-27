@@ -305,13 +305,13 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                             )
                             self.assertEqual(
                                 await page.get_by_text(
-                                    "Maak je klaar voor de muziekquiz", exact=False
+                                    "Maak je klaar voor de Muziek Quiz", exact=False
                                 ).count(),
                                 1,
                             )
                         else:
                             await page.get_by_text(
-                                "Muziekquiz begint zo", exact=False
+                                "Muziek Quiz begint zo", exact=False
                             ).wait_for()
 
                     await asyncio.to_thread(self._finish_music_gathering)

@@ -265,7 +265,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     for number in range(2, 12):
                         await asyncio.to_thread(self._answer_music, number)
                     await page.get_by_text(
-                        "Eindstand muziekquiz", exact=False
+                        "Eindstand Muziek Quiz", exact=False
                     ).wait_for(timeout=5000)
                     await page.get_by_role("heading", name="Sound ready").wait_for(
                         timeout=5000

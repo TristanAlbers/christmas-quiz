@@ -5,12 +5,12 @@
   </div>
   {% if state.music %}
     <div class="music-stage">
-      <p class="eyebrow">Muziekquiz</p>
+      <p class="eyebrow">Muziek Quiz</p>
       {% if state.music.phase == 'gathering' %}
         <div class="music-gathering music-gathering--public">
           <span class="music-gathering__note" aria-hidden="true">♫</span>
           <h1>Maak je klaar!</h1>
-          <p class="music-gathering__lead">De muziekquiz begint zo</p>
+          <p class="music-gathering__lead">De Muziek Quiz begint zo</p>
           <p>Verzamel je team en ga klaarstaan.</p>
           <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}">
             <span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span>
@@ -22,12 +22,10 @@
         <h2>{{ state.music.title }}</h2>
         <p>{{ state.music.body }}</p>
         <div class="music-player-progress" data-music-player-progress>
-          <span>0:00</span>
-          <progress aria-label="Verstreken tijd van deze muziekvraag op een vaste schaal van drie minuten" max="180000" value="{{ state.music.question_elapsed_ms }}">{% widthratio state.music.question_elapsed_ms 180000 100 %}%</progress>
-          <span>3:00</span>
+          <progress aria-label="Voortgang Muziek Quiz" max="180000" value="{{ state.music.question_elapsed_ms }}">{% widthratio state.music.question_elapsed_ms 180000 100 %}%</progress>
         </div>
       {% else %}
-        <h1>Eindstand muziekquiz</h1>
+        <h1>Eindstand Muziek Quiz</h1>
         <p>De Adventquiz gaat verder over {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconden.</p>
       {% endif %}
       {% include 'quiz/_music_progress.html' with music=state.music %}
