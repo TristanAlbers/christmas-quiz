@@ -52,7 +52,7 @@ class FinalPuzzleSkipTests(TestCase):
             activity_state="PUZZLE",
         )
 
-    def test_puzzle_24_skip_still_works_then_stale_and_direct_final_skips_are_atomic(self):
+    def test_transition_to_25_blocks_stale_and_direct_skips_atomically(self):
         self._put_team_on(24)
 
         result = skip_current(
