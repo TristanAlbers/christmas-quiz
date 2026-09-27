@@ -105,7 +105,13 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await team.locator(".resource-card--reverse").count(), 1
                     )
-                    self.assertEqual(await team.locator(".button-skip").count(), 1)
+                    final_skip = team.locator(".button-skip")
+                    self.assertEqual(await final_skip.count(), 1)
+                    self.assertTrue(await final_skip.is_disabled())
+                    self.assertIn(
+                        "Deze vraag kan niet worden overgeslagen",
+                        await final_skip.inner_text(),
+                    )
                     self.assertEqual(
                         await team.locator(".shop-item--freeze").count(), 1
                     )
@@ -159,17 +165,10 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         await answer.evaluate("el => el.selectionStart"), 2
                     )
                     self.assertEqual(await team.locator(".advent-door").count(), 0)
+                    self.assertTrue(await team.locator(".button-skip").is_disabled())
 
-                    skip = team.locator(".button-skip")
-                    box = await skip.bounding_box()
-                    self.assertIsNotNone(box)
-                    await team.mouse.move(
-                        box["x"] + box["width"] / 2,
-                        box["y"] + box["height"] / 2,
-                    )
-                    await team.mouse.down()
-                    await team.wait_for_timeout(700)
-                    await team.mouse.up()
+                    await answer.fill("north")
+                    await team.locator(".answer-form .button-primary").click()
                     await team.get_by_text(
                         "Both teams completed all 25 Advent doors"
                     ).wait_for(timeout=5000)
