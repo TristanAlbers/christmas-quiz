@@ -91,17 +91,23 @@
         <button class="button-hint" type="submit"><span class="hint-token" aria-hidden="true">?</span> Use Hint token</button>
       </form>
     {% endif %}
-    {% if state.skip_cost != None and state.current_number != 25 %}
-      <form class="skip-action" method="post" action="{% url 'team_action' 'skip' %}"
-            hx-post="{% url 'team_action' 'skip' %}" hx-trigger="submit"
-            hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-            hx-target="#game-status" hx-swap="innerHTML">
-        {% csrf_token %}
-        <input type="hidden" name="run_id" value="{{ state.run_id }}">
-        <input type="hidden" name="question_id" value="{{ state.question.id }}">
-        <input type="hidden" name="request_id" value="{{ skip_request_id }}">
-        <button class="button-skip" type="submit"><span aria-hidden="true">»</span> Skip this puzzle now <small>{{ state.skip_cost }} points · completes immediately</small></button>
-      </form>
+    {% if state.skip_cost != None %}
+      {% if state.current_number == 25 %}
+        <div class="skip-action">
+          <button class="button-skip" type="button" disabled><span aria-hidden="true">»</span> Laatste vraag <small>Deze vraag kan niet worden overgeslagen</small></button>
+        </div>
+      {% else %}
+        <form class="skip-action" method="post" action="{% url 'team_action' 'skip' %}"
+              hx-post="{% url 'team_action' 'skip' %}" hx-trigger="submit"
+              hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+              hx-target="#game-status" hx-swap="innerHTML">
+          {% csrf_token %}
+          <input type="hidden" name="run_id" value="{{ state.run_id }}">
+          <input type="hidden" name="question_id" value="{{ state.question.id }}">
+          <input type="hidden" name="request_id" value="{{ skip_request_id }}">
+          <button class="button-skip" type="submit"><span aria-hidden="true">»</span> Skip this puzzle now <small>{{ state.skip_cost }} points · completes immediately</small></button>
+        </form>
+      {% endif %}
     {% endif %}
     <form class="answer-form" method="post" action="{% url 'team_answer' %}"
           hx-post="{% url 'team_answer' %}" hx-trigger="submit"
