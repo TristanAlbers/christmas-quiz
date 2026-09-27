@@ -200,7 +200,6 @@ class SkipRulesTests(SimpleTestCase):
                 before,
                 PuzzleCompletion(25, 2, "last", None),
                 3,
-                True,
             ),
             "disallowed_state",
         )
