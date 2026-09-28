@@ -107,3 +107,9 @@ The earlier requirement that available Hint tokens receive deliberate visual tre
 The answer interaction appears before the Hint/Skip action pair so the current puzzle remains the primary task. Still-valid answer, Hint, and Skip controls must remain mounted across ordinary 500 ms polling. Resource polling may update displayed points/fragments/Reverse state and mutate the text/disabled properties of those contextual actions, but must not replace the controls while their semantic puzzle context is unchanged.
 
 Action/result feedback is contextual and transient. A newly resolved Challenge may briefly show its outcome, but ordinary polling must not restart that feedback interval or turn the result into permanent status chrome. This decision changes presentation only and does not alter game-state legality, costs, rewards, fragments, Challenge outcomes, or team isolation.
+
+## 2026-09-28 — team playing time is omitted and Freeze is full-viewport
+
+The team Puzzle/Freeze runtime does not show a persistent elapsed `Speeltijd` / `HH:MM:SS` readout. This intentionally supersedes the short-lived issue-#42 requirement that team devices display current playing time. The authoritative Advent gameplay clock and its Pause/recovery semantics remain unchanged; elapsed playing time continues to be presented on the shared public/TV overview.
+
+When a team is authoritatively frozen, the persistent ice-lock presentation covers the complete team-device viewport, with the readable Freeze message/countdown above the ice treatment and comfortable phone-safe padding. Private puzzle/hint content remains absent while frozen. The persistent lock stays below the one-shot Freeze/Uno Reverse choreography from #31 and does not change any Freeze rule, duration, transaction, isolation, or polling semantics.
