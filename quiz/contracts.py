@@ -157,6 +157,7 @@ class PublicChallengeProjection:
 class PublicTeamProgressProjection:
     team_id: TeamId
     advent_progress: AdventProgressProjection
+    is_frozen: bool = False
 
 
 @dataclass(frozen=True)
