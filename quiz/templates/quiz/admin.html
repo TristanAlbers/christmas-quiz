@@ -1,10 +1,10 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Christmas Quiz · Admin</title>
+  <title>Kerstmis Quiz · Game Master</title>
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/advent-calendar.css' %}">
@@ -13,11 +13,11 @@
 </head>
 <body class="game-page game-page--admin">
   <main class="app-shell app-shell-wide">
-    <header class="page-header"><div><p class="eyebrow">Christmas Escape Room</p><h1>Game master</h1></div>
-      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out</button></form>
+    <header class="page-header"><div><p class="eyebrow">Kerst Escape Room</p><h1>Game Master</h1></div>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Uitloggen</button></form>
     </header>
     {% if error %}<p role="alert">{{ error }}</p>{% endif %}
-    <section id="live-admin" aria-label="Live game administration">
+    <section id="live-admin" aria-label="Live spelbeheer">
       <div id="admin-poller" hx-get="{% url 'admin_state' %}" hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
            hx-sync="#live-admin:drop" hx-include="#admin-controls .poll-context"
            hx-target="#admin-state" hx-swap="innerHTML"></div>
