@@ -2,8 +2,10 @@
 
 import json
 import shutil
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 from uuid import uuid4
 
 from django.conf import settings
@@ -11,9 +13,24 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from quiz.application import get_team_state, start_game, submit_answer
-from quiz.contracts import Actor, StartGame, SubmitAnswer
+from quiz import phase6_application
+from quiz.application import (
+    force_complete_current,
+    get_team_state,
+    start_game,
+    submit_answer,
+    submit_music_answer,
+)
+from quiz.contracts import (
+    Actor,
+    AdminPuzzle,
+    StartGame,
+    SubmitAnswer,
+    SubmitMusicAnswer,
+)
 from quiz.models import AccountRole
+
+NOW = datetime(2026, 12, 24, 18, 0, tzinfo=timezone.utc)
 
 
 class TypedPuzzleAudioIsolationTests(TestCase):
@@ -35,6 +52,9 @@ class TypedPuzzleAudioIsolationTests(TestCase):
             {"type": "audio", "path": "a/clue.mp3"},
         ]
         config["teams"]["a"]["puzzles"][1]["media"] = [
+            {"type": "audio", "path": "a/future.mp3"}
+        ]
+        config["teams"]["a"]["puzzles"][13]["media"] = [
             {"type": "audio", "path": "a/future.mp3"}
         ]
         config["teams"]["b"]["puzzles"][0]["media"] = [
@@ -63,6 +83,7 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         self.run_id = start_game(
             self.admin_actor,
             StartGame(str(uuid4()), "christmas-2026-demo"),
+            now=NOW,
         ).run_id
 
     def _media_url(self, team_id, path):
@@ -76,7 +97,7 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         )
 
     def test_projection_exposes_type_without_weakening_current_question_boundary(self):
-        state = get_team_state(self.a_actor)
+        state = get_team_state(self.a_actor, now=NOW)
         self.assertEqual(
             [item.type for item in state.question.media],
             ["image", "audio"],
@@ -84,7 +105,7 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         self.assertEqual(state.question.media[0].alt, "Rode ster")
         self.assertIn("a/clue.mp3", state.question.media[1].url)
 
-        legacy = get_team_state(self.b_actor)
+        legacy = get_team_state(self.b_actor, now=NOW)
         self.assertEqual(
             [item.type for item in legacy.question.media],
             ["image", "audio"],
@@ -103,6 +124,7 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         submit_answer(
             self.a_actor,
             SubmitAnswer(str(uuid4()), self.run_id, "a-1", "red"),
+            now=NOW + timedelta(seconds=1),
         )
         previous = self.client.get(self._media_url("a", "a/clue.mp3"))
         self.assertEqual(previous.status_code, 404)
@@ -135,3 +157,70 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         response = self.client.get(self._media_url("a", "a/clue.mp3"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(b"".join(response.streaming_content), b"ID3-team-a-current")
+
+    def test_team_projection_verifies_snapshot_once_per_poll(self):
+        original = phase6_application._CORE_LOAD_SNAPSHOT
+        with patch.object(
+            phase6_application,
+            "_CORE_LOAD_SNAPSHOT",
+            wraps=original,
+        ) as load_snapshot:
+            state = get_team_state(self.a_actor, now=NOW + timedelta(seconds=1))
+
+        self.assertEqual(state.question.media[1].type, "audio")
+        self.assertEqual(load_snapshot.call_count, 1)
+
+    def test_final_music_answer_retry_keeps_typed_advent_media(self):
+        trigger_time = NOW + timedelta(seconds=5)
+        for number in range(1, 14):
+            force_complete_current(
+                self.admin_actor,
+                AdminPuzzle(
+                    str(uuid4()),
+                    self.run_id,
+                    "a",
+                    f"a-{number}",
+                ),
+                now=trigger_time,
+            )
+
+        answers = [
+            "jingle bells",
+            "silent night",
+            "white christmas",
+            "feliz navidad",
+            "last christmas",
+            "santa baby",
+            "winter wonderland",
+            "let it snow",
+            "the christmas song",
+            "rudolph",
+            "deck the halls",
+        ]
+        first_answer_time = trigger_time + timedelta(seconds=61)
+        final_command = None
+        final_time = None
+        for number, answer in enumerate(answers, 1):
+            request_id = str(uuid4())
+            command = SubmitMusicAnswer(
+                request_id,
+                self.run_id,
+                f"music-{number}",
+                answer,
+            )
+            answer_time = first_answer_time + timedelta(seconds=number)
+            submit_music_answer(self.a_actor, command, now=answer_time)
+            if number == 11:
+                final_command = command
+                final_time = answer_time
+
+        retry = submit_music_answer(
+            self.a_actor,
+            final_command,
+            now=final_time + timedelta(seconds=120),
+        )
+        self.assertEqual(retry.outcome, "won")
+        self.assertEqual(retry.state.global_state, "ADVENT_QUIZ")
+        self.assertEqual(retry.state.current_number, 14)
+        self.assertEqual([item.type for item in retry.state.question.media], ["audio"])
+        self.assertIn("a/future.mp3", retry.state.question.media[0].url)
