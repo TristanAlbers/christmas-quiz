@@ -64,8 +64,11 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                     {"width": 390, "height": 844},
                 )
                 try:
-                    await page.get_by_role("button", name="Antwoord insturen").wait_for()
-                    self.assertEqual(await page.locator("html").get_attribute("lang"), "nl")
+                    await page.get_by_role(
+                        "button", name="Antwoord insturen"
+                    ).wait_for()
+                    html_lang = await page.locator("html").get_attribute("lang")
+                    self.assertEqual(html_lang, "nl")
                     visible = await page.locator("body").inner_text()
                     self.assertIn("Uitloggen", visible)
                     self.assertIn("Antwoord", visible)
@@ -113,7 +116,8 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                 )
                 try:
                     await admin.get_by_role("heading", name="Game Master").wait_for()
-                    self.assertEqual(await admin.locator("html").get_attribute("lang"), "nl")
+                    admin_lang = await admin.locator("html").get_attribute("lang")
+                    self.assertEqual(admin_lang, "nl")
                     admin_text = await admin.locator("body").inner_text()
                     self.assertIn("Huidige spelstatus", admin_text)
                     self.assertIn("Adventquiz", admin_text)
@@ -133,16 +137,20 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
 
             async with async_playwright() as playwright:
                 browser = await playwright.chromium.launch()
-                context = await browser.new_context(viewport={"width": 390, "height": 844})
+                context = await browser.new_context(
+                    viewport={"width": 390, "height": 844}
+                )
                 page = await context.new_page()
                 try:
                     await page.goto(f"{self.live_server_url}/login/")
-                    self.assertEqual(await page.locator("html").get_attribute("lang"), "nl")
+                    html_lang = await page.locator("html").get_attribute("lang")
+                    self.assertEqual(html_lang, "nl")
                     await page.get_by_label("Team").select_option("a")
                     await page.get_by_label("Pincode").fill("verkeerd")
                     await page.get_by_role("button", name="Naar de quiz").click()
                     await page.get_by_text("Ongeldige inloggegevens.").wait_for()
-                    self.assertNotIn("Invalid credentials", await page.locator("body").inner_text())
+                    page_text = await page.locator("body").inner_text()
+                    self.assertNotIn("Invalid credentials", page_text)
                 finally:
                     await context.close()
                     await browser.close()
