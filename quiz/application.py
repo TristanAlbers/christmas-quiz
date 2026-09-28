@@ -10,7 +10,7 @@ from dataclasses import replace
 
 from . import _application_core as _core
 from ._application_core import *  # noqa: F403
-from .contracts import PublicAdventTeamProgressProjection
+from .contracts import AnswerResult, PublicAdventTeamProgressProjection
 from .models import Run, TeamRun
 from .persistence import read_snapshot
 from .phase6_application import (  # noqa: F401
@@ -20,6 +20,12 @@ from .phase6_application import (  # noqa: F401
     submit_challenge_answer,
 )
 from .phase6_application import get_public_state as _phase6_get_public_state
+
+
+def submit_answer(actor, command, *, now=None):
+    """Preserve the core answer transaction and return the enriched team projection."""
+    result = _core.submit_answer(actor, command, now=now)
+    return AnswerResult(result.outcome, get_team_state(actor, now=now))
 
 
 def get_public_state(*, now=None):
