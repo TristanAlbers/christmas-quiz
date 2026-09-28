@@ -47,7 +47,7 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
 
     async def _page_for(self, playwright, path):
         browser = await playwright.chromium.launch()
-        context = await browser.new_context()
+        context = await browser.new_context(viewport={"width": 390, "height": 844})
         host = urlparse(self.live_server_url).hostname
         await context.add_cookies(
             [
@@ -71,6 +71,12 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                 browser, context, page = await self._page_for(playwright, "/team/")
                 try:
                     await page.get_by_text("Demo A1", exact=False).wait_for()
+                    self.assertEqual(
+                        await page.locator(".team-playing-time").count(), 0
+                    )
+                    self.assertEqual(
+                        await page.locator("[data-gameplay-ms]").count(), 0
+                    )
                     self.assertEqual(
                         await page.locator(
                             "form[action='/team/action/freeze/']"
@@ -109,6 +115,97 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     self.assertNotIn(
                         "Hint tokens", await page.locator("#live-game").inner_text()
                     )
+                    self.assertEqual(
+                        await page.locator(".team-playing-time").count(), 0
+                    )
+                    self.assertEqual(
+                        await page.locator("[data-gameplay-ms]").count(), 0
+                    )
+
+                    geometry = await page.evaluate(
+                        """() => {
+                            const rect = selector => {
+                                const element = document.querySelector(selector);
+                                const box = element.getBoundingClientRect();
+                                return {
+                                    left: box.left,
+                                    top: box.top,
+                                    right: box.right,
+                                    bottom: box.bottom,
+                                    width: box.width,
+                                    height: box.height,
+                                };
+                            };
+                            return {
+                                viewport: {
+                                    width: window.innerWidth,
+                                    height: window.innerHeight,
+                                },
+                                surface: rect('.freeze-surface'),
+                                lock: rect('#game-status'),
+                                message: rect('.freeze-message'),
+                            };
+                        }"""
+                    )
+                    for layer in ("surface", "lock"):
+                        self.assertAlmostEqual(
+                            geometry[layer]["left"], 0, delta=1
+                        )
+                        self.assertAlmostEqual(
+                            geometry[layer]["top"], 0, delta=1
+                        )
+                        self.assertAlmostEqual(
+                            geometry[layer]["width"],
+                            geometry["viewport"]["width"],
+                            delta=1,
+                        )
+                        self.assertAlmostEqual(
+                            geometry[layer]["height"],
+                            geometry["viewport"]["height"],
+                            delta=1,
+                        )
+                    self.assertGreaterEqual(geometry["message"]["left"], 8)
+                    self.assertGreaterEqual(geometry["message"]["top"], 8)
+                    self.assertLessEqual(
+                        geometry["message"]["right"],
+                        geometry["viewport"]["width"] - 8,
+                    )
+                    self.assertLessEqual(
+                        geometry["message"]["bottom"],
+                        geometry["viewport"]["height"] - 8,
+                    )
+
+                    await page.set_viewport_size({"width": 568, "height": 320})
+                    await page.evaluate(
+                        "() => { document.documentElement.style.fontSize = '32px'; }"
+                    )
+                    freeze_lock = page.locator("#game-status")
+                    overflow = await freeze_lock.evaluate(
+                        """element => ({
+                            clientHeight: element.clientHeight,
+                            scrollHeight: element.scrollHeight,
+                        })"""
+                    )
+                    self.assertGreater(
+                        overflow["scrollHeight"], overflow["clientHeight"]
+                    )
+                    await page.locator(".freeze-message").hover()
+                    await page.mouse.wheel(0, 1000)
+                    await page.wait_for_timeout(1100)
+                    scroll_top = await freeze_lock.evaluate(
+                        "element => element.scrollTop"
+                    )
+                    self.assertGreater(scroll_top, 0)
+                    timer_box = await page.locator(".freeze-timer").bounding_box()
+                    self.assertIsNotNone(timer_box)
+                    self.assertLessEqual(
+                        timer_box["y"] + timer_box["height"], 312
+                    )
+                    await page.evaluate(
+                        "() => { document.documentElement.style.fontSize = ''; }"
+                    )
+                    await page.set_viewport_size({"width": 390, "height": 844})
+
                     surface_handle = await freeze_surface.element_handle()
                     await page.wait_for_timeout(1100)
                     self.assertTrue(

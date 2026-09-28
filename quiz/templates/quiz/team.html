@@ -123,23 +123,6 @@
       }
     }
 
-    function formatGameplayTime(rawMilliseconds) {
-      const milliseconds = Math.max(0, Number.parseInt(rawMilliseconds || '0', 10) || 0);
-      const totalSeconds = Math.floor(milliseconds / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      return [hours, minutes, seconds]
-        .map(value => String(value).padStart(2, '0'))
-        .join(':');
-    }
-
-    function syncPlayingTime() {
-      document.querySelectorAll('[data-gameplay-ms]').forEach(function (node) {
-        node.textContent = formatGameplayTime(node.dataset.gameplayMs);
-      });
-    }
-
     let challengeResultTimer = null;
     let activeChallengeResultKey = null;
     let activeChallengeResultExpiresAt = 0;
@@ -235,7 +218,6 @@
     });
     document.body.addEventListener('htmx:afterSwap', function (event) {
       if (event.detail.target.id === 'game-status') {
-        syncPlayingTime();
         syncTransientChallengeResult(challengeWasActiveBeforeSwap);
         challengeWasActiveBeforeSwap = false;
       }
@@ -247,7 +229,6 @@
     });
 
     syncPuzzleActionAvailability();
-    syncPlayingTime();
     syncTransientChallengeResult(false);
     armActionFeedbackTimer();
   </script>

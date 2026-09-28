@@ -1,12 +1,41 @@
-.state-panel-freeze {
-  position: relative;
-  z-index: 32;
-  border-color: #bceeff;
-  background: rgba(232, 249, 255, .96);
-  box-shadow: 0 1rem 3rem rgba(4, 55, 88, .35);
+#game-status:has(.state-panel-freeze) {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  padding: max(1.25rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: transparent;
+  pointer-events: auto;
 }
 
-.freeze-message { text-align: center; }
+.state-panel-freeze {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.state-panel-freeze > .freeze-message {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: min(30rem, 100%);
+  margin-block: auto;
+  margin-inline: 0;
+  padding: clamp(1.25rem, 5vw, 2rem);
+  border: 1px solid rgba(188, 238, 255, .96);
+  border-radius: 1rem;
+  background: rgba(232, 249, 255, .96);
+  box-shadow: 0 1rem 3rem rgba(4, 55, 88, .35);
+  text-align: center;
+}
 .freeze-message h2 { color: #07577c; font-size: clamp(1.8rem, 8vw, 3rem); }
 .freeze-message__icon {
   margin: 0;
@@ -18,7 +47,7 @@
 
 .freeze-surface {
   position: fixed;
-  z-index: 30;
+  z-index: 70;
   inset: 0;
   overflow: hidden;
   border: clamp(.65rem, 3vw, 2rem) solid rgba(198, 240, 255, .92);
