@@ -192,7 +192,7 @@ class Phase31LifecycleTests(TransactionTestCase):
         resume_game(self.admin, self.command(run_id), now=pause_at + timedelta(days=1))
         self.assertEqual(
             get_team_state(self.a, now=pause_at + timedelta(days=1)).question.title,
-            "Demo A1: North star",
+            "Demo A1: Poolster",
         )
 
     def test_simultaneous_starts_create_at_most_one_active_run_and_one_initialization(
