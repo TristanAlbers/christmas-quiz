@@ -196,8 +196,8 @@ class PhaseFiveApplicationTests(TestCase):
         b_final = get_team_state(self.b, now=resumed_at)
         self.assertEqual(a_final.fragments[-5:], ("C", "A", "R", "O", "L"))
         self.assertEqual(b_final.fragments[-5:], ("N", "O", "R", "T", "H"))
-        self.assertIn("five single-letter fragments", a_final.question.body)
-        self.assertIn("five single-letter fragments", b_final.question.body)
+        self.assertIn("vijf losse letters", a_final.question.body)
+        self.assertIn("vijf losse letters", b_final.question.body)
 
         a_request = str(uuid4())
         a_finish = self.answer(
