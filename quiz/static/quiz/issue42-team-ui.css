@@ -74,6 +74,7 @@
 }
 
 .game-page--team .resource-card--shop {
+  grid-column: 1 / -1;
   min-height: 4.6rem;
 }
 
