@@ -65,16 +65,22 @@ Once a game is started, normal polling/reload should move the team to the state 
 
 Target: `overview`
 
-This view should be optimized for desktop/TV usage.
+This view should be optimized for desktop/TV usage and presented as the player-facing **Quizzmass** event screen rather than a technical state/status page. The normal Advent overview must not show raw backend state names such as `ADVENT_QUIZ` or use technical `Advent Quiz in progress` wording as its main identity.
 
 It should represent:
 
+* prominent `Quizzmass` game/event branding within the shared Christmas visual language;
 * both teams' progress using two clear Advent-calendar-style progress representations (for example 25 doors/boxes per team with completed/current/future states);
 * a concise progress indicator such as `13/25` and/or a percentage for each team, but not percentage text as the sole progression presentation;
-* total playing time;
-* public winner/first-finisher information only when the game rules authorize it.
+* total server-authoritative playing time formatted as fixed `HH:MM:SS`, including a `00` hours field for sub-hour games and preserving existing Pause/recovery semantics;
+* public winner/first-finisher information only when the game rules authorize it;
+* whether each team is currently frozen during the normal Advent overview, using a clearly readable frost/ice treatment plus a textual Dutch `Bevroren` state so Freeze is not communicated by color alone.
 
-The overview should establish and reuse the shared Christmas visual language. It must never expose private balances, hints, answers, fragments, or hidden effects.
+The Freeze presentation must layer onto the team's existing Advent-calendar surface rather than replace it or obscure progression. It is driven by the authoritative effective team activity state and should enter/leave through normal 500 ms polling without depending on prior animation history. No public Freeze countdown is required or approved.
+
+The overview should establish and reuse the shared Christmas visual language. The frozen/not-frozen boolean is the only public Freeze exception: the overview must never expose Freeze duration, cause, source/attacker, reflected-Reverse details, attack inventory, private balances/points, Hint-token counts, Uno Reverse state, fragments, submitted answers/attempts, private puzzle/hint content, private media, Challenge opportunity/inventory outside the dedicated active Challenge overview, or other hidden team effects/resources.
+
+The dedicated Music Quiz and active Challenge takeover screens retain their separately approved content and replace the normal Advent overview while active.
 
 ## Puzzle View
 
