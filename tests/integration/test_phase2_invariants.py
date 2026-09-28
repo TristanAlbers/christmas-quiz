@@ -140,7 +140,8 @@ class PhaseTwoJourneyTests(PhaseTwoSetup, TestCase):
         self.assertEqual(use_hint(self.a, reveal), first)
         self.assertEqual(get_team_state(self.a).hint_tokens, 0)
         self.assertEqual(
-            get_team_state(self.a).question.hint, "The colour starts with R."
+            get_team_state(self.a).question.hint,
+            "De Engelse kleur begint met een R.",
         )
         self.assertIsNone(get_team_state(self.b).question.hint)
         repeat = use_hint(self.a, TeamPuzzle(str(uuid4()), self.run_id, "a-1"))

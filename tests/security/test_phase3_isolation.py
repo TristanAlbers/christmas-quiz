@@ -78,7 +78,10 @@ class PhaseThreeIsolationTests(TestCase):
             now=self.started,
         )
         before = get_team_state(self.a, now=self.started)
-        self.assertEqual(before.question.hint, "The colour starts with R.")
+        self.assertEqual(
+            before.question.hint,
+            "De Engelse kleur begint met een R.",
+        )
         media_url = before.question.media_urls[0]
 
         frozen_at = timezone.now()
@@ -101,9 +104,12 @@ class PhaseThreeIsolationTests(TestCase):
         poll = self.client.get(reverse("team_state"))
         for response in (page, poll):
             self.assertEqual(response.status_code, 200)
-            self.assertNotContains(response, "Demo A1: North star")
-            self.assertNotContains(response, "colour of the star")
-            self.assertNotContains(response, "The colour starts with R.")
+            self.assertNotContains(response, "Demo A1: Poolster")
+            self.assertNotContains(
+                response,
+                "Vul de Engelse kleur van de ster in je privéafbeelding in.",
+            )
+            self.assertNotContains(response, "De Engelse kleur begint met een R.")
             self.assertNotContains(response, media_url)
 
         before_counts = (AuditEvent.objects.count(), CommandReceipt.objects.count())
