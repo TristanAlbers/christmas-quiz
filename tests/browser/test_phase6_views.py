@@ -224,8 +224,8 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     await b_page.get_by_text(
                         "You won the Challenge", exact=True
                     ).wait_for(timeout=5000)
-                    await tv_page.get_by_text(
-                        "Advent Quiz in progress", exact=True
+                    await tv_page.get_by_role(
+                        "heading", name="Quizzmass", exact=True
                     ).wait_for(timeout=5000)
                     self.assertEqual(
                         await tv_page.locator(".challenge-overview").count(), 0
@@ -332,8 +332,8 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         "direct five-minute Freeze",
                         await monitor.inner_text(),
                     )
-                    await tv_page.get_by_text(
-                        "Advent Quiz in progress", exact=True
+                    await tv_page.get_by_role(
+                        "heading", name="Quizzmass", exact=True
                     ).wait_for(timeout=5000)
                     self.assertEqual(
                         await tv_page.locator(".challenge-overview").count(), 0

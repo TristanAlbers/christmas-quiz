@@ -1,8 +1,14 @@
-<section class="advent-progress{% if progress.is_finished %} advent-progress--finished{% endif %}"
+<section class="advent-progress{% if progress.is_finished %} advent-progress--finished{% endif %}{% if is_frozen %} advent-progress--frozen{% endif %}"
          {% if team_id %}data-team-id="{{ team_id }}"{% endif %}
          data-completed-count="{{ progress.completed_count }}"
-         aria-label="{% if team_id %}Team {{ team_id|upper }} {% endif %}Advent calendar progress">
-  {% if team_id %}<h2 class="advent-team-heading">Team {{ team_id|upper }}</h2>{% endif %}
+         data-frozen="{% if is_frozen %}true{% else %}false{% endif %}"
+         aria-label="{% if team_id %}Team {{ team_id|upper }} {% endif %}Advent calendar progress{% if is_frozen %}, bevroren{% endif %}">
+  {% if team_id %}
+    <div class="advent-team-heading-row">
+      <h2 class="advent-team-heading">Team {{ team_id|upper }}</h2>
+      {% if is_frozen %}<span class="advent-freeze-badge"><span aria-hidden="true">❄</span> Bevroren</span>{% endif %}
+    </div>
+  {% endif %}
   <div class="advent-progress__board">
     <span class="advent-progress__snow" aria-hidden="true"></span>
     <div class="advent-progress__header">

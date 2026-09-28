@@ -96,6 +96,7 @@ jobs:
               tests.browser.test_phase6_views
               tests.browser.test_phase4_views
               tests.browser.test_issue31_freeze
+              tests.browser.test_issue43_public_overview
 
     steps:
       - name: Check out repository

@@ -160,6 +160,11 @@ class PublicTeamProgressProjection:
 
 
 @dataclass(frozen=True)
+class PublicAdventTeamProgressProjection(PublicTeamProgressProjection):
+    is_frozen: bool = False
+
+
+@dataclass(frozen=True)
 class TeamProjection:
     run_id: str | None
     global_state: str
