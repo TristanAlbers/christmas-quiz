@@ -38,7 +38,8 @@ class TypedPuzzleAudioIsolationTests(TestCase):
             {"type": "audio", "path": "a/future.mp3"}
         ]
         config["teams"]["b"]["puzzles"][0]["media"] = [
-            {"type": "audio", "path": "b/clue.mp3"}
+            "b/sky.png",
+            {"type": "audio", "path": "b/clue.mp3"},
         ]
         config_file.write_text(json.dumps(config))
 
@@ -58,6 +59,7 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         AccountRole.objects.create(user=self.team_b, role="team", team_id="b")
         self.admin_actor = Actor(self.admin.pk, "admin")
         self.a_actor = Actor(self.team_a.pk, "team", "a")
+        self.b_actor = Actor(self.team_b.pk, "team", "b")
         self.run_id = start_game(
             self.admin_actor,
             StartGame(str(uuid4()), "christmas-2026-demo"),
@@ -78,6 +80,11 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         self.assertEqual([item.type for item in state.question.media], ["image", "audio"])
         self.assertEqual(state.question.media[0].alt, "Rode ster")
         self.assertIn("a/clue.mp3", state.question.media[1].url)
+
+        legacy = get_team_state(self.b_actor)
+        self.assertEqual([item.type for item in legacy.question.media], ["image", "audio"])
+        self.assertIsNone(legacy.question.media[0].alt)
+        self.assertIn("b/sky.png", legacy.question.media[0].url)
 
         self.client.force_login(self.team_a)
         current = self.client.get(self._media_url("a", "a/clue.mp3"))
