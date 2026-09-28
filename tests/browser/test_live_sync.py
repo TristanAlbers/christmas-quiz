@@ -123,11 +123,15 @@ class LiveSyncBrowserTests(LiveServerTestCase):
                 browser, context, page, _ = await self._open_team_page(playwright)
                 try:
                     await self._watch_state_polls(page)
+                    hint_action = page.locator("[data-hint-action]")
+                    self.assertTrue(await hint_action.is_disabled())
                     async with page.expect_response(
                         lambda response: "/team/action/use-hint/" in response.url
                         and response.status == 409
                     ):
-                        await page.get_by_role("button", name="Use Hint token").click()
+                        await page.locator(
+                            "form[action='/team/action/use-hint/']"
+                        ).evaluate("form => form.requestSubmit()")
                     feedback = page.locator("#action-feedback")
                     await feedback.filter(has_text="no hint tokens").wait_for()
                     await self._wait_for_three_state_polls(page)
