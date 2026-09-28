@@ -10,6 +10,7 @@ from dataclasses import replace
 
 from . import _application_core as _core
 from ._application_core import *  # noqa: F403
+from .contracts import PublicAdventTeamProgressProjection
 from .models import Run, TeamRun
 from .persistence import read_snapshot
 from .phase6_application import (  # noqa: F401
@@ -47,18 +48,19 @@ def get_public_state(*, now=None):
         teams = []
         for projection in state.teams:
             row = rows.get(projection.team_id)
-            if row is None:
-                teams.append(projection)
-                continue
-            effective = _core.reconcile_freeze(
-                row.activity_state,
-                row.freeze_started_gameplay_ms,
-                state.gameplay_elapsed_ms,
-            )
+            is_frozen = False
+            if row is not None:
+                effective = _core.reconcile_freeze(
+                    row.activity_state,
+                    row.freeze_started_gameplay_ms,
+                    state.gameplay_elapsed_ms,
+                )
+                is_frozen = effective.activity_state == "FREEZE"
             teams.append(
-                replace(
-                    projection,
-                    is_frozen=effective.activity_state == "FREEZE",
+                PublicAdventTeamProgressProjection(
+                    team_id=projection.team_id,
+                    advent_progress=projection.advent_progress,
+                    is_frozen=is_frozen,
                 )
             )
         return replace(state, teams=tuple(teams))
