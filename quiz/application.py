@@ -23,16 +23,18 @@ from .phase6_application import (  # noqa: F401
 
 def get_public_state(*, now=None):
     """Apply the approved coarse public Freeze projection to Advent overview state."""
-    state = _phase6_get_public_state(now=now)
-    if (
-        not state.teams
-        or state.music is not None
-        or state.challenge is not None
-        or state.global_state not in {"ADVENT_QUIZ", "PAUSED"}
-    ):
-        return state
-
     with read_snapshot():
+        # Keep the base public projection and the coarse Freeze enrichment in one
+        # read snapshot so a concurrent reset/start cannot mix two different runs.
+        state = _phase6_get_public_state(now=now)
+        if (
+            not state.teams
+            or state.music is not None
+            or state.challenge is not None
+            or state.global_state not in {"ADVENT_QUIZ", "PAUSED"}
+        ):
+            return state
+
         run = Run.objects.filter(active=True).first()
         if run is None:
             return state
