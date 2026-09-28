@@ -224,15 +224,12 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     await b_page.get_by_text(
                         "You won the Challenge", exact=True
                     ).wait_for(timeout=5000)
-                    await tv_page.get_by_role(
-                        "heading", name="Quizzmass", exact=True
-                    ).wait_for(timeout=5000)
+                    calendar = tv_page.locator(".public-calendar-grid")
+                    await calendar.first.wait_for(state="visible", timeout=5000)
                     self.assertEqual(
                         await tv_page.locator(".challenge-overview").count(), 0
                     )
-                    self.assertEqual(
-                        await tv_page.locator(".public-calendar-grid").count(), 1
-                    )
+                    self.assertEqual(await calendar.count(), 1)
                     for page in (a_page, b_page, tv_page):
                         self.assertTrue(
                             await page.evaluate(
@@ -332,15 +329,12 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         "direct five-minute Freeze",
                         await monitor.inner_text(),
                     )
-                    await tv_page.get_by_role(
-                        "heading", name="Quizzmass", exact=True
-                    ).wait_for(timeout=5000)
+                    calendar = tv_page.locator(".public-calendar-grid")
+                    await calendar.first.wait_for(state="visible", timeout=5000)
                     self.assertEqual(
                         await tv_page.locator(".challenge-overview").count(), 0
                     )
-                    self.assertEqual(
-                        await tv_page.locator(".public-calendar-grid").count(), 1
-                    )
+                    self.assertEqual(await calendar.count(), 1)
                     for page in (b_page, admin_page, tv_page):
                         self.assertTrue(
                             await page.evaluate(

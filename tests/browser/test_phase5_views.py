@@ -107,18 +107,19 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         )
                     )
                     self.assertEqual(
-                        await team.locator(".resource-card--hint").count(), 1
+                        await team.locator(".resource-card--hint").count(), 0
+                    )
+                    self.assertEqual(
+                        await team.locator("[data-hint-action]").count(), 1
                     )
                     self.assertEqual(
                         await team.locator(".resource-card--reverse").count(), 1
                     )
-                    final_skip = team.locator(".button-skip")
+                    final_skip = team.locator("[data-skip-action]")
                     self.assertEqual(await final_skip.count(), 1)
                     self.assertTrue(await final_skip.is_disabled())
-                    self.assertIn(
-                        "Deze vraag kan niet worden overgeslagen",
-                        await final_skip.inner_text(),
-                    )
+                    self.assertIn("Vraag overslaan", await final_skip.inner_text())
+                    self.assertIn("Laatste vraag", await final_skip.inner_text())
                     self.assertEqual(
                         await team.locator(".shop-item--freeze").count(), 1
                     )
@@ -172,7 +173,9 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         await answer.evaluate("el => el.selectionStart"), 2
                     )
                     self.assertEqual(await team.locator(".advent-door").count(), 0)
-                    self.assertTrue(await team.locator(".button-skip").is_disabled())
+                    self.assertTrue(
+                        await team.locator("[data-skip-action]").is_disabled()
+                    )
 
                     await answer.fill("north")
                     await team.locator(".answer-form .button-primary").click()

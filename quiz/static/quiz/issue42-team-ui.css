@@ -1,0 +1,248 @@
+.game-page--team .team-resource-bar {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.game-page--team .resource-card--coins {
+  grid-column: span 2;
+  min-height: 6.5rem;
+  border-color: #c99a22;
+  background: linear-gradient(145deg, #fff9dc, #fff1b8);
+  box-shadow: inset 0 0 0 .1rem rgba(214, 166, 44, .2), 0 .35rem .9rem rgba(103, 76, 10, .08);
+}
+
+.game-page--team .resource-card--coins .resource-points-mark {
+  color: #8b6507;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.game-page--team .resource-card--coins .resource-points-value {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 8vw, 3.35rem);
+  line-height: .95;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-page--team .resource-card--coins .resource-points-label {
+  color: #604707;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.game-page--team .resource-card--fragments {
+  border-color: #d5b95d;
+  background: #fffaf0;
+  text-align: left;
+}
+
+.game-page--team .resource-card--fragments > strong,
+.game-page--team .resource-card--reverse > strong {
+  font-size: .92rem;
+}
+
+.fragment-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  margin-top: .35rem;
+}
+
+.fragment-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.65rem;
+  max-width: 100%;
+  padding: .2rem .42rem;
+  border: 1px solid #c79723;
+  border-radius: 999px;
+  background: #fff1b8;
+  color: #5b4205;
+  font-size: .7rem;
+  font-weight: 900;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.fragment-chip--empty {
+  border-style: dashed;
+  border-color: #b8aaa0;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.game-page--team .resource-card--shop {
+  grid-column: 1 / -1;
+  min-height: 4.6rem;
+}
+
+.team-state-surface {
+  position: relative;
+}
+
+.team-playing-time {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: .2rem 0 .65rem;
+  padding: .45rem .65rem;
+  border: 1px solid rgba(84, 74, 59, .18);
+  border-radius: .7rem;
+  background: rgba(255, 255, 255, .7);
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.team-playing-time time {
+  color: var(--ink);
+  font-size: .9rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+}
+
+.team-state-surface > .finish-banner,
+.team-state-surface > .freeze-message,
+.team-state-surface > .interruption-message,
+.team-state-surface > .music-gathering-status,
+.team-state-surface > .challenge-status,
+.team-state-surface > .challenge-result {
+  margin: 1rem 0;
+}
+
+.challenge-result[hidden] {
+  display: none;
+}
+
+.puzzle-action-stack {
+  display: grid;
+  gap: .6rem;
+  margin: 1rem 0 0;
+}
+
+.puzzle-action-stack form,
+.puzzle-action-stack .puzzle-action-static {
+  margin: 0;
+}
+
+.puzzle-action-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: .7rem;
+  align-items: center;
+  width: 100%;
+  min-height: 4.2rem;
+  padding: .7rem .8rem;
+  text-align: left;
+}
+
+.puzzle-action-button .hint-token {
+  margin: 0;
+}
+
+.puzzle-action-copy {
+  display: grid;
+  gap: .1rem;
+  min-width: 0;
+}
+
+.puzzle-action-copy strong {
+  font-size: 1rem;
+}
+
+.puzzle-action-copy small,
+.puzzle-action-status {
+  font-size: .78rem;
+}
+
+.puzzle-action-copy small {
+  color: inherit;
+  opacity: .82;
+}
+
+.puzzle-action-status {
+  justify-self: end;
+  padding: .28rem .48rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.puzzle-action-button--hint {
+  border-color: #b28312;
+  background: #fff9dc;
+  color: #6f4f00;
+}
+
+.puzzle-action-button--hint:hover:not(:disabled) {
+  background: #fff2bd;
+}
+
+.puzzle-action-button--skip {
+  border-color: var(--berry);
+  background: linear-gradient(135deg, var(--berry), var(--berry-dark));
+  color: white;
+  box-shadow: 0 .35rem .9rem rgba(117, 32, 50, .2);
+}
+
+.puzzle-action-button--skip:hover:not(:disabled) {
+  background: var(--berry-dark);
+}
+
+.puzzle-action-button:disabled {
+  cursor: not-allowed;
+  opacity: .62;
+  box-shadow: none;
+}
+
+.puzzle-action-button--skip:disabled {
+  border: 1px dashed #9b8086;
+  background: #eee8e9;
+  color: #66565a;
+}
+
+.puzzle-action-button--hint:disabled {
+  border-style: dashed;
+  background: #f3f0e7;
+  color: #6c6658;
+}
+
+.answer-form + .puzzle-action-stack {
+  padding-top: .25rem;
+}
+
+@media (max-width: 36rem) {
+  .game-page--team .team-resource-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .45rem;
+  }
+
+  .game-page--team .resource-card--coins,
+  .game-page--team .resource-card--shop {
+    grid-column: 1 / -1;
+  }
+
+  .game-page--team .resource-card--coins {
+    min-height: 5.8rem;
+  }
+
+  .game-page--team .resource-card--fragments,
+  .game-page--team .resource-card--reverse {
+    min-height: 5.5rem;
+    padding: .55rem;
+    font-size: .72rem;
+  }
+
+  .puzzle-action-button {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .puzzle-action-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

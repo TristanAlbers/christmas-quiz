@@ -81,6 +81,8 @@ jobs:
             tests: >-
               tests.browser.test_live_sync
               tests.browser.test_issue18_incorrect_answer_feedback
+              tests.browser.test_issue42_team_ui
+              tests.browser.test_issue42_review_regressions
               tests.browser.test_phase31_views
               tests.browser.test_phase3_views
           - shard: music-calendar

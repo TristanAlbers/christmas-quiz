@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Christmas Quiz · Team {{ team_name }}</title>
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/issue42-team-ui.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
@@ -23,7 +24,6 @@
     </header>
     <section id="live-game" aria-label="Current game">
       <p id="connection-status" role="status"></p>
-      <p id="action-feedback" class="feedback" role="status"></p>
       <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}">
       <div id="poller" hx-get="{% url 'team_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
@@ -34,6 +34,7 @@
       </div>
       {% include 'quiz/_team_actions.html' %}
       {% include 'quiz/_question_pane.html' %}
+      <p id="action-feedback" class="feedback" role="status"></p>
     </section>
   </main>
   <div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true"></div>
@@ -59,12 +60,134 @@
       const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0'));
       return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`;
     }
+
+    let actionFeedbackTimer = null;
+    function armActionFeedbackTimer() {
+      const feedback = document.getElementById('action-feedback');
+      if (!feedback || !feedback.textContent.trim()) return;
+      const message = feedback.textContent;
+      window.clearTimeout(actionFeedbackTimer);
+      actionFeedbackTimer = window.setTimeout(function () {
+        const current = document.getElementById('action-feedback');
+        if (current && current.textContent === message) current.textContent = '';
+      }, 5000);
+    }
+
+    function showActionFeedback(message) {
+      const feedback = document.getElementById('action-feedback');
+      if (!feedback) return;
+      feedback.textContent = message;
+      armActionFeedbackTimer();
+    }
+
+    function syncPuzzleActionAvailability() {
+      const resources = document.getElementById('team-resource-values');
+      if (!resources) return;
+      const balance = Number.parseInt(resources.dataset.balance || '0', 10);
+      const hintTokens = Number.parseInt(resources.dataset.hintTokens || '0', 10);
+
+      document.querySelectorAll('[data-hint-inventory]').forEach(function (node) {
+        node.textContent = String(hintTokens);
+      });
+
+      const hintButton = document.querySelector('[data-hint-action]');
+      if (hintButton) {
+        const legal = hintButton.dataset.hintLegal === '1';
+        const enabled = legal && hintTokens > 0;
+        hintButton.disabled = !enabled;
+        const status = hintButton.querySelector('[data-hint-status]');
+        if (status) {
+          status.textContent = enabled
+            ? 'Beschikbaar'
+            : (legal ? 'Geen hints' : (hintButton.dataset.hintDisabledLabel || 'Niet beschikbaar'));
+        }
+      }
+
+      const skipButton = document.querySelector('[data-skip-action]');
+      if (skipButton) {
+        const legal = skipButton.dataset.skipLegal === '1';
+        const cost = Number.parseInt(skipButton.dataset.skipCost || '0', 10);
+        const enabled = legal && balance >= cost;
+        skipButton.disabled = !enabled;
+        const status = skipButton.querySelector('[data-skip-status]');
+        if (status) {
+          if (enabled) {
+            status.textContent = 'Beschikbaar';
+          } else if (!legal) {
+            status.textContent = skipButton.dataset.skipDisabledLabel || 'Niet mogelijk';
+          } else {
+            const missing = Math.max(0, cost - balance);
+            status.textContent = `${missing} ${missing === 1 ? 'punt' : 'punten'} tekort`;
+          }
+        }
+      }
+    }
+
+    function formatGameplayTime(rawMilliseconds) {
+      const milliseconds = Math.max(0, Number.parseInt(rawMilliseconds || '0', 10) || 0);
+      const totalSeconds = Math.floor(milliseconds / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return [hours, minutes, seconds]
+        .map(value => String(value).padStart(2, '0'))
+        .join(':');
+    }
+
+    function syncPlayingTime() {
+      document.querySelectorAll('[data-gameplay-ms]').forEach(function (node) {
+        node.textContent = formatGameplayTime(node.dataset.gameplayMs);
+      });
+    }
+
+    let challengeResultTimer = null;
+    let activeChallengeResultKey = null;
+    let activeChallengeResultExpiresAt = 0;
+    let challengeWasActiveBeforeSwap = false;
+
+    function syncTransientChallengeResult(startFromObservedTransition) {
+      window.clearTimeout(challengeResultTimer);
+      const result = document.querySelector('[data-challenge-result-key]');
+      if (!result) return;
+
+      const resultKey = result.dataset.challengeResultKey;
+      if (startFromObservedTransition && activeChallengeResultKey !== resultKey) {
+        activeChallengeResultKey = resultKey;
+        activeChallengeResultExpiresAt = Date.now() + 5000;
+      }
+
+      if (activeChallengeResultKey !== resultKey) {
+        result.hidden = true;
+        return;
+      }
+
+      const remaining = activeChallengeResultExpiresAt - Date.now();
+      if (remaining <= 0) {
+        result.hidden = true;
+        activeChallengeResultKey = null;
+        activeChallengeResultExpiresAt = 0;
+        return;
+      }
+
+      result.hidden = false;
+      challengeResultTimer = window.setTimeout(function () {
+        const current = document.querySelector('[data-challenge-result-key]');
+        if (current && current.dataset.challengeResultKey === resultKey) {
+          current.hidden = true;
+        }
+        if (activeChallengeResultKey === resultKey) {
+          activeChallengeResultKey = null;
+          activeChallengeResultExpiresAt = 0;
+        }
+      }, remaining);
+    }
+
     document.body.addEventListener('htmx:responseError', function (event) {
       const status = event.detail.xhr.status;
       const isAction = event.detail.elt.closest('form') !== null;
       if (isAction && status >= 400 && status < 500) {
         const message = 'Action rejected: ' + event.detail.xhr.responseText;
-        document.getElementById('action-feedback').textContent = message;
+        showActionFeedback(message);
         const shopFeedback = document.getElementById('shop-feedback');
         if (shopFeedback) shopFeedback.textContent = message;
       } else {
@@ -84,6 +207,13 @@
       }
     });
     let reopenShop = false;
+    document.body.addEventListener('htmx:beforeSwap', function (event) {
+      if (event.detail.target.id === 'game-status') {
+        challengeWasActiveBeforeSwap = Boolean(
+          document.querySelector('#game-status .challenge-status--active')
+        );
+      }
+    });
     document.body.addEventListener('htmx:oobBeforeSwap', function (event) {
       if (event.detail.target.id === 'team-actions') {
         const shop = document.getElementById('team-shop-dialog');
@@ -96,12 +226,30 @@
         if (shop) shop.showModal();
         reopenShop = false;
       }
+      if (event.detail.target.id === 'team-resource-values' || event.detail.target.id === 'question-pane') {
+        syncPuzzleActionAvailability();
+      }
+      if (event.detail.target.id === 'action-feedback') {
+        armActionFeedbackTimer();
+      }
+    });
+    document.body.addEventListener('htmx:afterSwap', function (event) {
+      if (event.detail.target.id === 'game-status') {
+        syncPlayingTime();
+        syncTransientChallengeResult(challengeWasActiveBeforeSwap);
+        challengeWasActiveBeforeSwap = false;
+      }
     });
     document.body.addEventListener('shopPurchaseSucceeded', function () {
       const shop = document.getElementById('team-shop-dialog');
       if (shop && shop.open) shop.close();
       reopenShop = false;
     });
+
+    syncPuzzleActionAvailability();
+    syncPlayingTime();
+    syncTransientChallengeResult(false);
+    armActionFeedbackTimer();
   </script>
 </body>
 </html>
