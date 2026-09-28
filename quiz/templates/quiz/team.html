@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Christmas Quiz · Team {{ team_name }}</title>
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/issue42-team-ui.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
@@ -23,7 +24,6 @@
     </header>
     <section id="live-game" aria-label="Current game">
       <p id="connection-status" role="status"></p>
-      <p id="action-feedback" class="feedback" role="status"></p>
       <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}">
       <div id="poller" hx-get="{% url 'team_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
@@ -34,6 +34,7 @@
       </div>
       {% include 'quiz/_team_actions.html' %}
       {% include 'quiz/_question_pane.html' %}
+      <p id="action-feedback" class="feedback" role="status"></p>
     </section>
   </main>
   <div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true"></div>
@@ -59,12 +60,116 @@
       const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0'));
       return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`;
     }
+
+    let actionFeedbackTimer = null;
+    function armActionFeedbackTimer() {
+      const feedback = document.getElementById('action-feedback');
+      if (!feedback || !feedback.textContent.trim()) return;
+      const message = feedback.textContent;
+      window.clearTimeout(actionFeedbackTimer);
+      actionFeedbackTimer = window.setTimeout(function () {
+        const current = document.getElementById('action-feedback');
+        if (current && current.textContent === message) current.textContent = '';
+      }, 5000);
+    }
+
+    function showActionFeedback(message) {
+      const feedback = document.getElementById('action-feedback');
+      if (!feedback) return;
+      feedback.textContent = message;
+      armActionFeedbackTimer();
+    }
+
+    function syncPuzzleActionAvailability() {
+      const resources = document.getElementById('team-resource-values');
+      if (!resources) return;
+      const points = Number.parseInt(resources.dataset.points || '0', 10);
+      const hintTokens = Number.parseInt(resources.dataset.hintTokens || '0', 10);
+
+      document.querySelectorAll('[data-hint-inventory]').forEach(function (node) {
+        node.textContent = String(hintTokens);
+      });
+
+      const hintButton = document.querySelector('[data-hint-action]');
+      if (hintButton) {
+        const legal = hintButton.dataset.hintLegal === '1';
+        const enabled = legal && hintTokens > 0;
+        hintButton.disabled = !enabled;
+        const status = hintButton.querySelector('[data-hint-status]');
+        if (status) {
+          status.textContent = enabled
+            ? 'Beschikbaar'
+            : (legal ? 'Geen hints' : (hintButton.dataset.hintDisabledLabel || 'Niet beschikbaar'));
+        }
+      }
+
+      const skipButton = document.querySelector('[data-skip-action]');
+      if (skipButton) {
+        const legal = skipButton.dataset.skipLegal === '1';
+        const cost = Number.parseInt(skipButton.dataset.skipCost || '0', 10);
+        const enabled = legal && points >= cost;
+        skipButton.disabled = !enabled;
+        const status = skipButton.querySelector('[data-skip-status]');
+        if (status) {
+          if (enabled) {
+            status.textContent = 'Beschikbaar';
+          } else if (!legal) {
+            status.textContent = skipButton.dataset.skipDisabledLabel || 'Niet mogelijk';
+          } else {
+            const missing = Math.max(0, cost - points);
+            status.textContent = `${missing} ${missing === 1 ? 'punt' : 'punten'} tekort`;
+          }
+        }
+      }
+    }
+
+    const challengeResultSeen = new Map();
+    let challengeResultTimer = null;
+    function challengeResultFirstSeen(resultKey) {
+      const storageKey = `quiz:challenge-result:${resultKey}`;
+      let seen = challengeResultSeen.get(resultKey) || 0;
+      try {
+        const stored = Number.parseInt(window.sessionStorage.getItem(storageKey) || '0', 10);
+        if (stored > 0) seen = stored;
+      } catch (error) {
+        // Session storage is an enhancement; the in-memory map still prevents poll restarts.
+      }
+      if (seen > 0) return seen;
+      seen = Date.now();
+      challengeResultSeen.set(resultKey, seen);
+      try {
+        window.sessionStorage.setItem(storageKey, String(seen));
+      } catch (error) {
+        // Ignore unavailable session storage.
+      }
+      return seen;
+    }
+
+    function syncTransientChallengeResult() {
+      window.clearTimeout(challengeResultTimer);
+      const result = document.querySelector('[data-challenge-result-key]');
+      if (!result) return;
+      const firstSeen = challengeResultFirstSeen(result.dataset.challengeResultKey);
+      const remaining = 5000 - (Date.now() - firstSeen);
+      if (remaining <= 0) {
+        result.hidden = true;
+        return;
+      }
+      result.hidden = false;
+      challengeResultTimer = window.setTimeout(function () {
+        const current = document.querySelector('[data-challenge-result-key]');
+        if (current && current.dataset.challengeResultKey === result.dataset.challengeResultKey) {
+          current.hidden = true;
+        }
+      }, remaining);
+    }
+
     document.body.addEventListener('htmx:responseError', function (event) {
       const status = event.detail.xhr.status;
       const isAction = event.detail.elt.closest('form') !== null;
       if (isAction && status >= 400 && status < 500) {
         const message = 'Action rejected: ' + event.detail.xhr.responseText;
-        document.getElementById('action-feedback').textContent = message;
+        showActionFeedback(message);
         const shopFeedback = document.getElementById('shop-feedback');
         if (shopFeedback) shopFeedback.textContent = message;
       } else {
@@ -96,12 +201,25 @@
         if (shop) shop.showModal();
         reopenShop = false;
       }
+      if (event.detail.target.id === 'team-resource-values' || event.detail.target.id === 'question-pane') {
+        syncPuzzleActionAvailability();
+      }
+      if (event.detail.target.id === 'action-feedback') {
+        armActionFeedbackTimer();
+      }
+    });
+    document.body.addEventListener('htmx:afterSwap', function (event) {
+      if (event.detail.target.id === 'game-status') syncTransientChallengeResult();
     });
     document.body.addEventListener('shopPurchaseSucceeded', function () {
       const shop = document.getElementById('team-shop-dialog');
       if (shop && shop.open) shop.close();
       reopenShop = false;
     });
+
+    syncPuzzleActionAvailability();
+    syncTransientChallengeResult();
+    armActionFeedbackTimer();
   </script>
 </body>
 </html>
