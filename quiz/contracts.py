@@ -157,6 +157,10 @@ class PublicChallengeProjection:
 class PublicTeamProgressProjection:
     team_id: TeamId
     advent_progress: AdventProgressProjection
+
+
+@dataclass(frozen=True)
+class PublicAdventTeamProgressProjection(PublicTeamProgressProjection):
     is_frozen: bool = False
 
 
@@ -305,7 +309,7 @@ class AdminProjection:
 class PublicProjection:
     global_state: str
     music: MusicProjection | None = None
-    teams: tuple[PublicTeamProgressProjection, ...] = ()
+    teams: tuple[PublicTeamProgressProjection | PublicAdventTeamProgressProjection, ...] = ()
     first_finisher_team_id: TeamId | None = None
     gameplay_elapsed_ms: int = 0
     challenge: PublicChallengeProjection | None = None
