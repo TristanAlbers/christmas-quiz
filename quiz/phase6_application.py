@@ -193,10 +193,9 @@ def get_public_state(*, now=None):
         config = _load_snapshot_compatible(run)
         if config.get("schema_version") != 6:
             return state
-        gameplay_ms = core._gameplay_ms(run, now)
+        gameplay_ms = state.gameplay_elapsed_ms
         return replace(
             state,
-            gameplay_elapsed_ms=gameplay_ms,
             challenge=_public_challenge_projection(run, config, gameplay_ms),
         )
 
