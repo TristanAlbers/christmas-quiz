@@ -88,9 +88,9 @@ class QuestionProjection:
     title: str
     body: str
     media_urls: tuple[str, ...] = ()
-    media: tuple[PuzzleMediaProjection, ...] = ()
     hint: str | None = None
     hint_available: bool = False
+    media: tuple[PuzzleMediaProjection, ...] = ()
 
 
 @dataclass(frozen=True)
