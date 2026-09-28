@@ -77,12 +77,18 @@ class TypedPuzzleAudioIsolationTests(TestCase):
 
     def test_projection_exposes_type_without_weakening_current_question_boundary(self):
         state = get_team_state(self.a_actor)
-        self.assertEqual([item.type for item in state.question.media], ["image", "audio"])
+        self.assertEqual(
+            [item.type for item in state.question.media],
+            ["image", "audio"],
+        )
         self.assertEqual(state.question.media[0].alt, "Rode ster")
         self.assertIn("a/clue.mp3", state.question.media[1].url)
 
         legacy = get_team_state(self.b_actor)
-        self.assertEqual([item.type for item in legacy.question.media], ["image", "audio"])
+        self.assertEqual(
+            [item.type for item in legacy.question.media],
+            ["image", "audio"],
+        )
         self.assertIsNone(legacy.question.media[0].alt)
         self.assertIn("b/sky.png", legacy.question.media[0].url)
 
@@ -98,12 +104,13 @@ class TypedPuzzleAudioIsolationTests(TestCase):
             self.a_actor,
             SubmitAnswer(str(uuid4()), self.run_id, "a-1", "red"),
         )
-        self.assertEqual(self.client.get(self._media_url("a", "a/clue.mp3")).status_code, 404)
+        previous = self.client.get(self._media_url("a", "a/clue.mp3"))
+        self.assertEqual(previous.status_code, 404)
         future = self.client.get(future_url)
         self.assertEqual(future.status_code, 200)
         self.assertEqual(b"".join(future.streaming_content), b"ID3-team-a-future")
 
-    def test_team_cannot_fetch_other_team_audio_and_anonymous_cannot_fetch_any_audio(self):
+    def test_cross_team_and_anonymous_audio_requests_are_hidden(self):
         self.client.force_login(self.team_a)
         existing = self.client.get(self._media_url("b", "b/clue.mp3"))
         missing = self.client.get(self._media_url("b", "b/missing.mp3"))
@@ -116,7 +123,12 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         self.assertEqual(anonymous.status_code, 404)
 
     def test_audio_bytes_are_served_from_the_pinned_snapshot(self):
-        source = Path(settings.QUIZ_GAMES_ROOT) / "christmas-2026-demo" / "a" / "clue.mp3"
+        source = (
+            Path(settings.QUIZ_GAMES_ROOT)
+            / "christmas-2026-demo"
+            / "a"
+            / "clue.mp3"
+        )
         source.write_bytes(b"ID3-edited-after-start")
 
         self.client.force_login(self.team_a)
