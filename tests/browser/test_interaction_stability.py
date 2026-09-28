@@ -152,8 +152,8 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     )
                     await page.mouse.up()
                     await (
-                        page.locator(".resource-card--hint")
-                        .filter(has_text="1 Hint tokens")
+                        page.locator("[data-hint-action]")
+                        .filter(has_text="1 beschikbaar")
                         .wait_for(timeout=5000)
                     )
                     await page.locator("#team-shop-dialog").wait_for(
