@@ -83,9 +83,26 @@
   {% elif state.question %}
     <h2>{{ state.question.title }}</h2>
     <p>{{ state.question.body }}</p>
-    {% for media_url in state.question.media_urls %}
-      <img class="puzzle-image" src="{{ media_url }}" alt="Privé-aanwijzing bij de puzzel">
-    {% endfor %}
+    {% if state.question.media %}
+      <div class="puzzle-media-list" aria-label="Media bij de puzzel">
+        {% for media in state.question.media %}
+          {% if media.type == 'audio' %}
+            <figure class="puzzle-audio-card" data-puzzle-audio>
+              <figcaption>Audiofragment bij de puzzel</figcaption>
+              <audio class="puzzle-audio" controls preload="metadata" src="{{ media.url }}">
+                Je browser ondersteunt geen audioweergave.
+              </audio>
+            </figure>
+          {% else %}
+            <img class="puzzle-image" src="{{ media.url }}" alt="{{ media.alt|default:'Privé-aanwijzing bij de puzzel' }}">
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% for media_url in state.question.media_urls %}
+        <img class="puzzle-image" src="{{ media_url }}" alt="Privé-aanwijzing bij de puzzel">
+      {% endfor %}
+    {% endif %}
     {% if state.question.hint %}<aside class="hint-card"><span class="hint-token" aria-hidden="true">?</span><div><strong>Hint onthuld</strong><p>{{ state.question.hint }}</p></div></aside>{% endif %}
     <form class="answer-form" method="post" action="{% url 'team_answer' %}"
           hx-post="{% url 'team_answer' %}" hx-trigger="submit"
