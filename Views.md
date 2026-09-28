@@ -19,6 +19,12 @@ Do not reduce a specified visual state to a raw text placeholder when this docum
 * active Uno Reverse and earned fragments should be recognizable visual cards/chips/badges rather than plain text prompts; the team Hint-token count belongs in the contextual Hint action rather than a separate top-level inventory card;
 * Skip is an immediate action under the current game rules, so it should be presented as a styled action when available, not as stored inventory.
 
+## Runtime language
+
+Normal runtime presentation is Dutch-first on all three consumer surfaces. Team login/waiting/gameplay feedback, public/TV status and audio controls, and Game Master labels/controls/errors should use concise Dutch copy. Player-visible package-authored titles, questions and hints should also be Dutch where they are intended as prose.
+
+Technical state values remain implementation details. Raw identifiers such as `READY`, `ADVENT_QUIZ`, `MUSIC_QUIZ`, `PUZZLE`, and `FREEZE` may be used by backend state, polling context, CSS/data attributes, tests, and developer documentation, but must be mapped to Dutch labels before they become normal visible UI. This requirement does not introduce a language selector or general-purpose localization framework.
+
 ## Polling and interaction stability
 
 The application uses 500 ms HTMX polling. All views must follow `docs/polling-ui-guideline.md`.
@@ -55,7 +61,7 @@ This view is shown while no game run is active.
 
 The team should see only a simple, visually intentional waiting state such as:
 
-> Waiting for the game master to start a game…
+> Wachten tot de Game Master het spel start…
 
 It must not expose the available package list, prior-run puzzle state, points, fragments, hints, effects, or other historical private state.
 
@@ -196,7 +202,7 @@ Target: `administrative`
 
 This view should be optimized for phone/tablet usage.
 
-When a run is active, it should provide a user-friendly interface for the supported administrative controls described in `Design.md` and the game-state documents. It should also make team progression easy to understand at a glance. The preferred representation is two mirrored Advent calendars, one per team, with clear completed/current/future states and a concise progress marker such as `13/25`.
+When a run is active, it should provide a user-friendly Dutch interface for the supported administrative controls described in `Design.md` and the game-state documents. It should also make team progression easy to understand at a glance. The preferred representation is two mirrored Advent calendars, one per team, with clear completed/current/future states and a concise progress marker such as `13/25`.
 
 Admin controls must remain stable under polling; editing a number, using a native selector, pressing a command, or interacting with a form must not race against a 500 ms redraw.
 
