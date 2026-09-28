@@ -16,7 +16,7 @@ Do not reduce a specified visual state to a raw text placeholder when this docum
 
 * where puzzle progression is shown, it should retain the Advent-calendar metaphor rather than being represented only as a percentage or text counter;
 * Music Quiz progression should be immediately visible as progress through 11 questions using a progress bar or clear 11-step tracker; the public/TV overview also shows the current question number;
-* active Uno Reverse and available Hint tokens should be recognizable visual cards/tokens/badges rather than plain text prompts;
+* active Uno Reverse and earned fragments should be recognizable visual cards/chips/badges rather than plain text prompts; the team Hint-token count belongs in the contextual Hint action rather than a separate top-level inventory card;
 * Skip is an immediate action under the current game rules, so it should be presented as a styled action when available, not as stored inventory.
 
 ## Polling and interaction stability
@@ -90,24 +90,22 @@ This view should be optimized for phone usage, with tablet compatibility.
 
 The team Puzzle View intentionally does **not** show the persistent 25-door Advent calendar/progression grid. Overall Advent progression is shown on both the shared/general overview and the administrative view, while the team screen stays focused on the current puzzle and the resources/actions the team can use.
 
-It should represent:
+During normal Advent play the screen should read as a player-facing puzzle experience, not a diagnostic status page. Raw technical state chrome such as `Game: ADVENT_QUIZ`, generic `Puzzle`/state badges, and stale resolved-Challenge status must not occupy the normal puzzle hierarchy.
 
-* current playing time;
-* an intentional graphical/card/badge representation of whether an Uno Reverse is active;
-* an intentional graphical/card/badge representation of the number of available Hint tokens;
-* total amount of coins/points;
-* puzzle content/media needed by the current event box;
-* interactions with the current event box to reveal/use a purchased hint where legal;
-* answer submission for the current question;
-* a clearly styled immediate Skip action where legal under the current rules;
-* access to a **Shop View**;
-* access to a **Sabotage View**.
+The normal Puzzle View should use this hierarchy:
+
+1. a resource area with the current point balance as the strongest element;
+2. compact persistent representations of earned fragments and Uno Reverse state;
+3. the current puzzle content followed by the answer interaction;
+4. a contextual Hint action bar directly above the Skip action bar.
+
+The Hint-token balance is deliberately **not** a standalone top-level resource card. The Hint action itself shows how many purchased Hint tokens remain, whether a Hint is legal for the current puzzle, and a clear disabled state when no token can be used. The Skip action shows its current cost and a clear disabled state when the team cannot afford it or the action is otherwise illegal. Disabled state must be understandable without relying on color alone.
 
 Puzzle 25 is the explicit final-puzzle exception: player Skip is not available. The layout may keep the Skip position as a clearly disabled control with concise Dutch-facing explanation, but no usable Skip form/action may be exposed. Correct-answer submission remains available and administrator force completion is unaffected.
 
-The team resource/status controls should be grouped above the current puzzle interaction so the answer field sits below that resource area and remains prominent on a phone.
+Transient outcomes and rejected-action feedback should appear near the active interaction and disappear after a short readable interval. A resolved Challenge may be surfaced briefly as feedback, but must not become permanent normal-play status chrome.
 
-The current answer input and other controls must survive normal polling without losing focus, caret position, selection, hover/press state, or clicks.
+The current answer input and other still-valid controls must survive normal polling without losing focus, caret position, selection, hover/press state, or clicks. Resource-value polling may update point/fragment/Reverse display and the disabled/text state of the contextual Hint/Skip actions, but it must not recreate those action elements while their puzzle context remains unchanged.
 
 ## Freeze View
 
