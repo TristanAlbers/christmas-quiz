@@ -99,7 +99,10 @@ class TypedPuzzleAudioBrowserTests(LiveServerTestCase):
                     self.assertTrue(await audio.evaluate("el => el.controls"))
                     self.assertEqual(await audio.get_attribute("preload"), "metadata")
                     self.assertIsNone(await audio.get_attribute("autoplay"))
-                    self.assertEqual(await page.evaluate("window.__issue39PlayCalls"), 0)
+                    self.assertEqual(
+                        await page.evaluate("window.__issue39PlayCalls"),
+                        0,
+                    )
 
                     await audio.evaluate(
                         """el => {
@@ -127,14 +130,19 @@ class TypedPuzzleAudioBrowserTests(LiveServerTestCase):
                     self.assertTrue(
                         await page.evaluate(
                             """() => window.__issue39AudioNode ===
-                              document.querySelector('#question-pane audio.puzzle-audio')"""
+                              document.querySelector(
+                                '#question-pane audio.puzzle-audio'
+                              )"""
                         )
                     )
                     self.assertEqual(
                         await audio.evaluate("el => el.__issue39Marker"),
                         "preserved",
                     )
-                    self.assertEqual(await page.evaluate("window.__issue39PlayCalls"), 0)
+                    self.assertEqual(
+                        await page.evaluate("window.__issue39PlayCalls"),
+                        0,
+                    )
                 finally:
                     await context.close()
                     await browser.close()
