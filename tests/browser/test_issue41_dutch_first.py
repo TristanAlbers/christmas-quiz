@@ -138,6 +138,7 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                 try:
                     await page.goto(f"{self.live_server_url}/login/")
                     self.assertEqual(await page.locator("html").get_attribute("lang"), "nl")
+                    await page.get_by_label("Team").select_option("a")
                     await page.get_by_label("Pincode").fill("verkeerd")
                     await page.get_by_role("button", name="Naar de quiz").click()
                     await page.get_by_text("Ongeldige inloggegevens.").wait_for()
