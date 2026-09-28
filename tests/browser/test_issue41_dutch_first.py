@@ -111,7 +111,7 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                 browser, context, admin = await self._authenticated_page(
                     playwright,
                     self.admin_cookie,
-                    "/admin/game/",
+                    "/admin-game/",
                     {"width": 768, "height": 1024},
                 )
                 try:
@@ -145,7 +145,7 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                     await page.goto(f"{self.live_server_url}/login/")
                     html_lang = await page.locator("html").get_attribute("lang")
                     self.assertEqual(html_lang, "nl")
-                    await page.get_by_label("Team").select_option("a")
+                    await page.get_by_label("Team", exact=True).select_option("a")
                     await page.get_by_label("Pincode").fill("verkeerd")
                     await page.get_by_role("button", name="Naar de quiz").click()
                     await page.get_by_text("Ongeldige inloggegevens.").wait_for()
