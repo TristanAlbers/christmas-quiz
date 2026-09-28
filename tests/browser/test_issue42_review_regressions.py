@@ -77,7 +77,7 @@ class Issue42ReviewRegressionBrowserTests(LiveServerTestCase):
                             const timer = document.querySelector('[data-gameplay-ms]');
                             return timer && timer.textContent.trim() !== initial;
                         }""",
-                        initial,
+                        arg=initial,
                         timeout=4000,
                     )
                     self.assertRegex(
