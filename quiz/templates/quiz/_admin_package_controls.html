@@ -2,21 +2,19 @@
   <input class="poll-context" type="hidden" name="package_context" value="{{ package_context }}">
   {% if global_state == 'READY' %}
     <section class="action-card" aria-labelledby="package-selection-title">
-      <h2 id="package-selection-title">Choose a game package</h2>
-      <p>Starting creates a fresh game snapshot. Source edits do not change an active run.</p>
+      <h2 id="package-selection-title">Kies een spelpakket</h2>
+      <p>Starten maakt een nieuwe vaste kopie van het spel. Wijzigingen aan bronbestanden veranderen een actieve spelronde niet.</p>
       <form id="package-selection-form" method="post" action="{% url 'admin_start' %}">
         {% csrf_token %}
         <input type="hidden" name="request_id" value="{{ request_id }}">
-        <label for="package-id">Game package</label>
+        <label for="package-id">Spelpakket</label>
         <select id="package-id" name="package_id" required>
-          <option value="">Select a package</option>
+          <option value="">Kies een pakket</option>
           {% for package in packages %}
-            <option value="{{ package.package_id }}"{% if not package.startable %} disabled{% endif %}>
-              {{ package.package_id }}{% if not package.startable %} — unavailable{% endif %}
-            </option>
+            <option value="{{ package.package_id }}"{% if not package.startable %} disabled{% endif %}>{{ package.package_id }}{% if not package.startable %} — niet beschikbaar{% endif %}</option>
           {% endfor %}
         </select>
-        <button class="button-primary" type="submit"{% if not has_startable_packages %} disabled{% endif %}>Start game</button>
+        <button class="button-primary" type="submit"{% if not has_startable_packages %} disabled{% endif %}>Spel starten</button>
       </form>
     </section>
   {% endif %}
