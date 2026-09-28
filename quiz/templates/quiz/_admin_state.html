@@ -56,7 +56,7 @@
         <p class="admin-challenge__outcome">De puzzel is actief. Wachten op het eerste juiste antwoord dat de server accepteert. De Game Master kan de uitdaging niet handmatig oplossen of annuleren.</p>
       {% endif %}
     {% else %}
-      <p class="admin-challenge__outcome"><strong>Team {{ challenge.winner_team_id|upper }} won.</strong> {% if challenge.freeze_applied %}Het uitgedaagde team kreeg direct vijf minuten Freeze.{% else %}Er is geen Freeze toegepast.{% endif %}</p>
+      <p class="admin-challenge__outcome"><strong>Team {{ challenge.winner_team_id|upper }} heeft gewonnen.</strong> {% if challenge.freeze_applied %}Het uitgedaagde team kreeg direct vijf minuten Freeze.{% else %}Er is geen Freeze toegepast.{% endif %}</p>
     {% endif %}
   </section>
 {% endif %}
