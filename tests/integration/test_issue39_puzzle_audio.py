@@ -18,7 +18,8 @@ class TypedPuzzleMediaSnapshotTests(SimpleTestCase):
         self.root = Path(self.temp.name)
         self.games = self.root / "games"
         self.package = self.games / "christmas-2026-demo"
-        shutil.copytree(settings.BASE_DIR / "games" / "christmas-2026-demo", self.package)
+        source = settings.BASE_DIR / "games" / "christmas-2026-demo"
+        shutil.copytree(source, self.package)
         self.snapshot_root = self.root / "snapshots"
         scope = override_settings(
             QUIZ_GAMES_ROOT=self.games,
