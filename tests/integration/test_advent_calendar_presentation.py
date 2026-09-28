@@ -50,7 +50,7 @@ class AdventCalendarPresentationTests(SimpleTestCase):
         self.assertLess(team_label, board)
         self.assertLess(title, doors)
         self.assertIn("Team B", html)
-        self.assertIn("Advent calendar", html)
+        self.assertIn("Adventkalender", html)
 
     def test_completed_door_has_a_persistent_open_visual_state(self):
         stylesheet_path = finders.find("quiz/advent-calendar.css")
