@@ -164,6 +164,46 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                             geometry["viewport"]["height"],
                             delta=1,
                         )
+
+                    edge_treatment = await freeze_surface.evaluate(
+                        """element => {
+                            const surface = getComputedStyle(element);
+                            const before = getComputedStyle(element, '::before');
+                            const after = getComputedStyle(element, '::after');
+                            return {
+                                borderWidths: [
+                                    surface.borderTopWidth,
+                                    surface.borderRightWidth,
+                                    surface.borderBottomWidth,
+                                    surface.borderLeftWidth,
+                                ],
+                                beforeInset: [
+                                    before.top,
+                                    before.right,
+                                    before.bottom,
+                                    before.left,
+                                ],
+                                afterInset: [
+                                    after.top,
+                                    after.right,
+                                    after.bottom,
+                                    after.left,
+                                ],
+                                surfaceBackground: surface.backgroundImage,
+                                beforeBackground: before.backgroundImage,
+                                afterBackground: after.backgroundImage,
+                            };
+                        }"""
+                    )
+                    self.assertEqual(
+                        edge_treatment["borderWidths"], ["0px"] * 4
+                    )
+                    self.assertEqual(edge_treatment["beforeInset"], ["0px"] * 4)
+                    self.assertEqual(edge_treatment["afterInset"], ["0px"] * 4)
+                    self.assertNotEqual(edge_treatment["surfaceBackground"], "none")
+                    self.assertNotEqual(edge_treatment["beforeBackground"], "none")
+                    self.assertNotEqual(edge_treatment["afterBackground"], "none")
+
                     self.assertGreaterEqual(geometry["message"]["left"], 8)
                     self.assertGreaterEqual(geometry["message"]["top"], 8)
                     self.assertLessEqual(
