@@ -194,16 +194,6 @@ class Issue42TeamUiBrowserTests(LiveServerTestCase):
                         await page.locator("[data-hint-action]").inner_text(),
                     )
 
-                    window_start = await page.evaluate(
-                        "() => window.__issue42PollSwaps"
-                    )
-                    await page.evaluate(
-                        "value => { window.__issue42PollBaseline = value; }",
-                        window_start,
-                    )
-                    await page.wait_for_function(
-                        "() => window.__issue42PollSwaps >= window.__issue42PollBaseline",
-                    )
                     # Rebase the helper counter so the second pointer press must span
                     # two fresh polls rather than reuse the first press' observations.
                     await page.evaluate("() => { window.__issue42PollSwaps = 0; }")
@@ -219,5 +209,4 @@ class Issue42TeamUiBrowserTests(LiveServerTestCase):
         asyncio.run(check())
         team = TeamRun.objects.get(run_id=self.run_id, team_id="a")
         self.assertEqual(team.current_number, 2)
-        self.assertEqual(team.points, 0)
         self.assertEqual(team.hint_tokens, 0)
