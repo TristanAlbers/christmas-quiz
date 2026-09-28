@@ -201,7 +201,9 @@ class Issue42TeamUiBrowserTests(LiveServerTestCase):
                     skip = page.locator("[data-skip-action]")
                     self.assertFalse(await skip.is_disabled())
                     await press_across_polls(page, skip, "__issue42SkipButton")
-                    await page.get_by_text("Demo A2", exact=False).wait_for(timeout=5000)
+                    await page.get_by_text("Demo A2", exact=False).wait_for(
+                        timeout=5000
+                    )
                 finally:
                     await context.close()
                     await browser.close()
