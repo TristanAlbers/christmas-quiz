@@ -82,6 +82,28 @@
   position: relative;
 }
 
+.team-playing-time {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: .2rem 0 .65rem;
+  padding: .45rem .65rem;
+  border: 1px solid rgba(84, 74, 59, .18);
+  border-radius: .7rem;
+  background: rgba(255, 255, 255, .7);
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.team-playing-time time {
+  color: var(--ink);
+  font-size: .9rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+}
+
 .team-state-surface > .finish-banner,
 .team-state-surface > .freeze-message,
 .team-state-surface > .interruption-message,
