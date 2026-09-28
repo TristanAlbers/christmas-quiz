@@ -1,22 +1,28 @@
-.state-panel-freeze {
+#game-status:has(.state-panel-freeze) {
   position: fixed;
   z-index: 80;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  box-sizing: border-box;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
   padding: max(1.25rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: transparent;
+  pointer-events: auto;
+}
+
+.state-panel-freeze {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100%;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  pointer-events: auto;
 }
 
-.freeze-message {
+.state-panel-freeze > .freeze-message {
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
