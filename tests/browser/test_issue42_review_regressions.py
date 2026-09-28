@@ -67,8 +67,12 @@ class Issue42ReviewRegressionBrowserTests(LiveServerTestCase):
                 browser = await playwright.chromium.launch()
                 context, page = await self._team_page(browser)
                 try:
-                    self.assertEqual(await page.locator(".team-playing-time").count(), 0)
-                    self.assertEqual(await page.locator("[data-gameplay-ms]").count(), 0)
+                    self.assertEqual(
+                        await page.locator(".team-playing-time").count(), 0
+                    )
+                    self.assertEqual(
+                        await page.locator("[data-gameplay-ms]").count(), 0
+                    )
                     self.assertEqual(
                         await page.get_by_text("Speeltijd", exact=True).count(), 0
                     )
