@@ -125,7 +125,8 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     geometry = await page.evaluate(
                         """() => {
                             const rect = selector => {
-                                const box = document.querySelector(selector).getBoundingClientRect();
+                                const element = document.querySelector(selector);
+                                const box = element.getBoundingClientRect();
                                 return {
                                     left: box.left,
                                     top: box.top,
