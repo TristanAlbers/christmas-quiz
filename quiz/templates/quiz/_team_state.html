@@ -1,6 +1,5 @@
 <div class="team-state-surface state-panel-{{ state.team_state|lower }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}" data-endgame-run-id="{{ state.run_id|default:'' }}">
   {% if state.run_id %}
-    <div class="team-playing-time" aria-label="Current playing time"><span>Speeltijd</span><time data-gameplay-ms="{{ state.gameplay_elapsed_ms }}">00:00:00</time></div>
     {% if not state.music and state.team_state == 'FREEZE' %}
       <div class="freeze-message" role="status" aria-live="polite"><p class="freeze-message__icon" aria-hidden="true">❄</p><p class="eyebrow">Ice lock active</p><h2>Your team is frozen</h2><p>Gameplay is unavailable. Your puzzle and Hint stay safely hidden until the server releases the freeze.</p><p class="freeze-timer" data-remaining-ms="{{ state.freeze_remaining_ms }}">{% widthratio state.freeze_remaining_ms 1000 1 %} seconds remaining</p></div>
     {% else %}
