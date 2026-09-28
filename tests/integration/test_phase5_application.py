@@ -319,7 +319,10 @@ class PhaseFiveApplicationTests(TestCase):
                 "gameplay_elapsed_ms",
             },
         )
-        self.assertEqual(set(public_data["teams"][0]), {"team_id", "advent_progress"})
+        self.assertEqual(
+            set(public_data["teams"][0]),
+            {"team_id", "advent_progress", "is_frozen"},
+        )
         self.assertEqual(
             set(public_data["teams"][0]["advent_progress"]),
             {"doors", "completed_count", "current_number", "is_finished"},
