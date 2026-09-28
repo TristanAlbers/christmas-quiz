@@ -1,5 +1,25 @@
-<div id="team-resource-values"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
-  <div class="resource-card resource-card--coins"><span aria-hidden="true">✦</span><strong>{{ state.points }}</strong><span>points</span></div>
-  <div class="resource-card resource-card--hint"><span class="hint-token" aria-hidden="true">?</span><strong>{{ state.hint_tokens }} Hint tokens</strong><span>available</span></div>
-  <div class="resource-card resource-card--reverse{% if state.uno_reverse_active %} resource-card--active{% endif %}"><span class="reverse-mark" aria-hidden="true">↶</span><strong>Uno Reverse {% if state.uno_reverse_active %}active{% else %}inactive{% endif %}</strong><span>{% if state.uno_reverse_active %}Ready to reflect{% else %}Not held{% endif %}</span></div>
+<div id="team-resource-values"
+     data-points="{{ state.points }}"
+     data-hint-tokens="{{ state.hint_tokens }}"
+     {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
+  <div class="resource-card resource-card--coins" aria-label="{{ state.points }} punten">
+    <span class="resource-points-mark" aria-hidden="true">✦</span>
+    <strong class="resource-points-value">{{ state.points }}</strong>
+    <span class="resource-points-label">punten</span>
+  </div>
+  <div class="resource-card resource-card--fragments" aria-label="Verzamelde fragmenten">
+    <strong>Fragmenten</strong>
+    <div class="fragment-track">
+      {% for fragment in state.fragments %}
+        <span class="fragment-chip" title="Verzameld fragment">{{ fragment }}</span>
+      {% empty %}
+        <span class="fragment-chip fragment-chip--empty">Nog geen fragmenten</span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="resource-card resource-card--reverse{% if state.uno_reverse_active %} resource-card--active{% endif %}">
+    <span class="reverse-mark" aria-hidden="true">↶</span>
+    <strong>Uno Reverse</strong>
+    <span>{% if state.uno_reverse_active %}Actief · klaar om te kaatsen{% else %}Niet actief{% endif %}</span>
+  </div>
 </div>
