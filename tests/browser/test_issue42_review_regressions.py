@@ -127,7 +127,10 @@ class Issue42ReviewRegressionBrowserTests(LiveServerTestCase):
                         "[data-challenge-result-key]"
                     )
                     await observed_result.wait_for(state="visible", timeout=5000)
-                    self.assertIn("You won the Challenge", await observed_result.inner_text())
+                    self.assertIn(
+                        "You won the Challenge",
+                        await observed_result.inner_text(),
+                    )
 
                     fresh_context, fresh_page = await self._team_page(browser)
                     fresh_result = fresh_page.locator("[data-challenge-result-key]")
