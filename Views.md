@@ -92,6 +92,8 @@ The team Puzzle View intentionally does **not** show the persistent 25-door Adve
 
 During normal Advent play the screen should read as a player-facing puzzle experience, not a diagnostic status page. Raw technical state chrome such as `Game: ADVENT_QUIZ`, generic `Puzzle`/state badges, and stale resolved-Challenge status must not occupy the normal puzzle hierarchy.
 
+The current playing time remains required on the team Puzzle View. It should be a compact player-facing readout derived from the existing server-authoritative Advent gameplay clock, formatted as fixed `HH:MM:SS` and preserving Pause/recovery semantics. It must not compete visually with the point balance or reintroduce raw technical state chrome.
+
 The normal Puzzle View should use this hierarchy:
 
 1. a resource area with the current point balance as the strongest element;
