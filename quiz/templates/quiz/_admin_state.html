@@ -1,117 +1,93 @@
+{% load quiz_format %}
 <div class="status-card">
   <div class="status-row">
-    <span class="eyebrow">Authoritative game state</span>
-    <strong class="state-badge state-{{ global_state|lower }}">{{ global_state }}</strong>
+    <span class="eyebrow">Huidige spelstatus</span>
+    <strong class="state-badge state-{{ global_state|lower }}">{{ global_state|state_label }}</strong>
   </div>
-  {% if run_id %}<p class="muted">Run {{ run_id }}</p>{% endif %}
-  {% if run_id %}<p class="game-clock">Playing time: <strong>{% widthratio gameplay_elapsed_ms 1000 1 %} seconds</strong></p>{% endif %}
+  {% if run_id %}<p class="muted">Spelronde {{ run_id }}</p>{% endif %}
+  {% if run_id %}<p class="game-clock">Speeltijd: <strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>{% endif %}
 </div>
 
 {% if first_finisher_team_id %}
   <aside class="finish-banner{% if global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
-    <p class="eyebrow">{% if global_state == 'FINISHED' %}Race complete{% else %}First finisher{% endif %}</p>
-    <h2>Team {{ first_finisher_team_id|upper }} finished first</h2>
-    <p>{% if global_state == 'FINISHED' %}Both teams completed all 25 doors.{% else %}The other team remains active.{% endif %}</p>
+    <p class="eyebrow">{% if global_state == 'FINISHED' %}Race afgerond{% else %}Eerste team klaar{% endif %}</p>
+    <h2>Team {{ first_finisher_team_id|upper }} was als eerste klaar</h2>
+    <p>{% if global_state == 'FINISHED' %}Beide teams hebben alle 25 vakjes voltooid.{% else %}Het andere team speelt nog verder.{% endif %}</p>
   </aside>
 {% endif %}
 
 {% if music %}
-  <section class="music-status" aria-label="Music Quiz status">
-    <p class="eyebrow">Music Quiz</p>
+  <section class="music-status" aria-label="Status Muziek Quiz">
+    <p class="eyebrow">Muziek Quiz</p>
     {% if music.phase == 'gathering' %}
       <h2>Muziek Quiz begint zo</h2>
       <p class="music-timer">Nog {% widthratio music.gathering_remaining_ms 1000 1 %} seconden</p>
     {% elif music.phase == 'question' %}
       <h2>Vraag {{ music.question_number }} van {{ music.question_total }}</h2>
       <p>{{ music.title }} — {{ music.body }}</p>
-      <p class="music-timer">{% widthratio music.question_elapsed_ms 1000 1 %} seconds</p>
+      <p class="music-timer">{% widthratio music.question_elapsed_ms 1000 1 %} seconden bezig</p>
     {% else %}
       <h2>Eindstand Muziek Quiz</h2>
       <p>De Adventquiz gaat verder over {% widthratio music.final_results_remaining_ms 1000 1 %} seconden.</p>
     {% endif %}
     <div class="music-scores">
-      {% for score in music.scores %}
-        <strong>Team {{ score.team_id|upper }}: {{ score.score }}</strong>
-      {% endfor %}
+      {% for score in music.scores %}<strong>Team {{ score.team_id|upper }}: {{ score.score }}</strong>{% endfor %}
     </div>
     {% include 'quiz/_music_progress.html' with music=music %}
   </section>
 {% endif %}
 
 {% if challenge %}
-  <section class="admin-challenge admin-challenge--{{ challenge.status }}" aria-label="Challenge monitor">
+  <section class="admin-challenge admin-challenge--{{ challenge.status }}" aria-label="Uitdaging volgen">
     <div class="status-row">
-      <div><p class="eyebrow">Challenge {{ challenge.challenge_number }} of 2 · free one-use race</p><h2>Christmas Challenge</h2></div>
-      <strong class="state-badge">{{ challenge.phase|upper }}</strong>
+      <div><p class="eyebrow">Uitdaging {{ challenge.challenge_number }} van 2 · gratis eenmalige race</p><h2>Kerstuitdaging</h2></div>
+      <strong class="state-badge">{{ challenge.phase|challenge_label }}</strong>
     </div>
-    <div class="admin-challenge__route" aria-label="Challenge teams">
-      <span>Team {{ challenge.initiator_team_id|upper }} <small>initiator</small></span>
+    <div class="admin-challenge__route" aria-label="Teams in de uitdaging">
+      <span>Team {{ challenge.initiator_team_id|upper }} <small>uitdager</small></span>
       <b aria-hidden="true">⚔</b>
-      <span>Team {{ challenge.challenged_team_id|upper }} <small>challenged</small></span>
+      <span>Team {{ challenge.challenged_team_id|upper }} <small>uitgedaagd</small></span>
     </div>
-    <p><strong>No points charged</strong> · Puzzle {{ challenge.question_id }}</p>
+    <p><strong>Geen punten afgeschreven</strong> · Puzzel {{ challenge.question_id }}</p>
     {% if challenge.status == 'active' %}
       {% if challenge.phase == 'starting' %}
-        <p class="admin-challenge__outcome">Gathering period: {% widthratio challenge.grace_remaining_ms 1000 1 %} seconds remaining. The puzzle and answer controls stay hidden until zero.</p>
+        <p class="admin-challenge__outcome">Voorbereiding: nog {% widthratio challenge.grace_remaining_ms 1000 1 %} seconden. De puzzel en antwoordvelden blijven verborgen tot nul.</p>
       {% else %}
-        <p class="admin-challenge__outcome">Puzzle is live. Waiting for the first server-accepted correct answer. Admin monitoring has no resolve or cancel control.</p>
+        <p class="admin-challenge__outcome">De puzzel is actief. Wachten op het eerste juiste antwoord dat de server accepteert. De Game Master kan de uitdaging niet handmatig oplossen of annuleren.</p>
       {% endif %}
     {% else %}
-      <p class="admin-challenge__outcome"><strong>Team {{ challenge.winner_team_id|upper }} won.</strong> {% if challenge.freeze_applied %}The challenged team received a direct five-minute Freeze.{% else %}No Freeze was applied.{% endif %}</p>
+      <p class="admin-challenge__outcome"><strong>Team {{ challenge.winner_team_id|upper }} won.</strong> {% if challenge.freeze_applied %}Het uitgedaagde team kreeg direct vijf minuten Freeze.{% else %}Er is geen Freeze toegepast.{% endif %}</p>
     {% endif %}
   </section>
 {% endif %}
 
 {% if global_state == 'READY' %}
-  {% if discovery_error %}
-    <p role="alert">Package discovery failed: {{ discovery_error }}</p>
-  {% endif %}
+  {% if discovery_error %}<p role="alert">Spelpakketten konden niet worden geladen: {{ discovery_error }}</p>{% endif %}
   {% if packages %}
-    <ul class="package-status-list" aria-label="Package validation status">
+    <ul class="package-status-list" aria-label="Validatiestatus spelpakketten">
       {% for package in packages %}
-        <li>
-          <strong>{{ package.package_id }}</strong> —
-          {% if package.startable %}
-            ready to start
-          {% else %}
-            unavailable: {{ package.diagnostic }}
-          {% endif %}
-        </li>
+        <li><strong>{{ package.package_id }}</strong> — {% if package.startable %}klaar om te starten{% else %}niet beschikbaar: {{ package.diagnostic }}{% endif %}</li>
       {% endfor %}
     </ul>
   {% elif not discovery_error %}
-    <p>No game packages were found under the configured games directory.</p>
+    <p>Er zijn geen spelpakketten gevonden in de ingestelde games-map.</p>
   {% endif %}
 {% endif %}
 
 {% if run_id %}
   <div class="team-grid" data-run-id="{{ run_id }}">
     {% for control in team_controls %}
-      <section class="team-card state-panel-{{ control.team.activity_state|lower }}"
-               aria-label="Team {{ control.team.team_id|upper }}">
-        <div class="status-row">
-          <h2>Team {{ control.team.team_id|upper }}</h2>
-          <strong class="state-badge">{{ control.team.activity_state }}</strong>
-        </div>
-        <div class="admin-team-metrics"><span>{{ control.team.points }} points</span><span><b class="hint-token" aria-hidden="true">?</b> {{ control.team.hint_tokens }} Hint token{{ control.team.hint_tokens|pluralize }}</span><span class="mini-reverse{% if control.team.uno_reverse_active %} mini-reverse--active{% endif %}">↶ Reverse {% if control.team.uno_reverse_active %}active{% else %}inactive{% endif %}</span><span class="mini-challenge{% if control.team.challenge_available %} mini-challenge--available{% endif %}">★ Challenge {% if control.team.challenge_available %}available{% else %}used{% endif %}</span></div>
+      <section class="team-card state-panel-{{ control.team.activity_state|lower }}" aria-label="Team {{ control.team.team_id|upper }}">
+        <div class="status-row"><h2>Team {{ control.team.team_id|upper }}</h2><strong class="state-badge">{{ control.team.activity_state|state_label }}</strong></div>
+        <div class="admin-team-metrics"><span>{{ control.team.points }} punten</span><span><b class="hint-token" aria-hidden="true">?</b> {{ control.team.hint_tokens }} hint{% if control.team.hint_tokens != 1 %}s{% endif %}</span><span class="mini-reverse{% if control.team.uno_reverse_active %} mini-reverse--active{% endif %}">↶ Reverse {% if control.team.uno_reverse_active %}actief{% else %}niet actief{% endif %}</span><span class="mini-challenge{% if control.team.challenge_available %} mini-challenge--available{% endif %}">★ Uitdaging {% if control.team.challenge_available %}beschikbaar{% else %}gebruikt{% endif %}</span></div>
         {% if control.team.advent_progress %}{% include 'quiz/_advent_calendar.html' with progress=control.team.advent_progress team_id=control.team.team_id %}{% endif %}
-        {% if control.team.freeze_remaining_ms != None %}
-          <p class="freeze-timer" data-remaining-ms="{{ control.team.freeze_remaining_ms }}">Freeze remaining: {% widthratio control.team.freeze_remaining_ms 1000 1 %} seconds</p>
-        {% endif %}
+        {% if control.team.freeze_remaining_ms != None %}<p class="freeze-timer" data-remaining-ms="{{ control.team.freeze_remaining_ms }}">Freeze: nog {% widthratio control.team.freeze_remaining_ms 1000 1 %} seconden</p>{% endif %}
       </section>
     {% endfor %}
   </div>
 {% endif %}
 
-{% if replace_package_controls %}
-  {% include 'quiz/_admin_package_controls.html' with oob=True %}
-{% endif %}
-{% if replace_global_controls %}
-  {% include 'quiz/_admin_global_controls.html' with oob=True %}
-{% endif %}
-{% if replace_team_a_controls %}
-  {% include 'quiz/_admin_team_controls.html' with oob=True team_id='a' control=team_a_control context_value=team_a_context %}
-{% endif %}
-{% if replace_team_b_controls %}
-  {% include 'quiz/_admin_team_controls.html' with oob=True team_id='b' control=team_b_control context_value=team_b_context %}
-{% endif %}
+{% if replace_package_controls %}{% include 'quiz/_admin_package_controls.html' with oob=True %}{% endif %}
+{% if replace_global_controls %}{% include 'quiz/_admin_global_controls.html' with oob=True %}{% endif %}
+{% if replace_team_a_controls %}{% include 'quiz/_admin_team_controls.html' with oob=True team_id='a' control=team_a_control context_value=team_a_context %}{% endif %}
+{% if replace_team_b_controls %}{% include 'quiz/_admin_team_controls.html' with oob=True team_id='b' control=team_b_control context_value=team_b_context %}{% endif %}
