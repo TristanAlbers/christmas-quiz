@@ -83,7 +83,7 @@
     function syncPuzzleActionAvailability() {
       const resources = document.getElementById('team-resource-values');
       if (!resources) return;
-      const points = Number.parseInt(resources.dataset.points || '0', 10);
+      const balance = Number.parseInt(resources.dataset.balance || '0', 10);
       const hintTokens = Number.parseInt(resources.dataset.hintTokens || '0', 10);
 
       document.querySelectorAll('[data-hint-inventory]').forEach(function (node) {
@@ -107,7 +107,7 @@
       if (skipButton) {
         const legal = skipButton.dataset.skipLegal === '1';
         const cost = Number.parseInt(skipButton.dataset.skipCost || '0', 10);
-        const enabled = legal && points >= cost;
+        const enabled = legal && balance >= cost;
         skipButton.disabled = !enabled;
         const status = skipButton.querySelector('[data-skip-status]');
         if (status) {
@@ -116,7 +116,7 @@
           } else if (!legal) {
             status.textContent = skipButton.dataset.skipDisabledLabel || 'Niet mogelijk';
           } else {
-            const missing = Math.max(0, cost - points);
+            const missing = Math.max(0, cost - balance);
             status.textContent = `${missing} ${missing === 1 ? 'punt' : 'punten'} tekort`;
           }
         }
