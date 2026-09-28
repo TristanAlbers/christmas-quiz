@@ -75,12 +75,20 @@ class SubmitChallengeAnswer:
 
 
 @dataclass(frozen=True)
+class PuzzleMediaProjection:
+    type: Literal["image", "audio"]
+    url: str
+    alt: str | None = None
+
+
+@dataclass(frozen=True)
 class QuestionProjection:
     id: str
     number: int
     title: str
     body: str
     media_urls: tuple[str, ...] = ()
+    media: tuple[PuzzleMediaProjection, ...] = ()
     hint: str | None = None
     hint_available: bool = False
 
