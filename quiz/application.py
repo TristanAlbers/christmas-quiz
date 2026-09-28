@@ -14,11 +14,11 @@ from .models import Run, TeamRun
 from .persistence import read_snapshot
 from .phase6_application import (  # noqa: F401
     get_admin_state,
-    get_public_state as _phase6_get_public_state,
     get_team_state,
     initiate_challenge,
     submit_challenge_answer,
 )
+from .phase6_application import get_public_state as _phase6_get_public_state
 
 
 def get_public_state(*, now=None):
