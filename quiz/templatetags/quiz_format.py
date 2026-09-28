@@ -22,15 +22,25 @@ CHALLENGE_LABELS = {
 FEEDBACK_LABELS = {
     "Correct answer. Puzzle completed.": "Goed antwoord. Puzzel afgerond.",
     "Incorrect answer. Try again.": "Onjuist antwoord. Probeer het opnieuw.",
-    "Correct. Your team won this Music question.": "Goed! Jullie team wint deze muziekvraag.",
+    "Correct. Your team won this Music question.": (
+        "Goed! Jullie team wint deze muziekvraag."
+    ),
     "Incorrect. Keep trying.": "Onjuist. Probeer het opnieuw.",
-    "Challenge won. The result is final.": "Uitdaging gewonnen. De uitslag staat vast.",
-    "Incorrect Challenge answer. Keep trying.": "Onjuist antwoord op de uitdaging. Probeer het opnieuw.",
-    "Hint was already revealed. No token used.": "De hint was al zichtbaar. Er is geen hint gebruikt.",
+    "Challenge won. The result is final.": (
+        "Uitdaging gewonnen. De uitslag staat vast."
+    ),
+    "Incorrect Challenge answer. Keep trying.": (
+        "Onjuist antwoord op de uitdaging. Probeer het opnieuw."
+    ),
+    "Hint was already revealed. No token used.": (
+        "De hint was al zichtbaar. Er is geen hint gebruikt."
+    ),
     "Hint token purchased.": "Hint gekocht.",
     "Hint revealed.": "Hint onthuld.",
     "Puzzle skipped and completed.": "Vraag overgeslagen en afgerond.",
-    "The opposing team's Reverse redirected the Freeze to you.": "De Uno Reverse van het andere team kaatste de Freeze naar jullie terug.",
+    "The opposing team's Reverse redirected the Freeze to you.": (
+        "De Uno Reverse van het andere team kaatste de Freeze naar jullie terug."
+    ),
     "The opposing team is frozen.": "Het andere team is bevroren.",
     "Uno Reverse purchased and armed.": "Uno Reverse gekocht en geactiveerd.",
     "Challenge starting. Gather around!": "De uitdaging begint. Verzamel je team!",
