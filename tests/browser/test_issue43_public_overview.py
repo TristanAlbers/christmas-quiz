@@ -97,7 +97,10 @@ class Issue43PublicOverviewBrowserTests(LiveServerTestCase):
                 try:
                     team_a = page.locator('.advent-progress[data-team-id="a"]')
                     self.assertEqual(await team_a.get_attribute("data-frozen"), "false")
-                    self.assertEqual(await team_a.locator(".advent-freeze-badge").count(), 0)
+                    self.assertEqual(
+                        await team_a.locator(".advent-freeze-badge").count(),
+                        0,
+                    )
 
                     await asyncio.to_thread(
                         admin_freeze,
@@ -112,10 +115,10 @@ class Issue43PublicOverviewBrowserTests(LiveServerTestCase):
                     self.assertIn("Bevroren", await badge.inner_text())
                     self.assertEqual(await frozen.locator(".advent-door").count(), 25)
                     self.assertEqual(await frozen.locator(".progress-count").count(), 1)
-                    self.assertEqual(
-                        await frozen.evaluate("el => getComputedStyle(el).animationName"),
-                        "none",
+                    animation_name = await frozen.evaluate(
+                        "el => getComputedStyle(el).animationName"
                     )
+                    self.assertEqual(animation_name, "none")
 
                     public_text = (
                         await page.locator("#overview-state").inner_text()
@@ -134,7 +137,10 @@ class Issue43PublicOverviewBrowserTests(LiveServerTestCase):
                     team_a = page.locator('.advent-progress[data-team-id="a"]')
                     await team_a.wait_for(state="visible", timeout=5000)
                     self.assertEqual(await team_a.get_attribute("data-frozen"), "false")
-                    self.assertEqual(await team_a.locator(".advent-freeze-badge").count(), 0)
+                    self.assertEqual(
+                        await team_a.locator(".advent-freeze-badge").count(),
+                        0,
+                    )
                 finally:
                     await context.close()
                     await browser.close()
