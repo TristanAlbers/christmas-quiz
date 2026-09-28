@@ -12,20 +12,22 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                 ba, ca, a = await self.page_for(playwright, self.a_cookie)
                 bb, cb, b = await self.page_for(playwright, self.b_cookie)
                 try:
-                    await a.get_by_role("button", name="Shop Power-ups").click()
-                    await a.get_by_role("button", name="Buy Uno Reverse (2)").click()
+                    await a.locator("[aria-controls='team-shop-dialog']").click()
+                    await a.get_by_role(
+                        "button", name="Uno Reverse kopen (2)"
+                    ).click()
                     await a.locator("#team-shop-dialog").wait_for(
                         state="hidden", timeout=5000
                     )
                     self.assertIn(
-                        "purchased and armed",
-                        await a.locator("#action-feedback").inner_text(),
+                        "gekocht en geactiveerd",
+                        (await a.locator("#action-feedback").inner_text()).lower(),
                     )
                     purchase = a.locator("#reverse-purchase.reverse-purchase")
                     await purchase.wait_for(state="visible", timeout=5000)
                     purchase_text = (await purchase.inner_text()).lower()
-                    self.assertIn("purchase successful", purchase_text)
-                    self.assertIn("uno reverse armed!", purchase_text)
+                    self.assertIn("aankoop gelukt", purchase_text)
+                    self.assertIn("uno reverse geactiveerd!", purchase_text)
                     self.assertEqual(
                         await purchase.evaluate(
                             "el => getComputedStyle(el).animationDuration"
@@ -34,8 +36,10 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     )
                     self.assertFalse(await a.locator("#gameplay-event").is_visible())
 
-                    await b.get_by_role("button", name="Shop Power-ups").click()
-                    await b.get_by_role("button", name="Freeze opponent (3)").click()
+                    await b.locator("[aria-controls='team-shop-dialog']").click()
+                    await b.get_by_role(
+                        "button", name="Andere team bevriezen (3)"
+                    ).click()
                     reflected = b.locator(
                         "#gameplay-event.gameplay-event--attacker-reversed"
                     )
@@ -43,9 +47,9 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     await reflected.wait_for(state="visible", timeout=5000)
                     await saved.wait_for(state="visible", timeout=5000)
                     reflected_text = (await reflected.inner_text()).lower()
-                    self.assertIn("freeze launched", reflected_text)
-                    self.assertIn("reflected!", reflected_text)
-                    self.assertIn("Your Reverse saved you!", await saved.inner_text())
+                    self.assertIn("freeze gelanceerd", reflected_text)
+                    self.assertIn("teruggekaatst!", reflected_text)
+                    self.assertIn("Jullie Reverse heeft jullie gered!", await saved.inner_text())
                     self.assertEqual(
                         await reflected.evaluate(
                             "el => getComputedStyle(el).animationDuration"
@@ -75,16 +79,20 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     playwright, self.a_cookie
                 )
                 try:
-                    await page.get_by_role("button", name="Shop Power-ups").click()
-                    await page.get_by_role("button", name="Buy Uno Reverse (2)").click()
+                    await page.locator("[aria-controls='team-shop-dialog']").click()
+                    await page.get_by_role(
+                        "button", name="Uno Reverse kopen (2)"
+                    ).click()
                     await page.locator("#team-shop-dialog").wait_for(
                         state="hidden", timeout=5000
                     )
-                    await page.get_by_role("button", name="Shop Power-ups").click()
+                    await page.locator("[aria-controls='team-shop-dialog']").click()
                     shop = page.locator("#team-shop-dialog")
-                    await page.get_by_role("button", name="Freeze opponent (3)").click()
+                    await page.get_by_role(
+                        "button", name="Andere team bevriezen (3)"
+                    ).click()
                     await page.locator("#shop-feedback").get_by_text(
-                        "Action rejected: insufficient points"
+                        "Actie geweigerd", exact=False
                     ).wait_for(timeout=5000)
                     self.assertTrue(await shop.evaluate("el => el.open"))
                     self.assertFalse(
