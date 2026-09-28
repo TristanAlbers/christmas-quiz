@@ -92,7 +92,7 @@ The team Puzzle View intentionally does **not** show the persistent 25-door Adve
 
 During normal Advent play the screen should read as a player-facing puzzle experience, not a diagnostic status page. Raw technical state chrome such as `Game: ADVENT_QUIZ`, generic `Puzzle`/state badges, and stale resolved-Challenge status must not occupy the normal puzzle hierarchy.
 
-The current playing time remains required on the team Puzzle View. It should be a compact player-facing readout derived from the existing server-authoritative Advent gameplay clock, formatted as fixed `HH:MM:SS` and preserving Pause/recovery semantics. It must not compete visually with the point balance or reintroduce raw technical state chrome.
+The team Puzzle View does **not** show a persistent elapsed-playing-time readout. The server-authoritative Advent gameplay clock remains unchanged; the shared public/TV overview is the primary runtime surface for elapsed `HH:MM:SS` playing time.
 
 The normal Puzzle View should use this hierarchy:
 
@@ -116,6 +116,8 @@ Target: `team`
 This view should be optimized for phone usage.
 
 It should use the same established visual language as the Puzzle View, but clearly communicate the frozen state and the remaining timer. Private underlying puzzle/hint content must not merely be blurred behind the freeze overlay; it should not be present in the rendered private content while frozen.
+
+While an authoritative Freeze is active, the persistent frost/ice treatment must cover the complete viewport rather than reading as an effect confined to the inner application card. The readable Freeze message and countdown sit above that treatment with comfortable phone-safe padding. The persistent lock stays below the dedicated one-shot Freeze/Uno Reverse choreography so those transient attack/result effects can complete before the lock presentation is revealed.
 
 Nothing should be interactable from this view. When a player Freeze caused this state, the persistent ice-lock view is revealed after the corresponding transient attacked/Reverse-reflected presentation finishes; authoritative interaction restrictions apply immediately even while that presentation is still covering the page.
 
