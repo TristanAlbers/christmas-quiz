@@ -309,7 +309,7 @@ class AdminProjection:
 class PublicProjection:
     global_state: str
     music: MusicProjection | None = None
-    teams: tuple[PublicTeamProgressProjection | PublicAdventTeamProgressProjection, ...] = ()
+    teams: tuple[PublicTeamProgressProjection, ...] = ()
     first_finisher_team_id: TeamId | None = None
     gameplay_elapsed_ms: int = 0
     challenge: PublicChallengeProjection | None = None
