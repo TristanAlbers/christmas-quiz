@@ -8,6 +8,7 @@ from quiz.auth import actor_for_user
 from quiz.configuration import (
     InvalidPackage,
     load_snapshot,
+    puzzle_media_paths,
     snapshot_challenge_media_path,
     snapshot_media_path,
 )
@@ -45,7 +46,7 @@ def private_media(request, run_id, team_id, asset_path):
                 raise Http404
             config = load_snapshot(run)
             puzzle = config["teams"][actor.team_id]["puzzles"][team.current_number - 1]
-            if asset_path not in puzzle["media"]:
+            if asset_path not in puzzle_media_paths(puzzle):
                 raise Http404
             path = snapshot_media_path(run, actor.team_id, asset_path)
             if path is None:
