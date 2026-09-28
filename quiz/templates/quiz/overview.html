@@ -1,10 +1,10 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Christmas Quiz · Overview</title>
+  <title>Kerstmis Quiz · TV-overzicht</title>
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/advent-calendar.css' %}">
@@ -19,12 +19,11 @@
 </head>
 <body class="game-page game-page--overview" data-endgame-surface="overview">
   <main class="app-shell app-shell-wide public-overview">
-    <div id="live-overview" aria-label="Public game overview">
+    <div id="live-overview" aria-label="Openbaar speloverzicht">
       <div id="overview-poller" hx-get="{% url 'overview_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
            hx-sync="#live-overview:drop" hx-include="#overview-audio-state .poll-context"
-           hx-target="#overview-state"
-           hx-swap="innerHTML"></div>
+           hx-target="#overview-state" hx-swap="innerHTML"></div>
       <div id="overview-state">{% include 'quiz/_public_state.html' %}</div>
       {% include 'quiz/_public_audio.html' %}
     </div>
