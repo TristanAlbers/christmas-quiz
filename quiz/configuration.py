@@ -50,6 +50,44 @@ def _relative_path(value):
     return path
 
 
+def puzzle_media_descriptor(item):
+    """Normalize legacy image paths and explicitly typed Advent puzzle media."""
+    if isinstance(item, str):
+        return {"type": "image", "path": str(_relative_path(item)), "alt": None}
+    if not isinstance(item, dict):
+        raise InvalidPackage("Puzzle media entries must be paths or typed objects")
+
+    media_type = item.get("type")
+    if media_type == "image":
+        if set(item) not in ({"type", "path"}, {"type", "path", "alt"}):
+            raise InvalidPackage("Invalid image media entry")
+        alt = item.get("alt")
+        if alt is not None and (not isinstance(alt, str) or not alt.strip()):
+            raise InvalidPackage("Image media alt must be nonempty text or omitted")
+        return {
+            "type": "image",
+            "path": str(_relative_path(item.get("path"))),
+            "alt": alt.strip() if alt is not None else None,
+        }
+    if media_type == "audio":
+        if set(item) != {"type", "path"}:
+            raise InvalidPackage("Invalid audio media entry")
+        return {
+            "type": "audio",
+            "path": str(_relative_path(item.get("path"))),
+            "alt": None,
+        }
+    raise InvalidPackage("Puzzle media type must be image or audio")
+
+
+def puzzle_media_paths(puzzle):
+    """Return validated declared paths for one normal Advent puzzle."""
+    media = puzzle.get("media")
+    if not isinstance(media, list):
+        raise InvalidPackage("media must be a list")
+    return tuple(puzzle_media_descriptor(item)["path"] for item in media)
+
+
 def _validate_challenge_puzzle(puzzle, team_id, referenced):
     if not isinstance(puzzle, dict) or set(puzzle) != {
         "id",
@@ -218,7 +256,7 @@ def _validate(config, package_id):
             if not isinstance(media, list):
                 raise InvalidPackage("media must be a list")
             for item in media:
-                referenced.add(str(_relative_path(item)))
+                referenced.add(puzzle_media_descriptor(item)["path"])
     if version in (4, 5, 6):
         reward = config["music_question_reward"]
         if type(reward) is not int or reward < 0:
@@ -461,15 +499,17 @@ def snapshot_media_path(run, team_id, relative_path):
     try:
         rel = str(_relative_path(relative_path))
         config = load_snapshot(run)
-    except InvalidPackage:
+        if team_id not in ("a", "b"):
+            return None
+        declared = {
+            descriptor["path"]
+            for puzzle in config["teams"][team_id]["puzzles"]
+            for descriptor in (
+                puzzle_media_descriptor(media) for media in puzzle["media"]
+            )
+        }
+    except (InvalidPackage, KeyError, TypeError):
         return None
-    if team_id not in ("a", "b"):
-        return None
-    declared = {
-        media
-        for puzzle in config["teams"][team_id]["puzzles"]
-        for media in puzzle["media"]
-    }
     if rel not in declared:
         return None
     return Path(run.snapshot_path) / "media" / rel
