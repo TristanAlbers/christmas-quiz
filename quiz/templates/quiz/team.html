@@ -123,43 +123,61 @@
       }
     }
 
-    const challengeResultSeen = new Map();
-    let challengeResultTimer = null;
-    function challengeResultFirstSeen(resultKey) {
-      const storageKey = `quiz:challenge-result:${resultKey}`;
-      let seen = challengeResultSeen.get(resultKey) || 0;
-      try {
-        const stored = Number.parseInt(window.sessionStorage.getItem(storageKey) || '0', 10);
-        if (stored > 0) seen = stored;
-      } catch (error) {
-        // Session storage is an enhancement; the in-memory map still prevents poll restarts.
-      }
-      if (seen > 0) return seen;
-      seen = Date.now();
-      challengeResultSeen.set(resultKey, seen);
-      try {
-        window.sessionStorage.setItem(storageKey, String(seen));
-      } catch (error) {
-        // Ignore unavailable session storage.
-      }
-      return seen;
+    function formatGameplayTime(rawMilliseconds) {
+      const milliseconds = Math.max(0, Number.parseInt(rawMilliseconds || '0', 10) || 0);
+      const totalSeconds = Math.floor(milliseconds / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return [hours, minutes, seconds]
+        .map(value => String(value).padStart(2, '0'))
+        .join(':');
     }
 
-    function syncTransientChallengeResult() {
+    function syncPlayingTime() {
+      document.querySelectorAll('[data-gameplay-ms]').forEach(function (node) {
+        node.textContent = formatGameplayTime(node.dataset.gameplayMs);
+      });
+    }
+
+    let challengeResultTimer = null;
+    let activeChallengeResultKey = null;
+    let activeChallengeResultExpiresAt = 0;
+    let challengeWasActiveBeforeSwap = false;
+
+    function syncTransientChallengeResult(startFromObservedTransition) {
       window.clearTimeout(challengeResultTimer);
       const result = document.querySelector('[data-challenge-result-key]');
       if (!result) return;
-      const firstSeen = challengeResultFirstSeen(result.dataset.challengeResultKey);
-      const remaining = 5000 - (Date.now() - firstSeen);
-      if (remaining <= 0) {
+
+      const resultKey = result.dataset.challengeResultKey;
+      if (startFromObservedTransition && activeChallengeResultKey !== resultKey) {
+        activeChallengeResultKey = resultKey;
+        activeChallengeResultExpiresAt = Date.now() + 5000;
+      }
+
+      if (activeChallengeResultKey !== resultKey) {
         result.hidden = true;
         return;
       }
+
+      const remaining = activeChallengeResultExpiresAt - Date.now();
+      if (remaining <= 0) {
+        result.hidden = true;
+        activeChallengeResultKey = null;
+        activeChallengeResultExpiresAt = 0;
+        return;
+      }
+
       result.hidden = false;
       challengeResultTimer = window.setTimeout(function () {
         const current = document.querySelector('[data-challenge-result-key]');
-        if (current && current.dataset.challengeResultKey === result.dataset.challengeResultKey) {
+        if (current && current.dataset.challengeResultKey === resultKey) {
           current.hidden = true;
+        }
+        if (activeChallengeResultKey === resultKey) {
+          activeChallengeResultKey = null;
+          activeChallengeResultExpiresAt = 0;
         }
       }, remaining);
     }
@@ -189,6 +207,13 @@
       }
     });
     let reopenShop = false;
+    document.body.addEventListener('htmx:beforeSwap', function (event) {
+      if (event.detail.target.id === 'game-status') {
+        challengeWasActiveBeforeSwap = Boolean(
+          document.querySelector('#game-status .challenge-status--active')
+        );
+      }
+    });
     document.body.addEventListener('htmx:oobBeforeSwap', function (event) {
       if (event.detail.target.id === 'team-actions') {
         const shop = document.getElementById('team-shop-dialog');
@@ -209,7 +234,11 @@
       }
     });
     document.body.addEventListener('htmx:afterSwap', function (event) {
-      if (event.detail.target.id === 'game-status') syncTransientChallengeResult();
+      if (event.detail.target.id === 'game-status') {
+        syncPlayingTime();
+        syncTransientChallengeResult(challengeWasActiveBeforeSwap);
+        challengeWasActiveBeforeSwap = false;
+      }
     });
     document.body.addEventListener('shopPurchaseSucceeded', function () {
       const shop = document.getElementById('team-shop-dialog');
@@ -218,7 +247,8 @@
     });
 
     syncPuzzleActionAvailability();
-    syncTransientChallengeResult();
+    syncPlayingTime();
+    syncTransientChallengeResult(false);
     armActionFeedbackTimer();
   </script>
 </body>
