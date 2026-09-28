@@ -2,6 +2,14 @@
 
 This file records later user-approved product decisions that intentionally refine or supersede older wording elsewhere in the repository. It overrides older specifications **only for the specific decisions stated here**. All unrelated game rules and security/privacy requirements keep their existing authority.
 
+## 2026-09-28 — playable runtime is Dutch-first
+
+All normal participant-facing and operator-facing runtime surfaces are Dutch-first. This includes team login and waiting states, Advent puzzle interactions, Hint/Skip/shop/sabotage/Freeze/Uno Reverse/Challenge feedback, Music Quiz states, winner/final states, the public/TV overview and audio controls, and the Game Master interface. Player-visible content authored in the active game package should likewise be Dutch where it is intended to be read by players.
+
+Internal contracts remain English where that protects stability and implementation clarity. Persisted state identifiers such as `READY`, `ADVENT_QUIZ`, `MUSIC_QUIZ`, `PUZZLE`, and `FREEZE`, URL names, audit identifiers, Python symbols, tests, and developer-facing documentation do not need to be renamed. Those technical identifiers must not leak into normal rendered UI; views translate them at the presentation boundary into stable Dutch labels. Product names and established game terms such as Uno Reverse may remain as named concepts.
+
+This is a single-language product decision, not a requirement to add a general localization framework, locale selector, translation catalog, or English parity mode. Validation and recoverable runtime errors shown to players or Game Masters should use concise Dutch wording without exposing raw internal error codes.
+
 ## 2026-09-24 — UI/interaction is a first-class requirement
 
 User-visible behavior is not complete merely because its backend mechanics work. Every phase that adds or changes user-visible behavior must include explicit presentation/interaction acceptance criteria and a dedicated UI/interaction implementation stage unless the contract demonstrates that no UI change is required.
