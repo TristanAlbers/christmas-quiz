@@ -71,8 +71,12 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                 browser, context, page = await self._page_for(playwright, "/team/")
                 try:
                     await page.get_by_text("Demo A1", exact=False).wait_for()
-                    self.assertEqual(await page.locator(".team-playing-time").count(), 0)
-                    self.assertEqual(await page.locator("[data-gameplay-ms]").count(), 0)
+                    self.assertEqual(
+                        await page.locator(".team-playing-time").count(), 0
+                    )
+                    self.assertEqual(
+                        await page.locator("[data-gameplay-ms]").count(), 0
+                    )
                     self.assertEqual(
                         await page.locator(
                             "form[action='/team/action/freeze/']"
@@ -111,8 +115,12 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     self.assertNotIn(
                         "Hint tokens", await page.locator("#live-game").inner_text()
                     )
-                    self.assertEqual(await page.locator(".team-playing-time").count(), 0)
-                    self.assertEqual(await page.locator("[data-gameplay-ms]").count(), 0)
+                    self.assertEqual(
+                        await page.locator(".team-playing-time").count(), 0
+                    )
+                    self.assertEqual(
+                        await page.locator("[data-gameplay-ms]").count(), 0
+                    )
 
                     geometry = await page.evaluate(
                         """() => {
@@ -139,8 +147,12 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         }"""
                     )
                     for layer in ("surface", "panel"):
-                        self.assertAlmostEqual(geometry[layer]["left"], 0, delta=1)
-                        self.assertAlmostEqual(geometry[layer]["top"], 0, delta=1)
+                        self.assertAlmostEqual(
+                            geometry[layer]["left"], 0, delta=1
+                        )
+                        self.assertAlmostEqual(
+                            geometry[layer]["top"], 0, delta=1
+                        )
                         self.assertAlmostEqual(
                             geometry[layer]["width"],
                             geometry["viewport"]["width"],
