@@ -9,9 +9,7 @@
   const action = document.getElementById("music-audio-action");
   const volume = document.getElementById("music-audio-volume");
 
-  if (!liveOverview || !panel || !player || !heading || !message || !action || !volume) {
-    return;
-  }
+  if (!liveOverview || !panel || !player || !heading || !message || !action || !volume) return;
 
   let armed = false;
   let sourceKey = "";
@@ -26,15 +24,7 @@
 
   function currentState() {
     const node = document.getElementById("overview-audio-state");
-    if (!node) {
-      return {
-        globalState: "",
-        phase: "",
-        questionNumber: "",
-        audioUrl: "",
-        runId: "",
-      };
-    }
+    if (!node) return { globalState: "", phase: "", questionNumber: "", audioUrl: "", runId: "" };
     return {
       globalState: node.dataset.globalState || "",
       phase: node.dataset.musicPhase || "",
@@ -45,29 +35,15 @@
   }
 
   function signatureFor(state) {
-    return [
-      state.runId,
-      state.globalState,
-      state.phase,
-      state.questionNumber,
-      state.audioUrl,
-    ].join("|");
+    return [state.runId, state.globalState, state.phase, state.questionNumber, state.audioUrl].join("|");
   }
 
   function isActiveMusicQuestion(state) {
-    return (
-      state.globalState === "MUSIC_QUIZ" &&
-      state.phase === "question" &&
-      Boolean(state.questionNumber)
-    );
+    return state.globalState === "MUSIC_QUIZ" && state.phase === "question" && Boolean(state.questionNumber);
   }
 
   function isPausedMusicQuestion(state) {
-    return (
-      state.globalState === "PAUSED" &&
-      state.phase === "question" &&
-      Boolean(state.questionNumber)
-    );
+    return state.globalState === "PAUSED" && state.phase === "question" && Boolean(state.questionNumber);
   }
 
   function setStatus(kind, title, detail, actionLabel = "") {
@@ -82,56 +58,31 @@
     }
   }
 
-  function setNotEnabled(
-    detail = "Enable sound once during setup so Music Quiz tracks can start reliably."
-  ) {
-    setStatus("not-enabled", "Sound not enabled", detail, "Enable sound");
+  function setNotEnabled(detail = "Schakel het geluid tijdens de voorbereiding één keer in, zodat nummers uit de Muziek Quiz betrouwbaar kunnen starten.") {
+    setStatus("not-enabled", "Geluid niet ingeschakeld", detail, "Geluid inschakelen");
   }
 
-  function setReady(
-    detail = "Sound is armed for the TV. Music will start automatically when a track becomes current."
-  ) {
-    setStatus("ready", "Sound ready", detail, "Test sound");
+  function setReady(detail = "Het TV-geluid staat klaar. Muziek start automatisch zodra een nummer actief wordt.") {
+    setStatus("ready", "Geluid klaar", detail, "Geluid testen");
   }
 
   function setPlaying() {
-    setStatus(
-      "playing",
-      "Playing",
-      "The current Music Quiz track is playing on this TV."
-    );
+    setStatus("playing", "Speelt af", "Het huidige nummer van de Muziek Quiz speelt op deze TV.");
   }
 
   function setPaused() {
-    setStatus(
-      "paused",
-      "Paused",
-      "Music is paused with the game. It will continue from this position when the Game Master resumes.",
-      "Test sound"
-    );
+    setStatus("paused", "Gepauzeerd", "De muziek is samen met het spel gepauzeerd en gaat vanaf dezelfde positie verder zodra de Game Master hervat.", "Geluid testen");
   }
 
   function setBlocked() {
-    setStatus(
-      "blocked",
-      "Sound blocked",
-      "The browser blocked playback. Click retry to grant sound permission on this TV.",
-      "Retry sound"
-    );
+    setStatus("blocked", "Geluid geblokkeerd", "De browser blokkeerde het afspelen. Klik opnieuw om op deze TV toestemming voor geluid te geven.", "Opnieuw proberen");
   }
 
   function setPlaybackError() {
-    setStatus(
-      "error",
-      "Playback error",
-      "The current audio could not be played. Check the TV output and retry; the game itself is still running.",
-      "Retry sound"
-    );
+    setStatus("error", "Afspeelfout", "De huidige audio kon niet worden afgespeeld. Controleer de TV-uitvoer en probeer opnieuw; het spel zelf loopt door.", "Opnieuw proberen");
   }
 
-  function cancelPendingPlay() {
-    playGeneration += 1;
-  }
+  function cancelPendingPlay() { playGeneration += 1; }
 
   function safeTime() {
     const value = Number(player.currentTime);
@@ -141,11 +92,7 @@
   function setTimeWhenPossible(value) {
     const target = Number.isFinite(value) && value >= 0 ? value : 0;
     const apply = () => {
-      try {
-        player.currentTime = target;
-      } catch (_error) {
-        // Metadata may not be ready yet. loadedmetadata below gets another chance.
-      }
+      try { player.currentTime = target; } catch (_error) { /* Metadata may not be ready yet. */ }
     };
     apply();
     player.addEventListener("loadedmetadata", apply, { once: true });
@@ -167,9 +114,7 @@
 
   function loadQuestion(state, force = false) {
     const desiredKey = `${state.runId}:${state.questionNumber}`;
-    if (!force && sourceKey === desiredKey) {
-      return;
-    }
+    if (!force && sourceKey === desiredKey) return;
     cancelPendingPlay();
     player.pause();
     player.loop = true;
@@ -180,37 +125,24 @@
   }
 
   async function playCurrentTrack() {
-    if (!player.getAttribute("src")) {
-      return;
-    }
+    if (!player.getAttribute("src")) return;
     const generation = ++playGeneration;
     try {
       await Promise.resolve(player.play());
-      if (generation !== playGeneration) {
-        return;
-      }
+      if (generation !== playGeneration) return;
       armed = true;
       setPlaying();
     } catch (error) {
-      if (generation !== playGeneration) {
-        return;
-      }
+      if (generation !== playGeneration) return;
       if (error && error.name === "NotAllowedError") {
         armed = false;
         setBlocked();
-      } else {
-        setPlaybackError();
-      }
+      } else setPlaybackError();
     }
   }
 
   function capturePlayer() {
-    return {
-      src: player.getAttribute("src") || "",
-      time: safeTime(),
-      loop: player.loop,
-      key: sourceKey,
-    };
+    return { src: player.getAttribute("src") || "", time: safeTime(), loop: player.loop, key: sourceKey };
   }
 
   function restorePlayer(saved) {
@@ -228,9 +160,7 @@
   }
 
   function cancelSoundCheck(restore = true) {
-    if (!checkingSound) {
-      return;
-    }
+    if (!checkingSound) return;
     checkingSound = false;
     soundCheckGeneration += 1;
     if (soundCheckTimer !== null) {
@@ -238,34 +168,24 @@
       soundCheckTimer = null;
     }
     player.pause();
-    if (restore && soundCheckSaved) {
-      restorePlayer(soundCheckSaved);
-    }
+    if (restore && soundCheckSaved) restorePlayer(soundCheckSaved);
     soundCheckSaved = null;
   }
 
   function finishSoundCheck(generation) {
-    if (!checkingSound || generation !== soundCheckGeneration) {
-      return;
-    }
+    if (!checkingSound || generation !== soundCheckGeneration) return;
     const saved = soundCheckSaved;
     checkingSound = false;
     soundCheckTimer = null;
     soundCheckSaved = null;
     player.pause();
-    if (saved) {
-      restorePlayer(saved);
-    }
+    if (saved) restorePlayer(saved);
     reconcile(currentState());
   }
 
   async function runSoundCheck() {
     const soundCheckUrl = panel.dataset.soundCheckUrl;
-    if (!soundCheckUrl) {
-      setPlaybackError();
-      return;
-    }
-
+    if (!soundCheckUrl) { setPlaybackError(); return; }
     cancelPendingPlay();
     cancelSoundCheck(true);
     const generation = ++soundCheckGeneration;
@@ -277,82 +197,47 @@
     player.src = soundCheckUrl;
     setTimeWhenPossible(0);
     player.load();
-
     try {
       await Promise.resolve(player.play());
-      if (!checkingSound || generation !== soundCheckGeneration) {
-        return;
-      }
+      if (!checkingSound || generation !== soundCheckGeneration) return;
       armed = true;
-      setReady("Sound check passed. This TV is armed for Music Quiz playback.");
+      setReady("Geluidstest geslaagd. Deze TV staat klaar voor de Muziek Quiz.");
       soundCheckTimer = window.setTimeout(() => finishSoundCheck(generation), 650);
     } catch (error) {
-      if (!checkingSound || generation !== soundCheckGeneration) {
-        return;
-      }
+      if (!checkingSound || generation !== soundCheckGeneration) return;
       const saved = soundCheckSaved;
       checkingSound = false;
       soundCheckSaved = null;
       player.pause();
-      if (saved) {
-        restorePlayer(saved);
-      }
-      if (error && error.name === "NotAllowedError") {
-        armed = false;
-        setBlocked();
-      } else {
-        setPlaybackError();
-      }
+      if (saved) restorePlayer(saved);
+      if (error && error.name === "NotAllowedError") { armed = false; setBlocked(); } else setPlaybackError();
     }
   }
 
   function reconcile(state) {
-    if (checkingSound) {
-      cancelSoundCheck(true);
-    }
-
+    if (checkingSound) cancelSoundCheck(true);
     if (isPausedMusicQuestion(state)) {
       cancelPendingPlay();
       player.pause();
-      if (armed) {
-        setPaused();
-      } else {
-        setNotEnabled(
-          "Music is paused. Enable sound now so the TV is ready when the game resumes."
-        );
-      }
+      if (armed) setPaused();
+      else setNotEnabled("De muziek is gepauzeerd. Schakel het geluid nu in zodat de TV klaarstaat wanneer het spel hervat.");
       return;
     }
-
     if (!isActiveMusicQuestion(state)) {
       clearPlayer();
-      if (armed) {
-        setReady();
-      } else {
-        setNotEnabled();
-      }
+      if (armed) setReady(); else setNotEnabled();
       return;
     }
-
     const desiredKey = `${state.runId}:${state.questionNumber}`;
     if (!state.audioUrl) {
-      if (sourceKey !== desiredKey) {
-        clearPlayer();
-        sourceKey = desiredKey;
-      }
-      if (armed) {
-        setReady("Sound is armed. No audio file is packaged for this Music question.");
-      } else {
-        setNotEnabled(
-          "No audio file is packaged for this question, but you can still arm TV sound for later tracks."
-        );
-      }
+      if (sourceKey !== desiredKey) { clearPlayer(); sourceKey = desiredKey; }
+      if (armed) setReady("Het geluid staat klaar. Voor deze muziekvraag is geen audiobestand meegeleverd.");
+      else setNotEnabled("Voor deze vraag is geen audiobestand meegeleverd, maar je kunt het TV-geluid alvast inschakelen voor latere nummers.");
       return;
     }
-
     loadQuestion(state);
     if (!armed) {
-      setNotEnabled("The current track is loaded. Enable sound on this TV to start playback.");
+      setNotEnabled("Het huidige nummer is geladen. Schakel het geluid op deze TV in om af te spelen.");
       return;
     }
     void playCurrentTrack();
@@ -361,9 +246,7 @@
   function syncState(force = false) {
     const state = currentState();
     const nextSignature = signatureFor(state);
-    if (!force && nextSignature === stateSignature) {
-      return;
-    }
+    if (!force && nextSignature === stateSignature) return;
     stateSignature = nextSignature;
     reconcile(state);
   }
@@ -379,27 +262,17 @@
     void runSoundCheck();
   });
 
-  volume.addEventListener("input", () => {
-    player.volume = Number(volume.value);
-  });
-
+  volume.addEventListener("input", () => { player.volume = Number(volume.value); });
   player.addEventListener("error", () => {
-    if (!player.getAttribute("src")) {
-      return;
-    }
+    if (!player.getAttribute("src")) return;
     if (checkingSound) {
       const saved = soundCheckSaved;
       cancelSoundCheck(false);
-      if (saved) {
-        restorePlayer(saved);
-      }
+      if (saved) restorePlayer(saved);
     } else {
       cancelPendingPlay();
       player.pause();
     }
-    // A failed media element cannot be trusted merely because its logical
-    // question key is unchanged. Invalidate the key so retry, or a later
-    // resume after a paused sound check, requests a fresh resource.
     sourceKey = "";
     setPlaybackError();
   });
@@ -408,6 +281,5 @@
   observer.observe(liveOverview, { childList: true, subtree: true });
   liveOverview.addEventListener("htmx:afterSettle", () => syncState());
   liveOverview.addEventListener("htmx:oobAfterSwap", () => syncState());
-
   syncState(true);
 })();

@@ -1,10 +1,10 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Christmas Quiz · Team {{ team_name }}</title>
+  <title>Kerstmis Quiz · Team {{ team_name }}</title>
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue42-team-ui.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
@@ -19,10 +19,10 @@
 </head>
 <body class="game-page game-page--team" data-endgame-surface="team" data-team-id="{{ team_name|lower }}">
   <main class="app-shell">
-    <header class="page-header"><div><p class="eyebrow">Christmas Escape Room</p><h1>Team {{ team_name }}</h1></div>
-      <form method="post" action="{% url 'logout' %}" style="position: relative; z-index: 40;">{% csrf_token %}<button type="submit">Log out</button></form>
+    <header class="page-header"><div><p class="eyebrow">Kerst Escape Room</p><h1>Team {{ team_name }}</h1></div>
+      <form method="post" action="{% url 'logout' %}" style="position: relative; z-index: 40;">{% csrf_token %}<button type="submit">Uitloggen</button></form>
     </header>
-    <section id="live-game" aria-label="Current game">
+    <section id="live-game" aria-label="Huidig spel">
       <p id="connection-status" role="status"></p>
       <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}">
       <div id="poller" hx-get="{% url 'team_state' %}"
@@ -169,17 +169,17 @@
       const status = event.detail.xhr.status;
       const isAction = event.detail.elt.closest('form') !== null;
       if (isAction && status >= 400 && status < 500) {
-        const message = 'Action rejected: ' + event.detail.xhr.responseText;
+        const message = 'Actie geweigerd. Controleer de huidige spelstatus en probeer het opnieuw.';
         showActionFeedback(message);
         const shopFeedback = document.getElementById('shop-feedback');
         if (shopFeedback) shopFeedback.textContent = message;
       } else {
         document.getElementById('connection-status').textContent =
-          'Connection trouble. Retrying…';
+          'Verbindingsprobleem. Opnieuw proberen…';
       }
     });
     document.body.addEventListener('htmx:sendError', function () {
-      document.getElementById('connection-status').textContent = 'Connection trouble. Retrying…';
+      document.getElementById('connection-status').textContent = 'Verbindingsprobleem. Opnieuw proberen…';
     });
     document.body.addEventListener('htmx:afterRequest', function (event) {
       if (event.detail.successful) document.getElementById('connection-status').textContent = '';

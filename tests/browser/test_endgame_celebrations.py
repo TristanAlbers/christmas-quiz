@@ -128,15 +128,15 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await overview.wait_for(timeout=5000)
 
                     await winner.get_by_role(
-                        "heading", name="You won the Advent race!"
+                        "heading", name="Jullie winnen de adventrace!"
                     ).wait_for()
                     await runner_up.get_by_role(
-                        "heading", name="Team A got there first"
+                        "heading", name="Team A was eerder"
                     ).wait_for()
                     await overview.get_by_role(
-                        "heading", name="Team A wins!"
+                        "heading", name="Team A wint!"
                     ).wait_for()
-                    await tv.get_by_text("Team A wins the Advent race!").wait_for()
+                    await tv.get_by_text("Team A wint de adventrace!").wait_for()
 
                     self.assertTrue(
                         await answer.evaluate(
@@ -177,8 +177,10 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                                 "'endgame-celebration--visible')"
                             )
                         )
-                    await team_b.get_by_text("Team A completed the calendar").wait_for()
-                    await tv.get_by_text("Team A wins the Advent race!").wait_for()
+                    await team_b.get_by_text(
+                        "Team A heeft de kalender voltooid"
+                    ).wait_for()
+                    await tv.get_by_text("Team A wint de adventrace!").wait_for()
                     self.assertEqual(await team_b.locator("#answer-input").count(), 1)
                 finally:
                     await tv_context.close()
@@ -213,7 +215,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         '.endgame-celebration--visible'
                     )
                     await overlay.wait_for(timeout=5000)
-                    await tv.get_by_text("Team A wins the Advent race!").wait_for()
+                    await tv.get_by_text("Team A wint de adventrace!").wait_for()
                     self.assertEqual(
                         await overlay.locator(".endgame-confetti__piece").count(), 0
                     )

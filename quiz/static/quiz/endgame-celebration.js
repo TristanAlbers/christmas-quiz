@@ -56,26 +56,26 @@
       return {
         kind: "overview-winner",
         icon: "🎉",
-        eyebrow: "Advent race winner",
-        title: "Team " + teamName + " wins!",
-        copy: "First to complete all 25 Advent doors. The other team keeps playing.",
+        eyebrow: "Winnaar adventrace",
+        title: "Team " + teamName + " wint!",
+        copy: "Als eerste alle 25 adventvakjes voltooid. Het andere team speelt verder.",
       };
     }
     if (currentTeam === winner) {
       return {
         kind: "winner",
         icon: "🏆",
-        eyebrow: "You finished first",
-        title: "You won the Advent race!",
-        copy: "Merry Christmas, champions. The other team can still complete its calendar.",
+        eyebrow: "Jullie waren als eerste klaar",
+        title: "Jullie winnen de adventrace!",
+        copy: "Vrolijk kerstfeest, kampioenen. Het andere team kan de kalender nog afmaken.",
       };
     }
     return {
       kind: "runner-up",
       icon: "🦌",
-      eyebrow: "The race has a winner",
-      title: "Team " + teamName + " got there first",
-      copy: "Rudolph looks a little glum, but your current puzzle is still active. Keep going!",
+      eyebrow: "De race heeft een winnaar",
+      title: "Team " + teamName + " was eerder",
+      copy: "Rudolph kijkt wat beteuterd, maar jullie huidige puzzel is nog actief. Ga door!",
     };
   }
 

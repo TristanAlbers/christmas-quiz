@@ -151,7 +151,7 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         "2.75s",
                     )
                     self.assertIn(
-                        "Incorrect answer. Try again.",
+                        "Onjuist antwoord. Probeer het opnieuw.",
                         await page.locator("#action-feedback").inner_text(),
                     )
                     self.assertEqual(await page.locator("#answer-input").count(), 1)
@@ -219,7 +219,7 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                     )
                     await page.wait_for_function(
                         """document.querySelector('#action-feedback')?.textContent
-                        === 'Correct answer. Puzzle completed.'"""
+                        === 'Goed antwoord. Puzzel afgerond.'"""
                     )
                     await page.wait_for_function(
                         """() => document.getElementById('incorrect-answer-effect')
@@ -289,7 +289,7 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         "2.75s",
                     )
                     self.assertIn(
-                        "Incorrect answer. Try again.",
+                        "Onjuist antwoord. Probeer het opnieuw.",
                         await page.locator("#action-feedback").inner_text(),
                     )
                 finally:

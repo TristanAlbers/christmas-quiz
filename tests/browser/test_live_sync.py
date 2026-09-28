@@ -100,10 +100,10 @@ class LiveSyncBrowserTests(LiveServerTestCase):
                     ).click()
                     feedback = page.locator("#action-feedback")
                     await feedback.filter(
-                        has_text="Incorrect answer. Try again."
+                        has_text="Onjuist antwoord. Probeer het opnieuw."
                     ).wait_for()
                     await self._wait_for_three_state_polls(page)
-                    self.assertIn("Incorrect answer", await feedback.inner_text())
+                    self.assertIn("Onjuist antwoord", await feedback.inner_text())
                     question = await page.locator("#question-pane").inner_text()
                     self.assertIn("Demo A1", question)
                 finally:
@@ -133,9 +133,9 @@ class LiveSyncBrowserTests(LiveServerTestCase):
                             "form[action='/team/action/use-hint/']"
                         ).evaluate("form => form.requestSubmit()")
                     feedback = page.locator("#action-feedback")
-                    await feedback.filter(has_text="no hint tokens").wait_for()
+                    await feedback.filter(has_text="Actie geweigerd").wait_for()
                     await self._wait_for_three_state_polls(page)
-                    self.assertIn("no hint tokens", await feedback.inner_text())
+                    self.assertIn("Actie geweigerd", await feedback.inner_text())
                     question = await page.locator("#question-pane").inner_text()
                     self.assertIn("Demo A1", question)
                 finally:

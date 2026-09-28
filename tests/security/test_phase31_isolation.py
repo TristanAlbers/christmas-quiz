@@ -42,8 +42,8 @@ class Phase31IsolationTests(TestCase):
         poll = self.client.get(reverse("team_state"))
         for response in (page, poll):
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, "Waiting for an administrator")
-            self.assertNotContains(response, "Demo A1: North star")
+            self.assertContains(response, "Wachten tot de Game Master het spel start.")
+            self.assertNotContains(response, "Demo A1: Poolster")
             self.assertNotContains(response, "christmas-2026-demo")
             self.assertNotContains(response, "points")
             self.assertNotContains(response, "/media/")

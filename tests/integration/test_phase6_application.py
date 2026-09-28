@@ -131,8 +131,8 @@ class PhaseSixApplicationTests(TestCase):
         self.assertEqual(b_active.challenge.question.id, "challenge-a-reindeer")
         public_active = get_public_state(now=GRACE_END)
         self.assertEqual(public_active.challenge.phase, "active")
-        self.assertEqual(public_active.challenge.title, "Reindeer roll call")
-        self.assertIn("glowing red nose", public_active.challenge.body)
+        self.assertEqual(public_active.challenge.title, "Rendierenappel")
+        self.assertIn("gloeiende rode neus", public_active.challenge.body)
 
         wrong_id = str(uuid4())
         before_context = _question_context(b_active)
@@ -177,7 +177,6 @@ class PhaseSixApplicationTests(TestCase):
         self.initiate(self.a)
         first = Challenge.objects.get(run_id=self.run_id)
         self.answer(self.b, first, "rudolph")
-
         second_start = GRACE_END + timedelta(seconds=1)
         self.initiate(self.b, now=second_start)
         second = Challenge.objects.get(run_id=self.run_id, initiator_team_id="b")

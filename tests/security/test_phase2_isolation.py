@@ -111,7 +111,8 @@ class PhaseTwoIsolationTests(TestCase):
             "revealed",
         )
         self.assertEqual(
-            get_team_state(self.a).question.hint, "The colour starts with R."
+            get_team_state(self.a).question.hint,
+            "De Engelse kleur begint met een R.",
         )
         self.assertIsNone(get_team_state(self.b).question.hint)
         self.assertEqual(get_team_state(self.b).hint_tokens, 0)
@@ -155,7 +156,8 @@ class PhaseTwoIsolationTests(TestCase):
         self.assertEqual(post_team("purchase-hint").status_code, 302)
         self.assertEqual(post_team("use-hint").status_code, 302)
         self.assertEqual(
-            get_team_state(self.a).question.hint, "The colour starts with R."
+            get_team_state(self.a).question.hint,
+            "De Engelse kleur begint met een R.",
         )
         self.assertIsNone(get_team_state(self.b).question.hint)
         self.assertEqual(post_team("skip").status_code, 302)

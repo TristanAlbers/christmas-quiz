@@ -99,7 +99,7 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     await freeze_surface.wait_for(timeout=5000)
                     self.assertEqual(await freeze_surface.count(), 1)
                     self.assertIn(
-                        "Your team is frozen",
+                        "Jullie team is bevroren",
                         await page.locator(".freeze-message").inner_text(),
                     )
                     self.assertEqual(await page.locator("#answer-input").count(), 0)
@@ -113,7 +113,7 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         await page.locator("#question-pane img").count(), 0
                     )
                     self.assertNotIn(
-                        "Hint tokens", await page.locator("#live-game").inner_text()
+                        "Fragmenten", await page.locator("#live-game").inner_text()
                     )
                     self.assertEqual(
                         await page.locator(".team-playing-time").count(), 0

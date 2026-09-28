@@ -2,6 +2,14 @@
 
 This file records later user-approved product decisions that intentionally refine or supersede older wording elsewhere in the repository. It overrides older specifications **only for the specific decisions stated here**. All unrelated game rules and security/privacy requirements keep their existing authority.
 
+## 2026-09-28 — playable runtime is Dutch-first
+
+All normal participant-facing and operator-facing runtime surfaces are Dutch-first. This includes team login and waiting states, Advent puzzle interactions, Hint/Skip/shop/sabotage/Freeze/Uno Reverse/Challenge feedback, Music Quiz states, winner/final states, the public/TV overview and audio controls, and the Game Master interface. Player-visible content authored in the active game package should likewise be Dutch where it is intended to be read by players.
+
+Internal contracts remain English where that protects stability and implementation clarity. Persisted state identifiers such as `READY`, `ADVENT_QUIZ`, `MUSIC_QUIZ`, `PUZZLE`, and `FREEZE`, URL names, audit identifiers, Python symbols, tests, and developer-facing documentation do not need to be renamed. Those technical identifiers must not leak into normal rendered UI; views translate them at the presentation boundary into stable Dutch labels. Product names and established game terms such as Uno Reverse may remain as named concepts.
+
+This is a single-language product decision, not a requirement to add a general localization framework, locale selector, translation catalog, or English parity mode. Validation and recoverable runtime errors shown to players or Game Masters should use concise Dutch wording without exposing raw internal error codes.
+
 ## 2026-09-24 — UI/interaction is a first-class requirement
 
 User-visible behavior is not complete merely because its backend mechanics work. Every phase that adds or changes user-visible behavior must include explicit presentation/interaction acceptance criteria and a dedicated UI/interaction implementation stage unless the contract demonstrates that no UI change is required.
@@ -107,9 +115,3 @@ The earlier requirement that available Hint tokens receive deliberate visual tre
 The answer interaction appears before the Hint/Skip action pair so the current puzzle remains the primary task. Still-valid answer, Hint, and Skip controls must remain mounted across ordinary 500 ms polling. Resource polling may update displayed points/fragments/Reverse state and mutate the text/disabled properties of those contextual actions, but must not replace the controls while their semantic puzzle context is unchanged.
 
 Action/result feedback is contextual and transient. A newly resolved Challenge may briefly show its outcome, but ordinary polling must not restart that feedback interval or turn the result into permanent status chrome. This decision changes presentation only and does not alter game-state legality, costs, rewards, fragments, Challenge outcomes, or team isolation.
-
-## 2026-09-28 — team playing time is omitted and Freeze is full-viewport
-
-The team Puzzle/Freeze runtime does not show a persistent elapsed `Speeltijd` / `HH:MM:SS` readout. This intentionally supersedes the short-lived issue-#42 requirement that team devices display current playing time. The authoritative Advent gameplay clock and its Pause/recovery semantics remain unchanged; elapsed playing time continues to be presented on the shared public/TV overview.
-
-When a team is authoritatively frozen, the persistent ice-lock presentation covers the complete team-device viewport, with the readable Freeze message/countdown above the ice treatment and comfortable phone-safe padding. Private puzzle/hint content remains absent while frozen. The persistent lock stays below the one-shot Freeze/Uno Reverse choreography from #31 and does not change any Freeze rule, duration, transaction, isolation, or polling semantics.

@@ -70,7 +70,7 @@ class Phase31BrowserTests(LiveServerTestCase):
                 )
                 try:
                     await team_page.get_by_text(
-                        "Waiting for an administrator", exact=False
+                        "Wachten tot de Game Master het spel start", exact=False
                     ).wait_for()
                     package_form = admin_page.locator("#package-selection-form")
                     package_select = admin_page.locator("select[name='package_id']")
@@ -94,8 +94,10 @@ class Phase31BrowserTests(LiveServerTestCase):
                     )
 
                     await package_select.select_option("christmas-2026-demo")
-                    await admin_page.get_by_role("button", name="Start game").click()
-                    await admin_page.get_by_text("ADVENT_QUIZ", exact=True).wait_for(
+                    await admin_page.get_by_role(
+                        "button", name="Spel starten"
+                    ).click()
+                    await admin_page.get_by_text("Adventquiz", exact=True).wait_for(
                         timeout=5000
                     )
                     await team_page.get_by_text("Demo A1", exact=False).wait_for(
@@ -107,13 +109,13 @@ class Phase31BrowserTests(LiveServerTestCase):
 
                     admin_page.once("dialog", accept_reset)
                     await admin_page.get_by_role(
-                        "button", name="Reset full game"
+                        "button", name="Hele spel resetten"
                     ).click()
-                    await admin_page.get_by_text("READY", exact=True).wait_for(
-                        timeout=5000
-                    )
+                    await admin_page.get_by_text(
+                        "Klaar om te starten", exact=True
+                    ).wait_for(timeout=5000)
                     await team_page.get_by_text(
-                        "Waiting for an administrator", exact=False
+                        "Wachten tot de Game Master het spel start", exact=False
                     ).wait_for(timeout=5000)
                     self.assertEqual(
                         await team_page.locator("#answer-input").count(), 0

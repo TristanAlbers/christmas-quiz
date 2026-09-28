@@ -120,7 +120,7 @@ class Issue42ReviewRegressionBrowserTests(LiveServerTestCase):
                     )
                     await observed_result.wait_for(state="visible", timeout=5000)
                     self.assertIn(
-                        "You won the Challenge",
+                        "Jullie hebben de uitdaging gewonnen",
                         await observed_result.inner_text(),
                     )
 

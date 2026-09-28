@@ -11,29 +11,17 @@
   <input class="poll-context" type="hidden" name="audio_context" value="{{ audio_context }}">
 </div>
 {% if not oob %}
-<section id="overview-audio-player"
-         class="music-audio-panel"
-         data-sound-state="not-enabled"
-         data-sound-check-url="{% static 'quiz/sound-check.wav' %}"
-         aria-labelledby="music-audio-heading">
+<section id="overview-audio-player" class="music-audio-panel" data-sound-state="not-enabled" data-sound-check-url="{% static 'quiz/sound-check.wav' %}" aria-labelledby="music-audio-heading">
   <div class="music-audio-panel__ornament" aria-hidden="true">♫</div>
   <div class="music-audio-panel__copy" role="status" aria-live="polite" aria-atomic="true">
-    <p class="eyebrow">TV sound</p>
-    <div class="music-audio-panel__status-row">
-      <span class="music-audio-panel__status-dot" aria-hidden="true"></span>
-      <h2 id="music-audio-heading">Sound not enabled</h2>
-    </div>
-    <p id="music-audio-message">Enable sound once during setup so Music Quiz tracks can start reliably.</p>
+    <p class="eyebrow">TV-geluid</p>
+    <div class="music-audio-panel__status-row"><span class="music-audio-panel__status-dot" aria-hidden="true"></span><h2 id="music-audio-heading">Geluid niet ingeschakeld</h2></div>
+    <p id="music-audio-message">Schakel het geluid tijdens de voorbereiding één keer in, zodat nummers uit de Muziek Quiz betrouwbaar kunnen starten.</p>
   </div>
   <div class="music-audio-panel__controls">
-    <button id="music-audio-action" class="button-primary" type="button">Enable sound</button>
-    <label class="music-audio-panel__volume" for="music-audio-volume">
-      <span>Volume</span>
-      <input id="music-audio-volume" type="range" min="0" max="1" step="0.05" value="0.85">
-    </label>
+    <button id="music-audio-action" class="button-primary" type="button">Geluid inschakelen</button>
+    <label class="music-audio-panel__volume" for="music-audio-volume"><span>Volume</span><input id="music-audio-volume" type="range" min="0" max="1" step="0.05" value="0.85"></label>
   </div>
-  <audio id="music-player" preload="auto" loop>
-    Your browser does not support audio playback.
-  </audio>
+  <audio id="music-player" preload="auto" loop>Je browser ondersteunt geen audioweergave.</audio>
 </section>
 {% endif %}
