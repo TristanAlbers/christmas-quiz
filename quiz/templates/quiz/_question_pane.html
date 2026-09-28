@@ -87,36 +87,6 @@
       <img class="puzzle-image" src="{{ media_url }}" alt="Private puzzle clue">
     {% endfor %}
     {% if state.question.hint %}<aside class="hint-card"><span class="hint-token" aria-hidden="true">?</span><div><strong>Hint revealed</strong><p>{{ state.question.hint }}</p></div></aside>{% endif %}
-    {% if state.question.hint_available and not state.question.hint %}
-      <form method="post" action="{% url 'team_action' 'use-hint' %}"
-            hx-post="{% url 'team_action' 'use-hint' %}" hx-trigger="submit"
-            hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-            hx-target="#game-status" hx-swap="innerHTML">
-        {% csrf_token %}
-        <input type="hidden" name="run_id" value="{{ state.run_id }}">
-        <input type="hidden" name="question_id" value="{{ state.question.id }}">
-        <input type="hidden" name="request_id" value="{{ use_request_id }}">
-        <button class="button-hint" type="submit"><span class="hint-token" aria-hidden="true">?</span> Use Hint token</button>
-      </form>
-    {% endif %}
-    {% if state.skip_cost != None %}
-      {% if state.current_number == 25 %}
-        <div class="skip-action">
-          <button class="button-skip" type="button" disabled><span aria-hidden="true">»</span> Laatste vraag <small>Deze vraag kan niet worden overgeslagen</small></button>
-        </div>
-      {% else %}
-        <form class="skip-action" method="post" action="{% url 'team_action' 'skip' %}"
-              hx-post="{% url 'team_action' 'skip' %}" hx-trigger="submit"
-              hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-              hx-target="#game-status" hx-swap="innerHTML">
-          {% csrf_token %}
-          <input type="hidden" name="run_id" value="{{ state.run_id }}">
-          <input type="hidden" name="question_id" value="{{ state.question.id }}">
-          <input type="hidden" name="request_id" value="{{ skip_request_id }}">
-          <button class="button-skip" type="submit"><span aria-hidden="true">»</span> Skip this puzzle now <small>{{ state.skip_cost }} points · completes immediately</small></button>
-        </form>
-      {% endif %}
-    {% endif %}
     <form class="answer-form" method="post" action="{% url 'team_answer' %}"
           hx-post="{% url 'team_answer' %}" hx-trigger="submit"
           hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
@@ -129,5 +99,71 @@
       <input id="answer-input" name="answer" autocomplete="off" required>
       <button class="button-primary" type="submit">Submit answer</button>
     </form>
+    <div class="puzzle-action-stack" aria-label="Hulp en overslaan">
+      {% if state.question.hint %}
+        <div class="puzzle-action-static">
+          <button class="puzzle-action-button puzzle-action-button--hint" type="button"
+                  data-hint-action data-hint-legal="0" data-hint-disabled-label="Al onthuld" disabled>
+            <span class="hint-token" aria-hidden="true">?</span>
+            <span class="puzzle-action-copy"><strong>Hint gebruiken</strong><small><span data-hint-inventory>{{ state.hint_tokens }}</span> beschikbaar</small></span>
+            <span class="puzzle-action-status" data-hint-status>Al onthuld</span>
+          </button>
+        </div>
+      {% elif state.question.hint_available %}
+        <form method="post" action="{% url 'team_action' 'use-hint' %}"
+              hx-post="{% url 'team_action' 'use-hint' %}" hx-trigger="submit"
+              hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+              hx-target="#game-status" hx-swap="innerHTML">
+          {% csrf_token %}
+          <input type="hidden" name="run_id" value="{{ state.run_id }}">
+          <input type="hidden" name="question_id" value="{{ state.question.id }}">
+          <input type="hidden" name="request_id" value="{{ use_request_id }}">
+          <button class="puzzle-action-button puzzle-action-button--hint" type="submit"
+                  data-hint-action data-hint-legal="1"{% if not state.hint_tokens %} disabled{% endif %}>
+            <span class="hint-token" aria-hidden="true">?</span>
+            <span class="puzzle-action-copy"><strong>Hint gebruiken</strong><small><span data-hint-inventory>{{ state.hint_tokens }}</span> beschikbaar</small></span>
+            <span class="puzzle-action-status" data-hint-status>{% if state.hint_tokens %}Beschikbaar{% else %}Geen hints{% endif %}</span>
+          </button>
+        </form>
+      {% else %}
+        <div class="puzzle-action-static">
+          <button class="puzzle-action-button puzzle-action-button--hint" type="button"
+                  data-hint-action data-hint-legal="0" data-hint-disabled-label="Geen hint voor deze vraag" disabled>
+            <span class="hint-token" aria-hidden="true">?</span>
+            <span class="puzzle-action-copy"><strong>Hint gebruiken</strong><small><span data-hint-inventory>{{ state.hint_tokens }}</span> beschikbaar</small></span>
+            <span class="puzzle-action-status" data-hint-status>Niet beschikbaar</span>
+          </button>
+        </div>
+      {% endif %}
+      {% if state.skip_cost != None %}
+        {% if state.current_number == 25 %}
+          <div class="puzzle-action-static">
+            <button class="puzzle-action-button puzzle-action-button--skip" type="button"
+                    data-skip-action data-skip-legal="0" data-skip-cost="{{ state.skip_cost }}"
+                    data-skip-disabled-label="Laatste vraag" disabled>
+              <span aria-hidden="true">»</span>
+              <span class="puzzle-action-copy"><strong>Vraag overslaan</strong><small>{{ state.skip_cost }} punten · rondt de vraag direct af</small></span>
+              <span class="puzzle-action-status" data-skip-status>Niet mogelijk</span>
+            </button>
+          </div>
+        {% else %}
+          <form method="post" action="{% url 'team_action' 'skip' %}"
+                hx-post="{% url 'team_action' 'skip' %}" hx-trigger="submit"
+                hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+                hx-target="#game-status" hx-swap="innerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="run_id" value="{{ state.run_id }}">
+            <input type="hidden" name="question_id" value="{{ state.question.id }}">
+            <input type="hidden" name="request_id" value="{{ skip_request_id }}">
+            <button class="puzzle-action-button puzzle-action-button--skip" type="submit"
+                    data-skip-action data-skip-legal="1" data-skip-cost="{{ state.skip_cost }}"{% if state.points < state.skip_cost %} disabled{% endif %}>
+              <span aria-hidden="true">»</span>
+              <span class="puzzle-action-copy"><strong>Vraag overslaan</strong><small>{{ state.skip_cost }} punten · rondt de vraag direct af</small></span>
+              <span class="puzzle-action-status" data-skip-status>{% if state.points < state.skip_cost %}Te weinig punten{% else %}Beschikbaar{% endif %}</span>
+            </button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
   {% endif %}
 </div>
