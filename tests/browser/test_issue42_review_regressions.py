@@ -2,7 +2,6 @@
 
 import asyncio
 import os
-import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
@@ -60,7 +59,7 @@ class Issue42ReviewRegressionBrowserTests(LiveServerTestCase):
         await page.goto(f"{self.live_server_url}/team/")
         return context, page
 
-    def test_team_playing_time_is_visible_and_tracks_authoritative_polling(self):
+    def test_team_playing_time_is_intentionally_not_rendered(self):
         async def check():
             from playwright.async_api import async_playwright
 
@@ -68,21 +67,14 @@ class Issue42ReviewRegressionBrowserTests(LiveServerTestCase):
                 browser = await playwright.chromium.launch()
                 context, page = await self._team_page(browser)
                 try:
-                    timer = page.locator("[data-gameplay-ms]")
-                    await timer.wait_for(timeout=5000)
-                    initial = await timer.inner_text()
-                    self.assertRegex(initial, re.compile(r"^\d{2}:\d{2}:\d{2}$"))
-                    await page.wait_for_function(
-                        """initial => {
-                            const timer = document.querySelector('[data-gameplay-ms]');
-                            return timer && timer.textContent.trim() !== initial;
-                        }""",
-                        arg=initial,
-                        timeout=4000,
+                    self.assertEqual(
+                        await page.locator(".team-playing-time").count(), 0
                     )
-                    self.assertRegex(
-                        await timer.inner_text(),
-                        re.compile(r"^\d{2}:\d{2}:\d{2}$"),
+                    self.assertEqual(
+                        await page.locator("[data-gameplay-ms]").count(), 0
+                    )
+                    self.assertEqual(
+                        await page.get_by_text("Speeltijd", exact=True).count(), 0
                     )
                 finally:
                     await context.close()
