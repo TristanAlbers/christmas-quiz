@@ -156,9 +156,9 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         self.admin,
                         AdminPuzzle(str(uuid4()), self.run_id, "a", "a-25"),
                     )
-                    await team.get_by_text("Team A completed the calendar").wait_for(
-                        timeout=5000
-                    )
+                    await team.get_by_text(
+                        "Team A heeft de kalender voltooid"
+                    ).wait_for(timeout=5000)
                     self.assertEqual(
                         await team.locator(".shop-item--freeze").count(), 0
                     )
@@ -180,12 +180,14 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                     await answer.fill("north")
                     await team.locator(".answer-form .button-primary").click()
                     await team.get_by_text(
-                        "Both teams completed all 25 Advent doors"
+                        "Beide teams hebben alle 25 adventvakjes voltooid"
                     ).wait_for(timeout=5000)
                     self.assertEqual(await team.locator("#answer-input").count(), 0)
                     self.assertEqual(await team.locator(".advent-door").count(), 0)
-                    await tv.get_by_text("Team A finished first").wait_for(timeout=5000)
-                    await admin.get_by_text("Team A finished first").wait_for(
+                    await tv.get_by_text("Team A was als eerste klaar").wait_for(
+                        timeout=5000
+                    )
+                    await admin.get_by_text("Team A was als eerste klaar").wait_for(
                         timeout=5000
                     )
                 finally:
@@ -244,13 +246,13 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         await tv.locator(
                             '.advent-progress[data-team-id="a"] [data-door-number="1"]'
                         ).get_attribute("aria-label"),
-                        "Door 1: completed",
+                        "Vakje 1: voltooid",
                     )
                     self.assertEqual(
                         await tv.locator(
                             '.advent-progress[data-team-id="b"] [data-door-number="2"]'
                         ).get_attribute("aria-label"),
-                        "Door 2: locked",
+                        "Vakje 2: vergrendeld",
                     )
                     await tv.wait_for_timeout(2100)
                     self.assertEqual(await tv.evaluate("window.__doorAnimations"), 1)
