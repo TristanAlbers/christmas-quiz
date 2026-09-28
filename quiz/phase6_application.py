@@ -27,10 +27,13 @@ from quiz.persistence import immediate_transaction, is_busy_error, read_snapshot
 # view of the immutable snapshot. The persisted snapshot retains the authoritative
 # typed media objects and `challenge_puzzles` map.
 _CORE_LOAD_SNAPSHOT = core.load_snapshot
+_AUTHORITATIVE_CONFIG_ATTR = "_phase6_authoritative_snapshot_config"
 
 
 def _load_snapshot_compatible(run_or_path):
     config = _CORE_LOAD_SNAPSHOT(run_or_path)
+    if hasattr(run_or_path, "snapshot_path"):
+        setattr(run_or_path, _AUTHORITATIVE_CONFIG_ATTR, config)
     teams = config.get("teams")
     typed_media = bool(
         isinstance(teams, dict)
@@ -205,7 +208,9 @@ def _projection(run, team_id, now):
     base = core._projection(run, team_id, now)
     if run is None:
         return base
-    authoritative_config = _CORE_LOAD_SNAPSHOT(run)
+    authoritative_config = getattr(run, _AUTHORITATIVE_CONFIG_ATTR, None)
+    if authoritative_config is None:
+        authoritative_config = _CORE_LOAD_SNAPSHOT(run)
     base = replace(
         base,
         question=_normal_question_projection(
