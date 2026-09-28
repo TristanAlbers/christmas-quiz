@@ -26,7 +26,7 @@ The shared public/TV overview may expose **coarse Advent progression for both te
 - a concise progress count such as `13/25` or equivalent percentage;
 - first-finisher / final-result information when already allowed by the game rules.
 
-This is a deliberate exception to older wording that treated all team progression as private. It does **not** authorize exposing private puzzle content, answers, answer attempts, balances/coins, fragments, hints, Hint inventory, Uno Reverse state, Freeze/other hidden effects, private media, or other team-private data.
+This is a deliberate exception to older wording that treated all team progression as private. It does **not** authorize exposing private puzzle content, answers, answer attempts, balances/coins, fragments, hints, Hint inventory, Uno Reverse state, private media, or other team-private data. Freeze and other hidden effects remain private except for the later 2026-09-28 decision below, which permits only the coarse frozen/not-frozen boolean on the normal Advent overview.
 
 The public overview should present this progress using the Advent-calendar metaphor; percentage/count text alone is not sufficient.
 
@@ -85,3 +85,15 @@ On the shared TV, an active question uses a decorative player-style progress bar
 ## 2026-09-27 — Music Quiz display refinement
 
 Player-facing Dutch copy names the mode `Muziek Quiz` as two words. On the shared TV, the active-question progress bar is a large visual element on the same fixed three-minute scale, without visible endpoint time labels. Its full state remains cosmetic: it does not advance or restrict the question and remains independent of audio duration and playback position.
+
+## 2026-09-28 — public Advent overview branding, timer and Freeze visibility
+
+The normal shared public/TV Advent overview is an event-facing surface, not a diagnostic state display. Its prominent game branding is **Quizzmass**. Raw backend/global-state labels such as `ADVENT_QUIZ` must not be shown to normal viewers, and technical wording such as `Advent Quiz in progress` should not be used as the main presentation.
+
+Total Advent playing time is still derived exclusively from the existing server-authoritative gameplay clock, including its Pause and recovery semantics. The public overview formats that elapsed value as fixed `HH:MM:SS` for TV readability. Formatting is presentation-only and does not introduce a client-owned clock or reset behavior.
+
+During the normal Advent overview, the public projection may expose **one additional coarse field per team: whether that team is currently frozen**. This is the only newly public team-state exception. It is sufficient to show a clear frost/ice treatment and textual Dutch `Bevroren` state. The public projection and UI must not expose Freeze remaining duration, source, cause, attacker, reflected-Reverse details, or any attack inventory.
+
+All other private resource/effect boundaries remain in force. In particular, the public overview must not expose points/balances, Hint-token inventory, Uno Reverse state, fragments, submitted answers/attempts, private puzzle or hint content, private media, Challenge opportunities/inventory outside the dedicated active Challenge overview, or any other hidden team state. Music and active Challenge takeover screens retain their own separately approved projection rules and do not gain this Freeze field.
+
+The Freeze treatment layers onto the existing festive Advent calendar so progression remains readable. Frozen state is communicated with text/iconography rather than color alone, and normal 500 ms polling should add/remove the treatment directly from authoritative state without relying on prior animation history. No enter/exit animation is required; any future animation must respect reduced-motion preferences.
