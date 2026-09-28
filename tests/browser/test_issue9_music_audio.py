@@ -162,8 +162,10 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         "document.querySelector('#music-player')"
                     )
 
-                    await page.get_by_role("button", name="Enable sound").click()
-                    await page.get_by_role("heading", name="Sound ready").wait_for()
+                    await page.get_by_role(
+                        "button", name="Geluid inschakelen"
+                    ).click()
+                    await page.get_by_role("heading", name="Geluid klaar").wait_for()
                     await page.wait_for_timeout(750)
 
                     await asyncio.to_thread(self._start_music)
@@ -174,14 +176,14 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         await page.locator("#music-player").get_attribute("src")
                     )
                     self.assertEqual(
-                        await page.get_by_role("heading", name="Playing").count(), 0
+                        await page.get_by_role("heading", name="Speelt af").count(), 0
                     )
 
                     await asyncio.to_thread(self._finish_gathering)
                     await page.get_by_text("Vraag 1 van 11", exact=False).wait_for(
                         timeout=5000
                     )
-                    await page.get_by_role("heading", name="Playing").wait_for(
+                    await page.get_by_role("heading", name="Speelt af").wait_for(
                         timeout=5000
                     )
                     self.assertTrue(
@@ -193,9 +195,6 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     player = page.locator("#music-player")
                     self.assertIn("q=1", await player.get_attribute("src"))
 
-                    # Complete the stubbed media-load lifecycle before simulating
-                    # elapsed playback so the controller's start-at-zero callback
-                    # cannot race the artificial playhead value below.
                     await player.dispatch_event("loadedmetadata")
                     await player.evaluate("(el) => { el.currentTime = 12.5; }")
                     play_count = await page.evaluate(
@@ -225,7 +224,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         self.admin,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role("heading", name="Paused").wait_for(
+                    await page.get_by_role("heading", name="Gepauzeerd").wait_for(
                         timeout=5000
                     )
                     paused_src = await player.get_attribute("src")
@@ -238,7 +237,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         self.admin,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role("heading", name="Playing").wait_for(
+                    await page.get_by_role("heading", name="Speelt af").wait_for(
                         timeout=5000
                     )
                     self.assertEqual(await player.get_attribute("src"), paused_src)
@@ -250,7 +249,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     await page.get_by_text("Vraag 2 van 11", exact=False).wait_for(
                         timeout=5000
                     )
-                    await page.get_by_role("heading", name="Playing").wait_for(
+                    await page.get_by_role("heading", name="Speelt af").wait_for(
                         timeout=5000
                     )
                     self.assertTrue(
@@ -267,7 +266,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     await page.get_by_text(
                         "Eindstand Muziek Quiz", exact=False
                     ).wait_for(timeout=5000)
-                    await page.get_by_role("heading", name="Sound ready").wait_for(
+                    await page.get_by_role("heading", name="Geluid klaar").wait_for(
                         timeout=5000
                     )
                     self.assertIsNone(await player.get_attribute("src"))
@@ -293,25 +292,29 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     await page.get_by_text("Vraag 1 van 11", exact=False).wait_for()
                     self.assertEqual(await page.locator("#music-player").count(), 1)
                     await page.evaluate("window.__rejectMediaPlay = true")
-                    await page.get_by_role("button", name="Enable sound").click()
-                    await page.get_by_role("heading", name="Sound blocked").wait_for()
-                    retry = page.get_by_role("button", name="Retry sound")
+                    await page.get_by_role(
+                        "button", name="Geluid inschakelen"
+                    ).click()
+                    await page.get_by_role(
+                        "heading", name="Geluid geblokkeerd"
+                    ).wait_for()
+                    retry = page.get_by_role("button", name="Opnieuw proberen")
                     self.assertTrue(await retry.is_visible())
 
                     await page.evaluate("window.__rejectMediaPlay = false")
-                    await page.get_by_role("button", name="Retry sound").click()
-                    await page.get_by_role("heading", name="Playing").wait_for()
+                    await retry.click()
+                    await page.get_by_role("heading", name="Speelt af").wait_for()
 
                     await page.locator("#music-player").dispatch_event("error")
-                    await page.get_by_role("heading", name="Playback error").wait_for()
+                    await page.get_by_role("heading", name="Afspeelfout").wait_for()
                     self.assertTrue(await retry.is_visible())
 
                     load_count = await page.evaluate(
                         "window.__mediaCalls"
                         ".filter(call => call.kind === 'load').length"
                     )
-                    await page.get_by_role("button", name="Retry sound").click()
-                    await page.get_by_role("heading", name="Playing").wait_for()
+                    await retry.click()
+                    await page.get_by_role("heading", name="Speelt af").wait_for()
                     self.assertGreater(
                         await page.evaluate(
                             "window.__mediaCalls"
@@ -325,14 +328,12 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         self.admin,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role("heading", name="Paused").wait_for()
-                    await page.get_by_role("button", name="Test sound").click()
+                    await page.get_by_role("heading", name="Gepauzeerd").wait_for()
+                    await page.get_by_role("button", name="Geluid testen").click()
                     await page.wait_for_timeout(750)
 
-                    # Restoring a question source while the backend is paused
-                    # can fail because that URL is intentionally unavailable.
                     await page.locator("#music-player").dispatch_event("error")
-                    await page.get_by_role("heading", name="Playback error").wait_for()
+                    await page.get_by_role("heading", name="Afspeelfout").wait_for()
                     load_count = await page.evaluate(
                         "window.__mediaCalls"
                         ".filter(call => call.kind === 'load').length"
@@ -343,7 +344,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         self.admin,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role("heading", name="Playing").wait_for(
+                    await page.get_by_role("heading", name="Speelt af").wait_for(
                         timeout=5000
                     )
                     self.assertGreater(
