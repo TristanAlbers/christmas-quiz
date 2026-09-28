@@ -175,6 +175,37 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                         geometry["viewport"]["height"] - 8,
                     )
 
+                    await page.set_viewport_size({"width": 568, "height": 320})
+                    await page.evaluate(
+                        "() => { document.documentElement.style.fontSize = '32px'; }"
+                    )
+                    freeze_panel = page.locator(".state-panel-freeze")
+                    overflow = await freeze_panel.evaluate(
+                        """element => ({
+                            clientHeight: element.clientHeight,
+                            scrollHeight: element.scrollHeight,
+                        })"""
+                    )
+                    self.assertGreater(
+                        overflow["scrollHeight"], overflow["clientHeight"]
+                    )
+                    await page.locator(".freeze-message").hover()
+                    await page.mouse.wheel(0, 1000)
+                    await page.wait_for_timeout(100)
+                    scroll_top = await freeze_panel.evaluate(
+                        "element => element.scrollTop"
+                    )
+                    self.assertGreater(scroll_top, 0)
+                    timer_box = await page.locator(".freeze-timer").bounding_box()
+                    self.assertIsNotNone(timer_box)
+                    self.assertLessEqual(
+                        timer_box["y"] + timer_box["height"], 312
+                    )
+                    await page.evaluate(
+                        "() => { document.documentElement.style.fontSize = ''; }"
+                    )
+                    await page.set_viewport_size({"width": 390, "height": 844})
+
                     surface_handle = await freeze_surface.element_handle()
                     await page.wait_for_timeout(1100)
                     self.assertTrue(
