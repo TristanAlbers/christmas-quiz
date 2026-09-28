@@ -97,7 +97,7 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                 )
                 try:
                     await page.get_by_text("Demo A1", exact=False).wait_for()
-                    launcher = page.get_by_role("button", name="Shop Power-ups")
+                    launcher = page.get_by_role("button", name="Winkel")
                     await launcher.focus()
                     await page.keyboard.press("Enter")
                     shop = page.locator("#team-shop-dialog")
@@ -110,7 +110,7 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     )
                     await launcher.click()
                     await self._watch_swaps(page, "game-status")
-                    button = page.get_by_role("button", name="Buy Hint (1)")
+                    button = page.get_by_role("button", name="Hint kopen (1)")
                     await button.scroll_into_view_if_needed()
                     await button.evaluate(
                         """el => {
@@ -184,9 +184,11 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     self.admin_session_cookie,
                 )
                 try:
-                    await page.get_by_text("ADVENT_QUIZ", exact=True).wait_for()
+                    await page.get_by_text("Adventquiz", exact=True).wait_for()
                     await self._watch_swaps(page, "admin-state")
-                    controls = page.locator("section[aria-label='Controls for Team A']")
+                    controls = page.locator(
+                        "section[aria-label='Bediening voor Team A']"
+                    )
                     field = controls.locator("input[name='delta']")
                     await field.fill("2")
                     await field.focus()
@@ -199,8 +201,10 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     self.assertTrue(
                         await field.evaluate("el => document.activeElement === el")
                     )
-                    await controls.get_by_role("button", name="Apply points").click()
-                    await page.get_by_text("5 points", exact=False).wait_for(
+                    await controls.get_by_role(
+                        "button", name="Punten toepassen"
+                    ).click()
+                    await page.get_by_text("5 punten", exact=False).wait_for(
                         timeout=5000
                     )
                 finally:
@@ -222,9 +226,11 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     self.admin_session_cookie,
                 )
                 try:
-                    controls = page.locator("section[aria-label='Controls for Team A']")
+                    controls = page.locator(
+                        "section[aria-label='Bediening voor Team A']"
+                    )
                     await controls.get_by_role(
-                        "button", name="Freeze team", exact=True
+                        "button", name="Team bevriezen", exact=True
                     ).wait_for()
                     await asyncio.to_thread(
                         admin_freeze,
@@ -232,11 +238,11 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         AdminTeam(str(uuid4()), self.run_id, "a"),
                     )
                     await controls.get_by_role(
-                        "button", name="Unfreeze team", exact=True
+                        "button", name="Team ontdooien", exact=True
                     ).wait_for(timeout=5000)
                     self.assertEqual(
                         await controls.get_by_role(
-                            "button", name="Freeze team", exact=True
+                            "button", name="Team bevriezen", exact=True
                         ).count(),
                         0,
                     )
@@ -247,7 +253,7 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         AdminTeam(str(uuid4()), self.run_id, "a"),
                     )
                     await controls.get_by_role(
-                        "button", name="Freeze team", exact=True
+                        "button", name="Team bevriezen", exact=True
                     ).wait_for(timeout=5000)
                 finally:
                     await context.close()

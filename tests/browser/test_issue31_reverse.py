@@ -49,7 +49,9 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     reflected_text = (await reflected.inner_text()).lower()
                     self.assertIn("freeze gelanceerd", reflected_text)
                     self.assertIn("teruggekaatst!", reflected_text)
-                    self.assertIn("Jullie Reverse heeft jullie gered!", await saved.inner_text())
+                    self.assertIn(
+                        "Jullie Reverse heeft jullie gered!", await saved.inner_text()
+                    )
                     self.assertEqual(
                         await reflected.evaluate(
                             "el => getComputedStyle(el).animationDuration"

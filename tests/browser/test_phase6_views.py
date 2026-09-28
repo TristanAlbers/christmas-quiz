@@ -106,15 +106,13 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     {"width": 1920, "height": 1080},
                 )
                 try:
-                    await a_page.get_by_role(
-                        "button", name="Shop Power-ups & sabotage"
-                    ).click()
+                    await a_page.get_by_role("button", name="Winkel").click()
                     challenge_item = a_page.locator(".shop-item--challenge")
                     challenge_text = await challenge_item.inner_text()
-                    self.assertIn("free & available", challenge_text)
-                    self.assertNotIn("need", challenge_text.lower())
+                    self.assertIn("gratis en beschikbaar", challenge_text)
+                    self.assertNotIn("punten nodig", challenge_text.lower())
                     start = challenge_item.get_by_role(
-                        "button", name="Start free Challenge"
+                        "button", name="Gratis uitdaging starten"
                     )
                     self.assertFalse(await start.is_disabled())
 
@@ -124,7 +122,7 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     )
                     await start.click()
                     await a_page.locator("#action-feedback").get_by_text(
-                        "Action rejected: stale run", exact=True
+                        "Actie geweigerd", exact=False
                     ).wait_for(timeout=5000)
                     await run_field.evaluate(
                         "(el, value) => el.value = value", self.run_id
@@ -138,23 +136,23 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                             await page.locator("#challenge-answer-input").count(), 0
                         )
                     self.assertIn(
-                        "You started this Challenge",
+                        "Jullie zijn deze uitdaging gestart",
                         await a_page.locator(".challenge-stage").inner_text(),
                     )
                     self.assertIn(
-                        "You were challenged",
+                        "Jullie zijn uitgedaagd",
                         await b_page.locator(".challenge-stage").inner_text(),
                     )
                     await tv_page.get_by_text(
-                        "Gather around — the Challenge is about to begin",
+                        "Verzamel je team — de uitdaging begint zo",
                         exact=True,
                     ).wait_for(timeout=5000)
                     tv_starting = await tv_page.locator(
                         ".challenge-overview"
                     ).inner_text()
-                    self.assertIn("challenge · 1 of 2", tv_starting.lower())
-                    self.assertIn("Team A challenged Team B", tv_starting)
-                    self.assertNotIn("Reindeer roll call", tv_starting)
+                    self.assertIn("kerstuitdaging · 1 van 2", tv_starting.lower())
+                    self.assertIn("Team A daagt Team B uit", tv_starting)
+                    self.assertNotIn("Rendierenappel", tv_starting)
                     self.assertEqual(
                         await tv_page.locator(".public-calendar-grid").count(), 0
                     )
@@ -165,11 +163,11 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                             timeout=5000
                         )
                     await tv_page.get_by_text(
-                        "Reindeer roll call", exact=True
+                        "Rendierenappel", exact=True
                     ).wait_for(timeout=5000)
                     tv_live = await tv_page.locator(".challenge-overview").inner_text()
-                    self.assertIn("glowing red nose", tv_live)
-                    self.assertIn("First correct answer", tv_live)
+                    self.assertIn("gloeiende rode neus", tv_live)
+                    self.assertIn("Het eerste juiste antwoord", tv_live)
 
                     answer = a_page.locator("#challenge-answer-input")
                     request_id = a_page.locator(
@@ -190,7 +188,7 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     )
                     await answer.press("Enter")
                     await a_page.get_by_text(
-                        "Incorrect Challenge answer. Keep trying."
+                        "Onjuist antwoord op de uitdaging. Probeer het opnieuw."
                     ).wait_for(timeout=5000)
                     self.assertTrue(
                         await answer.evaluate(
@@ -218,11 +216,11 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                             "rudolph",
                         ),
                     )
-                    await a_page.get_by_text("The rival team won", exact=True).wait_for(
-                        timeout=5000
-                    )
+                    await a_page.get_by_text(
+                        "Het andere team heeft gewonnen", exact=True
+                    ).wait_for(timeout=5000)
                     await b_page.get_by_text(
-                        "You won the Challenge", exact=True
+                        "Jullie hebben de uitdaging gewonnen", exact=True
                     ).wait_for(timeout=5000)
                     calendar = tv_page.locator(".public-calendar-grid")
                     await calendar.first.wait_for(state="visible", timeout=5000)
@@ -272,12 +270,12 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     monitor = admin_page.locator(".admin-challenge")
                     await monitor.wait_for()
                     text = await monitor.inner_text()
-                    self.assertIn("challenge 1 of 2", text.lower())
+                    self.assertIn("uitdaging 1 van 2", text.lower())
                     self.assertIn("Team A", text)
-                    self.assertIn("initiator", text.lower())
+                    self.assertIn("uitdager", text.lower())
                     self.assertIn("Team B", text)
-                    self.assertIn("No points charged", text)
-                    self.assertIn("Gathering period", text)
+                    self.assertIn("Geen punten afgeschreven", text)
+                    self.assertIn("Voorbereiding", text)
                     await tv_page.locator(".challenge-overview--starting").wait_for(
                         timeout=5000
                     )
@@ -290,15 +288,15 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         timeout=5000
                     )
                     await admin_page.get_by_text(
-                        "Puzzle is live.", exact=False
+                        "De puzzel is actief.", exact=False
                     ).wait_for(timeout=5000)
                     await tv_page.get_by_text(
-                        "Reindeer roll call", exact=True
+                        "Rendierenappel", exact=True
                     ).wait_for(timeout=5000)
                     tv_text = await tv_page.locator(
                         ".challenge-overview"
                     ).inner_text()
-                    self.assertIn("Team A challenged Team B", tv_text)
+                    self.assertIn("Team A daagt Team B uit", tv_text)
                     self.assertNotIn("rudolph", tv_text.lower())
                     self.assertNotIn("challenge-a-reindeer", tv_text)
 
@@ -317,16 +315,16 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         ),
                     )
                     await b_page.get_by_text(
-                        "Your team is frozen", exact=True
+                        "Jullie team is bevroren", exact=True
                     ).wait_for(timeout=5000)
                     freeze_text = await b_page.locator(".freeze-message").inner_text()
-                    self.assertIn("Your team is frozen", freeze_text)
-                    self.assertNotIn("Reindeer roll call", freeze_text)
-                    await admin_page.get_by_text("Team A won.", exact=False).wait_for(
-                        timeout=5000
-                    )
+                    self.assertIn("Jullie team is bevroren", freeze_text)
+                    self.assertNotIn("Rendierenappel", freeze_text)
+                    await admin_page.get_by_text(
+                        "Team A heeft gewonnen.", exact=False
+                    ).wait_for(timeout=5000)
                     self.assertIn(
-                        "direct five-minute Freeze",
+                        "direct vijf minuten Freeze",
                         await monitor.inner_text(),
                     )
                     calendar = tv_page.locator(".public-calendar-grid")

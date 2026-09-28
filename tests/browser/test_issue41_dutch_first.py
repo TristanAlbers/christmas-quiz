@@ -119,7 +119,7 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                     admin_lang = await admin.locator("html").get_attribute("lang")
                     self.assertEqual(admin_lang, "nl")
                     admin_text = await admin.locator("body").inner_text()
-                    self.assertIn("Huidige spelstatus", admin_text)
+                    self.assertIn("huidige spelstatus", admin_text.lower())
                     self.assertIn("Adventquiz", admin_text)
                     self.assertIn("Bediening Team A", admin_text)
                     self.assertNotIn("ADVENT_QUIZ", admin_text)

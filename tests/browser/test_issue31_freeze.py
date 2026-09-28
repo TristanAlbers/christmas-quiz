@@ -17,17 +17,19 @@ class Issue31FreezeBrowserTests(Issue31BrowserCase):
                 try:
                     await a.emulate_media(reduced_motion="reduce")
                     await b.emulate_media(reduced_motion="reduce")
-                    await a.get_by_role("button", name="Shop Power-ups").click()
-                    await a.get_by_role("button", name="Freeze opponent (3)").click()
+                    await a.get_by_role("button", name="Winkel").click()
+                    await a.get_by_role(
+                        "button", name="Andere team bevriezen (3)"
+                    ).click()
                     attacker = a.locator(
                         "#gameplay-event.gameplay-event--attacker"
                     )
                     victim = b.locator("#gameplay-event.gameplay-event--victim")
                     await attacker.wait_for(state="visible", timeout=5000)
                     await victim.wait_for(state="visible", timeout=5000)
-                    self.assertIn("direct hit!", (await attacker.inner_text()).lower())
+                    self.assertIn("voltreffer!", (await attacker.inner_text()).lower())
                     self.assertIn(
-                        "you have been frozen!", (await victim.inner_text()).lower()
+                        "jullie zijn bevroren!", (await victim.inner_text()).lower()
                     )
                     attacker_stage = attacker.locator(
                         ".gameplay-event__stage--attack"
@@ -75,7 +77,7 @@ class Issue31FreezeBrowserTests(Issue31BrowserCase):
                     playwright, self.a_cookie
                 )
                 try:
-                    await page.get_by_role("button", name="Shop Power-ups").click()
+                    await page.get_by_role("button", name="Winkel").click()
                     shop = page.locator("#team-shop-dialog")
                     await asyncio.to_thread(
                         admin_freeze,
@@ -83,7 +85,7 @@ class Issue31FreezeBrowserTests(Issue31BrowserCase):
                         AdminTeam(str(uuid4()), self.run_id, "b"),
                     )
                     unavailable = page.get_by_role(
-                        "button", name="Freeze unavailable"
+                        "button", name="Freeze niet beschikbaar"
                     )
                     await unavailable.wait_for(timeout=5000)
                     self.assertTrue(await shop.evaluate("el => el.open"))
@@ -94,7 +96,7 @@ class Issue31FreezeBrowserTests(Issue31BrowserCase):
                         AdminTeam(str(uuid4()), self.run_id, "b"),
                     )
                     await page.get_by_role(
-                        "button", name="Freeze opponent (3)"
+                        "button", name="Andere team bevriezen (3)"
                     ).wait_for(timeout=5000)
                     self.assertTrue(await shop.evaluate("el => el.open"))
                 finally:
