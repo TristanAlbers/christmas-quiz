@@ -142,12 +142,12 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                                     height: window.innerHeight,
                                 },
                                 surface: rect('.freeze-surface'),
-                                panel: rect('.state-panel-freeze'),
+                                lock: rect('#game-status'),
                                 message: rect('.freeze-message'),
                             };
                         }"""
                     )
-                    for layer in ("surface", "panel"):
+                    for layer in ("surface", "lock"):
                         self.assertAlmostEqual(
                             geometry[layer]["left"], 0, delta=1
                         )
@@ -179,8 +179,8 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     await page.evaluate(
                         "() => { document.documentElement.style.fontSize = '32px'; }"
                     )
-                    freeze_panel = page.locator(".state-panel-freeze")
-                    overflow = await freeze_panel.evaluate(
+                    freeze_lock = page.locator("#game-status")
+                    overflow = await freeze_lock.evaluate(
                         """element => ({
                             clientHeight: element.clientHeight,
                             scrollHeight: element.scrollHeight,
@@ -191,8 +191,8 @@ class PhaseThreeBrowserTests(LiveServerTestCase):
                     )
                     await page.locator(".freeze-message").hover()
                     await page.mouse.wheel(0, 1000)
-                    await page.wait_for_timeout(100)
-                    scroll_top = await freeze_panel.evaluate(
+                    await page.wait_for_timeout(1100)
+                    scroll_top = await freeze_lock.evaluate(
                         "element => element.scrollTop"
                     )
                     self.assertGreater(scroll_top, 0)
