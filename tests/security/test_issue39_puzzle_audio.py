@@ -177,7 +177,10 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         current = get_team_state(self.a_actor, now=NOW)
         wrong_run = replace(current, run_id=str(uuid4()))
 
-        with patch("quiz.application.get_team_state", return_value=wrong_run) as reselect:
+        with patch(
+            "quiz.application.get_team_state",
+            return_value=wrong_run,
+        ) as reselect:
             result = submit_answer(
                 self.a_actor,
                 SubmitAnswer(str(uuid4()), self.run_id, "a-1", "red"),

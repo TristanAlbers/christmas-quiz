@@ -17,13 +17,13 @@ from .contracts import (
 )
 from .models import Run, TeamRun
 from .persistence import read_snapshot
+from .phase6_application import _projection as _phase6_projection
 from .phase6_application import (  # noqa: F401
     get_admin_state,
     get_team_state,
     initiate_challenge,
     submit_challenge_answer,
 )
-from .phase6_application import _projection as _phase6_projection
 from .phase6_application import get_public_state as _phase6_get_public_state
 
 
