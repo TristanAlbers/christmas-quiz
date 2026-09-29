@@ -19,6 +19,7 @@ from quiz import phase6_application
 from quiz.application import (
     force_complete_current,
     get_team_state,
+    reset_game,
     start_game,
     submit_answer,
     submit_music_answer,
@@ -27,6 +28,7 @@ from quiz.contracts import (
     Actor,
     AdminPuzzle,
     PuzzleMediaProjection,
+    RunCommand,
     StartGame,
     SubmitAnswer,
     SubmitMusicAnswer,
@@ -190,6 +192,35 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         reselect.assert_not_called()
         self.assertEqual(result.state.run_id, self.run_id)
         self.assertEqual(result.state.current_number, 2)
+
+    def test_archived_answer_retry_restores_typed_next_puzzle_media(self):
+        command = SubmitAnswer(str(uuid4()), self.run_id, "a-1", "red")
+        first = submit_answer(
+            self.a_actor,
+            command,
+            now=NOW + timedelta(seconds=1),
+        )
+        self.assertEqual(first.outcome, "completed")
+        self.assertEqual(first.state.current_number, 2)
+        self.assertEqual([item.type for item in first.state.question.media], ["audio"])
+
+        reset_game(
+            self.admin_actor,
+            RunCommand(str(uuid4()), self.run_id),
+            now=NOW + timedelta(seconds=2),
+        )
+        self.assertFalse(Run.objects.get(pk=self.run_id).active)
+
+        retry = submit_answer(
+            self.a_actor,
+            command,
+            now=NOW + timedelta(seconds=3),
+        )
+        self.assertEqual(retry.outcome, "completed")
+        self.assertEqual(retry.state.run_id, self.run_id)
+        self.assertEqual(retry.state.current_number, 2)
+        self.assertEqual([item.type for item in retry.state.question.media], ["audio"])
+        self.assertIn("a/future.mp3", retry.state.question.media[0].url)
 
     def test_receipt_restore_rehydrates_typed_media_objects(self):
         state = get_team_state(self.a_actor, now=NOW)
