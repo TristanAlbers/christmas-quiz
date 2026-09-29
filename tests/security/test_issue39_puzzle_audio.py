@@ -2,6 +2,7 @@
 
 import json
 import shutil
+from dataclasses import asdict, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -13,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from quiz import _application_core as core
 from quiz import phase6_application
 from quiz.application import (
     force_complete_current,
@@ -24,11 +26,12 @@ from quiz.application import (
 from quiz.contracts import (
     Actor,
     AdminPuzzle,
+    PuzzleMediaProjection,
     StartGame,
     SubmitAnswer,
     SubmitMusicAnswer,
 )
-from quiz.models import AccountRole
+from quiz.models import AccountRole, Run
 
 NOW = datetime(2026, 12, 24, 18, 0, tzinfo=timezone.utc)
 
@@ -170,6 +173,32 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         self.assertEqual(state.question.media[1].type, "audio")
         self.assertEqual(load_snapshot.call_count, 1)
 
+    def test_answer_enrichment_does_not_reselect_a_different_active_run(self):
+        current = get_team_state(self.a_actor, now=NOW)
+        wrong_run = replace(current, run_id=str(uuid4()))
+
+        with patch("quiz.application.get_team_state", return_value=wrong_run) as reselect:
+            result = submit_answer(
+                self.a_actor,
+                SubmitAnswer(str(uuid4()), self.run_id, "a-1", "red"),
+                now=NOW + timedelta(seconds=1),
+            )
+
+        reselect.assert_not_called()
+        self.assertEqual(result.state.run_id, self.run_id)
+        self.assertEqual(result.state.current_number, 2)
+
+    def test_receipt_restore_rehydrates_typed_media_objects(self):
+        state = get_team_state(self.a_actor, now=NOW)
+        serialized = asdict(state)
+
+        restored = core._restore_team_projection(serialized)
+
+        self.assertIsInstance(restored.question.media, tuple)
+        self.assertEqual(len(restored.question.media), 2)
+        self.assertIsInstance(restored.question.media[0], PuzzleMediaProjection)
+        self.assertEqual(restored.question.media[1].type, "audio")
+
     def test_final_music_answer_retry_keeps_typed_advent_media(self):
         trigger_time = NOW + timedelta(seconds=5)
         for number in range(1, 14):
@@ -201,9 +230,8 @@ class TypedPuzzleAudioIsolationTests(TestCase):
         final_command = None
         final_time = None
         for number, answer in enumerate(answers, 1):
-            request_id = str(uuid4())
             command = SubmitMusicAnswer(
-                request_id,
+                str(uuid4()),
                 self.run_id,
                 f"music-{number}",
                 answer,
@@ -214,13 +242,24 @@ class TypedPuzzleAudioIsolationTests(TestCase):
                 final_command = command
                 final_time = answer_time
 
+        expired_time = final_time + timedelta(seconds=120)
         retry = submit_music_answer(
             self.a_actor,
             final_command,
-            now=final_time + timedelta(seconds=120),
+            now=expired_time,
         )
         self.assertEqual(retry.outcome, "won")
         self.assertEqual(retry.state.global_state, "ADVENT_QUIZ")
         self.assertEqual(retry.state.current_number, 14)
         self.assertEqual([item.type for item in retry.state.question.media], ["audio"])
         self.assertIn("a/future.mp3", retry.state.question.media[0].url)
+
+        # Exact receipt retry projects the effective post-Music state without
+        # persisting the timed transition. The media boundary must use that same
+        # effective state or it will advertise an audio URL that always 404s.
+        self.assertEqual(Run.objects.get(pk=self.run_id).global_state, "MUSIC_QUIZ")
+        self.client.force_login(self.team_a)
+        with patch("quiz.web.media_views.server_now", return_value=expired_time):
+            response = self.client.get(retry.state.question.media[0].url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b"".join(response.streaming_content), b"ID3-team-a-future")

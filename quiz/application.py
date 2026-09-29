@@ -23,16 +23,21 @@ from .phase6_application import (  # noqa: F401
     initiate_challenge,
     submit_challenge_answer,
 )
+from .phase6_application import _projection as _phase6_projection
 from .phase6_application import get_public_state as _phase6_get_public_state
 
 
 def _enrich_active_team_state(actor, state, *, now=None):
-    """Refresh presentation metadata only when the receipt's run is still active."""
+    """Refresh presentation metadata for the receipt's exact active run."""
     if state.run_id is None:
         return state
-    if not Run.objects.filter(pk=state.run_id, active=True).exists():
-        return state
-    return get_team_state(actor, now=now)
+    now = _core._server_now(now)
+    with read_snapshot():
+        _core._verify_actor(actor, "team")
+        run = Run.objects.filter(pk=state.run_id, active=True).first()
+        if run is None:
+            return state
+        return _phase6_projection(run, actor.team_id, now)
 
 
 def submit_answer(actor, command, *, now=None):
