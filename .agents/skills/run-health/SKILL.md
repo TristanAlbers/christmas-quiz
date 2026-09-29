@@ -11,6 +11,7 @@ Use this skill alongside the task-specific workflow. It does not replace `work-g
 - Do not invent artificial work merely to produce progress updates.
 - Do not loop indefinitely on an unchanged failure, pending review, unavailable environment, or repeated tool error.
 - Durable repository state is preferred over invisible conversational state.
+- CI failures and review findings are actionable evidence, not automatic reasons to hand control back to the user.
 
 ## 1. Establish a bounded run
 
@@ -56,19 +57,43 @@ Treat the run as unhealthy when one or more occurs:
 
 When detected, stop the loop and choose one of: narrow the reproduction, route to `investigate-ci-failure`, switch execution environment via `execution-router`, hand off to the owning specialist, or report the blocker.
 
-## 5. Waiting and external state
+A failing CI run is not an unhealthy loop by itself. New failure evidence should normally be diagnosed, repaired, pushed, and validated again without asking the user to approve each iteration.
 
-Do not spin waiting for GitHub CI, Codex review, or another external event. Check when useful; if the current environment cannot receive an asynchronous event automatically, leave a durable PR/SHA/status handoff and stop rather than polling indefinitely.
+## 5. CI and review gates
 
-A later run should re-fetch current external state before continuing.
+Use GitHub Actions as an autonomous feedback loop while implementation is still active:
+- keep the PR draft during implementation and CI repair;
+- when CI fails, apply `investigate-ci-failure`, make the smallest root-cause repair, push, and let CI run again;
+- do not stop merely because another CI iteration is required;
+- treat CI as green only when the required checks for the exact current PR head SHA have passed.
 
-## 6. Scope creep rule
+Before spending review capacity, re-check current `main`, mergeability, and material overlap. If the branch must be refreshed or repaired, do that first and restore exact-head green CI.
+
+Once implementation is complete and exact-head CI is green:
+1. mark the PR ready for review so the configured Codex review is triggered;
+2. verify that the review was successfully triggered or queued;
+3. record the exact reviewed head SHA;
+4. STOP the current run instead of waiting or polling for the review result.
+
+After actionable review feedback is available in a later run:
+- return the PR to draft before code changes;
+- address the findings and repeat the autonomous CI repair loop to exact-head green;
+- deliver the PR for re-review and STOP again after confirming the review trigger;
+- for a second/subsequent Codex review, prefer an explicit instruction to review only the changes since the last reviewed SHA and verify the prior findings, but do not claim this is a guaranteed delta-only review mode.
+
+## 6. Waiting and external state
+
+Do not spin indefinitely waiting for GitHub CI, Codex review, or another external event. During an active implementation/CI repair loop, continue while new actionable evidence arrives and the run remains healthy.
+
+The intentional clean stop is the review boundary above: exact-head CI green, current-main/mergeability rechecked, review triggered/queued, and exact reviewed SHA recorded. A later run should re-fetch current external state before continuing.
+
+## 7. Scope creep rule
 
 A run may repair directly related defects exposed by its focused validation. It should not absorb unrelated cleanup, refactors, or adjacent feature requests.
 
 If a new issue is independently shippable, record/decompose it and keep the current packet bounded.
 
-## 7. Completion/handoff
+## 8. Completion/handoff
 
 End with enough durable context to resume safely:
 - objective completed or concrete blocker;
@@ -77,5 +102,7 @@ End with enough durable context to resume safely:
 - focused validation and CI/review state;
 - unresolved actionable findings;
 - next owner/action if work remains.
+
+For the intentional review gate, explicitly report that exact-head CI is green, which SHA was delivered for review, and that the review trigger/queue was observed.
 
 A run that cannot finish but leaves this state is healthier than a long invisible run that continues retrying without new evidence.
