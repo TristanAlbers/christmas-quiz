@@ -4,10 +4,12 @@ from django.http import FileResponse, Http404
 from django.utils.timezone import now as server_now
 from django.views.decorators.cache import never_cache
 
+from quiz import _application_core as core
 from quiz.auth import actor_for_user
 from quiz.configuration import (
     InvalidPackage,
     load_snapshot,
+    puzzle_media_paths,
     snapshot_challenge_media_path,
     snapshot_media_path,
 )
@@ -29,13 +31,16 @@ def private_media(request, run_id, team_id, asset_path):
         raise Http404
     with read_snapshot():
         try:
-            run = Run.objects.get(pk=run_id, active=True, global_state="ADVENT_QUIZ")
-            team = TeamRun.objects.get(run=run, team_id=actor.team_id)
-            gameplay_ms = effective_gameplay_ms(
-                run.gameplay_elapsed_ms,
-                run.advent_clock_anchor,
+            run = Run.objects.get(pk=run_id, active=True)
+            config = load_snapshot(run)
+            global_state, gameplay_ms, _, _ = core._effective_run_state(
+                run,
+                config,
                 server_now(),
             )
+            if global_state != "ADVENT_QUIZ":
+                raise Http404
+            team = TeamRun.objects.get(run=run, team_id=actor.team_id)
             effective_team = reconcile_freeze(
                 team.activity_state,
                 team.freeze_started_gameplay_ms,
@@ -43,9 +48,8 @@ def private_media(request, run_id, team_id, asset_path):
             )
             if effective_team.activity_state != "PUZZLE":
                 raise Http404
-            config = load_snapshot(run)
             puzzle = config["teams"][actor.team_id]["puzzles"][team.current_number - 1]
-            if asset_path not in puzzle["media"]:
+            if asset_path not in puzzle_media_paths(puzzle):
                 raise Http404
             path = snapshot_media_path(run, actor.team_id, asset_path)
             if path is None:

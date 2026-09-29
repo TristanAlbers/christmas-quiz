@@ -75,6 +75,13 @@ class SubmitChallengeAnswer:
 
 
 @dataclass(frozen=True)
+class PuzzleMediaProjection:
+    type: Literal["image", "audio"]
+    url: str
+    alt: str | None = None
+
+
+@dataclass(frozen=True)
 class QuestionProjection:
     id: str
     number: int
@@ -83,6 +90,24 @@ class QuestionProjection:
     media_urls: tuple[str, ...] = ()
     hint: str | None = None
     hint_available: bool = False
+    media: tuple[PuzzleMediaProjection, ...] = ()
+
+    def __post_init__(self):
+        """Restore immutable typed media after dataclass/JSON receipt round-trips."""
+        if isinstance(self.media, tuple) and all(
+            isinstance(item, PuzzleMediaProjection) for item in self.media
+        ):
+            return
+        object.__setattr__(
+            self,
+            "media",
+            tuple(
+                item
+                if isinstance(item, PuzzleMediaProjection)
+                else PuzzleMediaProjection(**item)
+                for item in self.media
+            ),
+        )
 
 
 @dataclass(frozen=True)

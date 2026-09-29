@@ -6,11 +6,13 @@ from django.db import OperationalError
 from django.urls import reverse
 
 from quiz import _application_core as core
+from quiz.configuration import puzzle_media_descriptor
 from quiz.contracts import (
     AdminChallengeProjection,
     ChallengeAnswerResult,
     ChallengeQuestionProjection,
     PublicChallengeProjection,
+    PuzzleMediaProjection,
     RunCommand,
     SubmitChallengeAnswer,
     TeamChallengeProjection,
@@ -20,19 +22,53 @@ from quiz.models import Challenge, ChallengeAttempt, CommandReceipt, Run, TeamRu
 from quiz.persistence import immediate_transaction, is_busy_error, read_snapshot
 
 
-# The legacy core predates the amended two-puzzle Phase-6 contract and reads a
-# `challenge_puzzle` key only while constructing its temporary base projection.
-# Keep that implementation unchanged and supply a runtime-only alias; persisted
-# schema-v6 snapshots contain only the authoritative `challenge_puzzles` map.
+# The legacy core predates the amended two-puzzle Phase-6 contract and typed
+# normal-puzzle media. Keep it unchanged by supplying a runtime-only compatible
+# view of the immutable snapshot. The persisted snapshot retains the authoritative
+# typed media objects and `challenge_puzzles` map.
 _CORE_LOAD_SNAPSHOT = core.load_snapshot
+_AUTHORITATIVE_CONFIG_ATTR = "_phase6_authoritative_snapshot_config"
 
 
 def _load_snapshot_compatible(run_or_path):
     config = _CORE_LOAD_SNAPSHOT(run_or_path)
-    if config.get("schema_version") == 6 and "challenge_puzzle" not in config:
-        config = dict(config)
-        config["challenge_puzzle"] = config["challenge_puzzles"]["a"]
-    return config
+    if hasattr(run_or_path, "snapshot_path"):
+        setattr(run_or_path, _AUTHORITATIVE_CONFIG_ATTR, config)
+    teams = config.get("teams")
+    typed_media = bool(
+        isinstance(teams, dict)
+        and any(
+            isinstance(item, dict)
+            for team in teams.values()
+            for puzzle in team.get("puzzles", ())
+            for item in puzzle.get("media", ())
+        )
+    )
+    needs_challenge_alias = (
+        config.get("schema_version") == 6 and "challenge_puzzle" not in config
+    )
+    if not typed_media and not needs_challenge_alias:
+        return config
+
+    compatible = dict(config)
+    if typed_media:
+        compatible_teams = {}
+        for team_id, team in config["teams"].items():
+            compatible_team = dict(team)
+            compatible_puzzles = []
+            for puzzle in team["puzzles"]:
+                compatible_puzzle = dict(puzzle)
+                compatible_puzzle["media"] = [
+                    puzzle_media_descriptor(item)["path"]
+                    for item in puzzle["media"]
+                ]
+                compatible_puzzles.append(compatible_puzzle)
+            compatible_team["puzzles"] = compatible_puzzles
+            compatible_teams[team_id] = compatible_team
+        compatible["teams"] = compatible_teams
+    if needs_challenge_alias:
+        compatible["challenge_puzzle"] = config["challenge_puzzles"]["a"]
+    return compatible
 
 
 core.load_snapshot = _load_snapshot_compatible
@@ -139,18 +175,55 @@ def _public_challenge_projection(run, config, gameplay_ms):
     )
 
 
+def _normal_question_projection(run, config, team_id, question):
+    if question is None:
+        return None
+    try:
+        item = config["teams"][team_id]["puzzles"][question.number - 1]
+    except (KeyError, IndexError, TypeError):
+        return question
+    media = tuple(
+        PuzzleMediaProjection(
+            type=descriptor["type"],
+            url=reverse(
+                "private_media",
+                kwargs={
+                    "run_id": run.id,
+                    "team_id": team_id,
+                    "asset_path": descriptor["path"],
+                },
+            ),
+            alt=descriptor["alt"],
+        )
+        for descriptor in (puzzle_media_descriptor(value) for value in item["media"])
+    )
+    return replace(
+        question,
+        media_urls=tuple(entry.url for entry in media),
+        media=media,
+    )
+
+
 def _projection(run, team_id, now):
     base = core._projection(run, team_id, now)
     if run is None:
         return base
-    config = _load_snapshot_compatible(run)
-    if config.get("schema_version") != 6:
+    authoritative_config = getattr(run, _AUTHORITATIVE_CONFIG_ATTR, None)
+    if authoritative_config is None:
+        authoritative_config = _CORE_LOAD_SNAPSHOT(run)
+    base = replace(
+        base,
+        question=_normal_question_projection(
+            run, authoritative_config, team_id, base.question
+        ),
+    )
+    if authoritative_config.get("schema_version") != 6:
         return base
     return replace(
         base,
         challenge_cost=0,
         challenge=_team_challenge_projection(
-            run, config, team_id, base.gameplay_elapsed_ms
+            run, authoritative_config, team_id, base.gameplay_elapsed_ms
         ),
     )
 

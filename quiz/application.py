@@ -9,8 +9,13 @@ flows. Existing `quiz.application` imports remain the supported API.
 from dataclasses import replace
 
 from . import _application_core as _core
+from . import phase6_application as _phase6
 from ._application_core import *  # noqa: F403
-from .contracts import PublicAdventTeamProgressProjection
+from .contracts import (
+    AnswerResult,
+    MusicAnswerResult,
+    PublicAdventTeamProgressProjection,
+)
 from .models import Run, TeamRun
 from .persistence import read_snapshot
 from .phase6_application import (  # noqa: F401
@@ -20,6 +25,52 @@ from .phase6_application import (  # noqa: F401
     submit_challenge_answer,
 )
 from .phase6_application import get_public_state as _phase6_get_public_state
+
+
+def _enrich_active_team_state(actor, state, *, now=None):
+    """Restore typed presentation metadata for the receipt's exact run."""
+    if state.run_id is None:
+        return state
+    now = _core._server_now(now)
+    with read_snapshot():
+        _core._verify_actor(actor, "team")
+        run = Run.objects.filter(pk=state.run_id).first()
+        if run is None:
+            return state
+        if run.active:
+            return _phase6._projection(run, actor.team_id, now)
+
+        # An archived idempotency receipt must preserve its recorded state instead
+        # of re-projecting mutable run rows after Reset. Rehydrate only the typed
+        # media metadata for the already-recorded question from the pinned package.
+        config = _phase6._CORE_LOAD_SNAPSHOT(run)
+        return replace(
+            state,
+            question=_phase6._normal_question_projection(
+                run,
+                config,
+                actor.team_id,
+                state.question,
+            ),
+        )
+
+
+def submit_answer(actor, command, *, now=None):
+    """Preserve the core answer transaction and enrich active team presentation."""
+    result = _core.submit_answer(actor, command, now=now)
+    return AnswerResult(
+        result.outcome,
+        _enrich_active_team_state(actor, result.state, now=now),
+    )
+
+
+def submit_music_answer(actor, command, *, now=None):
+    """Keep Music idempotency intact while enriching a returned Advent puzzle."""
+    result = _core.submit_music_answer(actor, command, now=now)
+    return MusicAnswerResult(
+        result.outcome,
+        _enrich_active_team_state(actor, result.state, now=now),
+    )
 
 
 def get_public_state(*, now=None):

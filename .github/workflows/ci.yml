@@ -81,6 +81,7 @@ jobs:
             tests: >-
               tests.browser.test_live_sync
               tests.browser.test_issue18_incorrect_answer_feedback
+              tests.browser.test_issue39_puzzle_audio
               tests.browser.test_issue41_dutch_first
               tests.browser.test_issue42_team_ui
               tests.browser.test_issue42_review_regressions
