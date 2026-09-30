@@ -74,6 +74,17 @@ The merge steward owns dependency ordering, overlap/conflict triage, latest-main
 
 Landing is sequential: after every merge, refresh `main` and reassess remaining PRs rather than assuming checks against the previous base are still sufficient. Merge only when the user explicitly authorized landing/merging.
 
+## Reusable diagnostic and execution skills
+
+Use repository skills automatically when the request matches their workflow; the user does not need to name the skill explicitly.
+
+- `.agents/skills/investigate-ci-failure/SKILL.md` — use when asked why CI, a workflow, a PR check, or a post-merge run is failing. Diagnose and classify before editing; if the user asked only for investigation, stop before implementation.
+- `.agents/skills/work-polling-ui/SKILL.md` — use for HTMX/polling-sensitive UI work involving stable controls, focus/pointer behavior, transient-effect replay, persistent overlays/media, or DOM identity.
+- `.agents/skills/execution-router/SKILL.md` — use when deciding whether work should be handled through GitHub/web-chat orchestration, local Codex, or Codex Cloud, especially when the user asks for prompts or an implementation route.
+- `.agents/skills/run-health/SKILL.md` — use as a supporting skill for substantial autonomous work that risks becoming long, opaque, repetitive, or stuck. Keep work bounded, persist coherent progress, report evidence-based checkpoints, and stop unhealthy retry loops.
+
+Skills coordinate procedure; they do not override product specifications, hard invariants, specialist ownership, or the task-specific issue/staged/landing workflow.
+
 ## Context and contract discipline
 
 Start from the current phase/stage or issue slice, its contract/handoff, owned files, and only the authority needed for the assignment. Do not make every specialist reread all specifications, historical contracts, or unrelated code.
@@ -107,7 +118,7 @@ For feature/issue implementation, open the PR as a **draft** while changes are s
 Keep instructions progressively disclosed:
 - global rules/invariants/workflow boundaries belong here;
 - role-specific rules belong in `.codex/agents/*.toml`;
-- reusable issue/PR orchestration belongs in `.agents/skills/*`;
+- reusable orchestration, diagnostics, execution routing, and run-health procedures belong in `.agents/skills/*`;
 - phase-specific work belongs in `implementation_plan.md`;
 - product behavior belongs in the authoritative specifications/contracts.
 
