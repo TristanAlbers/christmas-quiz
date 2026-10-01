@@ -74,6 +74,8 @@ The merge steward owns dependency ordering, overlap/conflict triage, latest-main
 
 Landing is sequential: after every merge, refresh `main` and reassess remaining PRs rather than assuming checks against the previous base are still sufficient. Merge only when the user explicitly authorized landing/merging.
 
+Safe landing also requires a current `.agents/skills/ponytail-review/SKILL.md` `PONYTAIL PASS` covering the exact PR head SHA being merged. Missing or stale evidence is not a waiver: `land-prs` must run the review before merge. A `PONYTAIL CHANGES` result blocks landing until the findings are resolved or demonstrated, from repository authority and protected guarantees, not to be valid simplifications.
+
 ## Reusable diagnostic and execution skills
 
 Use repository skills automatically when the request matches their workflow; the user does not need to name the skill explicitly.
@@ -82,6 +84,8 @@ Use repository skills automatically when the request matches their workflow; the
 - `.agents/skills/work-polling-ui/SKILL.md` — use for HTMX/polling-sensitive UI work involving stable controls, focus/pointer behavior, transient-effect replay, persistent overlays/media, or DOM identity.
 - `.agents/skills/execution-router/SKILL.md` — use when deciding whether work should be handled through GitHub/web-chat orchestration, local Codex, or Codex Cloud, especially when the user asks for prompts or an implementation route.
 - `.agents/skills/run-health/SKILL.md` — use as a supporting skill for substantial autonomous work that risks becoming long, opaque, repetitive, or stuck. Keep work bounded, persist coherent progress, report evidence-based checkpoints, and stop unhealthy retry loops.
+- `.agents/skills/ponytail-review/SKILL.md` — mandatory read-only complexity review for implementation PRs before they are marked ready for Codex review and again after any later code-changing review fix. It protects invariants/tests/security/recovery/polling/compatibility while looking for unnecessary changed-scope complexity.
+- `.agents/skills/ponytail-audit/SKILL.md` — optional read-only whole-repository complexity audit for explicit maintenance/debt investigations. Convert accepted findings into small normal cleanup packets; do not batch an audit into a mega-refactor.
 
 Skills coordinate procedure; they do not override product specifications, hard invariants, specialist ownership, or the task-specific issue/staged/landing workflow.
 
@@ -101,6 +105,8 @@ During a stage or bounded issue packet:
 
 Do not repeatedly rerun an unchanged full suite for reassurance. CI owns the complete suite. For polling-sensitive controls, prefer stable-node/focus/caret and real pointer/touch interaction checks where practical.
 
+After implementation and focused validation are complete, but before an implementation PR is marked ready for Codex review, run `ponytail-review` against the complete branch diff. Apply only simplifications that preserve repository authority and protected guarantees, rerun focused validation after changes, and rerun the review until the current head receives `PONYTAIL PASS`. Record that pass with the exact reviewed head SHA in the PR description or another durable PR note.
+
 ## Progress and handoff
 
 For substantial work, report concise checkpoints: initial route/scope, implementation start, meaningful finding/blocker, before validation, and final handoff. Do not leave the user with only a long `Thinking` state or expose private chain-of-thought.
@@ -111,14 +117,16 @@ A handoff reports changed files, decisions/assumptions, focused validation, unre
 
 Use a short-lived branch from current `main` for non-trivial work. Preserve unrelated changes. Do not implement on `main`, merge, enable auto-merge, alter branch protection, or delete branches unless the user asks. The primary thread owns branch/commit/push/PR lifecycle.
 
-For feature/issue implementation, open the PR as a **draft** while changes are still being made. GitHub Actions must run for draft PR creation and subsequent pushes, and CI is the implementation gate before review. Mark the PR ready for review only after required CI is green. If review findings require code changes, return the PR to draft before pushing those fixes, re-establish green CI, and then mark it ready again. This keeps Codex review from being triggered repeatedly on known-incomplete work.
+For feature/issue implementation, open the PR as a **draft** while changes are still being made. GitHub Actions must run for draft PR creation and subsequent pushes. Keep the PR draft until implementation is complete, focused validation is green, the current head has a recorded `PONYTAIL PASS`, and required CI is green. Only then mark it ready so Codex/review automation sees a completed, complexity-reviewed implementation.
+
+If Codex/review findings require repository changes, return the PR to draft before pushing those fixes. Re-run applicable focused validation, rerun `ponytail-review` because the head SHA changed, update the recorded reviewed SHA, re-establish green CI, and only then mark the PR ready again. A Ponytail pass for an older head never authorizes a later head.
 
 ## Maintenance rule
 
 Keep instructions progressively disclosed:
 - global rules/invariants/workflow boundaries belong here;
 - role-specific rules belong in `.codex/agents/*.toml`;
-- reusable orchestration, diagnostics, execution routing, and run-health procedures belong in `.agents/skills/*`;
+- reusable orchestration, diagnostics, execution routing, run-health, complexity review, and audit procedures belong in `.agents/skills/*`;
 - phase-specific work belongs in `implementation_plan.md`;
 - product behavior belongs in the authoritative specifications/contracts.
 
