@@ -68,13 +68,13 @@ Do not route every issue through `architect`, `persistence_security`, or `test_i
 3. Give each specialist only its bounded packet, relevant contract/authority, owned files, and the previous handoff needed for the next step.
 4. Specialists STOP after their packet. The primary thread decides the next route.
 5. Prefer the smallest correct patch. Do not perform opportunistic refactors.
-6. Once the branch has a meaningful initial commit, open its PR as a **draft**. Keep it draft throughout implementation and CI repair so review automation does not inspect known-incomplete work.
+6. Once the branch has a meaningful initial commit, open its PR as a **draft**. Keep it draft throughout implementation, CI repair, and the pre-review Ponytail gate so review automation does not inspect known-incomplete work.
 
-## 5. Validation
+## 5. Validation and complexity gate
 
 During implementation, run focused tests/checks for changed behavior and nearby invariants according to `AGENTS.md` and the owning agent configuration. Do not repeatedly run the unchanged full suite for reassurance; GitHub Actions owns the complete deterministic gate.
 
-GitHub Actions must run on draft PR creation and on every push (`pull_request` `opened`/`synchronize` behavior). Use draft-PR CI as the gate for implementation work. Do not mark the PR ready for review while required CI is failing or pending.
+GitHub Actions must run on draft PR creation and on every push (`pull_request` `opened`/`synchronize` behavior). Use draft-PR CI as the implementation gate. Do not mark the PR ready for review while required CI is failing or pending.
 
 Use `test_invariants` when independent review materially improves confidence, especially for:
 - game-rule interactions;
@@ -84,6 +84,15 @@ Use `test_invariants` when independent review materially improves confidence, es
 - behavior spanning two implementation owners.
 
 A tiny documentation/style-only change does not need an artificial invariant-review stage.
+
+When the intended implementation and its focused validation are complete, run `.agents/skills/ponytail-review/SKILL.md` against the **complete PR diff** while the PR remains draft. This is mandatory for implementation PRs before Codex review.
+
+- `PONYTAIL PASS`: record the exact reviewed head SHA in the PR description or another durable PR note.
+- `PONYTAIL CHANGES`: keep the PR draft. Route non-trivial findings to the specialist that owns the affected behavior, apply only simplifications that preserve repository authority/protected guarantees, rerun applicable focused validation, and rerun Ponytail review on the new head.
+- If a simplification touches an invariant-sensitive area that previously required `test_invariants`, rerun that verification as well.
+- Any new commit invalidates the prior Ponytail checkpoint. The current head must have its own `PONYTAIL PASS`.
+
+Only after the current head has both a recorded `PONYTAIL PASS` and green required CI may the PR be marked ready for Codex/review automation.
 
 ## 6. Pull request endpoint
 
@@ -95,13 +104,15 @@ The PR should:
 - record the specialist route used;
 - describe behavior changed and important guarantees preserved;
 - list focused validation and current CI status/evidence;
+- include a Ponytail review checkpoint for the exact head SHA (`PONYTAIL PASS @ <sha>`) before the PR becomes ready for review;
 - note deferred child/follow-up work without pretending it was completed.
 
 Lifecycle:
 1. Open the implementation PR as a draft.
 2. Push implementation/fix commits while it remains draft and use GitHub Actions as the gate.
-3. When required CI is green, mark the PR ready for review so Codex/review automation can run against a completed implementation.
-4. If review findings require code changes, convert the PR back to draft before pushing those fixes. Re-run CI to green, then mark ready again for re-review.
-5. Finish only when CI is green and there are no unresolved actionable review findings.
+3. Finish the intended implementation and focused/invariant validation, then run `ponytail-review` on the complete diff while still draft. Resolve valid findings and repeat until the exact current head receives `PONYTAIL PASS`.
+4. Ensure required CI for that same head is green, update the durable Ponytail checkpoint, then mark the PR ready for review so Codex/review automation runs against a completed, complexity-reviewed implementation.
+5. If review findings require repository changes, convert the PR back to draft before pushing those fixes. Re-run applicable validation, rerun `ponytail-review` for the new head, update the reviewed SHA, and re-establish green CI before marking ready again.
+6. Finish only when CI is green, the current head has `PONYTAIL PASS`, and there are no unresolved actionable review findings.
 
-Do not merge automatically. Landing multiple PRs belongs to the `land-prs` skill / `merge_steward` workflow.
+Do not merge automatically. Landing multiple PRs belongs to the `land-prs` skill / `merge_steward` workflow, which independently verifies the Ponytail checkpoint before merge.
