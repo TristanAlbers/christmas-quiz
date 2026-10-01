@@ -85,14 +85,14 @@ Use `test_invariants` when independent review materially improves confidence, es
 
 A tiny documentation/style-only change does not need an artificial invariant-review stage.
 
-When the intended implementation and its focused validation are complete, run `.agents/skills/ponytail-review/SKILL.md` against the **complete PR diff** while the PR remains draft. This is mandatory for implementation PRs before Codex review.
+When the intended implementation and its focused validation are complete, run `.agents/skills/ponytail-review/SKILL.md` against the **complete PR diff and current base** while the PR remains draft. This is mandatory for implementation PRs before Codex review.
 
-- `PONYTAIL PASS`: record the exact reviewed head SHA in the PR description or another durable PR note.
-- `PONYTAIL CHANGES`: keep the PR draft. Route non-trivial findings to the specialist that owns the affected behavior, apply only simplifications that preserve repository authority/protected guarantees, rerun applicable focused validation, and rerun Ponytail review on the new head.
+- `PONYTAIL PASS`: record the exact reviewed base/head SHA pair in the PR description or another durable PR note as `PONYTAIL PASS base=<base-sha> head=<head-sha>`.
+- `PONYTAIL CHANGES`: keep the PR draft. Route non-trivial findings to the specialist that owns the affected behavior, apply only simplifications that preserve repository authority/protected guarantees, rerun applicable focused validation, and rerun Ponytail review on the current base/head pair.
 - If a simplification touches an invariant-sensitive area that previously required `test_invariants`, rerun that verification as well.
-- Any new commit invalidates the prior Ponytail checkpoint. The current head must have its own `PONYTAIL PASS`.
+- Any new commit or base advancement invalidates the prior Ponytail checkpoint. The current base/head pair must have its own `PONYTAIL PASS`.
 
-Only after the current head has both a recorded `PONYTAIL PASS` and green required CI may the PR be marked ready for Codex/review automation.
+Only after the current base/head pair has a recorded `PONYTAIL PASS` and green required CI for the current head may the PR be marked ready for Codex/review automation.
 
 ## 6. Pull request endpoint
 
@@ -104,15 +104,16 @@ The PR should:
 - record the specialist route used;
 - describe behavior changed and important guarantees preserved;
 - list focused validation and current CI status/evidence;
-- include a Ponytail review checkpoint for the exact head SHA (`PONYTAIL PASS @ <sha>`) before the PR becomes ready for review;
+- include a Ponytail review checkpoint for the exact base/head pair (`PONYTAIL PASS base=<base-sha> head=<head-sha>`) before the PR becomes ready for review;
 - note deferred child/follow-up work without pretending it was completed.
 
 Lifecycle:
 1. Open the implementation PR as a draft.
 2. Push implementation/fix commits while it remains draft and use GitHub Actions as the gate.
-3. Finish the intended implementation and focused/invariant validation, then run `ponytail-review` on the complete diff while still draft. Resolve valid findings and repeat until the exact current head receives `PONYTAIL PASS`.
+3. Finish the intended implementation and focused/invariant validation, then run `ponytail-review` on the complete diff/current base while still draft. Resolve valid findings and repeat until the exact current base/head pair receives `PONYTAIL PASS`.
 4. Ensure required CI for that same head is green, update the durable Ponytail checkpoint, then mark the PR ready for review so Codex/review automation runs against a completed, complexity-reviewed implementation.
-5. If review findings require repository changes, convert the PR back to draft before pushing those fixes. Re-run applicable validation, rerun `ponytail-review` for the new head, update the reviewed SHA, and re-establish green CI before marking ready again.
-6. Finish only when CI is green, the current head has `PONYTAIL PASS`, and there are no unresolved actionable review findings.
+5. If review findings require repository changes, convert the PR back to draft before pushing those fixes. Re-run applicable validation, rerun `ponytail-review` for the new base/head pair, update the checkpoint, and re-establish green CI before marking ready again.
+6. If `main` advances before review/landing, the old Ponytail checkpoint is stale even if the PR head is unchanged; rerun it against the new base.
+7. Finish only when CI is green, the current base/head pair has `PONYTAIL PASS`, and there are no unresolved actionable review findings.
 
 Do not merge automatically. Landing multiple PRs belongs to the `land-prs` skill / `merge_steward` workflow, which independently verifies the Ponytail checkpoint before merge.
