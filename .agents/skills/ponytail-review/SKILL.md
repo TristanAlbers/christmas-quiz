@@ -68,9 +68,9 @@ End with exactly one gate result:
 - `PONYTAIL PASS` — no actionable changed-scope complexity remains; or
 - `PONYTAIL CHANGES` — one or more actionable findings should be addressed before review/landing.
 
-Also record the exact reviewed head SHA. The checkpoint is valid only for that SHA.
+Record both the exact reviewed base SHA and head SHA. Use a durable checkpoint such as `PONYTAIL PASS base=<base-sha> head=<head-sha>`. The checkpoint is valid only for that exact base/head pair because either side changing can change the effective diff and available reuse opportunities.
 
-If accepted findings cause any repository change, focused validation must be rerun and this review must be rerun against the new head. A new commit invalidates the prior checkpoint even when the change seems small; rerunning a read-only diff review is cheaper and clearer than reasoning about exceptions.
+If accepted findings cause a repository change, focused validation must be rerun and this review must be rerun against the new head. If the PR base advances, rerun this review against that new base even when the head is unchanged. A changed base or head invalidates the prior checkpoint; rerunning a read-only diff review is cheaper and clearer than reasoning about exceptions.
 
 ## Workflow integration
 
@@ -79,13 +79,13 @@ For normal implementation PRs:
 2. run this skill on the complete diff while the PR is still draft;
 3. route non-trivial findings back to the specialist that owns the affected behavior;
 4. apply only changes that preserve documented guarantees;
-5. rerun focused validation and this review if the head changed;
-6. record `PONYTAIL PASS` plus the exact head SHA in the PR description or another durable PR note;
+5. rerun focused validation after implementation changes and rerun this review whenever the base or head changed;
+6. record `PONYTAIL PASS base=<base-sha> head=<head-sha>` in the PR description or another durable PR note;
 7. only then may the PR be marked ready for Codex review.
 
-A later Codex-review fix changes the head, so return the PR to draft, apply the fix, revalidate, rerun this skill, update the reviewed SHA, restore green CI, and only then mark ready again.
+A later Codex-review fix changes the head, so return the PR to draft, apply the fix, revalidate, rerun this skill, update the reviewed base/head pair, restore green CI, and only then mark ready again.
 
-Safe landing must verify a current `PONYTAIL PASS`. If evidence is missing or stale, `land-prs` runs this review before merge. A `PONYTAIL CHANGES` result blocks landing until the findings are resolved or shown, with repository-authority evidence, not to be valid simplifications.
+Safe landing must verify a current `PONYTAIL PASS` for the exact current base/head pair. If evidence is missing or stale, `land-prs` runs this review before merge. A `PONYTAIL CHANGES` result blocks landing until the findings are resolved or shown, with repository-authority evidence, not to be valid simplifications.
 
 ## Boundary
 
