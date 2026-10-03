@@ -222,5 +222,78 @@ class StallDecisionTests(unittest.TestCase):
         self.assertIn("Resume packet", body)
 
 
+class WatchdogTransitionTests(unittest.TestCase):
+    def test_stall_transition_is_one_shot(self):
+        now = datetime.now(UTC)
+        checkpoint_time = now - timedelta(hours=2)
+        evidence_time = now - timedelta(hours=1)
+
+        def timestamp(value):
+            return value.isoformat().replace("+00:00", "Z")
+
+        class FakeClient:
+            repo = "owner/repo"
+
+            def __init__(self):
+                self.comments = [
+                    {
+                        "id": 7,
+                        "body": watchdog.render_marker(marker()),
+                        "updated_at": timestamp(checkpoint_time),
+                    }
+                ]
+                self.posts = []
+                self.patches = []
+
+            def get(self, path):
+                if path.endswith("/pulls?state=open&per_page=100"):
+                    return [{"number": 69, "head": {"sha": HEAD}}]
+                if path.endswith("/issues/69/comments?per_page=100"):
+                    return self.comments
+                if "/actions/runs?" in path:
+                    return {
+                        "workflow_runs": [
+                            {
+                                "name": "CI",
+                                "head_sha": HEAD,
+                                "status": "completed",
+                                "conclusion": "success",
+                                "updated_at": timestamp(evidence_time),
+                                "run_number": 397,
+                                "html_url": "https://example.test/run/397",
+                            }
+                        ]
+                    }
+                raise AssertionError(f"unexpected GET {path}")
+
+            def post(self, path, payload):
+                self.posts.append((path, payload))
+                self.comments.append(
+                    {
+                        "id": 8,
+                        "body": payload["body"],
+                        "updated_at": timestamp(now),
+                    }
+                )
+                return self.comments[-1]
+
+            def patch(self, path, payload):
+                self.patches.append((path, payload))
+                self.comments[0]["body"] = payload["body"]
+                self.comments[0]["updated_at"] = timestamp(now)
+                return self.comments[0]
+
+        client = FakeClient()
+        self.assertEqual(watchdog.run_watchdog(client, 45, False), 1)
+        self.assertEqual(len(client.posts), 1)
+        self.assertEqual(len(client.patches), 1)
+        stalled = watchdog.parse_marker(client.comments[0]["body"])
+        self.assertEqual(stalled["mode"], "stalled")
+
+        self.assertEqual(watchdog.run_watchdog(client, 45, False), 0)
+        self.assertEqual(len(client.posts), 1)
+        self.assertEqual(len(client.patches), 1)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
