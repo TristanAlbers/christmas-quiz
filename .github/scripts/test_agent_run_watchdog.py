@@ -78,9 +78,9 @@ class PaginationTests(unittest.TestCase):
 
         def fake_get(path):
             calls.append(path)
-            if "page=1" in path:
+            if path.endswith("page=1"):
                 return [{"id": number} for number in range(100)]
-            if "page=2" in path:
+            if path.endswith("page=2"):
                 return [{"id": 100}]
             raise AssertionError(f"unexpected GET {path}")
 
