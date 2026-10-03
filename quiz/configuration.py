@@ -9,10 +9,10 @@ import tempfile
 from collections import OrderedDict
 from concurrent.futures import Future
 from dataclasses import dataclass
-from threading import Lock
-from types import MappingProxyType
 from decimal import Decimal, InvalidOperation
 from pathlib import Path, PurePosixPath
+from threading import Lock
+from types import MappingProxyType
 
 from django.conf import settings
 
