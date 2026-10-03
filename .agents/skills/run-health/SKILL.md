@@ -69,14 +69,19 @@ differs from the checkpoint, the watchdog deliberately refuses to infer a stall.
 
 The scheduled `Agent run watchdog` workflow inspects only `active` checkpoints.
 It paginates PR comments/review evidence rather than assuming the newest state is in
-the first API page. It does not flag healthy pending waits. It marks a run stalled
-only when actionable CI/review evidence is newer than the checkpoint and has remained
-unattended beyond the configured threshold.
+the first API page. Review evidence must belong to the exact checkpoint head; review
+activity attached to an older commit does not advance the current wait. It does not
+flag healthy pending waits. It marks a run stalled only when actionable CI/review
+evidence is newer than the checkpoint and has remained unattended beyond the
+configured threshold.
 
 Immediately before emitting a stall record, the watchdog re-fetches the current PR
-head and latest trusted checkpoint. If either changed, newer primary-thread progress
-wins and the stale detection is discarded. The watchdog never overwrites the primary
-checkpoint; it emits one idempotent, separate resume/stall record instead.
+state/head and latest trusted checkpoint. If the PR closed, the head changed, or the
+checkpoint changed, newer repository state wins and the stale detection is discarded.
+The watchdog never overwrites the primary checkpoint; it emits one idempotent,
+separate resume/stall record keyed to that checkpoint version instead. Only records
+authored by `github-actions[bot]` satisfy that idempotency check, so outside commenters
+cannot forge a suppression marker.
 
 The watchdog is detection/recovery context only. It does not merge, edit product
 code, weaken gates, or restart a stopped ChatGPT/web-chat execution. Automatic
