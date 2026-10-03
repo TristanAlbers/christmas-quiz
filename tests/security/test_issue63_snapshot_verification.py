@@ -12,7 +12,6 @@ from django.test import SimpleTestCase, override_settings
 
 from quiz import configuration
 from quiz.configuration import (
-    InvalidPackage,
     load_snapshot,
     snapshot_media_path,
     stage_snapshot,
