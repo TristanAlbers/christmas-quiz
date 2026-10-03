@@ -126,6 +126,55 @@ class EvidenceTests(unittest.TestCase):
         self.assertIn("failure", evidence.summary)
         self.assertEqual(evidence.url, "https://example.test/run/12")
 
+    def test_newer_pending_ci_suppresses_older_completed_evidence(self):
+        runs = [
+            {
+                "name": "CI",
+                "head_sha": HEAD,
+                "status": "completed",
+                "conclusion": "failure",
+                "created_at": "2026-10-03T19:10:00Z",
+                "updated_at": "2026-10-03T19:20:00Z",
+                "run_number": 12,
+            },
+            {
+                "name": "CI",
+                "head_sha": HEAD,
+                "status": "in_progress",
+                "created_at": "2026-10-03T19:30:00Z",
+                "updated_at": "2026-10-03T19:35:00Z",
+                "run_number": 13,
+            },
+        ]
+        self.assertIsNone(watchdog.latest_ci_evidence(runs, HEAD))
+
+    def test_newest_completed_ci_is_selected(self):
+        runs = [
+            {
+                "name": "CI",
+                "head_sha": HEAD,
+                "status": "completed",
+                "conclusion": "failure",
+                "created_at": "2026-10-03T19:10:00Z",
+                "updated_at": "2026-10-03T19:20:00Z",
+                "run_number": 12,
+            },
+            {
+                "name": "CI",
+                "head_sha": HEAD,
+                "status": "completed",
+                "conclusion": "success",
+                "created_at": "2026-10-03T19:30:00Z",
+                "updated_at": "2026-10-03T19:40:00Z",
+                "run_number": 13,
+                "html_url": "https://example.test/run/13",
+            },
+        ]
+        evidence = watchdog.latest_ci_evidence(runs, HEAD)
+        self.assertIsNotNone(evidence)
+        self.assertIn("success", evidence.summary)
+        self.assertEqual(evidence.url, "https://example.test/run/13")
+
     def test_review_evidence_uses_only_checkpoint_head(self):
         reviews = [
             {
