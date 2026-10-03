@@ -38,16 +38,58 @@ class MarkerTests(unittest.TestCase):
                 "id": 1,
                 "body": watchdog.render_marker(marker(mode="handoff")),
                 "updated_at": "2026-10-03T18:00:00Z",
+                "author_association": "OWNER",
             },
             {
                 "id": 2,
                 "body": watchdog.render_marker(marker()),
                 "updated_at": "2026-10-03T19:00:00Z",
+                "author_association": "OWNER",
             },
         ]
         comment, parsed = watchdog.latest_checkpoint(comments)
         self.assertEqual(comment["id"], 2)
         self.assertEqual(parsed["mode"], "active")
+
+    def test_untrusted_later_marker_cannot_override_owner_checkpoint(self):
+        comments = [
+            {
+                "id": 1,
+                "body": watchdog.render_marker(marker()),
+                "updated_at": "2026-10-03T18:00:00Z",
+                "author_association": "OWNER",
+            },
+            {
+                "id": 2,
+                "body": watchdog.render_marker(marker(mode="handoff")),
+                "updated_at": "2026-10-03T19:00:00Z",
+                "author_association": "CONTRIBUTOR",
+            },
+        ]
+        comment, parsed = watchdog.latest_checkpoint(comments)
+        self.assertEqual(comment["id"], 1)
+        self.assertEqual(parsed["mode"], "active")
+
+
+class PaginationTests(unittest.TestCase):
+    def test_get_all_reads_every_page(self):
+        client = watchdog.GitHubClient("owner/repo", "token", "https://example.test")
+        calls = []
+
+        def fake_get(path):
+            calls.append(path)
+            if "page=1" in path:
+                return [{"id": number} for number in range(100)]
+            if "page=2" in path:
+                return [{"id": 100}]
+            raise AssertionError(f"unexpected GET {path}")
+
+        client.get = fake_get
+        items = client.get_all("/repos/owner/repo/issues/69/comments")
+        self.assertEqual(len(items), 101)
+        self.assertEqual(len(calls), 2)
+        self.assertIn("per_page=100&page=1", calls[0])
+        self.assertIn("per_page=100&page=2", calls[1])
 
 
 class EvidenceTests(unittest.TestCase):
@@ -240,16 +282,21 @@ class WatchdogTransitionTests(unittest.TestCase):
                         "id": 7,
                         "body": watchdog.render_marker(marker()),
                         "updated_at": timestamp(checkpoint_time),
+                        "author_association": "OWNER",
                     }
                 ]
                 self.posts = []
-                self.patches = []
+
+            def get_all(self, path):
+                if path.endswith("/pulls?state=open"):
+                    return [{"number": 69, "head": {"sha": HEAD}}]
+                if path.endswith("/issues/69/comments"):
+                    return self.comments
+                raise AssertionError(f"unexpected paginated GET {path}")
 
             def get(self, path):
-                if path.endswith("/pulls?state=open&per_page=100"):
-                    return [{"number": 69, "head": {"sha": HEAD}}]
-                if path.endswith("/issues/69/comments?per_page=100"):
-                    return self.comments
+                if path.endswith("/pulls/69"):
+                    return {"number": 69, "head": {"sha": HEAD}}
                 if "/actions/runs?" in path:
                     return {
                         "workflow_runs": [
@@ -277,22 +324,80 @@ class WatchdogTransitionTests(unittest.TestCase):
                 )
                 return self.comments[-1]
 
-            def patch(self, path, payload):
-                self.patches.append((path, payload))
-                self.comments[0]["body"] = payload["body"]
-                self.comments[0]["updated_at"] = timestamp(now)
-                return self.comments[0]
-
         client = FakeClient()
         self.assertEqual(watchdog.run_watchdog(client, 45, False), 1)
         self.assertEqual(len(client.posts), 1)
-        self.assertEqual(len(client.patches), 1)
-        stalled = watchdog.parse_marker(client.comments[0]["body"])
-        self.assertEqual(stalled["mode"], "stalled")
+        self.assertEqual(
+            watchdog.parse_marker(client.comments[0]["body"])["mode"],
+            "active",
+        )
 
         self.assertEqual(watchdog.run_watchdog(client, 45, False), 0)
         self.assertEqual(len(client.posts), 1)
-        self.assertEqual(len(client.patches), 1)
+
+    def test_newer_checkpoint_progress_wins_race(self):
+        now = datetime.now(UTC)
+        checkpoint_time = now - timedelta(hours=2)
+        evidence_time = now - timedelta(hours=1)
+
+        def timestamp(value):
+            return value.isoformat().replace("+00:00", "Z")
+
+        class RacingClient:
+            repo = "owner/repo"
+
+            def __init__(self):
+                self.comment_reads = 0
+                self.posts = []
+                self.active_comment = {
+                    "id": 7,
+                    "body": watchdog.render_marker(marker()),
+                    "updated_at": timestamp(checkpoint_time),
+                    "author_association": "OWNER",
+                }
+
+            def get_all(self, path):
+                if path.endswith("/pulls?state=open"):
+                    return [{"number": 69, "head": {"sha": HEAD}}]
+                if path.endswith("/issues/69/comments"):
+                    self.comment_reads += 1
+                    if self.comment_reads == 1:
+                        return [dict(self.active_comment)]
+                    return [
+                        {
+                            "id": 7,
+                            "body": watchdog.render_marker(marker(mode="handoff")),
+                            "updated_at": timestamp(now),
+                            "author_association": "OWNER",
+                        }
+                    ]
+                raise AssertionError(f"unexpected paginated GET {path}")
+
+            def get(self, path):
+                if path.endswith("/pulls/69"):
+                    return {"number": 69, "head": {"sha": HEAD}}
+                if "/actions/runs?" in path:
+                    return {
+                        "workflow_runs": [
+                            {
+                                "name": "CI",
+                                "head_sha": HEAD,
+                                "status": "completed",
+                                "conclusion": "success",
+                                "updated_at": timestamp(evidence_time),
+                                "run_number": 399,
+                            }
+                        ]
+                    }
+                raise AssertionError(f"unexpected GET {path}")
+
+            def post(self, path, payload):
+                self.posts.append((path, payload))
+                return payload
+
+        client = RacingClient()
+        self.assertEqual(watchdog.run_watchdog(client, 45, False), 0)
+        self.assertEqual(client.posts, [])
 
 
 if __name__ == "__main__":
