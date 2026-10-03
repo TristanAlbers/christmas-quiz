@@ -49,8 +49,10 @@ Run health: active ...
 ```
 
 Update the same comment rather than creating a history of checkpoint comments.
-GitHub's server-side comment `updated_at` timestamp is the durable last-progress
-time; do not invent a separate client timestamp.
+Only checkpoint comments authored by the repository owner or a collaborator are
+trusted; untrusted PR commenters cannot control run-health state. GitHub's
+server-side comment `updated_at` timestamp is the durable last-progress time; do
+not invent a separate client timestamp.
 
 Use:
 - `mode=active` only while this run is supposed to continue after the named
@@ -66,10 +68,15 @@ Every new pushed head must update `head_sha` before waiting. If the current PR h
 differs from the checkpoint, the watchdog deliberately refuses to infer a stall.
 
 The scheduled `Agent run watchdog` workflow inspects only `active` checkpoints.
-It does not flag healthy pending waits. It marks a run stalled only when actionable
-CI/review evidence is newer than the checkpoint and has remained unattended beyond
-the configured threshold. A detected stall produces one durable resume packet and
-changes the checkpoint to `stalled`.
+It paginates PR comments/review evidence rather than assuming the newest state is in
+the first API page. It does not flag healthy pending waits. It marks a run stalled
+only when actionable CI/review evidence is newer than the checkpoint and has remained
+unattended beyond the configured threshold.
+
+Immediately before emitting a stall record, the watchdog re-fetches the current PR
+head and latest trusted checkpoint. If either changed, newer primary-thread progress
+wins and the stale detection is discarded. The watchdog never overwrites the primary
+checkpoint; it emits one idempotent, separate resume/stall record instead.
 
 The watchdog is detection/recovery context only. It does not merge, edit product
 code, weaken gates, or restart a stopped ChatGPT/web-chat execution. Automatic
