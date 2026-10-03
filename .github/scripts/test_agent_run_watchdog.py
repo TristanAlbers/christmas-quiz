@@ -478,6 +478,88 @@ class WatchdogTransitionTests(unittest.TestCase):
         self.assertEqual(client.posts, [])
 
 
+    def test_newer_pending_ci_during_revalidation_suppresses_stall(self):
+        now = datetime.now(UTC)
+        checkpoint_time = now - timedelta(hours=2)
+        evidence_time = now - timedelta(hours=1)
+
+        def timestamp(value):
+            return value.isoformat().replace("+00:00", "Z")
+
+        class CiRaceClient:
+            repo = "owner/repo"
+
+            def __init__(self):
+                self.ci_reads = 0
+                self.posts = []
+                self.comments = [
+                    {
+                        "id": 7,
+                        "body": watchdog.render_marker(marker()),
+                        "updated_at": timestamp(checkpoint_time),
+                        "author_association": "OWNER",
+                    }
+                ]
+
+            def get_all(self, path):
+                if path.endswith("/pulls?state=open"):
+                    return [{"number": 69, "head": {"sha": HEAD}}]
+                if path.endswith("/issues/69/comments"):
+                    return self.comments
+                raise AssertionError(f"unexpected paginated GET {path}")
+
+            def get(self, path):
+                if path.endswith("/pulls/69"):
+                    return {
+                        "number": 69,
+                        "state": "open",
+                        "head": {"sha": HEAD},
+                    }
+                if "/actions/runs?" in path:
+                    self.ci_reads += 1
+                    if self.ci_reads == 1:
+                        return {
+                            "workflow_runs": [
+                                {
+                                    "name": "CI",
+                                    "head_sha": HEAD,
+                                    "status": "completed",
+                                    "conclusion": "failure",
+                                    "updated_at": timestamp(evidence_time),
+                                    "run_number": 411,
+                                }
+                            ]
+                        }
+                    return {
+                        "workflow_runs": [
+                            {
+                                "name": "CI",
+                                "head_sha": HEAD,
+                                "status": "completed",
+                                "conclusion": "failure",
+                                "updated_at": timestamp(evidence_time),
+                                "run_number": 411,
+                            },
+                            {
+                                "name": "CI",
+                                "head_sha": HEAD,
+                                "status": "in_progress",
+                                "updated_at": timestamp(now),
+                                "run_number": 412,
+                            },
+                        ]
+                    }
+                raise AssertionError(f"unexpected GET {path}")
+
+            def post(self, path, payload):
+                self.posts.append((path, payload))
+                return payload
+
+        client = CiRaceClient()
+        self.assertEqual(watchdog.run_watchdog(client, 45, False), 0)
+        self.assertEqual(client.ci_reads, 2)
+        self.assertEqual(client.posts, [])
+
     def test_closed_pull_is_not_reported_after_revalidation(self):
         now = datetime.now(UTC)
         checkpoint_time = now - timedelta(hours=2)
