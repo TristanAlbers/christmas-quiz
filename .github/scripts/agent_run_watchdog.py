@@ -23,6 +23,7 @@ MARKER_RE = re.compile(
 NOTIFICATION_PREFIX = "<!-- agent-run-watchdog:"
 VALID_MODES = {"active", "handoff", "stalled", "complete"}
 VALID_EXPECTED = {"ci", "review", "none"}
+TRUSTED_CHECKPOINT_ASSOCIATIONS = {"OWNER", "COLLABORATOR"}
 
 
 @dataclass(frozen=True)
@@ -67,11 +68,17 @@ def render_marker(marker: dict[str, Any]) -> str:
     )
 
 
+def is_trusted_checkpoint_comment(comment: dict[str, Any]) -> bool:
+    return comment.get("author_association") in TRUSTED_CHECKPOINT_ASSOCIATIONS
+
+
 def latest_checkpoint(
     comments: list[dict[str, Any]],
 ) -> tuple[dict[str, Any], dict[str, str]] | None:
     checkpoints = []
     for comment in comments:
+        if not is_trusted_checkpoint_comment(comment):
+            continue
         try:
             marker = parse_marker(comment.get("body", ""))
         except (json.JSONDecodeError, ValueError):
@@ -267,11 +274,21 @@ class GitHubClient:
     def get(self, path: str) -> Any:
         return self.request("GET", path)
 
+    def get_all(self, path: str) -> list[dict[str, Any]]:
+        items = []
+        page = 1
+        separator = "&" if "?" in path else "?"
+        while True:
+            batch = self.get(f"{path}{separator}per_page=100&page={page}")
+            if not isinstance(batch, list):
+                raise RuntimeError(f"expected list response while paginating {path}")
+            items.extend(batch)
+            if len(batch) < 100:
+                return items
+            page += 1
+
     def post(self, path: str, payload: dict[str, Any]) -> Any:
         return self.request("POST", path, payload)
-
-    def patch(self, path: str, payload: dict[str, Any]) -> Any:
-        return self.request("PATCH", path, payload)
 
 
 def review_evidence(
@@ -280,11 +297,11 @@ def review_evidence(
     comments: list[dict[str, Any]],
     checkpoint_id: int,
 ) -> Evidence | None:
-    reviews = client.get(
-        f"/repos/{client.repo}/pulls/{pr_number}/reviews?per_page=100"
+    reviews = client.get_all(
+        f"/repos/{client.repo}/pulls/{pr_number}/reviews"
     )
-    review_comments = client.get(
-        f"/repos/{client.repo}/pulls/{pr_number}/comments?per_page=100"
+    review_comments = client.get_all(
+        f"/repos/{client.repo}/pulls/{pr_number}/comments"
     )
     return latest_review_evidence(
         reviews,
@@ -309,6 +326,46 @@ def ci_evidence(
     return latest_ci_evidence(result.get("workflow_runs", []), head_sha)
 
 
+def revalidate_stall_candidate(
+    client: GitHubClient,
+    pr_number: int,
+    head_sha: str,
+    checkpoint_comment: dict[str, Any],
+    marker: dict[str, str],
+    evidence: Evidence,
+    now: datetime,
+    threshold: timedelta,
+) -> tuple[bool, list[dict[str, Any]]]:
+    current_pull = client.get(f"/repos/{client.repo}/pulls/{pr_number}")
+    if current_pull.get("head", {}).get("sha") != head_sha:
+        return False, []
+
+    comments = client.get_all(f"/repos/{client.repo}/issues/{pr_number}/comments")
+    checkpoint = latest_checkpoint(comments)
+    if checkpoint is None:
+        return False, comments
+
+    current_comment, current_marker = checkpoint
+    if current_comment.get("id") != checkpoint_comment.get("id"):
+        return False, comments
+    if current_comment.get("updated_at") != checkpoint_comment.get("updated_at"):
+        return False, comments
+    if current_marker != marker:
+        return False, comments
+
+    current_updated_at = parse_time(current_comment["updated_at"])
+    if not should_stall(
+        current_marker,
+        current_updated_at,
+        head_sha,
+        evidence,
+        now,
+        threshold,
+    ):
+        return False, comments
+    return True, comments
+
+
 def run_watchdog(
     client: GitHubClient,
     threshold_minutes: int,
@@ -316,13 +373,13 @@ def run_watchdog(
 ) -> int:
     now = datetime.now(timezone.utc)
     threshold = timedelta(minutes=threshold_minutes)
-    pulls = client.get(f"/repos/{client.repo}/pulls?state=open&per_page=100")
+    pulls = client.get_all(f"/repos/{client.repo}/pulls?state=open")
     stalled_count = 0
 
     for pull in pulls:
         pr_number = int(pull["number"])
-        comments = client.get(
-            f"/repos/{client.repo}/issues/{pr_number}/comments?per_page=100"
+        comments = client.get_all(
+            f"/repos/{client.repo}/issues/{pr_number}/comments"
         )
         checkpoint = latest_checkpoint(comments)
         if checkpoint is None:
@@ -370,34 +427,48 @@ def run_watchdog(
         assert evidence is not None
         key = stall_key(pr_number, marker, evidence)
         notification_marker = f"{NOTIFICATION_PREFIX}{key} -->"
+
+        if dry_run:
+            print(
+                f"PR #{pr_number}: would mark stalled after {evidence.summary}; "
+                f"checkpoint={checkpoint_updated_at.isoformat()}"
+            )
+            stalled_count += 1
+            continue
+
+        valid, current_comments = revalidate_stall_candidate(
+            client,
+            pr_number,
+            head_sha,
+            checkpoint_comment,
+            marker,
+            evidence,
+            now,
+            threshold,
+        )
+        if not valid:
+            print(
+                f"PR #{pr_number}: progress changed during watchdog evaluation; "
+                "skipping stale stall notification"
+            )
+            continue
+
         already_notified = any(
             notification_marker in comment.get("body", "")
-            for comment in comments
+            for comment in current_comments
         )
+        if already_notified:
+            continue
 
+        client.post(
+            f"/repos/{client.repo}/issues/{pr_number}/comments",
+            {"body": notification_body(pr_number, marker, evidence, key)},
+        )
         print(
             f"PR #{pr_number}: stalled after {evidence.summary}; "
             f"checkpoint={checkpoint_updated_at.isoformat()}"
         )
         stalled_count += 1
-        if dry_run:
-            continue
-
-        if not already_notified:
-            client.post(
-                f"/repos/{client.repo}/issues/{pr_number}/comments",
-                {"body": notification_body(pr_number, marker, evidence, key)},
-            )
-
-        stalled_marker = dict(marker)
-        stalled_marker["mode"] = "stalled"
-        stalled_marker["stall_key"] = key
-        stalled_marker["evidence"] = evidence.summary
-        stalled_marker["detected_at"] = now.isoformat()
-        client.patch(
-            f"/repos/{client.repo}/issues/comments/{checkpoint_comment['id']}",
-            {"body": render_marker(stalled_marker)},
-        )
 
     return stalled_count
 
