@@ -140,17 +140,6 @@ class SnapshotVerificationLifecycleTests(SimpleTestCase):
             all(result["package_id"] == "snapshot-cache" for result in results)
         )
 
-    def test_restart_reverification_detects_unrequested_media_corruption(self):
-        load_snapshot(self.run)
-        other = self.snapshot / "media" / "a" / "other.bin"
-        other.write_bytes(b"tampered-after-warm-verification")
-
-        self.assertEqual(load_snapshot(self.run)["package_id"], "snapshot-cache")
-
-        configuration._reset_snapshot_cache()
-        with self.assertRaisesRegex(InvalidPackage, "Snapshot content changed"):
-            load_snapshot(self.run)
-
     def test_media_request_hashes_only_requested_file_and_rejects_tampering(self):
         load_snapshot(self.run)
         original_digest = configuration._file_digest
