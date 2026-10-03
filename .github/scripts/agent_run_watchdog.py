@@ -24,6 +24,7 @@ NOTIFICATION_PREFIX = "<!-- agent-run-watchdog:"
 VALID_MODES = {"active", "handoff", "stalled", "complete"}
 VALID_EXPECTED = {"ci", "review", "none"}
 TRUSTED_CHECKPOINT_ASSOCIATIONS = {"OWNER", "COLLABORATOR"}
+WATCHDOG_COMMENT_LOGIN = "github-actions[bot]"
 
 
 @dataclass(frozen=True)
@@ -118,12 +119,13 @@ def latest_ci_evidence(
 def latest_review_evidence(
     reviews: list[dict[str, Any]],
     review_comments: list[dict[str, Any]],
-    issue_comments: list[dict[str, Any]],
-    checkpoint_id: int,
+    head_sha: str,
 ) -> Evidence | None:
     candidates = []
 
     for review in reviews:
+        if review.get("commit_id") != head_sha:
+            continue
         timestamp = review.get("submitted_at")
         if not timestamp:
             continue
@@ -137,6 +139,8 @@ def latest_review_evidence(
         )
 
     for comment in review_comments:
+        if comment.get("commit_id") != head_sha:
+            continue
         timestamp = comment.get("updated_at") or comment.get("created_at")
         if not timestamp:
             continue
@@ -145,24 +149,6 @@ def latest_review_evidence(
                 kind="review-comment",
                 observed_at=parse_time(timestamp),
                 summary="Inline PR review comment added or updated",
-                url=comment.get("html_url", ""),
-            )
-        )
-
-    for comment in issue_comments:
-        if comment.get("id") == checkpoint_id:
-            continue
-        body = comment.get("body", "")
-        if MARKER_RE.search(body) or NOTIFICATION_PREFIX in body:
-            continue
-        timestamp = comment.get("updated_at") or comment.get("created_at")
-        if not timestamp:
-            continue
-        candidates.append(
-            Evidence(
-                kind="pr-comment",
-                observed_at=parse_time(timestamp),
-                summary="PR conversation comment added or updated",
                 url=comment.get("html_url", ""),
             )
         )
@@ -191,14 +177,22 @@ def should_stall(
 
 def stall_key(
     pr_number: int,
+    checkpoint_comment: dict[str, Any],
     marker: dict[str, str],
-    evidence: Evidence,
 ) -> str:
     value = (
-        f"{pr_number}|{marker['head_sha']}|{marker['phase']}|"
-        f"{evidence.kind}|{evidence.observed_at.isoformat()}"
+        f"{pr_number}|{checkpoint_comment.get('id')}|"
+        f"{checkpoint_comment.get('updated_at')}|{marker['head_sha']}|"
+        f"{marker['phase']}|{marker['expected']}"
     )
     return hashlib.sha256(value.encode()).hexdigest()[:16]
+
+
+def is_watchdog_notification(comment: dict[str, Any], marker: str) -> bool:
+    return (
+        marker in comment.get("body", "")
+        and comment.get("user", {}).get("login") == WATCHDOG_COMMENT_LOGIN
+    )
 
 
 def notification_body(
@@ -294,8 +288,7 @@ class GitHubClient:
 def review_evidence(
     client: GitHubClient,
     pr_number: int,
-    comments: list[dict[str, Any]],
-    checkpoint_id: int,
+    head_sha: str,
 ) -> Evidence | None:
     reviews = client.get_all(
         f"/repos/{client.repo}/pulls/{pr_number}/reviews"
@@ -303,12 +296,7 @@ def review_evidence(
     review_comments = client.get_all(
         f"/repos/{client.repo}/pulls/{pr_number}/comments"
     )
-    return latest_review_evidence(
-        reviews,
-        review_comments,
-        comments,
-        checkpoint_id,
-    )
+    return latest_review_evidence(reviews, review_comments, head_sha)
 
 
 def ci_evidence(
@@ -337,6 +325,8 @@ def revalidate_stall_candidate(
     threshold: timedelta,
 ) -> tuple[bool, list[dict[str, Any]]]:
     current_pull = client.get(f"/repos/{client.repo}/pulls/{pr_number}")
+    if current_pull.get("state") != "open":
+        return False, []
     if current_pull.get("head", {}).get("sha") != head_sha:
         return False, []
 
@@ -405,12 +395,7 @@ def run_watchdog(
         if marker["expected"] == "ci":
             evidence = ci_evidence(client, head_sha)
         elif marker["expected"] == "review":
-            evidence = review_evidence(
-                client,
-                pr_number,
-                comments,
-                int(checkpoint_comment["id"]),
-            )
+            evidence = review_evidence(client, pr_number, head_sha)
         else:
             continue
 
@@ -425,7 +410,7 @@ def run_watchdog(
             continue
 
         assert evidence is not None
-        key = stall_key(pr_number, marker, evidence)
+        key = stall_key(pr_number, checkpoint_comment, marker)
         notification_marker = f"{NOTIFICATION_PREFIX}{key} -->"
 
         if dry_run:
@@ -454,7 +439,7 @@ def run_watchdog(
             continue
 
         already_notified = any(
-            notification_marker in comment.get("body", "")
+            is_watchdog_notification(comment, notification_marker)
             for comment in current_comments
         )
         if already_notified:
