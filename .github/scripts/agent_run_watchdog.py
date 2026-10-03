@@ -96,24 +96,33 @@ def latest_ci_evidence(
     workflow_runs: list[dict[str, Any]],
     head_sha: str,
 ) -> Evidence | None:
-    candidates = []
-    for run in workflow_runs:
-        if run.get("head_sha") != head_sha or run.get("status") != "completed":
-            continue
-        if run.get("name") != "CI":
-            continue
-        observed = parse_time(run["updated_at"])
-        conclusion = run.get("conclusion") or "unknown"
-        number = run.get("run_number")
-        candidates.append(
-            Evidence(
-                kind="ci",
-                observed_at=observed,
-                summary=f"CI run #{number} completed with {conclusion}",
-                url=run.get("html_url", ""),
-            )
-        )
-    return max(candidates, key=lambda item: item.observed_at, default=None)
+    candidates = [
+        run
+        for run in workflow_runs
+        if run.get("head_sha") == head_sha and run.get("name") == "CI"
+    ]
+    if not candidates:
+        return None
+
+    newest = max(
+        candidates,
+        key=lambda run: (
+            int(run.get("run_number") or 0),
+            parse_time(run.get("created_at") or run["updated_at"]),
+        ),
+    )
+    if newest.get("status") != "completed":
+        return None
+
+    observed = parse_time(newest["updated_at"])
+    conclusion = newest.get("conclusion") or "unknown"
+    number = newest.get("run_number")
+    return Evidence(
+        kind="ci",
+        observed_at=observed,
+        summary=f"CI run #{number} completed with {conclusion}",
+        url=newest.get("html_url", ""),
+    )
 
 
 def latest_review_evidence(
