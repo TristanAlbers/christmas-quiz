@@ -400,7 +400,11 @@ class WatchdogTransitionTests(unittest.TestCase):
 
             def get(self, path):
                 if path.endswith("/pulls/69"):
-                    return {"number": 69, "head": {"sha": HEAD}}
+                    return {
+                        "number": 69,
+                        "state": "open",
+                        "head": {"sha": HEAD},
+                    }
                 if "/actions/runs?" in path:
                     return {
                         "workflow_runs": [
@@ -597,7 +601,11 @@ class WatchdogTransitionTests(unittest.TestCase):
                         "head": {"sha": HEAD},
                     }
                 if "/actions/runs?" in path:
-                    observed = first_evidence if self.run_number == 1 else second_evidence
+                    observed = (
+                        first_evidence
+                        if self.run_number == 1
+                        else second_evidence
+                    )
                     return {
                         "workflow_runs": [
                             {
