@@ -76,8 +76,9 @@ evidence is newer than the checkpoint and has remained unattended beyond the
 configured threshold.
 
 Immediately before emitting a stall record, the watchdog re-fetches the current PR
-state/head and latest trusted checkpoint. If the PR closed, the head changed, or the
-checkpoint changed, newer repository state wins and the stale detection is discarded.
+state/head, latest trusted checkpoint, and current CI state when CI is the expected
+event. If the PR closed, the head/checkpoint changed, or a newer CI run is now queued
+or in progress, newer repository state wins and the stale detection is discarded.
 The watchdog never overwrites the primary checkpoint; it emits one idempotent,
 separate resume/stall record keyed to that checkpoint version instead. Only records
 authored by `github-actions[bot]` satisfy that idempotency check, so outside commenters
