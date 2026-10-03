@@ -133,7 +133,10 @@ def latest_review_evidence(
             Evidence(
                 kind="review",
                 observed_at=parse_time(timestamp),
-                summary=f"PR review submitted with state {review.get('state', 'unknown')}",
+                summary=(
+                    "PR review submitted with state "
+                    f"{review.get('state', 'unknown')}"
+                ),
                 url=review.get("html_url", ""),
             )
         )
