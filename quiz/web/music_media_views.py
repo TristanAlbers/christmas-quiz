@@ -4,7 +4,7 @@ from django.http import FileResponse, Http404
 from django.views.decorators.cache import never_cache
 
 from quiz import _application_core as core
-from quiz.configuration import load_snapshot, snapshot_music_audio_path
+from quiz.configuration import InvalidPackage, load_snapshot, snapshot_music_audio_path
 from quiz.models import Run
 from quiz.persistence import read_snapshot
 
@@ -30,7 +30,7 @@ def current_music_audio(request, run_id):
             if path is None:
                 raise Http404
             file = path.open("rb")
-        except (Run.DoesNotExist, OSError) as exc:
+        except (Run.DoesNotExist, InvalidPackage, OSError) as exc:
             raise Http404 from exc
     response = FileResponse(file)
     response["Cache-Control"] = "public, no-store"
