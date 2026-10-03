@@ -575,7 +575,7 @@ def _verified_snapshot(run_or_path):
 
     try:
         verified = _verify_snapshot(path, expected)
-    except BaseException as exc:
+    except Exception as exc:
         with _snapshot_cache_lock:
             _snapshot_verification_flights.pop(key, None)
         flight.set_exception(exc)
