@@ -32,6 +32,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Test agent run watchdog
+        run: python3 .github/scripts/test_agent_run_watchdog.py
+
       - name: Build development test image
         run: docker build --target dev --tag $CI_IMAGE .
 
