@@ -274,6 +274,7 @@ class StallDecisionTests(unittest.TestCase):
         )
 
     def test_stall_key_and_notification_are_stable(self):
+        evidence = self.evidence(60)
         checkpoint = {"id": 7, "updated_at": "2026-10-03T18:00:00Z"}
         first = watchdog.stall_key(68, checkpoint, marker())
         second = watchdog.stall_key(68, checkpoint, marker())
