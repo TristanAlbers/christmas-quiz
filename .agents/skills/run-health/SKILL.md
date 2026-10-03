@@ -37,6 +37,44 @@ A specialist working inside that lifecycle should make only its owned repository
 
 Do not push broken speculative micro-edits solely for visibility; persist coherent checkpoints.
 
+### Durable autonomous-run checkpoint
+
+When a primary web/chat run is expected to continue automatically after an external
+GitHub event, maintain exactly one top-level PR comment containing a machine-readable
+checkpoint:
+
+```text
+<!-- agent-run-health {"mode":"active","phase":"ci","expected":"ci","head_sha":"<40-char SHA>"} -->
+Run health: active ...
+```
+
+Update the same comment rather than creating a history of checkpoint comments.
+GitHub's server-side comment `updated_at` timestamp is the durable last-progress
+time; do not invent a separate client timestamp.
+
+Use:
+- `mode=active` only while this run is supposed to continue after the named
+  external event;
+- `expected=ci` while waiting for the repository CI workflow on the exact head;
+- `expected=review` only when this run is intentionally staying alive for review
+  evidence rather than using the normal clean review handoff;
+- `mode=handoff` before an intentional clean stop where a later user/run is
+  expected to resume;
+- `mode=complete` when no further autonomous continuation is expected.
+
+Every new pushed head must update `head_sha` before waiting. If the current PR head
+differs from the checkpoint, the watchdog deliberately refuses to infer a stall.
+
+The scheduled `Agent run watchdog` workflow inspects only `active` checkpoints.
+It does not flag healthy pending waits. It marks a run stalled only when actionable
+CI/review evidence is newer than the checkpoint and has remained unattended beyond
+the configured threshold. A detected stall produces one durable resume packet and
+changes the checkpoint to `stalled`.
+
+The watchdog is detection/recovery context only. It does not merge, edit product
+code, weaken gates, or restart a stopped ChatGPT/web-chat execution. Automatic
+resumption requires an external supervisor and is a separate capability.
+
 ## 3. Progress checkpoints
 
 For substantial runs, report concise checkpoints at useful boundaries:
