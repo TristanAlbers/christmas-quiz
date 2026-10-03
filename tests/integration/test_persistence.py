@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, connection
 from django.test import TestCase, override_settings
 
+from quiz import configuration
 from quiz.configuration import InvalidPackage, load_snapshot, stage_snapshot
 from quiz.models import AuditEvent, Run, TeamRun
 from quiz.persistence import immediate_transaction, read_snapshot
@@ -99,6 +100,14 @@ class PersistenceTests(TestCase):
                     load_snapshot(run)["teams"]["a"]["puzzles"][0]["body"], "Clue"
                 )
                 (Path(staged.path) / "media" / "a.txt").write_text("tampered")
+
+                # Warm process state intentionally keeps using the bytes verified
+                # before tampering. A restart must verify the full snapshot again.
+                self.assertEqual(
+                    load_snapshot(run)["teams"]["a"]["puzzles"][0]["body"],
+                    "Clue",
+                )
+                configuration._reset_snapshot_cache()
                 with self.assertRaises(InvalidPackage):
                     load_snapshot(run)
 

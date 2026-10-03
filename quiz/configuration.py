@@ -6,9 +6,13 @@ import os
 import re
 import shutil
 import tempfile
+from collections import OrderedDict
+from concurrent.futures import Future
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path, PurePosixPath
+from threading import Lock
+from types import MappingProxyType
 
 from django.conf import settings
 
@@ -31,8 +35,29 @@ class StagedSnapshot:
     config: dict
 
 
+@dataclass(frozen=True)
+class _VerifiedSnapshot:
+    path: Path
+    config_bytes: bytes
+    files: MappingProxyType
+
+
+_VERIFIED_SNAPSHOT_CACHE_MAX = 8
+_verified_snapshot_cache = OrderedDict()
+_snapshot_verification_flights = {}
+_snapshot_cache_lock = Lock()
+
+
 def _digest(data):
     return hashlib.sha256(data).hexdigest()
+
+
+def _file_digest(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _canonical(value):
@@ -444,12 +469,11 @@ def stage_snapshot(package_id):
                 shutil.copyfile(source_asset, target)
                 if target.stat().st_size > 20_000_000:
                     raise InvalidPackage("Referenced media exceeds the 20 MB limit")
-                target_bytes = target.read_bytes()
+                hashes[f"media/{rel}"] = _file_digest(target)
             except OSError as exc:
                 raise InvalidPackage(
                     "Referenced media became unreadable while staging"
                 ) from exc
-            hashes[f"media/{rel}"] = _digest(target_bytes)
         manifest_bytes = _canonical({"schema_version": 1, "files": hashes})
         (staging / "manifest.json").write_bytes(manifest_bytes)
         digest = _digest(manifest_bytes)
@@ -461,8 +485,7 @@ def stage_snapshot(package_id):
         raise
 
 
-def load_snapshot(run_or_path):
-    """Verify the pinned manifest and every referenced byte before using rules."""
+def _snapshot_identity(run_or_path):
     original = Path(getattr(run_or_path, "snapshot_path", run_or_path))
     if original.is_symlink():
         raise InvalidPackage("Snapshot path is a symlink")
@@ -470,29 +493,132 @@ def load_snapshot(run_or_path):
     root = _root("QUIZ_SNAPSHOT_ROOT", "var/snapshots")
     if path.parent != root:
         raise InvalidPackage("Snapshot path is outside the snapshot root")
+
+    expected = getattr(run_or_path, "snapshot_digest", None)
+    if expected is None:
+        try:
+            expected = _digest((path / "manifest.json").read_bytes())
+        except OSError as exc:
+            raise InvalidPackage("Cannot read snapshot") from exc
+    if not isinstance(expected, str):
+        raise InvalidPackage("Invalid snapshot digest")
+    return path, expected
+
+
+def _verify_snapshot(path, expected):
+    """Fully verify one pinned snapshot before trusting it in this process."""
     try:
-        manifest_bytes = (path / "manifest.json").read_bytes()
-        expected = getattr(run_or_path, "snapshot_digest", _digest(manifest_bytes))
+        manifest_path = path / "manifest.json"
+        if manifest_path.is_symlink():
+            raise InvalidPackage("Snapshot manifest is a symlink")
+        manifest_bytes = manifest_path.read_bytes()
         if _digest(manifest_bytes) != expected:
             raise InvalidPackage("Snapshot manifest changed")
         manifest = json.loads(manifest_bytes)
-        if manifest.get("schema_version") != 1 or not isinstance(
-            manifest.get("files"), dict
-        ):
+        files = manifest.get("files")
+        if manifest.get("schema_version") != 1 or not isinstance(files, dict):
             raise InvalidPackage("Invalid snapshot manifest")
-        for rel, digest in manifest["files"].items():
+
+        config_digest = files.get("game.json")
+        if not isinstance(config_digest, str):
+            raise InvalidPackage("Invalid snapshot manifest")
+        config_path = path / "game.json"
+        if config_path.is_symlink():
+            raise InvalidPackage("Snapshot content changed")
+        config_bytes = config_path.read_bytes()
+        if _digest(config_bytes) != config_digest:
+            raise InvalidPackage("Snapshot content changed")
+
+        for rel, digest in files.items():
             _relative_path(rel)
+            if not isinstance(digest, str):
+                raise InvalidPackage("Invalid snapshot manifest")
+            if rel == "game.json":
+                continue
             target = path / rel
-            if target.is_symlink() or _digest(target.read_bytes()) != digest:
+            if target.is_symlink() or _file_digest(target) != digest:
                 raise InvalidPackage("Snapshot content changed")
-        config = json.loads((path / "game.json").read_bytes())
+
+        config = json.loads(config_bytes)
         if not isinstance(config, dict):
             raise InvalidPackage("Invalid snapshot config")
         _validate(config, config.get("package_id"))
-        return config
+        return _VerifiedSnapshot(
+            path=path,
+            config_bytes=config_bytes,
+            files=MappingProxyType(dict(files)),
+        )
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise InvalidPackage("Cannot read snapshot") from exc
 
+
+def _verified_snapshot(run_or_path):
+    """Return a process-verified snapshot, single-flighting cold verification."""
+    path, expected = _snapshot_identity(run_or_path)
+    key = (path, expected)
+
+    with _snapshot_cache_lock:
+        cached = _verified_snapshot_cache.get(key)
+        if cached is not None:
+            _verified_snapshot_cache.move_to_end(key)
+            return cached
+        flight = _snapshot_verification_flights.get(key)
+        if flight is None:
+            flight = Future()
+            _snapshot_verification_flights[key] = flight
+            verifier = True
+        else:
+            verifier = False
+
+    if not verifier:
+        return flight.result()
+
+    try:
+        verified = _verify_snapshot(path, expected)
+    except Exception as exc:
+        with _snapshot_cache_lock:
+            _snapshot_verification_flights.pop(key, None)
+        flight.set_exception(exc)
+        raise
+
+    with _snapshot_cache_lock:
+        _verified_snapshot_cache[key] = verified
+        _verified_snapshot_cache.move_to_end(key)
+        while len(_verified_snapshot_cache) > _VERIFIED_SNAPSHOT_CACHE_MAX:
+            _verified_snapshot_cache.popitem(last=False)
+        _snapshot_verification_flights.pop(key, None)
+    flight.set_result(verified)
+    return verified
+
+
+def _reset_snapshot_cache():
+    """Clear verified snapshots; used by restart-focused tests."""
+    with _snapshot_cache_lock:
+        if _snapshot_verification_flights:
+            raise RuntimeError("Cannot clear snapshot cache during verification")
+        _verified_snapshot_cache.clear()
+
+
+def load_snapshot(run_or_path):
+    """Return pinned rules after one full verification per process/cache lifetime."""
+    verified = _verified_snapshot(run_or_path)
+    return json.loads(verified.config_bytes)
+
+
+def _verified_snapshot_file(run_or_path, relative_path):
+    """Verify one requested file against the already-verified pinned manifest."""
+    verified = _verified_snapshot(run_or_path)
+    rel = str(_relative_path(relative_path))
+    expected = verified.files.get(rel)
+    if not isinstance(expected, str):
+        raise InvalidPackage("Snapshot file is not declared in manifest")
+    target = verified.path / rel
+    try:
+        if target.is_symlink() or _file_digest(target) != expected:
+            raise InvalidPackage("Snapshot content changed")
+    except OSError as exc:
+        raise InvalidPackage("Cannot read snapshot") from exc
+    return target
 
 def snapshot_media_path(run, team_id, relative_path):
     """Return a declared asset only after the caller has authorized this team."""
@@ -508,11 +634,11 @@ def snapshot_media_path(run, team_id, relative_path):
                 puzzle_media_descriptor(media) for media in puzzle["media"]
             )
         }
+        if rel not in declared:
+            return None
+        return _verified_snapshot_file(run, f"media/{rel}")
     except (InvalidPackage, KeyError, TypeError):
         return None
-    if rel not in declared:
-        return None
-    return Path(run.snapshot_path) / "media" / rel
 
 
 def snapshot_music_audio_path(run, question_number):
@@ -528,9 +654,9 @@ def snapshot_music_audio_path(run, question_number):
         if audio is None:
             return None
         rel = str(_relative_path(audio))
+        return _verified_snapshot_file(run, f"media/{rel}")
     except (InvalidPackage, IndexError, KeyError, TypeError):
         return None
-    return Path(run.snapshot_path) / "media" / rel
 
 
 def snapshot_challenge_media_path(
@@ -567,6 +693,6 @@ def snapshot_challenge_media_path(
         puzzle = config["challenge_puzzles"][challenge.initiator_team_id]
         if challenge.question_id != puzzle["id"] or rel not in puzzle["media"]:
             return None
+        return _verified_snapshot_file(run, f"media/{rel}")
     except (InvalidPackage, KeyError, TypeError):
         return None
-    return Path(run.snapshot_path) / "media" / rel

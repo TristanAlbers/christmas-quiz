@@ -5,6 +5,7 @@ The quiz uses 500 ms HTMX polling for live state. Polling must not recreate or t
 Use these rules for polled views:
 
 - Keep rapidly changing read-only status inside the normal polling swap target.
+- Keep package-wide filesystem verification out of normal polling: once a pinned snapshot has passed cold process verification, warm projections must not reread or hash unrelated media files.
 - Keep user-operated controls outside that target while their interaction context is unchanged.
 - Replace an interactive pane out-of-band only when its authoritative context genuinely changes, such as a new run, question, global state, team activity state, hint/reverse eligibility, permission set, or available READY package options.
 - Do not use `hx-preserve` as the primary protection for actively used controls. Preservation can retain a DOM node while HTMX temporarily relocates it during a parent swap, which can still interrupt native controls or pointer interaction.

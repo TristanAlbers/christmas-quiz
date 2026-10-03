@@ -405,12 +405,23 @@ active-run read uses that snapshot, including after a restart. Source package
 edits or deletion cannot silently change active rules or media. Keep secret
 credentials out of committed puzzle packages.
 
-In phase 1, `load_snapshot` verifies the manifest and all declared media bytes
-when it reads configuration, including within an answer transaction. The two
-asset demonstration package keeps this short. A larger event package may make
-that writer hold time material; measure it and adopt a validated immutable
-snapshot cache or pretransaction verification with an in-transaction pin check
-before loading large media packages. Do not skip integrity verification.
+Snapshot integrity uses two lifecycle tiers. Start still validates, copies and
+hashes the complete selected package before the run is pinned. On the first
+`load_snapshot` for a pinned snapshot in each application process, verify the
+pinned manifest digest and every declared snapshot file before trusting that
+snapshot. Concurrent first readers for the same resolved snapshot path + pinned
+digest share one verification; successful verification is kept in a small
+bounded process-local cache.
+
+After that cold verification, normal `load_snapshot` calls return a fresh parsed
+configuration from the verified in-memory bytes and do not reread or hash
+unrelated media. The cached configuration bytes remain authoritative for that
+process, so later filesystem mutation cannot change warm in-memory run rules.
+Media serving is stricter at the point of use: after normal authorization and
+current-context checks, hash only the requested snapshot media file against its
+digest in the already-verified manifest before opening it. A process restart (or
+cache clear) performs complete verification again and rejects any on-disk
+corruption. Never fall back to mutable source `games/` data.
 
 Persist attempts, balances, progression, reward history, fragments, clocks,
 effects, receipts, and audit events. Events identify timestamp, run/request,
