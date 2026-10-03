@@ -124,7 +124,11 @@ class SnapshotVerificationLifecycleTests(SimpleTestCase):
             release.wait(timeout=2)
             return original_verify(path, expected)
 
-        with patch.object(configuration, "_verify_snapshot", side_effect=controlled_verify):
+        with patch.object(
+            configuration,
+            "_verify_snapshot",
+            side_effect=controlled_verify,
+        ):
             with ThreadPoolExecutor(max_workers=4) as pool:
                 futures = [pool.submit(load_snapshot, self.run) for _ in range(4)]
                 self.assertTrue(entered.wait(timeout=1))
@@ -132,7 +136,9 @@ class SnapshotVerificationLifecycleTests(SimpleTestCase):
                 results = [future.result(timeout=2) for future in futures]
 
         self.assertEqual(verify_count, 1)
-        self.assertTrue(all(result["package_id"] == "snapshot-cache" for result in results))
+        self.assertTrue(
+            all(result["package_id"] == "snapshot-cache" for result in results)
+        )
 
     def test_restart_reverification_detects_unrequested_media_corruption(self):
         load_snapshot(self.run)
