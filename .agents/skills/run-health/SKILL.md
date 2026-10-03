@@ -37,6 +37,57 @@ A specialist working inside that lifecycle should make only its owned repository
 
 Do not push broken speculative micro-edits solely for visibility; persist coherent checkpoints.
 
+### Durable autonomous-run checkpoint
+
+When a primary web/chat run is expected to continue automatically after an external
+GitHub event, maintain exactly one top-level PR comment containing a machine-readable
+checkpoint:
+
+```text
+<!-- agent-run-health {"mode":"active","phase":"ci","expected":"ci","head_sha":"<40-char SHA>"} -->
+Run health: active ...
+```
+
+Update the same comment rather than creating a history of checkpoint comments.
+Only checkpoint comments authored by the repository owner or a collaborator are
+trusted; untrusted PR commenters cannot control run-health state. GitHub's
+server-side comment `updated_at` timestamp is the durable last-progress time; do
+not invent a separate client timestamp.
+
+Use:
+- `mode=active` only while this run is supposed to continue after the named
+  external event;
+- `expected=ci` while waiting for the repository CI workflow on the exact head;
+- `expected=review` only when this run is intentionally staying alive for review
+  evidence rather than using the normal clean review handoff;
+- `mode=handoff` before an intentional clean stop where a later user/run is
+  expected to resume;
+- `mode=complete` when no further autonomous continuation is expected.
+
+Every new pushed head must update `head_sha` before waiting. If the current PR head
+differs from the checkpoint, the watchdog deliberately refuses to infer a stall.
+
+The scheduled `Agent run watchdog` workflow inspects only `active` checkpoints.
+It paginates PR comments/review evidence rather than assuming the newest state is in
+the first API page. Review evidence must belong to the exact checkpoint head; review
+activity attached to an older commit does not advance the current wait. It does not
+flag healthy pending waits. It marks a run stalled only when actionable CI/review
+evidence is newer than the checkpoint and has remained unattended beyond the
+configured threshold.
+
+Immediately before emitting a stall record, the watchdog re-fetches the current PR
+state/head, latest trusted checkpoint, and current CI state when CI is the expected
+event. If the PR closed, the head/checkpoint changed, or a newer CI run is now queued
+or in progress, newer repository state wins and the stale detection is discarded.
+The watchdog never overwrites the primary checkpoint; it emits one idempotent,
+separate resume/stall record keyed to that checkpoint version instead. Only records
+authored by `github-actions[bot]` satisfy that idempotency check, so outside commenters
+cannot forge a suppression marker.
+
+The watchdog is detection/recovery context only. It does not merge, edit product
+code, weaken gates, or restart a stopped ChatGPT/web-chat execution. Automatic
+resumption requires an external supervisor and is a separate capability.
+
 ## 3. Progress checkpoints
 
 For substantial runs, report concise checkpoints at useful boundaries:
