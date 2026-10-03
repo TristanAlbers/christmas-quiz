@@ -335,37 +335,43 @@ def revalidate_stall_candidate(
     evidence: Evidence,
     now: datetime,
     threshold: timedelta,
-) -> tuple[bool, list[dict[str, Any]]]:
+) -> tuple[bool, list[dict[str, Any]], Evidence | None]:
     current_pull = client.get(f"/repos/{client.repo}/pulls/{pr_number}")
     if current_pull.get("state") != "open":
-        return False, []
+        return False, [], None
     if current_pull.get("head", {}).get("sha") != head_sha:
-        return False, []
+        return False, [], None
 
     comments = client.get_all(f"/repos/{client.repo}/issues/{pr_number}/comments")
     checkpoint = latest_checkpoint(comments)
     if checkpoint is None:
-        return False, comments
+        return False, comments, None
 
     current_comment, current_marker = checkpoint
     if current_comment.get("id") != checkpoint_comment.get("id"):
-        return False, comments
+        return False, comments, None
     if current_comment.get("updated_at") != checkpoint_comment.get("updated_at"):
-        return False, comments
+        return False, comments, None
     if current_marker != marker:
-        return False, comments
+        return False, comments, None
+
+    current_evidence = evidence
+    if current_marker["expected"] == "ci":
+        current_evidence = ci_evidence(client, head_sha)
+        if current_evidence is None:
+            return False, comments, None
 
     current_updated_at = parse_time(current_comment["updated_at"])
     if not should_stall(
         current_marker,
         current_updated_at,
         head_sha,
-        evidence,
+        current_evidence,
         now,
         threshold,
     ):
-        return False, comments
-    return True, comments
+        return False, comments, None
+    return True, comments, current_evidence
 
 
 def run_watchdog(
@@ -433,7 +439,7 @@ def run_watchdog(
             stalled_count += 1
             continue
 
-        valid, current_comments = revalidate_stall_candidate(
+        valid, current_comments, current_evidence = revalidate_stall_candidate(
             client,
             pr_number,
             head_sha,
@@ -457,12 +463,13 @@ def run_watchdog(
         if already_notified:
             continue
 
+        assert current_evidence is not None
         client.post(
             f"/repos/{client.repo}/issues/{pr_number}/comments",
-            {"body": notification_body(pr_number, marker, evidence, key)},
+            {"body": notification_body(pr_number, marker, current_evidence, key)},
         )
         print(
-            f"PR #{pr_number}: stalled after {evidence.summary}; "
+            f"PR #{pr_number}: stalled after {current_evidence.summary}; "
             f"checkpoint={checkpoint_updated_at.isoformat()}"
         )
         stalled_count += 1
