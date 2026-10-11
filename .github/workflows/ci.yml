@@ -88,7 +88,7 @@ jobs:
               tests.browser.test_issue41_dutch_first
               tests.browser.test_issue72_midnight_entry
               tests.browser.test_issue74_team_advent_panel
-              ui74_capture_temp
+              tests.browser.ui74_capture_temp
               tests.browser.test_issue79_admin_ready
               tests.browser.test_issue42_team_ui
               tests.browser.test_issue42_review_regressions
