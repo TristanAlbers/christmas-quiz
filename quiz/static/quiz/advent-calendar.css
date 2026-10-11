@@ -266,6 +266,7 @@
 }
 
 .advent-door__hinge {
+  display: none;
   position: absolute;
   z-index: 5;
   top: 0;
@@ -291,6 +292,7 @@
 .advent-door__hinge::before { top: 15%; }
 .advent-door__hinge::after { bottom: 15%; }
 .advent-door--completed .advent-door__hinge {
+  display: block;
   background: linear-gradient(90deg, #3a231c, #edc58a 58%, #654528);
 }
 
