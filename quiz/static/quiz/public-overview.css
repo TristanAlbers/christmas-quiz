@@ -568,7 +568,7 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   #overview-audio-player {
     position: absolute;
     z-index: 10;
-    top: clamp(115px, 8.4vw, 164px);
+    top: clamp(150px, 9.4vw, 190px);
     right: clamp(22px, 3vw, 62px);
     display: block;
     width: auto;
@@ -613,4 +613,37 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   }
   .game-page--overview .public-overview:has(.public-status--advent)
   .music-audio-panel__volume input { min-height: 24px; }
+}
+
+/* Permanent panel edge + brass hinge remain visible after flap rotation. */
+.game-page--overview .public-status--advent .advent-door__hinge {
+  z-index: 6;
+  left: -2px;
+  width: clamp(4px, .33cqw, 7px);
+}
+.game-page--overview .public-status--advent .advent-door__hinge::before,
+.game-page--overview .public-status--advent .advent-door__hinge::after {
+  width: clamp(5px, .4cqw, 9px);
+  left: -1px;
+}
+.game-page--overview .public-status--advent .advent-door--completed::before {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  top: -1px;
+  bottom: -1px;
+  left: -1px;
+  width: clamp(6px, .85cqw, 16px);
+  border: 1px solid #ad8357;
+  background: linear-gradient(90deg, #48232d, #8d3543 60%, #381c22);
+  box-shadow: inset 1px 0 1px #f2d0ac55, 2px 0 3px #000a;
+  pointer-events: none;
+}
+.game-page--overview .public-status--advent
+.advent-door--completed:nth-child(3n+2)::before {
+  background: linear-gradient(90deg, #0e392e, #42735c 60%, #0a2f27);
+}
+.game-page--overview .public-status--advent
+.advent-door--completed:nth-child(5n+4)::before {
+  background: linear-gradient(90deg, #634121, #b88750 60%, #51361d);
 }
