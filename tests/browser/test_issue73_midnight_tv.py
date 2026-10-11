@@ -287,7 +287,8 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                                          reveal.x-reveal.width/2) < 1.5 &&
                                 Math.abs((choc.top-reveal.top) -
                                          (reveal.bottom-choc.bottom)) < 1.5,
-                            chocolateSameSize: Math.abs(choc.width-liveChoc.width) < 2 &&
+                            chocolateSameSize:
+                                Math.abs(choc.width-liveChoc.width) < 2 &&
                                                Math.abs(choc.height-liveChoc.height) < 2
                         };
                     }""")
@@ -323,7 +324,9 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     )"""))
                     await self._screenshot(page, "tv-v4-opening-a14-b10-1920x1080")
                     await page.wait_for_timeout(350)
-                    await self._screenshot(page, "tv-v4-opening-midframe-a14-b10-1920x1080")
+                    await self._screenshot(
+                        page, "tv-v4-opening-midframe-a14-b10-1920x1080"
+                    )
                     await page.wait_for_timeout(1200)
                     self.assertEqual(
                         await page.evaluate("window.__issue73Echoes"), 1
