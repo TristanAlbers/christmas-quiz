@@ -151,15 +151,27 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                 browser = await playwright.chromium.launch()
                 try:
                     context = await browser.new_context(
-                        viewport={"width": 390, "height": 844}
+                        viewport={"width": 320, "height": 844}
                     )
                     page = await context.new_page()
                     await page.goto(f"{self.live_server_url}/admin-login/")
-                    await self._screenshot(page, "admin-login-390")
+                    await self._assert_narrow(page, 320)
+                    await self._screenshot(page, "admin-login-320")
+                    await page.get_by_label("Gebruikersnaam").focus()
+                    self.assertNotEqual(
+                        await page.get_by_label("Gebruikersnaam").evaluate(
+                            "(el) => getComputedStyle(el).outlineStyle"
+                        ),
+                        "none",
+                    )
                     await page.get_by_label("Gebruikersnaam").fill("midnight-admin")
                     await page.get_by_label("Wachtwoord").fill("incorrect")
                     await page.get_by_role("button", name="Open Game Master").click()
                     await page.get_by_text("Ongeldige inloggegevens.").wait_for()
+                    await self._assert_narrow(page, 320)
+                    await page.set_viewport_size({"width": 390, "height": 844})
+                    await self._assert_narrow(page, 390)
+                    await self._screenshot(page, "admin-login-390")
                     await page.get_by_label("Wachtwoord").fill("admin-secret")
                     await page.get_by_role("button", name="Open Game Master").click()
                     self.assertTrue(page.url.endswith("/admin-game/"))
