@@ -454,3 +454,83 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
     grid-row: 2;
   }
 }
+
+/* V4 comparison pass: ensure the persistent audio tray fits a 1080p TV. */
+@media (min-width: 1000px) {
+  .game-page--overview .public-status--music {
+    min-height: 0;
+    padding-top: .4rem;
+  }
+  .game-page--overview .public-status--music .public-music-header {
+    padding-top: .1rem;
+    padding-bottom: .35rem;
+  }
+  .game-page--overview .public-status--music .music-stage--midnight {
+    min-height: min(55vh, 600px);
+    padding: clamp(1rem, 1.25vw, 1.8rem);
+  }
+  .game-page--overview:has(.public-status--music) .music-audio-panel {
+    width: min(100% - 1.5rem, 1120px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 370px);
+    gap: .7rem;
+    margin: .8rem .75rem .3rem auto;
+  }
+  .game-page--overview:has(.public-status--music) .music-audio-panel__copy > p:last-child {
+    font-size: .77rem;
+    line-height: 1.25;
+  }
+  .game-page--overview:has(.public-status--music) .music-audio-panel__controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: .7rem;
+    min-width: 0;
+  }
+  .game-page--overview:has(.public-status--music) .music-audio-panel__controls button {
+    min-height: 2.5rem;
+    padding: .35rem .5rem;
+    font-size: .82rem;
+  }
+  .game-page--overview:has(.public-status--music) .music-audio-panel__volume {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .4rem;
+  }
+}
+/* Phone: the original V4 presents a single compact utility header. */
+@media (max-width: 780px) {
+  .game-page--team:has(.music-quiz--phone) .page-header {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: .4rem;
+    padding: .1rem 0 .5rem;
+  }
+  .game-page--team:has(.music-quiz--phone) .page-header > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .45rem;
+    min-width: 0;
+  }
+  .game-page--team:has(.music-quiz--phone) .page-header .eyebrow {
+    margin: 0;
+    font-size: 1.05rem;
+    letter-spacing: -.03em;
+  }
+  .game-page--team:has(.music-quiz--phone) .page-header h1 {
+    margin: 0;
+    font-size: .75rem;
+  }
+  .game-page--team:has(.music-quiz--phone) .page-header button {
+    min-height: 2.2rem;
+    padding: .3rem .55rem;
+    font-size: .75rem;
+  }
+  .game-page--team:has(.music-quiz--phone) #question-pane {
+    margin: .65rem 0 .2rem;
+  }
+  .game-page--team:has(.music-quiz--phone) .music-quiz--phone {
+    gap: .72rem;
+    padding: 1.05rem 1rem 1.1rem;
+  }
+  .game-page--team:has(.music-quiz--phone) .music-quiz--phone h2 {
+    font-size: clamp(1.85rem, 8.4vw, 2.3rem);
+  }
+}
