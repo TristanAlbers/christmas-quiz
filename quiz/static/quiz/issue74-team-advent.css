@@ -33,7 +33,7 @@
   border-bottom: 1px solid rgba(192, 161, 106, .42);
   color: #f4dba6;
   font-family: var(--font-display);
-  font-size: .95rem;
+  font-size: 1rem;
   font-weight: 400;
   letter-spacing: -.02em;
   text-transform: none;
@@ -47,7 +47,7 @@
   margin: 0;
   color: var(--christmas-cream-50);
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.65rem;
   font-weight: 400;
   letter-spacing: -.025em;
 }
@@ -57,13 +57,13 @@
   right: .85rem;
 }
 .game-page--team:has(.team-advent-panel) .page-header button {
-  min-height: 1.85rem;
+  min-height: 2.35rem;
   padding: .25rem .45rem;
   border-color: rgba(231, 201, 127, .38);
   border-radius: .45rem;
   background: rgba(255, 250, 240, .06);
   color: var(--christmas-cream-50);
-  font-size: .65rem;
+  font-size: .82rem;
   opacity: .78;
 }
 .team-advent-meta {
@@ -73,7 +73,7 @@
   gap: .55rem;
   margin: .35rem 0 .48rem;
   color: #dac8a9;
-  font-size: .69rem;
+  font-size: .875rem;
   line-height: 1.25;
   font-variant-numeric: tabular-nums;
 }
@@ -82,12 +82,12 @@
   position: absolute;
   top: -4.75rem;
   right: .85rem;
-  font-size: .68rem;
+  font-size: .875rem;
 }
 .game-page--team:has(.team-advent-panel) .team-resource-bar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.07fr);
-  grid-template-rows: 5.2rem 2.5rem;
+  grid-template-rows: 5.8rem 2.85rem;
   gap: .38rem;
   margin: 0 0 .48rem;
 }
@@ -125,7 +125,7 @@
 .game-page--team:has(.team-advent-panel) .resource-card--coins .resource-points-label {
   order: -1;
   color: #e0c99f;
-  font-size: .7rem;
+  font-size: .875rem;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -142,7 +142,7 @@
 }
 .game-page--team:has(.team-advent-panel) .resource-card--fragments > strong {
   flex: 0 0 auto;
-  font-size: .7rem;
+  font-size: .825rem;
   font-weight: 500;
 }
 .game-page--team:has(.team-advent-panel) .fragment-track {
@@ -160,7 +160,7 @@
   border-radius: .08rem;
   background: #763446;
   color: #f1cf92;
-  font-size: .62rem;
+  font-size: .82rem;
 }
 .game-page--team:has(.team-advent-panel) .fragment-chip--empty {
   width: max-content;
@@ -236,12 +236,12 @@
 .game-page--team:has(.team-advent-panel) .resource-reverse-copy { display: grid; min-width: 0; gap: .06rem; }
 .resource-reverse-copy strong {
   color: #f0bf8c;
-  font-size: .625rem;
+  font-size: .8rem;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
-.resource-reverse-copy b { color: #fff2cc; font-size: 1.05rem; line-height: 1; text-transform: uppercase; }
-.resource-reverse-copy small { color: #efd8c0; font-size: .56rem; line-height: 1.15; }
+.game-page--team:has(.team-advent-panel) .resource-reverse-copy b { color: #fff2cc; font-size: 1.05rem; line-height: 1.1; text-transform: uppercase; }
+.game-page--team:has(.team-advent-panel) .resource-reverse-copy small { color: #efd8c0; font-size: .8rem; line-height: 1.25; }
 .game-page--team:has(.team-advent-panel) .resource-card--shop {
   grid-column: 2;
   grid-row: 2;
@@ -254,12 +254,12 @@
   border-color: #f3d49b;
   background: linear-gradient(140deg, #e4bc79, #b88643);
   color: #182f26;
-  font-size: .62rem;
+  font-size: .82rem;
   text-align: center;
 }
 .game-page--team:has(.team-advent-panel) .resource-card--shop::after { content: none; }
 .game-page--team:has(.team-advent-panel) .resource-card--shop strong {
-  font-size: .7rem;
+  font-size: .875rem;
   line-height: 1.1;
   text-transform: uppercase;
 }
@@ -305,7 +305,7 @@
 .team-advent-panel__number {
   margin: 0 0 .28rem;
   color: #70482d;
-  font-size: .6rem;
+  font-size: .8rem;
   font-weight: 650;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -314,7 +314,7 @@
   margin: 0;
   color: #2d3f31;
   font-family: var(--font-display);
-  font-size: 1.55rem;
+  font-size: 1.72rem;
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: -.025em;
@@ -323,8 +323,8 @@
   margin: .28rem 0 .5rem;
   color: #344034;
   font-family: var(--font-display);
-  font-size: .88rem;
-  line-height: 1.38;
+  font-size: 1.125rem;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .team-advent-panel .puzzle-media-list {
@@ -351,7 +351,7 @@
 .team-advent-panel .puzzle-image-figure figcaption {
   padding: .22rem .45rem;
   color: #ecdbb8;
-  font-size: .62rem;
+  font-size: .82rem;
   line-height: 1.3;
 }
 .team-advent-panel .puzzle-audio-card {
@@ -366,7 +366,7 @@
 }
 .team-advent-panel .puzzle-audio-card figcaption {
   color: #4f4d3d;
-  font-size: .62rem;
+  font-size: .82rem;
   font-weight: 700;
   letter-spacing: 0;
 }
@@ -389,7 +389,7 @@
 .team-advent-panel .answer-form label {
   grid-column: 1 / -1;
   color: #eee0bf;
-  font-size: .7rem;
+  font-size: .9rem;
   font-weight: 500;
 }
 .team-advent-panel .answer-form input,
@@ -415,7 +415,7 @@
   border-color: #e2b57b;
   background: #9c3644;
   color: #fff9e9;
-  font-size: .72rem;
+  font-size: .95rem;
   white-space: nowrap;
 }
 .team-advent-panel .answer-form button:hover:not(:disabled) { background: #b14050; }
@@ -432,7 +432,7 @@
   align-items: center;
   gap: .38rem;
   width: 100%;
-  min-height: 3.1rem;
+  min-height: 4rem;
   padding: .4rem .5rem;
   border: 1px solid #816f50;
   border-radius: .3rem;
@@ -455,14 +455,14 @@
   border-color: #d1ad63;
   background: transparent;
   color: #e9ca8e;
-  font-size: .72rem;
+  font-size: .9rem;
 }
 .team-advent-panel .puzzle-action-copy { gap: .05rem; }
-.team-advent-panel .puzzle-action-copy strong { font-size: .72rem; }
+.team-advent-panel .puzzle-action-copy strong { font-size: .95rem; }
 .team-advent-panel .puzzle-action-copy small {
   color: #c8c0a3;
-  font-size: .6rem;
-  line-height: 1.15;
+  font-size: .8rem;
+  line-height: 1.3;
   opacity: 1;
 }
 .team-advent-panel .puzzle-action-status { display: none; }
@@ -470,7 +470,7 @@
   display: block;
   grid-column: 2;
   color: #f0c694;
-  font-size: .65rem;
+  font-size: .8rem;
   line-height: 1.2;
 }
 .team-advent-panel .puzzle-action-button:disabled {
@@ -487,7 +487,7 @@
   }
   .resource-reverse-card { width: 2.25rem; }
   .resource-reverse-copy small { display: none; }
-  .team-advent-panel .answer-form { grid-template-columns: minmax(0, 1fr) 5.5rem; }
+  .team-advent-panel .answer-form { grid-template-columns: minmax(0, 1fr) 6.25rem; }
   .team-advent-panel .puzzle-action-stack { grid-template-columns: 1fr; }
   .team-advent-panel .puzzle-action-button { padding-inline: .55rem; }
 }
