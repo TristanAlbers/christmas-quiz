@@ -167,6 +167,35 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                         "none",
                     )
 
+                    # A changed invalid-package reason is a read-only update.
+                    # It must not replace the still-valid native selection.
+                    old_diagnostic_context = await page.locator(
+                        "#admin-package-diagnostics .poll-context"
+                    ).input_value()
+                    await asyncio.to_thread(
+                        (self.games / "broken-package" / "game.json").write_text,
+                        "{broken",
+                        encoding="utf-8",
+                    )
+                    await page.get_by_text(
+                        "game.json is missing, unreadable, or invalid JSON"
+                    ).wait_for(timeout=5000)
+                    self.assertNotEqual(
+                        await page.locator(
+                            "#admin-package-diagnostics .poll-context"
+                        ).input_value(),
+                        old_diagnostic_context,
+                    )
+                    self.assertTrue(
+                        await selector.evaluate(
+                            "el => el === window.__readySelect && "
+                            "document.activeElement === el"
+                        )
+                    )
+                    self.assertEqual(
+                        await selector.input_value(), "christmas-2026-demo"
+                    )
+
                     # Hold native select pointer through real status swaps.
                     bounds = await selector.bounding_box()
                     await page.mouse.move(
