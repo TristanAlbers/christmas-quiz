@@ -100,7 +100,7 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                         await overview.locator("html").get_attribute("lang"), "nl"
                     )
                     public_text = await overview.locator("#overview-state").inner_text()
-                    self.assertIn("De kerststrijd is begonnen", public_text)
+                    self.assertIn("De adventrace is begonnen", public_text)
                     self.assertIn("Adventkalender", public_text)
                     self.assertNotIn("ADVENT_QUIZ", public_text)
                     self.assertNotIn("Advent calendar", public_text)
