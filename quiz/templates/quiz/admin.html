@@ -15,9 +15,20 @@
 </head>
 <body class="game-page game-page--admin">
   <main class="app-shell app-shell-wide">
-    <header class="page-header"><div><p class="eyebrow">Quizzmass · Midnight Advent</p><h1>Game Master</h1><p class="gm-header-caption">Regietafel · Spelvoorbereiding en spelbeheer</p></div>
+    <header class="page-header">
+      <div class="gm-page-brand">
+        <span class="gm-brand-seal" aria-hidden="true">Q</span>
+        <div>
+          <p class="gm-brand-wordmark">Quizzmass</p>
+          <p class="gm-brand-caption">Game Master · Spelleiding</p>
+        </div>
+      </div>
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Uitloggen</button></form>
     </header>
+    <div class="gm-page-title">
+      <div><p class="eyebrow">Spelbeheer / Kerst 2026</p><h1>Game Master</h1><p class="gm-header-caption">De regietafel · Overzicht en bediening van het kerstspel.</p></div>
+      <span class="gm-ready-pill" aria-hidden="true">Klaarzetten</span>
+    </div>
     {% if error %}<p role="alert">{{ error }}</p>{% endif %}
     <section id="live-admin" aria-label="Live spelbeheer">
       <div id="admin-poller" hx-get="{% url 'admin_state' %}" hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
