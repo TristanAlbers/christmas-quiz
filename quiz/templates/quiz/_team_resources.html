@@ -7,14 +7,11 @@
     <strong class="resource-points-value">{{ state.points }}</strong>
     <span class="resource-points-label">punten</span>
   </div>
-  <div class="resource-card resource-card--fragments" aria-label="Verzamelde fragmenten">
+  <div class="resource-card resource-card--fragments" aria-label="Fragmenten (decoratieve kaarten)">
     <strong>Fragmenten</strong>
-    <div class="fragment-track">
-      {% for fragment in state.fragments %}
-        <span class="fragment-chip" title="Verzameld fragment">{{ fragment }}</span>
-      {% empty %}
-        <span class="fragment-chip fragment-chip--empty">Nog geen fragmenten</span>
-      {% endfor %}
+    <div class="fragment-track" aria-hidden="true">
+      <span class="fragment-chip">✧</span>
+      <span class="fragment-chip">✦</span>
     </div>
   </div>
   <div class="resource-card resource-card--reverse{% if state.uno_reverse_active %} resource-card--active{% endif %}">

@@ -127,9 +127,8 @@
         <div class="puzzle-action-static">
           <button class="puzzle-action-button puzzle-action-button--hint" type="button"
                   data-hint-action data-hint-legal="0" data-hint-disabled-label="Al onthuld" disabled>
-            <span class="hint-token" aria-hidden="true">?</span>
-            <span class="puzzle-action-copy"><strong>Hint gebruiken</strong><small><span data-hint-inventory>{{ state.hint_tokens }}</span> beschikbaar</small></span>
-            <span class="puzzle-action-status" data-hint-status>Al onthuld</span>
+            <span class="puzzle-action-mark" aria-hidden="true">✧</span>
+            <span class="puzzle-action-copy"><strong>Hint</strong><small data-hint-status>Al onthuld</small></span>
           </button>
         </div>
       {% elif state.question.hint_available %}
@@ -143,18 +142,16 @@
           <input type="hidden" name="request_id" value="{{ use_request_id }}">
           <button class="puzzle-action-button puzzle-action-button--hint" type="submit"
                   data-hint-action data-hint-legal="1"{% if not state.hint_tokens %} disabled{% endif %}>
-            <span class="hint-token" aria-hidden="true">?</span>
-            <span class="puzzle-action-copy"><strong>Hint gebruiken</strong><small><span data-hint-inventory>{{ state.hint_tokens }}</span> beschikbaar</small></span>
-            <span class="puzzle-action-status" data-hint-status>{% if state.hint_tokens %}Beschikbaar{% else %}Geen hints{% endif %}</span>
+            <span class="puzzle-action-mark" aria-hidden="true">✧</span>
+            <span class="puzzle-action-copy"><strong>Hint</strong><small data-hint-status>{{ state.hint_tokens }} beschikbaar</small></span>
           </button>
         </form>
       {% else %}
         <div class="puzzle-action-static">
           <button class="puzzle-action-button puzzle-action-button--hint" type="button"
                   data-hint-action data-hint-legal="0" data-hint-disabled-label="Geen hint voor deze vraag" disabled>
-            <span class="hint-token" aria-hidden="true">?</span>
-            <span class="puzzle-action-copy"><strong>Hint gebruiken</strong><small><span data-hint-inventory>{{ state.hint_tokens }}</span> beschikbaar</small></span>
-            <span class="puzzle-action-status" data-hint-status>Niet beschikbaar</span>
+            <span class="puzzle-action-mark" aria-hidden="true">✧</span>
+            <span class="puzzle-action-copy"><strong>Hint</strong><small data-hint-status>Niet beschikbaar</small></span>
           </button>
         </div>
       {% endif %}
@@ -164,9 +161,8 @@
             <button class="puzzle-action-button puzzle-action-button--skip" type="button"
                     data-skip-action data-skip-legal="0" data-skip-cost="{{ state.skip_cost }}"
                     data-skip-disabled-label="Laatste vraag" disabled>
-              <span aria-hidden="true">»</span>
-              <span class="puzzle-action-copy"><strong>Vraag overslaan</strong><small>{{ state.skip_cost }} punten · rondt de vraag direct af</small></span>
-              <span class="puzzle-action-status" data-skip-status>Niet mogelijk</span>
+              <span class="puzzle-action-mark" aria-hidden="true">↠</span>
+              <span class="puzzle-action-copy"><strong>Overslaan</strong><small data-skip-status>Laatste vraag</small></span>
             </button>
           </div>
         {% else %}
@@ -180,9 +176,8 @@
             <input type="hidden" name="request_id" value="{{ skip_request_id }}">
             <button class="puzzle-action-button puzzle-action-button--skip" type="submit"
                     data-skip-action data-skip-legal="1" data-skip-cost="{{ state.skip_cost }}"{% if state.points < state.skip_cost %} disabled{% endif %}>
-              <span aria-hidden="true">»</span>
-              <span class="puzzle-action-copy"><strong>Vraag overslaan</strong><small>{{ state.skip_cost }} punten · rondt de vraag direct af</small></span>
-              <span class="puzzle-action-status" data-skip-status>{% if state.points < state.skip_cost %}Te weinig punten{% else %}Beschikbaar{% endif %}</span>
+              <span class="puzzle-action-mark" aria-hidden="true">↠</span>
+              <span class="puzzle-action-copy"><strong>Overslaan</strong><small data-skip-status>{{ state.skip_cost }} punten{% if state.points < state.skip_cost %} · tekort{% endif %}</small></span>
             </button>
           </form>
         {% endif %}

@@ -121,6 +121,7 @@
   font-weight: 400;
   line-height: .82;
   letter-spacing: -.06em;
+  margin-top: .35rem;
 }
 .game-page--team:has(.team-advent-panel) .resource-card--coins .resource-points-label {
   order: -1;
@@ -147,28 +148,27 @@
 }
 .game-page--team:has(.team-advent-panel) .fragment-track {
   display: flex;
-  flex-wrap: nowrap;
-  gap: .22rem;
-  max-height: 2rem;
+  align-items: center;
+  gap: .3rem;
   margin: 0;
-  overflow: auto;
 }
 .game-page--team:has(.team-advent-panel) .fragment-chip {
-  min-height: 1.35rem;
-  padding: .12rem .35rem;
-  border-color: #b88961;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.55rem;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid #b88961;
   border-radius: .08rem;
   background: #763446;
   color: #f1cf92;
-  font-size: .82rem;
+  font-size: 1rem;
+  line-height: 1;
 }
-.game-page--team:has(.team-advent-panel) .fragment-chip--empty {
-  width: max-content;
-  border-color: #897149;
-  background: transparent;
-  color: #cbbd9e;
-  font-weight: 500;
-}
+.game-page--team:has(.team-advent-panel) .fragment-chip:first-child { transform: rotate(-3deg); }
+.game-page--team:has(.team-advent-panel) .fragment-chip:last-child { transform: rotate(5deg); }
 .game-page--team:has(.team-advent-panel) .resource-card--reverse {
   grid-column: 2;
   grid-row: 1;
@@ -442,15 +442,14 @@
   margin: 0;
 }
 .team-advent-panel .puzzle-action-button {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  gap: .38rem;
+  gap: .4rem;
   width: 100%;
   height: 100%;
+  min-height: 3.85rem;
   box-sizing: border-box;
-  min-height: 5.25rem;
-  padding: .4rem .5rem;
+  padding: .55rem .65rem;
   border: 1px solid #816f50;
   border-radius: .3rem;
   background: #15372e;
@@ -464,37 +463,51 @@
   background: #15372e;
   color: #eee0bd;
 }
-.team-advent-panel .puzzle-action-button:hover:not(:disabled) { border-color: #d0ae6d; background: #1c493c; }
-.team-advent-panel .puzzle-action-button .hint-token {
-  width: 1.4rem;
-  height: 1.4rem;
-  margin: 0;
-  border-color: #d1ad63;
-  background: transparent;
-  color: #e9ca8e;
-  font-size: .9rem;
+.team-advent-panel .puzzle-action-button:hover:not(:disabled) {
+  border-color: #d0ae6d;
+  background: #1c493c;
 }
-.team-advent-panel .puzzle-action-copy { gap: .05rem; }
-.team-advent-panel .puzzle-action-copy strong { font-size: 1rem; }
+.team-advent-panel .puzzle-action-mark {
+  display: block;
+  flex: 0 0 1.2rem;
+  color: #e9ca8e;
+  font-size: 1.15rem;
+  line-height: 1;
+  text-align: center;
+}
+.team-advent-panel .puzzle-action-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  gap: .12rem;
+}
+.team-advent-panel .puzzle-action-copy strong {
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1.2;
+}
 .team-advent-panel .puzzle-action-copy small {
+  display: block;
   color: #c8c0a3;
   font-size: .875rem;
   line-height: 1.3;
+  font-weight: 400;
   opacity: 1;
-}
-.team-advent-panel .puzzle-action-status { display: none; }
-.team-advent-panel .puzzle-action-button:disabled .puzzle-action-status {
-  display: block;
-  grid-column: 2;
-  color: #f0c694;
-  font-size: .875rem;
-  line-height: 1.2;
+  overflow-wrap: break-word;
 }
 .team-advent-panel .puzzle-action-button:disabled {
   border-style: dashed;
   background: #223830;
-  color: #aaa58f;
-  opacity: .72;
+  color: #c7c2b0;
+  opacity: 1;
+}
+.team-advent-panel .puzzle-action-button:disabled .puzzle-action-mark {
+  color: #bba982;
+}
+.team-advent-panel .puzzle-action-button:disabled .puzzle-action-copy small {
+  color: #bfb8a6;
 }
 .game-page--team:has(.team-advent-panel) #action-feedback { color: var(--christmas-cream-100); }
 @media (max-width: 21rem) {

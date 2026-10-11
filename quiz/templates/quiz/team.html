@@ -89,10 +89,6 @@
       const balance = Number.parseInt(resources.dataset.balance || '0', 10);
       const hintTokens = Number.parseInt(resources.dataset.hintTokens || '0', 10);
 
-      document.querySelectorAll('[data-hint-inventory]').forEach(function (node) {
-        node.textContent = String(hintTokens);
-      });
-
       const hintButton = document.querySelector('[data-hint-action]');
       if (hintButton) {
         const legal = hintButton.dataset.hintLegal === '1';
@@ -100,9 +96,9 @@
         hintButton.disabled = !enabled;
         const status = hintButton.querySelector('[data-hint-status]');
         if (status) {
-          status.textContent = enabled
-            ? 'Beschikbaar'
-            : (legal ? 'Geen hints' : (hintButton.dataset.hintDisabledLabel || 'Niet beschikbaar'));
+          status.textContent = legal
+            ? `${hintTokens} beschikbaar`
+            : (hintButton.dataset.hintDisabledLabel || 'Niet beschikbaar');
         }
       }
 
@@ -114,14 +110,10 @@
         skipButton.disabled = !enabled;
         const status = skipButton.querySelector('[data-skip-status]');
         if (status) {
-          if (enabled) {
-            status.textContent = 'Beschikbaar';
-          } else if (!legal) {
-            status.textContent = skipButton.dataset.skipDisabledLabel || 'Niet mogelijk';
-          } else {
-            const missing = Math.max(0, cost - balance);
-            status.textContent = `${missing} ${missing === 1 ? 'punt' : 'punten'} tekort`;
-          }
+          const costText = `${cost} ${cost === 1 ? 'punt' : 'punten'}`;
+          status.textContent = !legal
+            ? (skipButton.dataset.skipDisabledLabel || 'Niet mogelijk')
+            : (enabled ? costText : `${costText} · tekort`);
         }
       }
     }

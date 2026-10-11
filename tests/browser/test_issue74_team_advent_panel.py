@@ -233,6 +233,23 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
         )
         await page.mouse.up()
 
+    async def _action_content_within_buttons(self, page):
+        return await page.evaluate(
+            """() => [...document.querySelectorAll('.puzzle-action-button')].every(button => {
+                const outer = button.getBoundingClientRect();
+                const items = button.querySelectorAll(
+                    '.puzzle-action-mark, .puzzle-action-copy, .puzzle-action-copy strong, .puzzle-action-copy small'
+                );
+                return [...items].every(item => {
+                    const box = item.getBoundingClientRect();
+                    return box.left >= outer.left - 0.5
+                        && box.right <= outer.right + 0.5
+                        && box.top >= outer.top - 0.5
+                        && box.bottom <= outer.bottom + 0.5;
+                });
+            })"""
+        )
+
     def test_rendered_phone_tablet_media_and_polling_interactions(self):
         async def check():
             from playwright.async_api import async_playwright
@@ -301,6 +318,13 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                     self.assertIsNotNone(skip_box)
                     self.assertLess(abs(hint_box["y"] - skip_box["y"]), 8)
                     self.assertLess(abs(hint_box["height"] - skip_box["height"]), 1)
+                    self.assertEqual(
+                        await page.locator(".fragment-chip").all_inner_texts(),
+                        ["✧", "✦"],
+                    )
+                    self.assertTrue(
+                        await self._action_content_within_buttons(page)
+                    )
                     self.assertGreater(skip_box["x"], hint_box["x"])
                     self.assertGreaterEqual(
                         await page.locator(".team-advent-panel__question").evaluate(
@@ -455,6 +479,11 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                         "__issue74NarrowHintPointerNode",
                     )
                     await narrow.locator(".hint-card").wait_for(timeout=5000)
+                    self.assertTrue(await self._action_content_within_buttons(narrow))
+                    self.assertEqual(
+                        await narrow.locator(".fragment-chip").all_inner_texts(),
+                        ["✧", "✦"],
+                    )
                     post_hint_height = await narrow.locator(
                         "[data-hint-action]"
                     ).evaluate("el => el.getBoundingClientRect().height")
@@ -520,6 +549,9 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                         )
                         skip = page.locator("[data-skip-action]")
                         self.assertTrue(await skip.is_disabled())
+                        self.assertTrue(
+                            await self._action_content_within_buttons(page)
+                        )
                         self.assertIn(
                             "Laatste vraag",
                             await skip.get_attribute("data-skip-disabled-label"),
