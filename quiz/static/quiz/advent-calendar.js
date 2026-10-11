@@ -78,6 +78,12 @@
     // This retains the complete live calendar when polling changes nothing.
     const stableCurrent = current.cloneNode(true);
     const stableNext = next.cloneNode(true);
+    // The ephemeral opening overlay is not part of the server projection.
+    // Exclude it from equality checks so the 500ms clock poll cannot tear
+    // down the animation halfway through.
+    stableCurrent.querySelectorAll(".advent-door-opening-echo").forEach(function (node) {
+      node.remove();
+    });
     stableCurrent.querySelector(".game-clock strong").textContent = "";
     stableNext.querySelector(".game-clock strong").textContent = "";
     if (!stableCurrent.isEqualNode(stableNext)) return;
