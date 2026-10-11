@@ -10,7 +10,12 @@ from django.contrib.auth import get_user_model
 from django.test import LiveServerTestCase, override_settings
 from django.utils import timezone
 
-from quiz.application import admin_freeze, admin_unfreeze, force_complete_current, start_game
+from quiz.application import (
+    admin_freeze,
+    admin_unfreeze,
+    force_complete_current,
+    start_game,
+)
 from quiz.contracts import Actor, AdminPuzzle, AdminTeam, StartGame
 from quiz.models import AccountRole, FragmentAward, PuzzleProgress, Run, TeamRun
 
@@ -38,7 +43,10 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
         for team_id, completed in (("a", 13), ("b", 10)):
             PuzzleProgress.objects.filter(
                 run_id=self.run_id, team_id=team_id, number__lte=completed
-            ).update(completed=True, reward_awarded=True, completion_route="admin_force")
+            ).update(
+                completed=True, reward_awarded=True,
+                completion_route="admin_force",
+            )
             TeamRun.objects.filter(
                 run_id=self.run_id, team_id=team_id
             ).update(current_number=completed + 1)
@@ -74,7 +82,9 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         cabinet = page.locator(
                             f'.advent-progress[data-team-id="{team_id}"]'
                         )
-                        self.assertEqual(await cabinet.locator(".advent-door").count(), 25)
+                        self.assertEqual(
+                            await cabinet.locator(".advent-door").count(), 25
+                        )
                         self.assertEqual(
                             await cabinet.locator(".advent-door--completed").count(),
                             completed,
@@ -94,7 +104,8 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                             len(await cabinet.locator(
                                 ".advent-door__chocolate"
                             ).evaluate_all(
-                                "els => [...new Set(els.slice(0,11).map(e => e.dataset.motif))]"
+                                "els => [...new Set(els.slice(0,11)"
+                                ".map(e => e.dataset.motif))]"
                             )),
                             11,
                         )
@@ -103,7 +114,9 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         "01:24",
                     )
                     self.assertEqual(
-                        await page.locator("#overview-poller").get_attribute("hx-trigger"),
+                        await page.locator("#overview-poller").get_attribute(
+                            "hx-trigger"
+                        ),
                         "every 500ms [!document.hidden], "
                         "visibilitychange[!document.hidden] from:document",
                     )
@@ -119,12 +132,15 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     await page.evaluate("""() => {
                         window.__issue73Echoes = 0;
                         new MutationObserver(records => {
-                            records.forEach(record => record.addedNodes.forEach(node => {
+                            records.forEach(record => {
+                                record.addedNodes.forEach(node => {
                                 if (node.nodeType === 1 &&
-                                    node.classList.contains('advent-door-opening-echo')) {
+                                    node.classList.contains(
+                                        'advent-door-opening-echo')) {
                                     window.__issue73Echoes += 1;
                                 }
-                            }));
+                                });
+                            });
                         }).observe(document.body, {childList: true});
                     }""")
                     await asyncio.to_thread(
@@ -193,7 +209,8 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     )
                     await frozen.wait_for(timeout=5000)
                     self.assertIn(
-                        "Bevroren", await frozen.locator(".advent-freeze-badge").inner_text()
+                        "Bevroren",
+                        await frozen.locator(".advent-freeze-badge").inner_text()
                     )
                     self.assertEqual(
                         await frozen.locator(".advent-door").count(), 25
@@ -231,7 +248,9 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                             '.advent-door--completed .advent-door__motif'
                         ).count(), 14
                     )
-                    await self._screenshot(page, "tv-v4-reduced-motion-a14-b10-1920x1080")
+                    await self._screenshot(
+                        page, "tv-v4-reduced-motion-a14-b10-1920x1080"
+                    )
                 finally:
                     await context.close()
                     await browser.close()
