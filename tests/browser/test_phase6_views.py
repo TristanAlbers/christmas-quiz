@@ -166,10 +166,8 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertNotIn("gloeiende rode neus", tv_starting.lower())
                     self.assertNotIn("rudolph", tv_starting.lower())
                     for page in (a_page, b_page):
-                        self.assertNotIn(
-                            "gloeiende rode neus",
-                            (await page.locator(".challenge-stage").inner_text()).lower(),
-                        )
+                        stage_text = await page.locator(".challenge-stage").inner_text()
+                        self.assertNotIn("gloeiende rode neus", stage_text.lower())
                     await self._screenshot(tv_page, "challenge-gathering-tv-1920x1080")
                     await self._screenshot(a_page, "challenge-gathering-phone-390x844")
 
