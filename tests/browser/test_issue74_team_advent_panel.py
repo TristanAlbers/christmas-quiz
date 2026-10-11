@@ -300,7 +300,14 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                     self.assertIsNotNone(hint_box)
                     self.assertIsNotNone(skip_box)
                     self.assertLess(abs(hint_box["y"] - skip_box["y"]), 8)
+                    self.assertLess(abs(hint_box["height"] - skip_box["height"]), 1)
                     self.assertGreater(skip_box["x"], hint_box["x"])
+                    self.assertGreaterEqual(
+                        await page.locator(".team-advent-panel__question").evaluate(
+                            "el => parseFloat(getComputedStyle(el).fontSize)"
+                        ),
+                        19,
+                    )
                     self.assertTrue(
                         await page.evaluate(
                             "document.documentElement.scrollWidth <= window.innerWidth"
@@ -400,6 +407,16 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                     self.assertIsNotNone(narrow_hint)
                     self.assertIsNotNone(narrow_skip)
                     self.assertGreater(narrow_skip["y"], narrow_hint["y"] + 20)
+                    self.assertLess(
+                        abs(narrow_skip["height"] - narrow_hint["height"]),
+                        1,
+                    )
+                    self.assertGreaterEqual(
+                        await narrow.locator(".team-advent-sheet").evaluate(
+                            "el => el.getBoundingClientRect().height"
+                        ),
+                        368,
+                    )
                     self.assertTrue(
                         await narrow.evaluate(
                             "document.documentElement.scrollWidth <= window.innerWidth"
@@ -438,6 +455,13 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                         "__issue74NarrowHintPointerNode",
                     )
                     await narrow.locator(".hint-card").wait_for(timeout=5000)
+                    post_hint_height = await narrow.locator(
+                        "[data-hint-action]"
+                    ).evaluate("el => el.getBoundingClientRect().height")
+                    post_skip_height = await narrow.locator(
+                        "[data-skip-action]"
+                    ).evaluate("el => el.getBoundingClientRect().height")
+                    self.assertLess(abs(post_hint_height - post_skip_height), 1)
                     await self._screenshot(narrow, "issue74-after-320-no-media.png")
 
                     tablet_context, tablet = await self._page(
