@@ -107,6 +107,7 @@ jobs:
               tests.browser.test_phase6_views
               tests.browser.test_phase4_views
               tests.browser.test_issue31_freeze
+              tests.browser.test_issue76_frozen_phone
               tests.browser.test_issue43_public_overview
               tests.browser.test_issue73_midnight_tv
 
@@ -118,7 +119,7 @@ jobs:
         run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Create screenshot directory
-        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74
+        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-76
 
       - name: Run browser shard
         run: >-
@@ -127,10 +128,12 @@ jobs:
           -v "${{ github.workspace }}/artifacts/ui-74:/tmp/ui74"
           -v "${{ github.workspace }}/artifacts/ui-79:/tmp/ui79"
           -v "${{ github.workspace }}/artifacts/ui-73:/tmp/ui73"
+          -v "${{ github.workspace }}/artifacts/ui-76:/tmp/ui76"
           -e UI72_SCREENSHOT_DIR=/tmp/ui72
           -e UI74_SCREENSHOT_DIR=/tmp/ui74
           -e UI79_SCREENSHOT_DIR=/tmp/ui79
           -e UI73_SCREENSHOT_DIR=/tmp/ui73
+          -e UI76_SCREENSHOT_DIR=/tmp/ui76
           -e DJANGO_SETTINGS_MODULE=config.test_settings
           -e DJANGO_SECRET_KEY=ci-only-not-used-in-production
           -e DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
@@ -191,3 +194,11 @@ jobs:
         run: |
           test "$FAST_RESULT" = "success"
           test "$BROWSER_RESULT" = "success"
+
+      - name: Preserve issue 76 frozen phone screenshots
+        if: always() && matrix.shard == 'effects-challenge'
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-76
+          path: artifacts/ui-76/*.png
+          if-no-files-found: warn
