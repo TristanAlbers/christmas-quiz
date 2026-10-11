@@ -54,6 +54,7 @@
       {% if state.music.previous_winner_team_id %}<p class="music-winner">Laatste punt: Team {{ state.music.previous_winner_team_id|upper }}</p>{% endif %}
     </div>
   {% elif state.challenge %}
+    <div class="public-challenge-status"><span aria-hidden="true"></span><p>Een kerstuitdaging is begonnen</p></div>
     <section class="challenge-overview challenge-overview--{{ state.challenge.phase }}" aria-label="Kerstuitdaging">
       <p class="challenge-kicker">Kerstuitdaging · {{ state.challenge.challenge_number }} van 2</p>
       <h2 class="visually-hidden">Team {{ state.challenge.initiator_team_id|upper }} daagt Team {{ state.challenge.challenged_team_id|upper }} uit</h2>
