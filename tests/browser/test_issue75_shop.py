@@ -98,6 +98,27 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                 self.assertEqual(await page.locator(".shop-item").count(), 4)
                 prices = await page.locator(".shop-item__price").all_inner_texts()
                 self.assertEqual(prices, self.expected)
+                # Readable type on a real phone; never squeeze labels into
+                # unreadably small text to fit the shop above the fold.
+                text_sizes = await page.evaluate(
+                    """() => Object.fromEntries(
+                        [
+                            ['name', '.shop-item__details strong'],
+                            ['description', '.shop-item__details small'],
+                            ['price', '.shop-item__price'],
+                            ['button', '.shop-item__action button'],
+                        ].map(([key, selector]) => [
+                            key,
+                            parseFloat(getComputedStyle(
+                                document.querySelector(selector)
+                            ).fontSize),
+                        ])
+                    )"""
+                )
+                self.assertGreaterEqual(text_sizes["name"], 16)
+                self.assertGreaterEqual(text_sizes["description"], 14)
+                self.assertGreaterEqual(text_sizes["price"], 15)
+                self.assertGreaterEqual(text_sizes["button"], 14)
                 self.assertEqual(
                     await page.locator(".shop-dialog__balance strong").inner_text(),
                     "✦ 6 punten" if self.alt_prices else "✦ 8 punten",
@@ -155,6 +176,20 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                 self.assertGreaterEqual(metrics["dialog"]["x"], 0)
                 self.assertLessEqual(
                     metrics["dialog"]["x"] + metrics["dialog"]["width"], 390
+                )
+                # Four actions keep their own bounds and the dialog scrolls
+                # vertically rather than compressing fonts or spilling sideways.
+                self.assertTrue(
+                    await page.evaluate(
+                        """() => [...document.querySelectorAll(
+                            '.shop-item__details, .shop-item__action'
+                        )].every(node => {
+                            const child = node.getBoundingClientRect();
+                            const parent = node.closest('.shop-item').getBoundingClientRect();
+                            return child.left >= parent.left - 1
+                                && child.right <= parent.right + 1;
+                        })"""
+                    )
                 )
                 button = page.locator(".shop-item--hint button")
                 await button.evaluate("el => { window.__issue75Button = el; }")
