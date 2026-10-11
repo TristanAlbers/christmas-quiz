@@ -195,3 +195,250 @@
     display: none;
   }
 }
+
+/* #83 — Pause/Victory V1. Durable state comes from the Django projection.
+   Confetti is the only transient layer; a finished team never returns to play. */
+.game-page--team:has(.endgame-team-result) {
+  background: #061815;
+}
+.game-page--team:has(.endgame-team-result) .page-header,
+.game-page--team:has(.endgame-team-result) #team-actions,
+.game-page--team:has(.endgame-team-result) #question-pane,
+.game-page--team:has(.endgame-team-result) #action-feedback {
+  display: none;
+}
+
+.endgame-team-result {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 2.25rem 1.5rem;
+  overflow-y: auto;
+  border: 9px solid #2a3330;
+  border-radius: 26px;
+  background:
+    radial-gradient(ellipse 65% 40% at 50% 37%, #51452b85, transparent 78%),
+    linear-gradient(160deg, #0b221c 3%, #203e2b 95%);
+  color: #f6e7c8;
+  text-align: center;
+}
+.endgame-team-result::before {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  inset: 18px;
+  border: 1px solid #c6aa6e50;
+  border-radius: 2px;
+  pointer-events: none;
+}
+.endgame-team-result__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 33rem);
+  gap: 0;
+}
+.endgame-team-result__sigil {
+  margin: 0 0 1.6rem;
+  color: #f5d68f;
+  font: normal clamp(5rem, 23vw, 8rem)/1 Georgia, serif;
+  text-shadow: 0 0 2rem #d7ae6033;
+}
+.endgame-team-result__kicker {
+  margin: 0 0 1.1rem;
+  color: #f0cf84;
+  font: 800 .7rem/1.45 system-ui, sans-serif;
+  letter-spacing: .19em;
+  text-transform: uppercase;
+}
+.endgame-team-result h1 {
+  margin: 0 0 1.8rem;
+  color: #f8e8c7;
+  font: normal clamp(2.5rem, 11vw, 4rem)/1.1 Georgia, serif;
+  letter-spacing: -.025em;
+}
+.endgame-team-result__copy {
+  max-width: 19rem;
+  margin: 0;
+  color: #e5d4b1;
+  font: normal 1.05rem/1.55 Georgia, serif;
+}
+.endgame-team-result__divider {
+  margin: 2.6rem 0 1.15rem;
+  color: #e2b772;
+  font: normal 1.35rem/1 Georgia, serif;
+  letter-spacing: .13em;
+}
+.endgame-team-result__stamp {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: .8rem 1.15rem;
+  border: 1px solid #b69658;
+  color: #e7d4b0;
+  font: 500 .75rem/1.4 system-ui, sans-serif;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+.endgame-team-result--complete {
+  background: radial-gradient(ellipse at 50% 40%, #46402c60, transparent 65%), linear-gradient(160deg, #10251f, #24392f);
+}
+.endgame-continuing-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .6rem;
+  align-items: center;
+  margin: .25rem 0 .65rem;
+  padding: .55rem .75rem;
+  border: 1px solid #b4945e;
+  border-radius: .2rem;
+  background: #17382c;
+  color: #f1d7a2;
+  font: 500 .875rem/1.35 system-ui, sans-serif;
+}
+.endgame-continuing-note strong { color: #f7dfb0; }
+
+/* Keep the existing twin cabinets visible and readable while the second team plays. */
+.game-page--overview .public-status--advent .endgame-tv-ribbon {
+  align-self: center;
+  max-width: 100%;
+  padding: .38cqw 1.25cqw;
+  border: 1px solid #ae8e55;
+  background: #172c23ed;
+  color: #e6c88e;
+  font: 700 clamp(14px, 1.1cqw, 23px)/1.35 Georgia, serif;
+  text-align: center;
+}
+
+/* The final result is a distinct noninteractive stage, after both calendars reach 25. */
+.game-page--overview .public-status--advent .endgame-tv-final {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 3cqw;
+  background:
+    radial-gradient(ellipse at 50% 50%, #66503533, transparent 65%),
+    linear-gradient(160deg, #0b231ff5, #19291ff2 70%, #321f20f4);
+  color: #f6e8c6;
+  text-align: center;
+}
+.endgame-tv-final::before,
+.endgame-tv-final::after {
+  content: "";
+  position: absolute;
+  inset: 1.5cqw;
+  border: 1px solid #bda06b6e;
+  pointer-events: none;
+}
+.endgame-tv-final::after { inset: 2.35cqw; border-color: #a98b5447; }
+.endgame-tv-final__inner { position: relative; z-index: 1; width: min(100%, 1100px); }
+.endgame-tv-final__sigils {
+  margin-bottom: 1.3cqw;
+  color: #edcd84;
+  font: normal clamp(40px, 5.5cqw, 105px)/1 Georgia, serif;
+}
+.endgame-tv-final__kicker {
+  margin: 0 0 .8cqw;
+  color: #f0cd88;
+  font: 800 clamp(12px, 1.1cqw, 23px)/1.4 system-ui, sans-serif;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+.endgame-tv-final h2 {
+  margin: 0 0 1cqw;
+  color: #f6e6bc;
+  font: normal clamp(38px, 5.3cqw, 104px)/1 Georgia, serif;
+}
+.endgame-tv-final__intro {
+  margin: 0 0 2cqw;
+  color: #e5d2aa;
+  font: normal clamp(16px, 1.45cqw, 29px)/1.35 Georgia, serif;
+}
+.endgame-tv-final__teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.8cqw;
+  width: min(100%, 1080px);
+  margin: 0 auto;
+}
+.endgame-tv-final__team {
+  display: grid;
+  justify-items: center;
+  gap: .5cqw;
+  padding: 1.2cqw;
+  border: 1px solid #9d855d;
+  background: #143329b8;
+}
+.endgame-tv-final__team--winner {
+  border-color: #efc977;
+  background: linear-gradient(130deg, #473a2ac9, #163a2bcb);
+}
+.endgame-tv-final__team span {
+  color: #eac681;
+  font: 800 clamp(12px, 1.04cqw, 21px)/1.3 system-ui, sans-serif;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.endgame-tv-final__team strong {
+  color: #f7e4b7;
+  font: normal clamp(26px, 2.9cqw, 58px)/1 Georgia, serif;
+}
+.endgame-tv-final__team small {
+  color: #dfcfac;
+  font: normal clamp(12px, .9cqw, 19px)/1.4 Georgia, serif;
+}
+.endgame-tv-final__clock {
+  margin: 2cqw 0 0;
+  color: #e7d4ad;
+  font: 500 clamp(15px, 1.3cqw, 27px)/1.5 system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.endgame-tv-final__clock strong { color: #f9eac8; }
+
+/* The transient celebration is candlelit and borderless, not a second paper dialog. */
+.endgame-celebration--winner .endgame-celebration__veil,
+.endgame-celebration--overview-winner .endgame-celebration__veil {
+  background: radial-gradient(ellipse at 50% 42%, #5644298a, #071d16ed 75%);
+}
+.endgame-celebration--winner .endgame-celebration__card,
+.endgame-celebration--overview-winner .endgame-celebration__card {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #f7e8c9;
+}
+.endgame-celebration--winner .endgame-celebration__card h2,
+.endgame-celebration--overview-winner .endgame-celebration__card h2 {
+  color: #f7e8c9;
+  font-weight: 400;
+}
+.endgame-celebration--winner .endgame-celebration__eyebrow,
+.endgame-celebration--overview-winner .endgame-celebration__eyebrow { color: #efcd87; }
+.endgame-celebration--winner .endgame-celebration__card p:last-child,
+.endgame-celebration--overview-winner .endgame-celebration__card p:last-child {
+  color: #e7d3ac;
+  font-family: Georgia, serif;
+}
+.endgame-celebration--winner .endgame-celebration__icon,
+.endgame-celebration--overview-winner .endgame-celebration__icon {
+  color: #f5d68f;
+  font-family: Georgia, serif;
+}
+.endgame-celebration--winner .endgame-celebration__snow,
+.endgame-celebration--overview-winner .endgame-celebration__snow { display: none; }
+@media (max-width: 480px) {
+  .endgame-team-result { border-width: 8px; border-radius: 23px; padding-inline: 1.2rem; }
+  .endgame-team-result__kicker { letter-spacing: .14em; }
+  .endgame-team-result h1 { font-size: clamp(2.4rem, 10.7vw, 3.35rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .endgame-team-result, .endgame-tv-final, .endgame-tv-ribbon { animation: none !important; transition: none !important; }
+}
