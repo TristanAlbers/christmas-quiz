@@ -50,3 +50,359 @@
   .challenge-role { width: fit-content; }
   .admin-challenge__route { grid-template-columns: 1fr; }
 }
+
+/* #82 — approved Midnight Advent V4 Challenge takeover.
+   Render only authoritative public title/body; the answer form is never polled away. */
+body.game-page--overview:has(.public-status--challenge) {
+  background: #061815;
+  color: #f9edce;
+}
+body.game-page--overview:has(.public-status--challenge)::before { display: none; }
+.game-page--overview .public-overview:has(.public-status--challenge) {
+  container-type: inline-size;
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: clamp(8px, .6vw, 14px);
+  border: clamp(4px, .38vw, 8px) solid #28312e;
+  border-radius: 10px;
+  background: #061815;
+  box-shadow: inset 0 0 0 1px #ae8c4b42;
+}
+.game-page--overview .public-status--challenge {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1cqw, 20px);
+  min-height: calc(100vh - 40px);
+  margin: 0;
+  padding: clamp(14px, 2.1cqw, 44px) clamp(16px, 2.6cqw, 53px) clamp(12px, 1cqw, 22px);
+  border: 1px solid #ae8c4b42;
+  border-radius: 1px;
+  background: radial-gradient(ellipse 65% 45% at 50% -15%, #6e593840, transparent), #061815;
+  color: #f9edce;
+  box-shadow: none;
+}
+.game-page--overview .public-status--challenge .public-brand {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  text-align: center;
+}
+.game-page--overview .public-status--challenge .public-brand__name {
+  margin: 0;
+  color: #f5e5bc;
+  font: normal clamp(34px, 4.7cqw, 94px)/.95 Georgia, serif;
+  letter-spacing: -.045em;
+  text-shadow: 0 .25cqw 2cqw #0007;
+}
+.game-page--overview .public-status--challenge .public-brand__subtitle {
+  margin: .55cqw 0 0;
+  color: #c7bca4;
+  font-size: clamp(9px, .8cqw, 17px);
+  letter-spacing: .1em;
+}
+.game-page--overview .public-status--challenge .game-clock {
+  justify-items: end;
+  color: #c6b48f;
+  font: normal clamp(11px, .84cqw, 18px) system-ui, sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.game-page--overview .public-status--challenge .game-clock strong {
+  color: #f9edce;
+  font: 600 clamp(24px, 2.4cqw, 49px)/1.4 system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.game-page--overview .public-status--challenge .challenge-overview {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(8px, .7cqw, 16px);
+  margin: 0 .6cqw;
+  padding: clamp(16px, 1.6cqw, 34px) clamp(18px, 5.7cqw, 116px);
+  border: 1px solid #927149;
+  border-radius: 0;
+  background: radial-gradient(circle at 50% 40%, #5b352755, transparent 60%), #0b211c;
+  color: #f9edce;
+  box-shadow: none;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.game-page--overview .challenge-kicker {
+  margin: 0;
+  color: #d5b77a;
+  font: normal clamp(15px, 1.1cqw, 22px) Georgia, serif;
+}
+.game-page--overview .challenge-duel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(12px, 2cqw, 40px);
+  color: #e6c995;
+  font: normal clamp(30px, 3.2cqw, 64px)/1.05 Georgia, serif;
+}
+.game-page--overview .challenge-duel__ornament {
+  color: #eecb84;
+  font: normal clamp(50px, 5.1cqw, 100px)/1 Georgia, serif;
+}
+.game-page--overview .challenge-overview__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, .85cqw, 20px);
+  width: 100%;
+}
+.game-page--overview .challenge-overview__copy h3 {
+  margin: 0;
+  color: #f0d19b;
+  font: normal clamp(25px, 2.3cqw, 47px)/1.12 Georgia, serif;
+}
+.game-page--overview .challenge-overview__question {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, .8cqw, 20px);
+  width: min(100%, 64cqw);
+  min-height: clamp(140px, 12cqw, 240px);
+  padding: clamp(18px, 1.8cqw, 42px) clamp(20px, 2.4cqw, 52px);
+  border: 1px solid #a68450;
+  background: linear-gradient(145deg, #16352b, #0b241c);
+  box-shadow: inset 0 0 0 .5cqw #0c251d, 0 1cqw 2cqw #0005;
+}
+.game-page--overview .challenge-overview__question > span {
+  color: #dfbb83;
+  font: 650 clamp(12px, 1.1cqw, 21px) system-ui, sans-serif;
+  letter-spacing: .15em;
+}
+.game-page--overview .challenge-overview__question p {
+  max-width: 55cqw;
+  margin: 0;
+  color: #ffebc7;
+  font: normal clamp(24px, 2.3cqw, 47px)/1.24 Georgia, serif;
+}
+.game-page--overview .challenge-overview__question--waiting time {
+  color: #ffebc7;
+  font: normal clamp(28px, 3cqw, 60px)/1.2 Georgia, serif;
+  font-variant-numeric: tabular-nums;
+}
+.game-page--overview .challenge-overview__question--waiting p {
+  font-size: clamp(15px, 1.1cqw, 22px);
+}
+.game-page--overview .challenge-overview__seal {
+  margin: 4px 0 0;
+  padding: .4cqw 1.2cqw;
+  border-top: 1px solid #836341;
+  border-bottom: 1px solid #836341;
+  color: #e7c27d;
+  font: normal clamp(15px, 1.05cqw, 22px) Georgia, serif;
+}
+.game-page--overview .public-status--challenge .public-challenge-footer {
+  margin: 0;
+  color: #e0cc9e;
+  font: normal clamp(14px, 1.15cqw, 24px) Georgia, serif;
+  text-align: center;
+}
+.game-page--overview .public-challenge-footer span { margin: 0 1.5cqw; color: #b68e5b; }
+
+@media (min-width: 960px) and (min-aspect-ratio: 14/9) {
+  .game-page--overview .public-overview:has(.public-status--challenge) { height: 100vh; }
+  .game-page--overview .public-status--challenge { height: calc(100vh - 36px); min-height: 0; }
+}
+
+@media (max-width: 700px) {
+  .game-page--overview .public-status--challenge .public-advent-header {
+    grid-template-columns: 1fr auto;
+  }
+  .game-page--overview .public-status--challenge .public-brand {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .game-page--overview .public-status--challenge .public-advent-event { grid-column: 1; grid-row: 2; }
+  .game-page--overview .public-status--challenge .game-clock { grid-column: 2; grid-row: 2; }
+  .game-page--overview .challenge-overview__question { width: 100%; }
+}
+
+/* Challenge phone: keep the approved simple dark shell and only a small puzzle,
+   input and submit; keep the form node mounted through 500 ms polling. */
+.game-page--team:has(.challenge-stage) {
+  min-height: 100svh;
+  background: radial-gradient(ellipse 85% 25% at 50% 0%, #36574480, transparent), linear-gradient(145deg, #0d2a24, #061815 65%);
+  color: #f7e8c9;
+}
+.game-page--team:has(.challenge-stage)::before { display: none; }
+.game-page--team:has(.challenge-stage) .app-shell {
+  width: min(calc(100% - 1rem), 44rem);
+  min-height: calc(100svh - 1rem);
+  margin: .5rem auto;
+  padding: .75rem .85rem 1.4rem;
+  border: 1px solid #c59c5935;
+  border-radius: 8px;
+  background: #0b211c;
+  color: #f7e8c9;
+  box-shadow: 0 1rem 3rem #0004;
+}
+.game-page--team:has(.challenge-stage) .page-header {
+  margin: 0;
+  padding: .2rem 0 .7rem;
+  border-bottom: 1px solid #c0a16a65;
+}
+.game-page--team:has(.challenge-stage) .page-header .eyebrow {
+  color: #f4dba6;
+  font: normal 1.35rem Georgia, serif;
+  letter-spacing: -.035em;
+  text-transform: none;
+}
+.game-page--team:has(.challenge-stage) .page-header h1 {
+  color: #f7e8c9;
+  font: normal 1.5rem Georgia, serif;
+}
+.game-page--team:has(.challenge-stage) .page-header button {
+  min-height: 2.4rem;
+  padding: .35rem .65rem;
+  border-color: #9b855c;
+  background: transparent;
+  color: #edd6a5;
+  font-size: .78rem;
+}
+.game-page--team:has(.challenge-stage) .team-advent-meta {
+  margin: .7rem 0;
+  color: #ddc9a3;
+  font-size: .85rem;
+}
+.game-page--team:has(.challenge-stage) .team-advent-meta > span:last-child {
+  position: static;
+}
+.game-page--team:has(.challenge-stage) .team-advent-meta strong { color: #f0d49b; }
+.game-page--team:has(.challenge-stage) .challenge-status--active,
+.game-page--team:has(.challenge-stage) #team-actions .team-resource-bar { display: none; }
+.game-page--team:has(.challenge-stage) #question-pane {
+  margin: .7rem 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage {
+  display: grid;
+  gap: .9rem;
+  min-width: 0;
+  min-height: 0;
+  padding: .85rem .8rem 1rem;
+  border: 1px solid #af7f56;
+  border-radius: 0;
+  background: linear-gradient(145deg, #2b302a, #0c261e);
+  color: #f7e8c9;
+  box-shadow: none;
+  overflow-wrap: anywhere;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage::before { content: none; }
+.game-page--team:has(.challenge-stage) .challenge-stage__kicker {
+  margin: 0;
+  color: #f8d69f;
+  font: 700 .7rem system-ui, sans-serif;
+  letter-spacing: .08em;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__role {
+  margin: -.5rem 0 0;
+  color: #ddceaa;
+  font-size: .77rem;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__gathering {
+  display: grid;
+  gap: 1.3rem;
+  min-height: 15rem;
+  padding: 1.5rem .7rem;
+  place-content: center;
+  text-align: center;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__gathering h2 {
+  color: #f8d69f;
+  font: normal clamp(1.7rem, 7vw, 2.1rem)/1.2 Georgia, serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-start-timer {
+  color: #f7e8c9;
+  font: normal 1.6rem Georgia, serif;
+  font-variant-numeric: tabular-nums;
+}
+.game-page--team:has(.challenge-stage) .challenge-question-phone {
+  min-width: 0;
+  padding: 1.1rem .9rem;
+  border: 1px solid #e7d2aa;
+  background: linear-gradient(145deg, #dcc59f, #ba9f78);
+  color: #243c31;
+}
+.game-page--team:has(.challenge-stage) .challenge-question-phone > span {
+  font: 750 .7rem system-ui, sans-serif;
+  color: #725031;
+  letter-spacing: .11em;
+}
+.game-page--team:has(.challenge-stage) .challenge-question-phone h2 {
+  margin: .6rem 0 0;
+  color: #233b30;
+  font: normal clamp(1.4rem, 6.6vw, 1.65rem)/1.22 Georgia, serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-question-phone p {
+  margin: .7rem 0 0;
+  color: #233b30;
+  font: normal 1rem/1.45 Georgia, serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-question-phone .challenge-image {
+  display: block;
+  max-width: 100%;
+  max-height: 45vh;
+  margin: .8rem auto 0;
+  object-fit: contain;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form {
+  display: grid;
+  gap: .55rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form label {
+  color: #e9d6b5;
+  font-size: .81rem;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form input {
+  width: 100%;
+  min-height: 49px;
+  margin: 0;
+  padding: .75rem;
+  border: 1px solid #c3a779;
+  border-radius: 3px;
+  background: #f9f0dd;
+  color: #283b2e;
+  font-size: 1rem;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form button {
+  min-height: 49px;
+  border: 1px solid #d9aa78;
+  border-radius: 3px;
+  background: #983f4d;
+  color: #fff3df;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__footnote {
+  margin: 0;
+  color: #e4c99f;
+  font-size: .75rem;
+  text-align: center;
+}
+.game-page--team:has(.challenge-stage) #action-feedback { color: #f4dfb5; }
+@media (prefers-reduced-motion: reduce) {
+  .public-status--challenge *,
+  .game-page--team:has(.challenge-stage) .challenge-stage * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
