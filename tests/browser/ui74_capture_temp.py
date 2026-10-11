@@ -1,3 +1,4 @@
+# ruff: noqa: E501, I001
 import asyncio
 import json
 import os

@@ -71,7 +71,7 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                     self.assertEqual(html_lang, "nl")
                     visible = await page.locator("body").inner_text()
                     self.assertIn("Uitloggen", visible)
-                    self.assertIn("Antwoord", visible)
+                    self.assertIn("Jullie antwoord", visible)
                     self.assertIn("Winkel", visible)
                     self.assertNotIn("ADVENT_QUIZ", visible)
                     self.assertNotIn("PUZZLE", visible)

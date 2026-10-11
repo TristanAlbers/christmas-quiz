@@ -267,7 +267,7 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                         await page.locator(".resource-card--coins").inner_text(),
                     )
                     self.assertIn(
-                        "Actief",
+                        "ACTIEF",
                         await page.locator(".resource-card--reverse").inner_text(),
                     )
                     self.assertIn(

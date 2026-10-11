@@ -99,13 +99,13 @@
               </audio>
             </figure>
           {% else %}
-            <img class="puzzle-image" src="{{ media.url }}" alt="{{ media.alt|default:'Privé-aanwijzing bij de puzzel' }}">
+            <figure class="puzzle-image-figure"><img class="puzzle-image" src="{{ media.url }}" alt="{{ media.alt|default:'Privé-aanwijzing bij de puzzel' }}"><figcaption>{{ media.alt|default:'Afbeelding bij de puzzel' }}</figcaption></figure>
           {% endif %}
         {% endfor %}
       </div>
       {% else %}
       {% for media_url in state.question.media_urls %}
-        <img class="puzzle-image" src="{{ media_url }}" alt="Privé-aanwijzing bij de puzzel">
+        <figure class="puzzle-image-figure"><img class="puzzle-image" src="{{ media_url }}" alt="Privé-aanwijzing bij de puzzel"><figcaption>Afbeelding bij de puzzel</figcaption></figure>
       {% endfor %}
       {% endif %}
       {% if state.question.hint %}<aside class="hint-card"><span class="hint-token" aria-hidden="true">?</span><div><strong>Hint onthuld</strong><p>{{ state.question.hint }}</p></div></aside>{% endif %}

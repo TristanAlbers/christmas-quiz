@@ -26,12 +26,13 @@
     </header>
     <section id="live-game" aria-label="Huidig spel">
       <p id="connection-status" role="status"></p>
+      <p id="game-announcement" class="visually-hidden" role="status"></p>
       <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}">
       <div id="poller" hx-get="{% url 'team_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
            hx-sync="#live-game:drop" hx-include="#view-context, #actions-context, #event-context"
            hx-target="#game-status" hx-swap="innerHTML"></div>
-      <div id="game-status" aria-live="polite">
+      <div id="game-status" aria-live="off">
         {% include 'quiz/_team_state.html' with replace_pane=False replace_actions=False %}
       </div>
       {% include 'quiz/_team_actions.html' %}
@@ -139,6 +140,8 @@
       if (startFromObservedTransition && activeChallengeResultKey !== resultKey) {
         activeChallengeResultKey = resultKey;
         activeChallengeResultExpiresAt = Date.now() + 5000;
+        const announcement = document.getElementById('game-announcement');
+        if (announcement) announcement.textContent = result.textContent.trim();
       }
 
       if (activeChallengeResultKey !== resultKey) {
