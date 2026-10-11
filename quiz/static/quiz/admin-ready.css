@@ -13,7 +13,6 @@
   background:
     radial-gradient(ellipse at 50% -16%, rgba(231, 201, 127, .19), transparent 43rem),
     linear-gradient(160deg, #133e30, var(--christmas-pine-950) 65%);
-  background-attachment: fixed;
 }
 .game-page--admin:has(.gm-ready)::before {
   background: linear-gradient(90deg, var(--christmas-pine-700), var(--christmas-gold-400), var(--christmas-red-700));
