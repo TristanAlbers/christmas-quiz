@@ -136,9 +136,12 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await runner_up.wait_for(timeout=5000)
                     await overview.wait_for(timeout=5000)
 
-                    await winner.get_by_role(
+                    await team_a.get_by_role(
                         "heading", name="Jullie winnen!"
                     ).wait_for()
+                    self.assertFalse(
+                        await winner.locator(".endgame-celebration__card").is_visible()
+                    )
                     await runner_up.get_by_role(
                         "heading", name="Team A was eerder"
                     ).wait_for()
