@@ -103,12 +103,14 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                     "✦ 6 punten" if self.alt_prices else "✦ 8 punten",
                 )
                 self.assertEqual(
-                    await page.locator(".shop-item--reverse .resource-reverse-card").count(),
+                    await page.locator(
+                        ".shop-item--reverse .resource-reverse-card"
+                    ).count(),
                     1,
                 )
                 if self.alt_prices:
                     self.assertEqual(
-                        await page.locator(".shop-item--reverse form").count(), 0
+                        await page.locator("form.shop-item--reverse").count(), 1
                     )
                     self.assertTrue(
                         await page.get_by_role(
@@ -116,11 +118,15 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                         ).is_enabled()
                     )
                     self.assertTrue(
-                        await page.locator(".shop-item--freeze [data-shop-insufficient]").is_visible()
+                        await page.locator(
+                            ".shop-item--freeze [data-shop-insufficient]"
+                        ).is_visible()
                     )
                 else:
                     self.assertEqual(
-                        await page.locator(".shop-item--reverse .shop-item__unavailable").inner_text(),
+                        await page.locator(
+                            ".shop-item--reverse .shop-item__unavailable"
+                        ).inner_text(),
                         "Al actief",
                     )
                     self.assertEqual(
@@ -159,7 +165,9 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                 self.assertTrue(await dialog.evaluate("el => el.open"))
 
                 if self.screenshot_dir:
-                    label = "alternate-snapshot" if self.alt_prices else "demo-armed-reverse"
+                    label = (
+                        "alternate-snapshot" if self.alt_prices else "demo-armed-reverse"
+                    )
                     await page.screenshot(
                         path=self.screenshot_dir / f"issue75-{label}-390x844.png",
                         full_page=False,
