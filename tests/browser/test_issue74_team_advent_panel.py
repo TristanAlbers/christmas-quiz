@@ -235,10 +235,13 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
 
     async def _action_content_within_buttons(self, page):
         return await page.evaluate(
-            """() => [...document.querySelectorAll('.puzzle-action-button')].every(button => {
+            """() => {
+                const buttons = document.querySelectorAll('.puzzle-action-button');
+                return [...buttons].every(button => {
                 const outer = button.getBoundingClientRect();
                 const items = button.querySelectorAll(
-                    '.puzzle-action-mark, .puzzle-action-copy, .puzzle-action-copy strong, .puzzle-action-copy small'
+                    '.puzzle-action-mark, .puzzle-action-copy, '
+                    + '.puzzle-action-copy strong, .puzzle-action-copy small'
                 );
                 return [...items].every(item => {
                     const box = item.getBoundingClientRect();
@@ -247,7 +250,8 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                         && box.top >= outer.top - 0.5
                         && box.bottom <= outer.bottom + 0.5;
                 });
-            })"""
+                });
+            }"""
         )
 
     def test_rendered_phone_tablet_media_and_polling_interactions(self):
