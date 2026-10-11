@@ -60,14 +60,18 @@ body.game-page--team:has(.team-ready) {
   box-sizing: border-box;
 }
 
-html {
+html:has(body.landing-page),
+html:has(body.auth-page),
+html:has(body.game-page--team:has(.team-ready)) {
   min-height: 100%;
   background: var(--color-bg);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
-body {
+body.landing-page,
+body.auth-page,
+body.game-page--team:has(.team-ready) {
   margin: 0;
   min-width: 100%;
   min-height: 100vh;
