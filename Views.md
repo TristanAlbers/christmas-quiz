@@ -1,6 +1,6 @@
 # Game Views
 
-This document describes the required views and their presentation/interaction targets. There are three main consumers:
+This document describes the required views and their presentation/interaction targets. The **2026-10-11 approved Midnight Advent redesign** in `docs/product-decisions.md` and `docs/ui/midnight-advent.md` refines the visual/layout details here while preserving all unrelated state, privacy and polling requirements. There are three main consumers:
 
 * `administrative` — the game masters. They manage the game state, intervene when necessary, and can perform privileged controls such as point adjustments.
 * `overview` — a generic public overview intended for a large shared TV. It must not expose sensitive team information such as private balances, answers, hints, or effects unless explicitly approved elsewhere.
@@ -105,9 +105,9 @@ The normal Puzzle View should use this hierarchy:
 1. a resource area with the current point balance as the strongest element;
 2. compact persistent representations of earned fragments and Uno Reverse state;
 3. the current puzzle content followed by the answer interaction;
-4. a contextual Hint action bar directly above the Skip action bar.
+4. contextual Hint and Skip actions, **side by side where width permits**, reflowing vertically on constrained phones or enlarged text without reducing their touch/readability. Both retain their contextual count/cost/legality semantics.
 
-The Hint-token balance is deliberately **not** a standalone top-level resource card. The Hint action itself shows how many purchased Hint tokens remain, whether a Hint is legal for the current puzzle, and a clear disabled state when no token can be used. The Skip action shows its current cost and a clear disabled state when the team cannot afford it or the action is otherwise illegal. Disabled state must be understandable without relying on color alone.
+The Hint-token balance is deliberately **not** a standalone top-level resource card. The **Winkel** entry must be conspicuous, and an armed Reverse should be visibly recognizable as a prominent red Reverse-style card in the team's private resource area. The Hint action itself shows how many purchased Hint tokens remain, whether a Hint is legal for the current puzzle, and a clear disabled state when no token can be used. The Skip action shows its current cost and a clear disabled state when the team cannot afford it or the action is otherwise illegal. Disabled state must be understandable without relying on color alone.
 
 Puzzle 25 is the explicit final-puzzle exception: player Skip is not available. The layout may keep the Skip position as a clearly disabled control with concise Dutch-facing explanation, but no usable Skip form/action may be exposed. Correct-answer submission remains available and administrator force completion is unaffected.
 
@@ -121,7 +121,7 @@ Target: `team`
 
 This view should be optimized for phone usage.
 
-It should use the same established visual language as the Puzzle View, but clearly communicate the frozen state and the remaining timer. Private underlying puzzle/hint content must not merely be blurred behind the freeze overlay; it should not be present in the rendered private content while frozen.
+It should use the same established visual language as the Puzzle View, but clearly communicate the frozen state with a **blue translucent animated ice layer** and the server-authoritative remaining timer. A static **non-sensitive silhouette** may suggest a puzzle underneath, but never include the actual question/media/hint markup. This is distinct from the **gold/amber global Pause** that disables all player commands while preserving the authorized underlying mode. Private underlying puzzle/hint content must not merely be blurred behind the freeze overlay; it should not be present in the rendered private content while frozen.
 
 Nothing should be interactable from this view. When a player Freeze caused this state, the persistent ice-lock view is revealed after the corresponding transient attacked/Reverse-reflected presentation finishes; authoritative interaction restrictions apply immediately even while that presentation is still covering the page.
 
@@ -139,7 +139,7 @@ The shop should present purchasable gameplay elements as deliberate cards/items 
 
 Puzzle 25 must never expose an enabled Shop/alternate Skip entry point. Any such UI is only a convenience projection of the backend rule; stale or crafted requests remain backend-rejected.
 
-Costs, availability, disabled states, and rejection feedback should be visually clear. Purchasing must remain backend-authoritative. The phone overlay must have comfortable internal padding and spacing; successful shop purchases close the overlay before transient gameplay feedback starts, while rejected purchases keep it open so the rejection remains readable.
+Each offered item shows a **high-contrast server-derived cost and availability independent of its buy button**, with the once-per-team Challenge action explicitly marked **Gratis**. Costs, availability, disabled states, and rejection feedback should be visually clear. Purchasing must remain backend-authoritative. The phone overlay must have comfortable internal padding and spacing; successful shop purchases close the overlay before transient gameplay feedback starts, while rejected purchases keep it open so the rejection remains readable.
 
 Buying Uno Reverse only arms the private Reverse indicator. The major Reverse presentation occurs later, only when an authoritative player Freeze actually triggers it. A successful Freeze purchase is presented as a major attack event rather than a quiet balance/state update.
 
@@ -195,6 +195,10 @@ During gathering, the team view shows a concise preparation state and authoritat
 The team status area should not duplicate the public Music overview: it should omit a separate `Question N of 11` heading, elapsed-question timer, team Music scores, previous-winner summary, and final-results countdown. Those status details belong on the shared public/TV overview.
 
 The answer control must remain mounted and usable across normal 500 ms polling until the authoritative question/context changes. Advancing to a new Music question is a valid context change that may replace the interaction pane.
+
+## First-finisher / Final-result View
+
+On a first team's completion of puzzle 25, present one-shot confetti followed by a **persistent, noninteractive winner tableau** on that team phone. The other team sees a brief, nonblocking notice and continues its puzzle with stable controls. The public TV retains both cabinets and a small first-winner marker; global `FINISHED` appears **only after the second team completes puzzle 25**, with one first winner and a positive non-winning completion state for the second team. Recovery/reload must restore durable results without replaying old celebrations. Follow the approved UI contract for visual treatment.
 
 ## Administrative View
 
