@@ -1,12 +1,27 @@
 {% load quiz_format %}
+{% if run_id %}
+<div class="status-card gm-live-status{% if global_state == 'PAUSED' %} gm-live-status--paused{% endif %}">
+  <div class="gm-live-status__intro">
+    <span class="gm-live-status__star" aria-hidden="true">✦</span>
+    <div>
+      <p class="eyebrow">Lopende spelronde</p>
+      <h2>{% if global_state == 'ADVENT_QUIZ' %}De adventrace is bezig{% elif global_state == 'PAUSED' %}Het spel is gepauzeerd{% elif global_state == 'MUSIC_QUIZ' %}De muziekquiz is bezig{% elif global_state == 'FINISHED' %}De race is afgelopen{% else %}De spelronde is actief{% endif %}</h2>
+      <p class="gm-live-status__note">{% if global_state == 'PAUSED' %}Alle speeltijden staan stil tot het spel wordt hervat.{% elif global_state == 'FINISHED' %}Beide teams hebben de adventrace voltooid.{% elif global_state == 'MUSIC_QUIZ' %}Volg de vragen en score in het muziekoverzicht.{% elif challenge and challenge.status == 'active' %}De kerstuitdaging is actief; volg hieronder de wedstrijd.{% else %}Beide teams spelen hun eigen kalender.{% endif %}</p>
+    </div>
+  </div>
+  <div class="gm-live-status__time">
+    <span>Speeltijd</span>
+    <strong class="game-clock">{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong>
+  </div>
+</div>
+{% else %}
 <div class="status-card">
   <div class="status-row">
     <span class="eyebrow">Huidige spelstatus</span>
     <strong class="state-badge state-{{ global_state|lower }}">{{ global_state|state_label }}</strong>
   </div>
-  {% if run_id %}<p class="muted">Spelronde {{ run_id }}</p>{% endif %}
-  {% if run_id %}<p class="game-clock">Speeltijd: <strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>{% endif %}
 </div>
+{% endif %}
 
 {% if first_finisher_team_id %}
   <aside class="finish-banner{% if global_state == 'FINISHED' %} finish-banner--final{% endif %}" role="status">
@@ -62,13 +77,40 @@
 {% endif %}
 
 {% if run_id %}
-  <div class="team-grid" data-run-id="{{ run_id }}">
+  <div class="gm-live-section-heading">
+    <div><p class="eyebrow">Het spel volgen</p><h2>Teamoverzicht</h2></div>
+    <p>Twee adventkalenders · serverstand in het echte spel</p>
+  </div>
+  <div class="team-grid gm-admin-team-grid" data-run-id="{{ run_id }}">
     {% for control in team_controls %}
-      <section class="team-card state-panel-{{ control.team.activity_state|lower }}" aria-label="Team {{ control.team.team_id|upper }}">
-        <div class="status-row"><h2>Team {{ control.team.team_id|upper }}</h2><strong class="state-badge">{{ control.team.activity_state|state_label }}</strong></div>
-        <div class="admin-team-metrics"><span>{{ control.team.points }} punten</span><span><b class="hint-token" aria-hidden="true">?</b> {{ control.team.hint_tokens }} hint{% if control.team.hint_tokens != 1 %}s{% endif %}</span><span class="mini-reverse{% if control.team.uno_reverse_active %} mini-reverse--active{% endif %}">↶ Reverse {% if control.team.uno_reverse_active %}actief{% else %}niet actief{% endif %}</span><span class="mini-challenge{% if control.team.challenge_available %} mini-challenge--available{% endif %}">★ Uitdaging {% if control.team.challenge_available %}beschikbaar{% else %}gebruikt{% endif %}</span></div>
-        {% if control.team.advent_progress %}{% include 'quiz/_advent_calendar.html' with progress=control.team.advent_progress team_id=control.team.team_id %}{% endif %}
-        {% if control.team.freeze_remaining_ms != None %}<p class="freeze-timer" data-remaining-ms="{{ control.team.freeze_remaining_ms }}">Freeze: nog {% widthratio control.team.freeze_remaining_ms 1000 1 %} seconden</p>{% endif %}
+      <section class="team-card gm-admin-team-panel state-panel-{{ control.team.activity_state|lower }}"
+               data-team="{{ control.team.team_id }}"
+               aria-label="Team {{ control.team.team_id|upper }}">
+        <header class="gm-admin-team-header">
+          <span class="gm-admin-team-letter" aria-hidden="true">{{ control.team.team_id|upper }}</span>
+          <div>
+            <h3>Team {{ control.team.team_id|upper }}</h3>
+            <p>{% if control.team.advent_progress.is_finished %}Alle vakjes voltooid{% elif control.team.activity_state == 'FREEZE' %}Bevroren{% elif control.team.advent_progress %}Huidige puzzel {{ control.team.advent_progress.completed_count|add:1 }}{% else %}{{ control.team.activity_state|state_label }}{% endif %}</p>
+          </div>
+          {% if control.team.advent_progress %}
+          <strong class="gm-admin-team-count">{{ control.team.advent_progress.completed_count }}<span>/25</span></strong>
+          {% endif %}
+        </header>
+        <div class="gm-admin-team-body">
+          {% if control.team.advent_progress %}
+            <p class="gm-admin-team-label">Adventkalender</p>
+            {% include 'quiz/_advent_calendar.html' with progress=control.team.advent_progress team_id=control.team.team_id %}
+          {% endif %}
+          <div class="admin-team-metrics">
+            <span><strong>{{ control.team.points }}</strong><small>Punten</small></span>
+            <span><strong>{{ control.team.hint_tokens }}</strong><small>Hints</small></span>
+            <span class="mini-reverse{% if control.team.uno_reverse_active %} mini-reverse--active{% endif %}"><strong aria-hidden="true">↶</strong><small>Reverse {% if control.team.uno_reverse_active %}actief{% else %}niet actief{% endif %}</small></span>
+            <span class="mini-challenge{% if control.team.challenge_available %} mini-challenge--available{% endif %}"><strong>{% if control.team.challenge_available %}Beschikbaar{% else %}Gebruikt{% endif %}</strong><small>Uitdaging</small></span>
+          </div>
+          {% if control.team.freeze_remaining_ms != None %}
+            <p class="freeze-timer" data-remaining-ms="{{ control.team.freeze_remaining_ms }}">Bevroren · nog {% widthratio control.team.freeze_remaining_ms 1000 1 %} seconden</p>
+          {% endif %}
+        </div>
       </section>
     {% endfor %}
   </div>
