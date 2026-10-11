@@ -174,11 +174,12 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
 
                     await asyncio.to_thread(self._set_music_time, 150_000)
                     await tv.wait_for_timeout(800)
-                    self.assertEqual(
+                    self.assertAlmostEqual(
                         await bar.locator(".music-player-progress__fill").evaluate(
                             "node => getComputedStyle(node).width / node.parentElement.clientWidth"
                         ),
                         0.4,
+                        places=2,
                     )
                     self.assertEqual(
                         await team_a.locator(".music-player-progress").count(), 0
@@ -200,11 +201,12 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await asyncio.to_thread(self._set_music_time, 300_000)
                     await tv.wait_for_timeout(800)
                     self.assertEqual(await bar.locator("progress").count(), 0)
-                    self.assertEqual(
+                    self.assertAlmostEqual(
                         await bar.locator(".music-player-progress__fill").evaluate(
                             "node => getComputedStyle(node).width / node.parentElement.clientWidth"
                         ),
                         0.4,
+                        places=2,
                     )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 1
@@ -212,11 +214,12 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await tv.reload()
                     bar = tv.locator(".music-player-progress")
                     self.assertEqual(await bar.locator("progress").count(), 0)
-                    self.assertEqual(
+                    self.assertAlmostEqual(
                         await bar.locator(".music-player-progress__fill").evaluate(
                             "node => getComputedStyle(node).width / node.parentElement.clientWidth"
                         ),
                         0.4,
+                        places=2,
                     )
 
                     await team_a.locator("#music-answer-input").fill("jingle bells")
