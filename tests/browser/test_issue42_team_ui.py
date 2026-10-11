@@ -128,7 +128,8 @@ class Issue42TeamUiBrowserTests(LiveServerTestCase):
                     self.assertIsNotNone(hint_box)
                     self.assertIsNotNone(skip_box)
                     self.assertLess(answer_box["y"], hint_box["y"])
-                    self.assertLess(hint_box["y"], skip_box["y"])
+                    self.assertLess(abs(hint_box["y"] - skip_box["y"]), 8)
+                    self.assertGreater(skip_box["x"], hint_box["x"])
                     self.assertTrue(
                         await page.evaluate(
                             "document.documentElement.scrollWidth <= window.innerWidth"

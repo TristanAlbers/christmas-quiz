@@ -106,6 +106,17 @@
   color: var(--christmas-cream-100);
 }
 
+.game-page--team:has(.team-advent-panel) .resource-card--reverse.resource-card--active {
+  border-color: #df8292;
+  background: linear-gradient(145deg, #a62f43, #681e31);
+  color: #fff8ed;
+  box-shadow: 0 .4rem 1rem rgba(68, 14, 27, .28);
+}
+
+.game-page--team:has(.team-advent-panel) .resource-card--reverse.resource-card--active .reverse-mark {
+  color: var(--christmas-gold-300);
+}
+
 .game-page--team:has(.team-advent-panel) .fragment-track {
   max-height: 3.2rem;
   overflow: auto;
@@ -227,6 +238,14 @@
   background: rgba(255, 250, 235, .86);
 }
 
+.team-advent-panel .hint-card {
+  color: var(--christmas-pine-950);
+}
+
+.team-advent-panel .hint-card p {
+  color: #4b402d;
+}
+
 .team-advent-panel .answer-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -330,12 +349,5 @@
 
   .team-advent-panel__question {
     max-width: 70ch;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .team-advent-panel,
-  .game-page--team:has(.team-advent-panel) .resource-card {
-    scroll-behavior: auto;
   }
 }
