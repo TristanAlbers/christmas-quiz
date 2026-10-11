@@ -146,5 +146,5 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () { observeEndgame(true); });
-  document.body.addEventListener("htmx:afterSettle", observeEndgame);
+  document.body.addEventListener("htmx:afterSettle", function () { observeEndgame(false); });
 }());
