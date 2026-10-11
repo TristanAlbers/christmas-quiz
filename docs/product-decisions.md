@@ -115,3 +115,18 @@ The earlier requirement that available Hint tokens receive deliberate visual tre
 The answer interaction appears before the Hint/Skip action pair so the current puzzle remains the primary task. Still-valid answer, Hint, and Skip controls must remain mounted across ordinary 500 ms polling. Resource polling may update displayed points/fragments/Reverse state and mutate the text/disabled properties of those contextual actions, but must not replace the controls while their semantic puzzle context is unchanged.
 
 Action/result feedback is contextual and transient. A newly resolved Challenge may briefly show its outcome, but ordinary polling must not restart that feedback interval or turn the result into permanent status chrome. This decision changes presentation only and does not alter game-state legality, costs, rewards, fragments, Challenge outcomes, or team isolation.
+
+## 2026-10-11 — approved Midnight Advent visual overhaul
+
+The product owner approves the **Midnight Advent V4** team/public visual language, **Game Master V1**, and **Pause & Victory V1**. The binding bounded design is documented in [`docs/ui/midnight-advent.md`](ui/midnight-advent.md) and its [rollout](ui/midnight-advent-rollout.md). Those documents refine **presentation only**; all unrelated normative gameplay, authorization, public/privacy, clock, challenge/music, and polling requirements remain binding.
+
+Explicit presentation refinements of older view wording:
+- On normal team phones, **Hint and Skip may sit side by side** when legible, rather than being vertically stacked; preserve contextual token/cost/disabled semantics and the no-Skip-on-puzzle-25 rule.
+- A first-finishing team's brief confetti is followed by a **persistent, non-interactive winner tableau**. The other team continues, the TV retains an unobtrusive winner marker, and global `FINISHED` still requires both teams to complete puzzle 25.
+- Global Pause has a distinct clear **gold/amber suspended** treatment for TV and teams, with no active player commands and correct preserved underlying mode/timers; a player Freeze retains the separate blue icy treatment, with **no private puzzle/hint/media rendered under ice**.
+- Completed doors on public/admin Advent calendars **open to reveal small rectangular embossed Christmas-themed chocolates**; the decorative motif has no game-rule meaning.
+- Armed Uno Reverse is conspicuous as a **red Reverse-style card**; purchase merely arms it, and a qualifying Freeze reflection gets a major event animation. The shop visibly shows **server-derived** costs and availability for Hint, Reverse, Freeze, and the free Challenge.
+- The approved Music Quiz TV aesthetic is retained; Challenge phones keep only necessary shared puzzle and answer controls, and the shared Challenge question appears on TV only after its authoritative grace period.
+- No invented team names: label teams **Team A** and **Team B**. Runtime remains Dutch-first. All new presentation effects support reduced motion and polling-stable interaction.
+
+Standalone design prototypes are references, **not** production code or permission to hardcode sample values. This UI decision does not authorize a frontend framework migration, game-engine rewrite, new admin powers, or weakening existing tests.
