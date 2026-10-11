@@ -493,3 +493,17 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
   .game-page--team:has(.challenge-stage) .team-advent-meta { right: 5.6rem; }
   .game-page--team:has(.challenge-stage) .page-header .eyebrow { font-size: 1.15rem; }
 }
+
+
+/* The state fragment has an internal positioned ancestor, so anchor the polled
+   playing clock to the viewport and align it with the centered team shell. */
+.game-page--team:has(.challenge-stage) .team-advent-meta {
+  position: fixed;
+  top: 1.5rem;
+  right: max(6.5rem, calc(50vw - 15.5rem));
+  left: auto;
+  width: auto;
+  margin: 0;
+  z-index: 3;
+  line-height: 1;
+}
