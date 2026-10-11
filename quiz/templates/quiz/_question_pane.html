@@ -75,11 +75,7 @@
       {% endif %}
     </section>
   {% elif state.team_state == 'FREEZE' %}
-    <div class="freeze-surface" aria-hidden="true">
-      <span class="freeze-surface__crystal freeze-surface__crystal--one">❄</span>
-      <span class="freeze-surface__crystal freeze-surface__crystal--two">❆</span>
-      <span class="freeze-surface__crystal freeze-surface__crystal--three">❅</span>
-    </div>
+    {# No real puzzle, hint, media, or actions are rendered while frozen. #}
   {% elif state.question %}
     <section class="team-advent-panel" aria-labelledby="team-advent-title">
       <article class="team-advent-sheet">
