@@ -1,6 +1,16 @@
 {% load quiz_format %}
 <section class="status-card public-status{% if not state.music and not state.challenge and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
-  {% if state.music or state.challenge or state.global_state == 'READY' %}
+  {% if state.challenge %}
+  <header class="challenge-tv-header">
+    <p class="challenge-tv-header__occasion">Kerstavond 2026<span>Twee teams. Eén avontuur.</span></p>
+    <div class="challenge-tv-header__brand">
+      <span aria-hidden="true">✦</span>
+      <h1>Quizzmass</h1>
+      <small>DE KERST ESCAPE ROOM</small>
+    </div>
+    <p class="challenge-tv-header__clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
+  </header>
+  {% elif state.music or state.global_state == 'READY' %}
   <header class="public-brand">
     <span class="eyebrow">Kerst Escape Room</span>
     <h1 class="public-brand__name">Quizzmass</h1>
@@ -44,22 +54,35 @@
       {% if state.music.previous_winner_team_id %}<p class="music-winner">Laatste punt: Team {{ state.music.previous_winner_team_id|upper }}</p>{% endif %}
     </div>
   {% elif state.challenge %}
-    <div class="music-stage challenge-overview challenge-overview--{{ state.challenge.phase }}">
-      <p class="eyebrow">Kerstuitdaging · {{ state.challenge.challenge_number }} van 2</p>
-      <h1>Team {{ state.challenge.initiator_team_id|upper }} daagt Team {{ state.challenge.challenged_team_id|upper }} uit</h1>
-      <div class="admin-challenge__route" aria-label="Teams in de uitdaging">
-        <span>Team {{ state.challenge.initiator_team_id|upper }} <small>uitdager</small></span><b aria-hidden="true">⚔</b><span>Team {{ state.challenge.challenged_team_id|upper }} <small>uitgedaagd</small></span>
+    <section class="challenge-overview challenge-overview--{{ state.challenge.phase }}" aria-label="Kerstuitdaging op TV">
+      <p class="challenge-overview__live"><span aria-hidden="true">●</span> Een kerstuitdaging is begonnen</p>
+      <div class="challenge-overview__stage">
+        <p class="challenge-overview__kicker">De kerstuitdaging · Ronde {{ state.challenge.challenge_number }} van 2</p>
+        <div class="challenge-overview__duel" aria-label="Deelnemende teams">
+          <span>Team {{ state.challenge.initiator_team_id|upper }}</span>
+          <span class="challenge-overview__duel-mark" aria-hidden="true">✣</span>
+          <span>Team {{ state.challenge.challenged_team_id|upper }}</span>
+        </div>
+        <p class="challenge-overview__matchup">Team {{ state.challenge.initiator_team_id|upper }} daagt Team {{ state.challenge.challenged_team_id|upper }} uit</p>
+        {% if state.challenge.phase == 'starting' %}
+          <h2>Verzamel je team — de uitdaging begint zo</h2>
+          <div class="challenge-overview__question challenge-overview__gathering">
+            <span>DE PUZZEL VOLGT NA DE VOORBEREIDING</span>
+            <time class="challenge-start-timer" data-remaining-ms="{{ state.challenge.grace_remaining_ms }}">Begint over {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden</time>
+          </div>
+          {% if state.global_state == 'PAUSED' %}<p class="challenge-overview__paused">Gepauzeerd · de tijd staat stil</p>{% endif %}
+        {% else %}
+          <h2>Dezelfde puzzel. Eén winnaar.</h2>
+          <div class="challenge-overview__question">
+            <span>DE PUZZEL · OOK OP DE TELEFOONS</span>
+            <h3>{{ state.challenge.title }}</h3>
+            <p>{{ state.challenge.body }}</p>
+          </div>
+        {% endif %}
+        <p class="challenge-overview__seal">Eerste juiste antwoord wint</p>
       </div>
-      {% if state.challenge.phase == 'starting' %}
-        <h2>Verzamel je team — de uitdaging begint zo</h2>
-        <p>De puzzel blijft verborgen tot de voorbereiding voorbij is, zodat beide teams tegelijk beginnen.</p>
-        <p class="music-timer challenge-start-timer" data-remaining-ms="{{ state.challenge.grace_remaining_ms }}">Begint over {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden</p>
-      {% else %}
-        <h2>{{ state.challenge.title }}</h2>
-        <p class="challenge-stage__question">{{ state.challenge.body }}</p>
-        <p class="challenge-stage__rules">Het eerste juiste antwoord dat de server accepteert wint. Pogingen zijn onbeperkt en zonder straf.</p>
-      {% endif %}
-    </div>
+      <footer class="challenge-overview__footer"><span aria-hidden="true">✧</span> Eén puzzel. Twee teams. <span aria-hidden="true">✧</span></footer>
+    </section>
   {% elif state.global_state == 'READY' %}
     <div class="public-ready-state"><p class="public-overview-phase">Wachten op de Game Master</p></div>
   {% else %}
