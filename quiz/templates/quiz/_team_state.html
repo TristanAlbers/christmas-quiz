@@ -13,7 +13,15 @@
         <aside class="challenge-result{% if state.challenge.freeze_applied %} challenge-result--freeze{% endif %}" role="status" aria-live="polite" hidden data-challenge-result-key="{{ state.run_id }}:{{ state.challenge.id }}:{{ state.challenge.winner_team_id|default:'' }}"><span class="challenge-result__seal" aria-hidden="true">{% if state.challenge.freeze_applied %}❄{% else %}★{% endif %}</span><div><p class="eyebrow">Uitslag uitdaging</p>{% if state.challenge.freeze_applied %}{% if state.challenge.role == 'initiator' %}<h2>Jullie hebben de uitdaging gewonnen</h2><p>Het andere team krijgt vijf minuten Freeze. Jullie adventpuzzel gaat verder.</p>{% else %}<h2>Het andere team heeft gewonnen</h2><p>Jullie team krijgt vijf minuten Freeze. Een actieve Uno Reverse blijft behouden.</p>{% endif %}{% else %}{% if state.challenge.role == 'challenged' %}<h2>Jullie hebben de uitdaging gewonnen</h2><p>Jullie hebben de sabotage gestopt. Beide teams keren zonder Freeze terug naar hun adventpuzzel.</p>{% else %}<h2>Het andere team heeft gewonnen</h2><p>De uitdaging eindigde zonder Freeze. Jullie adventpuzzel gaat verder.</p>{% endif %}{% endif %}</div></aside>
       {% endif %}
     {% endif %}
-  {% else %}<p>Wachten tot de Game Master het spel start.</p>{% endif %}
+  {% else %}
+    <section class="team-ready theme-card" aria-labelledby="team-ready-title">
+      <span class="team-ready__seal" aria-hidden="true">✦</span>
+      <p class="theme-eyebrow">Midnight Advent · Team {{ viewer_team_id|upper }}</p>
+      <h2 class="theme-display" id="team-ready-title">De deuren zijn nog gesloten</h2>
+      <p class="team-ready__intro">Jullie kerstavontuur staat klaar. Verzamel je team en maak je gereed om de 25 adventdeurtjes te openen.</p>
+      <div class="team-ready__status"><span class="team-ready__light" aria-hidden="true"></span><p><strong>Wachten op de Game Master</strong><span>Wachten tot de Game Master het spel start. De quiz verschijnt hier vanzelf.</span></p></div>
+    </section>
+  {% endif %}
 </div>
 {% if feedback %}<p id="action-feedback" class="feedback" role="status" hx-swap-oob="outerHTML">{{ feedback|dutch_feedback }}</p>{% endif %}
 {% if feedback == 'Incorrect answer. Try again.' %}<div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true" hx-swap-oob="outerHTML"></div><div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--active" aria-hidden="true" hx-swap-oob="outerHTML"><div class="incorrect-answer-effect__card"><span class="incorrect-answer-effect__santa" aria-hidden="true">🎅</span><strong>Nog niet!</strong><span>De kerstman zegt dat dit antwoord niet klopt. Probeer het opnieuw.</span></div></div>{% endif %}

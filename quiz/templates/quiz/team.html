@@ -4,7 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kerstmis Quiz · Team {{ team_name }}</title>
+  <title>Quizzmass · Team {{ team_name }}</title>
+  <link rel="stylesheet" href="{% static 'quiz/theme.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue42-team-ui.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
@@ -19,7 +20,7 @@
 </head>
 <body class="game-page game-page--team" data-endgame-surface="team" data-team-id="{{ team_name|lower }}">
   <main class="app-shell">
-    <header class="page-header"><div><p class="eyebrow">Kerst Escape Room</p><h1>Team {{ team_name }}</h1></div>
+    <header class="page-header"><div><p class="eyebrow">Quizzmass</p><h1>Team {{ team_name }}</h1></div>
       <form method="post" action="{% url 'logout' %}" style="position: relative; z-index: 40;">{% csrf_token %}<button type="submit">Uitloggen</button></form>
     </header>
     <section id="live-game" aria-label="Huidig spel">

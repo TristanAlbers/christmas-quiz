@@ -258,3 +258,156 @@
     justify-self: start;
   }
 }
+
+/* READY is the only team mode borrowing the existing Midnight Advent theme.
+   :has() follows the server-rendered state panel after the 500ms HTMX swap,
+   so entering ADVENT restores the untouched light gameplay presentation. */
+.game-page--team:has(.team-ready) {
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 50% 0, rgba(231, 201, 127, .15), transparent 29rem),
+    linear-gradient(160deg, #10382c, var(--christmas-pine-950) 75%);
+  color: var(--christmas-cream-50);
+}
+
+.game-page--team:has(.team-ready)::before {
+  display: none;
+}
+
+.game-page--team:has(.team-ready) .app-shell {
+  width: min(calc(100% - 1.25rem), 44rem);
+  margin: clamp(.65rem, 3vw, 2rem) auto;
+  padding: clamp(1rem, 4vw, 2rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: rgba(6, 24, 19, .64);
+  color: inherit;
+  box-shadow: var(--shadow-card);
+}
+
+.game-page--team:has(.team-ready) .page-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.game-page--team:has(.team-ready) .page-header .eyebrow {
+  color: var(--color-accent);
+}
+
+.game-page--team:has(.team-ready) .page-header button {
+  min-height: 2.75rem;
+  border-color: var(--color-border);
+  background: rgba(255, 250, 240, .07);
+  color: var(--christmas-cream-50);
+}
+
+.game-page--team:has(.team-ready) .page-header button:hover {
+  background: rgba(255, 250, 240, .16);
+}
+
+.game-page--team:has(.team-ready) .page-header button:focus-visible {
+  outline-color: var(--christmas-gold-300);
+}
+
+.team-ready {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  margin: 1.25rem 0 .5rem;
+  padding: clamp(1.5rem, 6vw, 3rem) clamp(1rem, 5vw, 2.6rem);
+  text-align: center;
+}
+
+.team-ready::before {
+  content: "";
+  position: absolute;
+  inset: .65rem 1rem auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--christmas-gold-400), transparent);
+}
+
+.team-ready__seal {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--christmas-gold-300);
+  box-shadow: var(--shadow-glow-gold);
+  font-size: 1.8rem;
+}
+
+.team-ready h2 {
+  max-width: 13ch;
+  margin: 0;
+  color: var(--christmas-cream-50);
+  font-size: clamp(2.15rem, 7vw, 3.6rem);
+  text-wrap: balance;
+}
+
+.team-ready__intro {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--christmas-cream-100);
+  font-size: clamp(1rem, 3.6vw, 1.15rem);
+}
+
+.team-ready__status {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: .8rem;
+  margin-top: .6rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 250, 240, .06);
+  text-align: left;
+}
+
+.team-ready__status p {
+  display: grid;
+  gap: .3rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.team-ready__status strong {
+  color: var(--christmas-gold-300);
+}
+
+.team-ready__status span:last-child {
+  color: var(--color-text-muted);
+}
+
+.team-ready__light {
+  flex: 0 0 .75rem;
+  width: .75rem;
+  height: .75rem;
+  margin-top: .35rem;
+  border-radius: 50%;
+  background: var(--christmas-gold-400);
+  box-shadow: 0 0 1rem rgba(231, 201, 127, .5);
+}
+
+/* No stale empty gameplay card should appear while no run exists. */
+.game-page--team:has(.team-ready) #question-pane,
+.game-page--team:has(.team-ready) #action-feedback:empty {
+  display: none;
+}
+
+@media (max-width: 22rem) {
+  .game-page--team:has(.team-ready) .page-header {
+    align-items: flex-start;
+  }
+
+  .team-ready {
+    padding-inline: .9rem;
+  }
+
+  .team-ready__status {
+    padding: .8rem;
+  }
+}
