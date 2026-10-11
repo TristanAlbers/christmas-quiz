@@ -177,6 +177,14 @@ jobs:
           path: artifacts/ui-79/*.png
           if-no-files-found: warn
 
+      - name: Preserve issue 76 frozen phone screenshots
+        if: always() && matrix.shard == 'effects-challenge'
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-76
+          path: artifacts/ui-76/*.png
+          if-no-files-found: warn
+
   quality-and-tests:
     name: Quality and tests
     if: always()
@@ -194,11 +202,3 @@ jobs:
         run: |
           test "$FAST_RESULT" = "success"
           test "$BROWSER_RESULT" = "success"
-
-      - name: Preserve issue 76 frozen phone screenshots
-        if: always() && matrix.shard == 'effects-challenge'
-        uses: actions/upload-artifact@v4
-        with:
-          name: midnight-advent-issue-76
-          path: artifacts/ui-76/*.png
-          if-no-files-found: warn
