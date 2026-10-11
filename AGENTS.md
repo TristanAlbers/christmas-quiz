@@ -15,6 +15,8 @@ Use this order:
 6. `docs/architecture.md` — approved implementation architecture.
 7. Current phase/issue contract or handoff — decisions for that bounded work only.
 
+**Active UI initiative (approved 2026-10-11):** For Midnight Advent issues #72–#84 and final #80, **approved presentation detail** is in `docs/ui/midnight-advent.md`, with tracer-bullet dependencies in `docs/ui/midnight-advent-rollout.md`, explicit agent routing/skill evidence in `docs/ui/midnight-advent-agent-guide.md`, and parent product spec GitHub #71. The dated `docs/product-decisions.md` entry gives these **later user-approved visual decisions precedence over stale visual wording** in earlier `Views.md`, `visual-style.md`, and historical phases; it does **not** override protected game/domain/privacy/architecture contracts. `implementation_plan.md` is a historical snapshot for old phases, not a current UI task route. The actual issue's `Blocked by` section must be satisfied, even if its label is `ready-for-agent`. Do not begin implementation before PR #70 and issue blockers are landed. A later visual decision is not permission to invent new backend rules.
+
 Do not silently resolve genuine conflicts. Route unresolved cross-boundary ambiguity to `architect`; ask the user only when authority cannot settle it.
 
 Approved baseline: synchronous Django + Gunicorn WSGI, Django templates + locally bundled HTMX, SQLite, WhiteNoise, Docker Compose, one application container, persistent `./var`. Architecture changes require an `architect` stage.
@@ -85,7 +87,8 @@ Use repository skills automatically when the request matches their workflow; the
 - `.agents/skills/execution-router/SKILL.md` — use when deciding whether work should be handled through GitHub/web-chat orchestration, local Codex, or Codex Cloud, especially when the user asks for prompts or an implementation route.
 - `.agents/skills/run-health/SKILL.md` — use as a supporting skill for substantial autonomous work that risks becoming long, opaque, repetitive, or stuck. Keep work bounded, persist coherent progress, report evidence-based checkpoints, and stop unhealthy retry loops.
 - `.agents/skills/ponytail-review/SKILL.md` — mandatory read-only complexity review for implementation PRs before they are marked ready for Codex review and again whenever the reviewed base/head pair changes. It protects invariants/tests/security/recovery/polling/compatibility while looking for unnecessary changed-scope complexity.
-- `.agents/skills/ponytail-audit/SKILL.md` — optional read-only whole-repository complexity audit for explicit maintenance/debt investigations. Convert accepted findings into small normal cleanup packets; do not batch an audit into a mega-refactor.
+- `.agents/skills/ponytail-audit/SKILL.md` — optional read-only whole-repository complexity audit for explicit maintenance/debt investigations.
+- `.agents/skills/midnight-advent-ui/SKILL.md` — use for approved Midnight Advent implementation tickets. Apply the visual quality loop, use genuine installed Anthropic Frontend Design and Impeccable when available, and **report actual invocation versus unavailable/manual review**. Read `docs/ui/midnight-advent-agent-guide.md`. This local guidance does not magically install third-party skills. The existing Ponytail gate remains mandatory for finished implementation diffs. Convert accepted findings into small normal cleanup packets; do not batch an audit into a mega-refactor.
 
 Skills coordinate procedure; they do not override product specifications, hard invariants, specialist ownership, or the task-specific issue/staged/landing workflow.
 
