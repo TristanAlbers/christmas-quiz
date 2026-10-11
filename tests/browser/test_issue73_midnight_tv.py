@@ -140,6 +140,13 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         await page.locator(".advent-door-opening-echo").count(), 0
                     )
                     await self._screenshot(page, "tv-v4-advent-a13-b10-1920x1080")
+                    await page.set_viewport_size({"width": 1024, "height": 768})
+                    self.assertLessEqual(
+                        await page.evaluate("document.documentElement.scrollWidth"),
+                        1025,
+                    )
+                    await self._screenshot(page, "tv-v4-advent-a13-b10-1024x768")
+                    await page.set_viewport_size({"width": 1920, "height": 1080")
                     await page.evaluate("""() => {
                         window.__issue73Echoes = 0;
                         new MutationObserver(records => {
@@ -163,6 +170,7 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         '.advent-progress[data-team-id="a"][data-completed-count="14"]'
                     ).wait_for(timeout=5000)
                     await page.wait_for_function("() => window.__issue73Echoes === 1")
+                    await self._screenshot(page, "tv-v4-opening-a14-b10-1920x1080")
                     await page.wait_for_timeout(1200)
                     self.assertEqual(
                         await page.evaluate("window.__issue73Echoes"), 1
