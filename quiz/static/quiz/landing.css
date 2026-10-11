@@ -455,3 +455,27 @@
     animation: none;
   }
 }
+
+/* Keep the existing landing and login widgets; give their cabinet edge an
+   antique-brass highlight shared with the READY waiting surface. */
+.landing-card,
+.auth-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-card::before,
+.auth-card::before {
+  content: "";
+  position: absolute;
+  inset: 0.55rem 1.2rem auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--christmas-gold-400), transparent);
+  pointer-events: none;
+}
+
+.auth-form input:focus-visible,
+.auth-form select:focus-visible {
+  outline: 3px solid var(--christmas-gold-300);
+  outline-offset: 2px;
+}
