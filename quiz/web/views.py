@@ -530,7 +530,7 @@ def admin_start(request):
             ),
         )
     except ApplicationError as exc:
-        if exc.code == "invalid_input":
+        if exc.code == "invalid_input" and actor.role == "admin":
             # A rejected READY Start must show a Dutch, recoverable error while
             # leaving package validation and snapshot semantics server-owned.
             state = get_admin_state(actor)
