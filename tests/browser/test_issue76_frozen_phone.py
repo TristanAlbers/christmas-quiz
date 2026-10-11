@@ -25,7 +25,12 @@ class Issue76FrozenPhoneBrowserTests(Issue31BrowserCase):
                 )
                 host = urlparse(self.live_server_url).hostname
                 await context.add_cookies(
-                    [{"name": "sessionid", "value": self.a_cookie, "domain": host, "path": "/"}]
+                    [{
+                        "name": "sessionid",
+                        "value": self.a_cookie,
+                        "domain": host,
+                        "path": "/",
+                    }]
                 )
                 page = await context.new_page()
                 output_dir = os.environ.get("UI76_SCREENSHOT_DIR")
@@ -46,17 +51,22 @@ class Issue76FrozenPhoneBrowserTests(Issue31BrowserCase):
                     self.assertTrue(await ice.locator(".freeze-ghost").is_visible())
                     self.assertTrue(await ice.locator(".freeze-ice").is_visible())
                     self.assertEqual(
-                        await page.locator("#question-pane img, #question-pane audio, "
-                                           "#question-pane video, #question-pane .hint-card, "
-                                           "#question-pane .answer-form, #team-actions form, "
-                                           "#team-actions button, #question-pane button").count(),
+                        await page.locator(
+                            "#question-pane img, #question-pane audio, "
+                            "#question-pane video, #question-pane .hint-card, "
+                            "#question-pane .answer-form, #team-actions form, "
+                            "#team-actions button, #question-pane button"
+                        ).count(),
                         0,
                     )
                     self.assertEqual(await page.locator("#team-shop-dialog").count(), 0)
                     self.assertNotIn("answer-input", await page.content())
                     time_text = await page.locator(".freeze-timer").inner_text()
                     self.assertRegex(time_text, re.compile(r"^\d{2}:\d{2}$"))
-                    await page.evaluate("window.__freezeBackdrop = document.getElementById('freeze-backdrop')")
+                    await page.evaluate(
+                        "window.__freezeBackdrop = "
+                        "document.getElementById('freeze-backdrop')"
+                    )
                     if output_dir:
                         await page.wait_for_timeout(180)
                         await page.screenshot(
@@ -66,12 +76,17 @@ class Issue76FrozenPhoneBrowserTests(Issue31BrowserCase):
                     await page.wait_for_timeout(2900)
                     self.assertTrue(
                         await page.evaluate(
-                            "window.__freezeBackdrop === document.getElementById('freeze-backdrop')"
+                            "window.__freezeBackdrop === "
+                            "document.getElementById('freeze-backdrop')"
                         ),
                         "Freeze layer must not be remounted by 500ms polls.",
                     )
                     self.assertLessEqual(
-                        int(await page.locator(".freeze-timer").get_attribute("data-remaining-ms")),
+                        int(
+                            await page.locator(".freeze-timer").get_attribute(
+                                "data-remaining-ms"
+                            )
+                        ),
                         300000,
                     )
                     if output_dir:
@@ -96,7 +111,9 @@ class Issue76FrozenPhoneBrowserTests(Issue31BrowserCase):
                         AdminTeam(str(uuid4()), self.run_id, "a"),
                     )
                     await page.locator("#answer-input").wait_for(timeout=5000)
-                    self.assertFalse(await page.locator("#freeze-backdrop").is_visible())
+                    self.assertFalse(
+                        await page.locator("#freeze-backdrop").is_visible()
+                    )
                 finally:
                     await context.close()
                     await browser.close()
