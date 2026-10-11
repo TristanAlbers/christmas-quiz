@@ -135,6 +135,58 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         ).evaluate("el => getComputedStyle(el).color"),
                         "rgb(64, 44, 22)",
                     )
+                    # The SVG motif and calendar must retain DOM identity
+                    # through real 500ms polls, not merely look stable.
+                    await page.evaluate("""() => {
+                        window.__stableCalendar = document.querySelector(
+                            '.advent-progress[data-team-id="a"] .advent-calendar'
+                        );
+                        window.__stableMotif = window.__stableCalendar.querySelector(
+                            '.advent-door__motif'
+                        );
+                        window.__tvPolls = 0;
+                        document.body.addEventListener('htmx:afterRequest', e => {
+                            if (e.detail.elt.id === 'overview-poller') {
+                                window.__tvPolls += 1;
+                            }
+                        });
+                    }""")
+                    await page.wait_for_function(
+                        "() => window.__tvPolls >= 3", timeout=5000
+                    )
+                    self.assertTrue(await page.evaluate("""() => (
+                        document.querySelector(
+                          '.advent-progress[data-team-id="a"] .advent-calendar'
+                        ) === window.__stableCalendar &&
+                        document.querySelector(
+                          '.advent-progress[data-team-id="a"] .advent-door__motif'
+                        ) === window.__stableMotif
+                    )"""))
+                    self.assertTrue(await page.locator(
+                        ".advent-door__motif"
+                    ).evaluate_all("""els => els.every(svg => {
+                        const c = svg.parentElement.getBoundingClientRect();
+                        const b = svg.getBoundingClientRect();
+                        return Math.abs(b.x+b.width/2-c.x-c.width/2) < 1 &&
+                               Math.abs(b.y+b.height/2-c.y-c.height/2) < 1;
+                    })"""))
+                    self.assertEqual(
+                        await page.locator(
+                            ".advent-door--completed .advent-door__hinge"
+                        ).count(), 23
+                    )
+                    self.assertTrue(await page.locator(
+                        ".advent-door--completed"
+                    ).first.evaluate("""door =>
+                        getComputedStyle(door, '::before').content !== 'none'
+                    """))
+                    clearance = await page.evaluate("""() => {
+                        const clock = document.querySelector('.game-clock strong');
+                        const audio = document.getElementById('overview-audio-player');
+                        return audio.getBoundingClientRect().top -
+                            clock.getBoundingClientRect().bottom;
+                    }""")
+                    self.assertGreaterEqual(clearance, 24)
                     await page.wait_for_timeout(1100)
                     self.assertEqual(
                         await page.locator(".advent-door-opening-echo").count(), 0
