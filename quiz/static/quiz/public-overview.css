@@ -249,6 +249,9 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   text-transform: none;
   letter-spacing: 0;
 }
+.game-page--overview .public-advent-header .game-clock {
+  transform: translateY(-10px);
+}
 .game-page--overview .public-advent-header .game-clock strong {
   color: #f9edce;
   font: 600 clamp(24px, 2.4cqw, 49px)/1.4 system-ui, sans-serif;
@@ -568,7 +571,7 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   #overview-audio-player {
     position: absolute;
     z-index: 10;
-    top: clamp(150px, 9.4vw, 190px);
+    top: clamp(154px, 9.6vw, 194px);
     right: clamp(22px, 3vw, 62px);
     display: block;
     width: auto;
