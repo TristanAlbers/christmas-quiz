@@ -269,12 +269,12 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
   border-color: #9b855c;
   background: transparent;
   color: #edd6a5;
-  font-size: .78rem;
+  font-size: .875rem;
 }
 .game-page--team:has(.challenge-stage) .team-advent-meta {
   margin: .7rem 0;
   color: #ddc9a3;
-  font-size: .85rem;
+  font-size: .9375rem;
 }
 .game-page--team:has(.challenge-stage) .team-advent-meta > span:last-child {
   position: static;
@@ -307,7 +307,7 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
 .game-page--team:has(.challenge-stage) .challenge-stage__kicker {
   margin: 0;
   color: #f8d69f;
-  font: 700 .7rem system-ui, sans-serif;
+  font: 700 .875rem system-ui, sans-serif;
   letter-spacing: .08em;
 }
 .game-page--team:has(.challenge-stage) .challenge-stage__role {
@@ -340,7 +340,7 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
   color: #243c31;
 }
 .game-page--team:has(.challenge-stage) .challenge-question-phone > span {
-  font: 750 .7rem system-ui, sans-serif;
+  font: 750 .875rem system-ui, sans-serif;
   color: #725031;
   letter-spacing: .11em;
 }
@@ -372,7 +372,7 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
 }
 .game-page--team:has(.challenge-stage) .challenge-answer-form label {
   color: #e9d6b5;
-  font-size: .81rem;
+  font-size: .9375rem;
 }
 .game-page--team:has(.challenge-stage) .challenge-answer-form input {
   width: 100%;
@@ -395,7 +395,7 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
 .game-page--team:has(.challenge-stage) .challenge-stage__footnote {
   margin: 0;
   color: #e4c99f;
-  font-size: .75rem;
+  font-size: .875rem;
   text-align: center;
 }
 .game-page--team:has(.challenge-stage) #action-feedback { color: #f4dfb5; }
@@ -478,12 +478,12 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
 .game-page--team:has(.challenge-stage) .challenge-stage__role { display: none; }
 .game-page--team:has(.challenge-stage) .challenge-status--active strong {
   color: #ddceaa;
-  font-size: .76rem;
+  font-size: .875rem;
   font-weight: 500;
 }
 .game-page--team:has(.challenge-stage) .challenge-question-phone h2 {
   color: #725031;
-  font: normal .97rem/1.3 Georgia, serif;
+  font: normal 1.125rem/1.3 Georgia, serif;
 }
 .game-page--team:has(.challenge-stage) .challenge-question-phone p {
   margin: .75rem 0 0;
