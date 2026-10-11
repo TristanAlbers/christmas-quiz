@@ -258,7 +258,7 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
   padding: 0;
   border: 0;
   color: #e7d3a5;
-  font: 600 .73rem system-ui, sans-serif;
+  font: 600 .9375rem system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 .game-page--team:has(.challenge-stage) .team-advent-meta > span:first-child { display: none; }
@@ -312,7 +312,7 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
 .game-page--team:has(.challenge-stage) .challenge-stage__kicker {
   margin: 0;
   color: #e6c288;
-  font: 700 .7rem/1.4 system-ui, sans-serif;
+  font: 700 .875rem/1.4 system-ui, sans-serif;
   letter-spacing: .09em;
   text-transform: uppercase;
 }
@@ -336,13 +336,13 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
 }
 .game-page--team:has(.challenge-stage) .challenge-stage__paper > span {
   color: #725031;
-  font: 750 .7rem system-ui, sans-serif;
+  font: 750 .875rem system-ui, sans-serif;
   letter-spacing: .12em;
 }
 .game-page--team:has(.challenge-stage) .challenge-stage__paper h2 {
   margin: .65rem 0 .4rem;
   color: #233a30;
-  font: normal 1.6rem/1.23 Georgia, serif;
+  font: normal 1.8rem/1.23 Georgia, serif;
 }
 .game-page--team:has(.challenge-stage) .challenge-stage__paper p {
   margin: .4rem 0 0;
@@ -368,7 +368,7 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
 }
 .game-page--team:has(.challenge-stage) .challenge-answer-form label {
   color: #f1dfbf;
-  font: .8rem system-ui, sans-serif;
+  font: .9375rem system-ui, sans-serif;
 }
 .game-page--team:has(.challenge-stage) .challenge-answer-form input {
   box-sizing: border-box;
@@ -390,7 +390,7 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
   border-radius: 0;
   background: #993d4d;
   color: #fff4e7;
-  font: 700 1rem system-ui, sans-serif;
+  font: 700 1.0625rem system-ui, sans-serif;
 }
 .game-page--team:has(.challenge-stage) .challenge-answer-form .button-challenge:focus-visible,
 .game-page--team:has(.challenge-stage) .challenge-answer-form input:focus-visible {
@@ -400,7 +400,7 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
 .game-page--team:has(.challenge-stage) .challenge-stage__footnote {
   color: #f0d4a2;
   text-align: center;
-  font: .75rem system-ui, sans-serif;
+  font: .875rem system-ui, sans-serif;
 }
 .game-page--team:has(.challenge-stage) .challenge-stage__gathering {
   display: grid;
