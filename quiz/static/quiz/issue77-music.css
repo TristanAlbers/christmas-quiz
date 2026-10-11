@@ -1,0 +1,364 @@
+/* Issue #77 — V4 Music takeover. All question/score/timer values remain Django projections.
+   The record and bar are illustrations; the existing independent TV audio player persists. */
+body.game-page--overview:has(.public-status--music),
+body.game-page--team:has(.music-quiz--phone) {
+  background: radial-gradient(ellipse 80% 32% at 35% 0, #284c3b80, transparent),
+              linear-gradient(145deg, #0d2a24, #061815 72%);
+  color: #f7e8c9;
+}
+body.game-page--overview:has(.public-status--music)::before,
+body.game-page--team:has(.music-quiz--phone)::before { display: none; }
+
+.game-page--overview:has(.public-status--music) .public-overview {
+  width: calc(100% - 1.5rem);
+  max-width: none;
+  min-height: calc(100svh - 1.5rem);
+  margin: .75rem auto;
+  padding: .6rem 1.15rem;
+  border: 1px solid #a88a574f;
+  border-radius: .35rem;
+  background: #061a16d9;
+  box-shadow: inset 0 0 0 .25rem #0c2921, 0 1rem 2rem #0006;
+}
+.game-page--overview .public-status--music {
+  width: 100%;
+  min-height: calc(100svh - 10.25rem);
+  margin: 0;
+  padding: .9rem 1.2rem .5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #f8e6b8;
+}
+.game-page--overview .public-status--music .public-brand {
+  margin: 0 0 .6rem;
+  padding: .35rem 0 .65rem;
+  border-bottom: 1px solid #bfa16a64;
+}
+.game-page--overview .public-status--music .public-brand__name {
+  font: normal clamp(2.6rem, 4.5vw, 5.2rem)/1 Georgia, serif;
+  color: #f6e4bd;
+  text-shadow: 0 .25rem 1rem #0005;
+}
+.game-page--overview .public-status--music .public-brand .eyebrow {
+  color: #d6b77e;
+  font: normal clamp(.7rem, .85vw, 1rem) Georgia, serif;
+  letter-spacing: .12em;
+}
+.game-page--overview .public-status--music .music-stage--midnight {
+  display: grid;
+  grid-template-columns: 1fr 1.18fr;
+  align-items: stretch;
+  gap: clamp(1.25rem, 2vw, 3rem);
+  min-height: min(66vh, 715px);
+  margin: .4rem 0 0;
+  padding: clamp(1.25rem, 1.8vw, 2.5rem);
+  border: 1px solid #967347;
+  border-radius: 0;
+  background: radial-gradient(circle at 26% 42%, #b890312b, transparent 36%),
+              linear-gradient(145deg, #152c25, #0b201d);
+  box-shadow: inset 0 0 0 .33rem #0b201d, inset 0 0 0 .39rem #96734766;
+  text-align: left;
+}
+.music-stage--midnight .music-stage__vinyl {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2rem;
+  min-width: 0;
+  color: #d6b77e;
+  font: normal clamp(.9rem, 1.2vw, 1.3rem) Georgia, serif;
+}
+.music-stage--midnight .music-stage__disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(25vw, 420px);
+  aspect-ratio: 1;
+  border: 1px solid #988568;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, #050d0d 0 .17rem,
+    #192222 .22rem .38rem, #071010 .4rem .52rem);
+  box-shadow: 0 0 0 .55rem #06130f, 0 0 0 .62rem #876943,
+    inset 0 0 2.3rem #000, 0 1rem 2rem #0009;
+}
+.music-stage--midnight .music-stage__disc::before {
+  content: "♫";
+  display: grid;
+  place-items: center;
+  width: 33%;
+  aspect-ratio: 1;
+  border: .55rem solid #d7b779;
+  border-radius: 50%;
+  background: #8d3142;
+  color: #f5d49a;
+  font: normal clamp(3rem, 5vw, 6rem) Georgia, serif;
+}
+.music-stage--midnight .music-stage__disc::after {
+  content: "";
+  position: absolute;
+  width: .8rem;
+  height: .8rem;
+  border: 1px solid #111;
+  border-radius: 50%;
+  background: #e8cb8b;
+}
+.music-stage--midnight .music-stage__vinyl p { margin: 0; }
+.music-stage--midnight .music-stage__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(.75rem, 1.3vw, 1.55rem);
+  min-width: 0;
+  padding: clamp(.7rem, 1.25vw, 1.6rem) clamp(.25rem, 1vw, 1.2rem);
+}
+.music-stage--midnight .music-stage__kicker {
+  margin: 0;
+  color: #d5b77a;
+  font: normal clamp(.85rem, 1.15vw, 1.4rem) Georgia, serif;
+}
+.music-stage--midnight h1 {
+  margin: 0;
+  color: #f8e6b8;
+  font: normal clamp(2.6rem, 4vw, 5rem)/1.06 Georgia, serif;
+  letter-spacing: -.035em;
+}
+.music-stage--midnight h2 {
+  margin: 0;
+  color: #faf2da;
+  font: normal clamp(1.1rem, 1.6vw, 2rem) Georgia, serif;
+}
+.music-stage--midnight .music-stage__question,
+.music-stage--midnight .music-stage__content > p:not(.music-stage__kicker):not(.music-winner) {
+  margin: 0;
+  color: #d5ceba;
+  font: normal clamp(.95rem, 1.18vw, 1.45rem)/1.5 system-ui, sans-serif;
+}
+.music-stage--midnight .music-player-progress {
+  position: relative;
+  width: 100%;
+  height: .55rem;
+  margin: .8rem 0 .4rem;
+  padding: 0;
+  border: 1px solid #7d6249;
+  border-radius: 0;
+  background: #122e27;
+  box-shadow: none;
+}
+.music-stage--midnight .music-player-progress::before { display: none; }
+.music-stage--midnight .music-player-progress::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 40%;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #f5dc98;
+  box-shadow: 0 0 .8rem #ffedaa;
+  transform: translate(-50%, -50%);
+}
+.music-stage--midnight .music-player-progress__fill {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, #9c6a48, #e9bf73);
+  box-shadow: 0 0 1.5rem #d8a05888;
+}
+.music-stage--midnight .music-progress { margin: .2rem 0 0; }
+.music-stage--midnight .music-steps { gap: .36rem; }
+.music-stage--midnight .music-step,
+.music-quiz--phone .music-step {
+  min-width: 0;
+  height: .45rem;
+  aspect-ratio: auto;
+  border: 1px solid #6f7354;
+  border-radius: 0;
+  background: #37564a;
+  box-shadow: none;
+}
+.music-stage--midnight .music-step--complete,
+.music-quiz--phone .music-step--complete { background: #b89a62; border-color: #b89a62; }
+.music-stage--midnight .music-step--current,
+.music-quiz--phone .music-step--current {
+  border-color: #e8c58a;
+  background: #f4dca3;
+  box-shadow: 0 0 .75rem #efc985;
+}
+.music-stage--midnight .music-step span,
+.music-quiz--phone .music-step span { font-size: 0; }
+.music-stage--midnight .music-scores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.music-stage--midnight .music-scores article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  padding: .95rem 1.1rem;
+  border-top: 1px solid #8d6f4b;
+  border-radius: 0;
+  background: #0a221b;
+  color: #dbccad;
+}
+.music-stage--midnight .music-scores span { font: normal clamp(.8rem, 1vw, 1.2rem) Georgia, serif; }
+.music-stage--midnight .music-scores strong {
+  color: #fae6b1;
+  font: normal clamp(2rem, 2.6vw, 3.2rem) Georgia, serif;
+}
+.music-stage--midnight .music-winner {
+  margin: 0;
+  color: #e5d2a1;
+  font-size: clamp(.75rem, 1vw, 1.05rem);
+}
+.music-stage--midnight .music-countdown {
+  margin: .4rem 0;
+  color: #f6ddb0;
+  font: normal clamp(3rem, 6vw, 7rem) Georgia, serif;
+}
+.game-page--overview:has(.public-status--music) .music-audio-panel {
+  width: min(100% - 3rem, 930px);
+  margin: .55rem 2rem .4rem auto;
+  padding: .45rem .8rem;
+  border: 1px solid #8d6f4b;
+  border-radius: .3rem;
+  background: #0c261f;
+  box-shadow: none;
+}
+.game-page--overview:has(.public-status--music) .music-audio-panel::after { content: none; }
+.game-page--overview:has(.public-status--music) .music-audio-panel__ornament { display: none; }
+.game-page--overview:has(.public-status--music) .music-audio-panel__status-row h2 { font-size: 1rem; }
+.game-page--overview:has(.public-status--music) .music-audio-panel__controls {
+  grid-template-columns: auto minmax(8rem, 1fr);
+  align-items: center;
+  min-width: min(28vw, 370px);
+}
+
+.game-page--team:has(.music-quiz--phone) .app-shell {
+  position: relative;
+  width: min(calc(100% - 1rem), 42rem);
+  min-height: calc(100svh - 1rem);
+  margin: .5rem auto;
+  padding: .8rem .9rem 1.5rem;
+  border: 1px solid #c59c594d;
+  border-radius: .5rem;
+  background: #061b17;
+  color: #f7e8c9;
+  box-shadow: 0 1rem 2rem #0006;
+}
+.game-page--team:has(.music-quiz--phone) .page-header {
+  gap: .7rem;
+  padding: .3rem 0 1rem;
+  border-bottom: 1px solid #a7875566;
+}
+.game-page--team:has(.music-quiz--phone) .page-header .eyebrow {
+  color: #f4dba6;
+  font: normal 1.35rem Georgia, serif;
+  letter-spacing: -.035em;
+  text-transform: none;
+}
+.game-page--team:has(.music-quiz--phone) .page-header h1 {
+  color: #ecd4aa;
+  font: normal 1rem Georgia, serif;
+}
+.game-page--team:has(.music-quiz--phone) .page-header button {
+  min-height: 2.5rem;
+  border-color: #a78755;
+  background: transparent;
+  color: #ebd6ab;
+  font-size: .78rem;
+}
+.game-page--team:has(.music-quiz--phone) #game-status,
+.game-page--team:has(.music-quiz--phone) .team-state-surface {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.game-page--team:has(.music-quiz--phone) #question-pane {
+  margin: 1rem 0 .2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f7e8c9;
+}
+.game-page--team:has(.music-quiz--phone) .team-advent-meta { margin: .4rem 0 0; }
+.music-quiz--phone {
+  display: grid;
+  gap: .95rem;
+  padding: 1.4rem 1.2rem;
+  border: 1px solid #a78755;
+  background: linear-gradient(150deg, #193a2f, #102a24);
+}
+.music-quiz--phone__kicker {
+  margin: 0;
+  color: #dab77c;
+  font: normal .8rem Georgia, serif;
+}
+.music-quiz--phone h2 {
+  margin: 0;
+  color: #f5e3b3;
+  font: normal clamp(2rem, 8.8vw, 2.7rem)/1.08 Georgia, serif;
+  letter-spacing: -.035em;
+}
+.music-quiz--phone .music-progress { margin: .2rem 0 0; }
+.music-quiz--phone .music-steps { gap: .25rem; }
+.music-quiz--phone .music-step { height: .34rem; }
+.music-quiz--phone__question,
+.music-quiz--phone > p:not(.music-quiz--phone__kicker) {
+  margin: 0;
+  color: #e6d5b2;
+  font: normal .97rem/1.55 system-ui, sans-serif;
+}
+.music-quiz--phone__title { color: #e7c78d; font-style: italic; }
+.music-quiz--phone__form {
+  display: grid;
+  gap: .75rem;
+  margin-top: .1rem;
+}
+.music-quiz--phone__form label { font-size: .88rem; color: #f0dfc0; }
+.music-quiz--phone__form input {
+  width: 100%;
+  min-height: 3.15rem;
+  border: 1px solid #c3a779;
+  border-radius: .25rem;
+  background: #fff9e9;
+  color: #1e2d29;
+  font-size: 1rem;
+}
+.music-quiz--phone__form button {
+  width: 100%;
+  min-height: 3.15rem;
+  border: 0;
+  border-radius: .25rem;
+  background: #9c3546;
+  color: #fff2e0;
+  font-size: 1rem;
+  font-weight: 750;
+}
+.music-quiz--phone__form button:hover { background: #ad4556; }
+.music-quiz--phone__note { margin: .9rem .1rem; color: #b8aa8e; font-size: .81rem; }
+@media (max-width: 780px) {
+  .game-page--overview .public-status--music { min-height: 0; }
+  .game-page--overview .public-status--music .music-stage--midnight {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .music-stage--midnight .music-stage__vinyl { gap: .8rem; }
+  .music-stage--midnight .music-stage__disc { width: min(40vw, 240px); }
+  .music-stage--midnight .music-stage__content { padding: .5rem; }
+  .game-page--overview:has(.public-status--music) .music-audio-panel {
+    width: 100%;
+    margin: .65rem 0;
+    grid-template-columns: 1fr;
+  }
+  .game-page--overview:has(.public-status--music) .music-audio-panel__controls { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .music-stage--midnight .music-step--current,
+  .music-quiz--phone .music-step--current { box-shadow: none; }
+}
