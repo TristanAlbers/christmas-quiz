@@ -212,7 +212,8 @@ Admin removal immediately returns the team to `PUZZLE`; there is no remaining ti
 
 During a Challenge:
 
-- both teams receive the same Challenge puzzle;
+- each initiating team has a **different** package-authored Challenge puzzle; across one Challenge both teams receive the **same selected puzzle**;
+- there is a **15-second server-authoritative gathering phase** before puzzle and answer controls become available; Pause suspends that countdown;
 - attempts are unlimited;
 - there is no time limit;
 - wrong answers have no penalty;
@@ -230,7 +231,7 @@ A Challenge opportunity is consumed at initiation.
 
 Disconnecting does not cause a loss. The Challenge continues until resolved.
 
-Admins may cancel a Challenge as an emergency operation. Cancellation restores the initiator's opportunity and refunds the Challenge cost. This is a low-priority emergency feature.
+Admins may cancel a Challenge as an emergency operation. Cancellation restores the initiator's opportunity; Challenge costs **zero points**, so there is **no positive points refund**. This is a low-priority emergency feature, not a command to invent during the current UI redesign.
 
 ## FINISHED
 
@@ -415,7 +416,7 @@ All costs and rewards are globally configurable, including:
 - Skip cost;
 - Freeze cost;
 - Uno Reverse cost;
-- Challenge cost;
+- Challenge cost (**fixed at zero** for the supported game package; not a purchasable/affordability condition);
 - Music Quiz question reward;
 - initial points.
 
@@ -485,15 +486,17 @@ A Challenge may be initiated only when:
 - neither team is finished;
 - global state is `ADVENT_QUIZ`;
 - the initiating team still has its Challenge opportunity;
-- initiating team can afford the configured cost.
+- a separate Challenge puzzle for that initiating team exists in the snapshotted package.
+
+Challenge is **free**, so points and affordability are **not** eligibility conditions.
 
 Initiation atomically:
 
-1. deducts cost;
-2. consumes the opportunity;
-3. creates the Challenge state.
+1. consumes the **single free opportunity** of the initiator without deducting points;
+2. selects the initiator's **distinct** snapshotted Challenge puzzle and records the Challenge;
+3. begins a **15-second gathering period**, with question/media/answer unavailable until that period expires on the server.
 
-Both teams then participate in the same Challenge puzzle.
+Both teams then participate in **the same selected Challenge puzzle**. Up to two Challenges can occur in one run, with no reused question identity.
 
 First valid server-accepted correct answer wins.
 
@@ -752,7 +755,7 @@ Configurable values should include at least:
 - Hint cost;
 - Skip cost;
 - Uno Reverse cost;
-- Challenge cost;
+- Challenge cost (schema compatibility only; **must be zero**);
 - puzzle completion rewards;
 - Music Quiz question reward;
 - Music Quiz score-display duration;
@@ -1112,7 +1115,9 @@ Do not make the normal game architecture unnecessarily complicated to optimize f
 ### Challenge
 
 - Each team can initiate once.
-- Cost is atomic.
+- Challenge costs **zero points**; only one opportunity per team is consumed atomically.
+- Each team initiates a different puzzle; each individual Challenge shares one selected puzzle between both teams.
+- The question/answers stay hidden during the **15-second gathering** phase.
 - Frozen targets cannot be challenged.
 - Cannot start during Pause/Music Quiz.
 - Same puzzle for both teams.
@@ -1120,7 +1125,7 @@ Do not make the normal game architecture unnecessarily complicated to optimize f
 - No Challenge points.
 - Losing challenged team is frozen on Advent return.
 - Disconnect does not cause loss.
-- Cancellation restores opportunity/refunds cost.
+- Cancellation restores the opportunity with **no points refund** (the original cost was zero).
 
 ### Security
 
