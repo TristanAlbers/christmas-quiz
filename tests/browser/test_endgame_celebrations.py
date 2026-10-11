@@ -191,7 +191,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                             )
                         )
                     await team_b.get_by_text(
-                        "Team A heeft de kalender voltooid"
+                        "Team A is als eerste klaar."
                     ).wait_for()
                     await tv.get_by_text(
                         "Team A heeft gewonnen", exact=False
