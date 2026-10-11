@@ -227,7 +227,9 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await page.locator(".team-resource-bar").count(), 0
                     )
-                    self.assertEqual(await page.locator("#question-pane img").count(), 0)
+                    self.assertEqual(
+                        await page.locator("#question-pane img").count(), 0
+                    )
                     self.assertNotIn(
                         "Demo A1", await page.locator("body").inner_text()
                     )
