@@ -66,17 +66,32 @@
     <div class="public-advent-summary">
       <p class="public-overview-phase">{% if state.global_state == 'FINISHED' %}De adventrace is afgerond{% elif state.global_state == 'PAUSED' %}Spel gepauzeerd{% else %}De adventrace is begonnen{% endif %}</p>
     </div>
-    {% if first_finisher_team_id %}
-      <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% else %} finish-banner--winner{% endif %}" role="status">
-        <p class="eyebrow">{% if state.global_state == 'FINISHED' %}Einduitslag{% else %}Winnaar adventrace{% endif %}</p>
-        <h2>{% if state.global_state == 'FINISHED' %}Team {{ first_finisher_team_id|upper }} was als eerste klaar{% else %}Team {{ first_finisher_team_id|upper }} wint de adventrace!{% endif %}</h2>
-        <p>{% if state.global_state == 'FINISHED' %}Beide teams hebben de kalender voltooid.{% else %}Het andere team speelt verder totdat ook hun kalender compleet is.{% endif %}</p>
-      </aside>
-    {% endif %}
     <div class="public-calendar-grid">
       {% for team in teams %}{% include 'quiz/_advent_calendar.html' with progress=team.advent_progress team_id=team.team_id is_frozen=team.is_frozen %}{% endfor %}
     </div>
+    {% if first_finisher_team_id and state.global_state != 'FINISHED' %}
+      <div class="endgame-tv-ribbon" role="status">✦ Team {{ first_finisher_team_id|upper }} heeft gewonnen · Team {% if first_finisher_team_id == 'a' %}B{% else %}A{% endif %} speelt verder ✦</div>
+    {% elif state.global_state == 'FINISHED' and first_finisher_team_id %}
+      <section class="endgame-tv-final" aria-label="Einduitslag adventrace" role="group">
+        <div class="endgame-tv-final__inner">
+          <div class="endgame-tv-final__sigils" aria-hidden="true">✦ ✦ ✦</div>
+          <p class="endgame-tv-final__kicker">De kerst escape room is voltooid</p>
+          <h2>De adventrace is voorbij</h2>
+          <p class="endgame-tv-final__intro">Alle 50 deurtjes geopend. Eén team was als eerste.</p>
+          <div class="endgame-tv-final__teams">
+            <article class="endgame-tv-final__team endgame-tv-final__team--winner">
+              <span>✦ Winnaar</span><strong>Team {{ first_finisher_team_id|upper }}</strong><small>25 van 25 voltooid</small>
+            </article>
+            <article class="endgame-tv-final__team">
+              <span>Tweede team</span><strong>Team {% if first_finisher_team_id == 'a' %}B{% else %}A{% endif %}</strong><small>25 van 25 voltooid</small>
+            </article>
+          </div>
+          <p class="endgame-tv-final__clock">Totale speeltijd <strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
+        </div>
+      </section>
+    {% else %}
     <p class="public-advent-footer"><span aria-hidden="true">✧</span> Elke deur brengt jullie dichter bij kerst. <span aria-hidden="true">✧</span></p>
+    {% endif %}
   {% endif %}
 </section>
 {% if replace_audio %}{% include 'quiz/_public_audio.html' with oob=True %}{% endif %}
