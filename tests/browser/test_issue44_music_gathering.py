@@ -193,6 +193,10 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         "document.querySelector('#overview-audio-state')"
                         ".dataset.globalState === 'PAUSED'"
                     )
+                    # Team and TV have independent 500 ms pollers.
+                    await team_a.locator("#music-answer-input").wait_for(
+                        state="detached", timeout=5000
+                    )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 0
                     )
