@@ -148,6 +148,8 @@
 }
 .game-page--team:has(.team-advent-panel) .fragment-track {
   display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
   gap: .3rem;
   margin: 0;
@@ -516,6 +518,19 @@
     padding-inline: .45rem;
   }
   .team-advent-sheet { min-height: 25rem; }
+  .game-page--team:has(.team-advent-panel) .resource-card--fragments {
+    gap: .2rem;
+    padding-inline: .3rem;
+  }
+  .game-page--team:has(.team-advent-panel) .resource-card--fragments > strong {
+    font-size: .8rem;
+  }
+  .game-page--team:has(.team-advent-panel) .fragment-track { gap: .18rem; }
+  .game-page--team:has(.team-advent-panel) .fragment-chip {
+    width: 1.17rem;
+    height: 1.4rem;
+    font-size: .875rem;
+  }
   .resource-reverse-card { width: 2.25rem; }
   .resource-reverse-copy small { display: none; }
   .team-advent-panel .answer-form { grid-template-columns: minmax(0, 1fr) 6.25rem; }

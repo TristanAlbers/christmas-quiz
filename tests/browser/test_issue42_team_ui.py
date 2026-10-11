@@ -119,7 +119,7 @@ class Issue42TeamUiBrowserTests(LiveServerTestCase):
                     self.assertIn("0 beschikbaar", await hint.inner_text())
                     self.assertTrue(await skip.is_disabled())
                     self.assertIn("2 punten", await skip.inner_text())
-                    self.assertIn("1 punt tekort", await skip.inner_text())
+                    self.assertIn("2 punten · tekort", await skip.inner_text())
 
                     answer_box = await answer.bounding_box()
                     hint_box = await hint.bounding_box()
@@ -191,7 +191,7 @@ class Issue42TeamUiBrowserTests(LiveServerTestCase):
                     await press_across_polls(page, hint, "__issue42HintButton")
                     await page.locator(".hint-card").wait_for(timeout=5000)
                     self.assertIn(
-                        "0 beschikbaar",
+                        "Al onthuld",
                         await page.locator("[data-hint-action]").inner_text(),
                     )
 

@@ -233,6 +233,21 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
         )
         await page.mouse.up()
 
+    async def _fragment_cards_fit(self, page):
+        return await page.evaluate(
+            """() => {
+                const parent = document.querySelector('.resource-card--fragments');
+                const chips = [...parent.querySelectorAll('.fragment-chip')];
+                const bounds = parent.getBoundingClientRect();
+                if (chips.length !== 2) return false;
+                const a = chips[0].getBoundingClientRect();
+                const b = chips[1].getBoundingClientRect();
+                return Math.abs(a.top - b.top) < 8
+                    && a.left >= bounds.left - 1
+                    && b.right <= bounds.right + 1;
+            }"""
+        )
+
     async def _action_content_within_buttons(self, page):
         return await page.evaluate(
             """() => {
@@ -290,10 +305,6 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                     self.assertIn(
                         "ACTIEF",
                         await page.locator(".resource-card--reverse").inner_text(),
-                    )
-                    self.assertIn(
-                        "C",
-                        await page.locator(".resource-card--fragments").inner_text(),
                     )
                     self.assertTrue(
                         await page.get_by_role(
@@ -555,6 +566,9 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                         self.assertTrue(await skip.is_disabled())
                         self.assertTrue(
                             await self._action_content_within_buttons(page)
+                        )
+                        self.assertTrue(
+                            await self._fragment_cards_fit(page)
                         )
                         self.assertIn(
                             "Laatste vraag",
