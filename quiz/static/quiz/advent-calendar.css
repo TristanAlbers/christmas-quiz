@@ -255,16 +255,6 @@
   text-shadow: 0 .08rem .12rem rgba(0,0,0,.6);
 }
 
-.advent-door__number--inside {
-  position: absolute;
-  z-index: 2;
-  right: .16rem;
-  bottom: .08rem;
-  color: #fff6ce;
-  font-size: clamp(.62rem, 1.35vw, .86rem);
-  text-shadow: 0 .08rem .14rem rgba(62,28,20,.55);
-}
-
 .advent-door__hinge {
   display: none;
   position: absolute;
