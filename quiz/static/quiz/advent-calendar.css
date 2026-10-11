@@ -172,6 +172,8 @@
 }
 
 .advent-door__chocolate {
+  display: grid;
+  place-items: center;
   position: relative;
   z-index: 1;
   width: 46%;
@@ -195,6 +197,9 @@
 }
 
 .advent-door__motif {
+  display: block;
+  justify-self: center;
+  align-self: center;
   position: relative;
   z-index: 1;
   width: 77%;
@@ -258,6 +263,35 @@
   color: #fff6ce;
   font-size: clamp(.62rem, 1.35vw, .86rem);
   text-shadow: 0 .08rem .14rem rgba(62,28,20,.55);
+}
+
+.advent-door__hinge {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  bottom: 0;
+  left: -2px;
+  width: 4px;
+  background: linear-gradient(90deg, #291a14, #d3ae6c 48%, #513c29);
+  box-shadow: 1px 0 2px #090f0c;
+  pointer-events: none;
+}
+.advent-door__hinge::before,
+.advent-door__hinge::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  width: 6px;
+  height: 16%;
+  border: 1px solid #60401e;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #87582b, #edc58a 55%, #896336);
+  box-shadow: 1px 1px 2px #0009;
+}
+.advent-door__hinge::before { top: 15%; }
+.advent-door__hinge::after { bottom: 15%; }
+.advent-door--completed .advent-door__hinge {
+  background: linear-gradient(90deg, #3a231c, #edc58a 58%, #654528);
 }
 
 .advent-door__knob {
