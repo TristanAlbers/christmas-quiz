@@ -37,6 +37,11 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
             self.admin, StartGame(str(uuid4()), "christmas-2026-demo")
         ).run_id
 
+        directory = os.environ.get("UI83_SCREENSHOT_DIR")
+        self.screenshot_dir = Path(directory) if directory else None
+        if self.screenshot_dir:
+            self.screenshot_dir.mkdir(parents=True, exist_ok=True)
+
         self.cookies = {}
         for role, user in (("a", self.a_user), ("b", self.b_user)):
             client = Client()
@@ -59,6 +64,10 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
             completed=True, reward_awarded=True, completion_route="admin_force"
         )
         TeamRun.objects.filter(run_id=self.run_id).update(current_number=25, points=10)
+
+    async def _shot(self, page, filename):
+        if self.screenshot_dir:
+            await page.screenshot(path=self.screenshot_dir / filename)
 
     async def _count_shows(self, page):
         await page.evaluate(
@@ -128,7 +137,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await overview.wait_for(timeout=5000)
 
                     await winner.get_by_role(
-                        "heading", name="Jullie winnen de adventrace!"
+                        "heading", name="Jullie winnen!"
                     ).wait_for()
                     await runner_up.get_by_role(
                         "heading", name="Team A was eerder"
@@ -136,7 +145,9 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await overview.get_by_role(
                         "heading", name="Team A wint!"
                     ).wait_for()
-                    await tv.get_by_text("Team A wint de adventrace!").wait_for()
+                    await tv.get_by_text("Team A heeft gewonnen", exact=False).wait_for()
+                    await self._shot(team_a, "a-first-winner-phone-keyframe-390.png")
+                    await self._shot(tv, "a-first-tv-burst-keyframe-1920.png")
 
                     self.assertTrue(
                         await answer.evaluate(
@@ -180,12 +191,96 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await team_b.get_by_text(
                         "Team A heeft de kalender voltooid"
                     ).wait_for()
-                    await tv.get_by_text("Team A wint de adventrace!").wait_for()
+                    await tv.get_by_text("Team A heeft gewonnen", exact=False).wait_for()
                     self.assertEqual(await team_b.locator("#answer-input").count(), 1)
+                    self.assertEqual(
+                        await team_a.locator(".endgame-team-result--winner").count(), 1
+                    )
+                    self.assertEqual(await team_a.locator("#answer-input").count(), 0)
+                    self.assertEqual(await team_a.locator(".shop-item form").count(), 0)
+                    self.assertEqual(await tv.locator(".endgame-tv-ribbon").count(), 1)
+                    self.assertEqual(await tv.locator(".advent-progress").count(), 2)
+                    await self._shot(team_a, "a-first-winner-phone-settled-390.png")
+                    await self._shot(tv, "a-first-continuing-tv-1920.png")
+                    await asyncio.to_thread(
+                        force_complete_current,
+                        self.admin,
+                        AdminPuzzle(str(uuid4()), self.run_id, "b", "b-25"),
+                    )
+                    await tv.locator(".endgame-tv-final").wait_for(timeout=5000)
+                    await team_b.locator(".endgame-team-result--complete").wait_for()
+                    self.assertEqual(await team_b.locator("#answer-input").count(), 0)
+                    self.assertEqual(await tv.locator(".advent-door--completed").count(), 50)
+                    self.assertEqual(await tv.get_by_text("Team A", exact=True).count() >= 1, True)
+                    await self._shot(team_b, "a-first-second-team-complete-390.png")
+                    await self._shot(tv, "a-first-final-tv-1920.png")
                 finally:
                     await tv_context.close()
                     await b_context.close()
                     await a_context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_b_first_remains_only_winner_after_a_completes(self):
+        self._put_both_teams_on_door_25()
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            # Load after the first finish: durable result, no replayed confetti.
+            await asyncio.to_thread(
+                force_complete_current,
+                self.admin,
+                AdminPuzzle(str(uuid4()), self.run_id, "b", "b-25"),
+            )
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                b_context, team_b = await self._page(
+                    browser, "/team/", {"width": 390, "height": 844}, self.cookies["b"]
+                )
+                a_context, team_a = await self._page(
+                    browser, "/team/", {"width": 390, "height": 844}, self.cookies["a"]
+                )
+                tv_context, tv = await self._page(
+                    browser, "/overview/", {"width": 1920, "height": 1080}
+                )
+                try:
+                    await team_b.locator(".endgame-team-result--winner").wait_for()
+                    await team_a.locator("#answer-input").wait_for()
+                    self.assertEqual(
+                        await tv.locator(".endgame-tv-ribbon").count(), 1
+                    )
+                    self.assertEqual(await tv.locator(".advent-progress").count(), 2)
+                    self.assertFalse(
+                        await team_b.locator("#endgame-celebration").evaluate(
+                            "el => el.classList.contains('endgame-celebration--visible')"
+                        )
+                    )
+                    await self._shot(team_b, "b-first-winner-phone-settled-390.png")
+                    await self._shot(tv, "b-first-continuing-tv-1920.png")
+                    answer = team_a.locator("#answer-input")
+                    await answer.fill("still playing")
+                    await answer.focus()
+                    await asyncio.to_thread(
+                        force_complete_current,
+                        self.admin,
+                        AdminPuzzle(str(uuid4()), self.run_id, "a", "a-25"),
+                    )
+                    await tv.locator(".endgame-tv-final").wait_for(timeout=5000)
+                    await team_a.locator(".endgame-team-result--complete").wait_for()
+                    self.assertEqual(
+                        await team_b.locator(".endgame-team-result--winner").count(), 1
+                    )
+                    self.assertEqual(
+                        await team_a.locator(".endgame-team-result--winner").count(), 0
+                    )
+                    self.assertEqual(await tv.locator(".advent-door--completed").count(), 50)
+                    await self._shot(tv, "b-first-final-tv-1920.png")
+                finally:
+                    await tv_context.close()
+                    await a_context.close()
+                    await b_context.close()
                     await browser.close()
 
         asyncio.run(check())
@@ -215,7 +310,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         '.endgame-celebration--visible'
                     )
                     await overlay.wait_for(timeout=5000)
-                    await tv.get_by_text("Team A wint de adventrace!").wait_for()
+                    await tv.get_by_text("Team A heeft gewonnen", exact=False).wait_for()
                     self.assertEqual(
                         await overlay.locator(".endgame-confetti__piece").count(), 0
                     )
