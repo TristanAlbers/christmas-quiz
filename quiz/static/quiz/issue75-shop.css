@@ -1,9 +1,9 @@
 /* Issue #75: approved V4 parchment shop. Prices and actions stay server-rendered. */
 .shop-dialog--midnight {
   box-sizing: border-box;
-  width: min(calc(100% - 2rem), 21.25rem);
+  width: min(calc(100% - 1rem), 22.5rem);
   max-width: none;
-  max-height: calc(100dvh - 2.5rem);
+  max-height: calc(100dvh - 1rem);
   margin: auto;
   padding: 0;
   overflow-x: hidden;
@@ -37,7 +37,7 @@
 .shop-dialog--midnight .shop-dialog__eyebrow {
   margin: .2rem 0 .24rem;
   color: #746348;
-  font-size: .68rem;
+  font-size: .8rem;
   font-weight: 600;
   letter-spacing: .18em;
   line-height: 1.4;
@@ -86,7 +86,7 @@
 }
 .shop-dialog--midnight .shop-dialog__balance > span {
   color: #e2cb91;
-  font-size: .65rem;
+  font-size: .82rem;
   font-weight: 750;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -94,15 +94,15 @@
 .shop-dialog--midnight .shop-dialog__balance strong {
   flex: 0 0 auto;
   color: #ffe1a4;
-  font-size: .92rem;
+  font-size: 1rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 .shop-dialog--midnight .shop-dialog__description {
   margin: .65rem 0 .7rem;
   color: #394b3f;
-  font-size: .77rem;
-  line-height: 1.45;
+  font-size: .9375rem;
+  line-height: 1.4;
 }
 .shop-dialog--midnight #shop-feedback {
   margin: 0 0 .6rem;
@@ -110,7 +110,7 @@
   border-left: 3px solid #99404c;
   background: #f7e7d4;
   color: #6f2633;
-  font-size: .78rem;
+  font-size: .9rem;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -121,12 +121,12 @@
 }
 .shop-dialog--midnight .shop-item {
   display: grid;
-  grid-template-columns: 2.55rem minmax(0, 1fr) 5.45rem;
+  grid-template-columns: 2.65rem minmax(0, 1fr) 6.05rem;
   grid-template-rows: 1fr;
   align-items: center;
   gap: .47rem;
   min-width: 0;
-  min-height: 4.75rem;
+  min-height: 5.5rem;
   margin: 0;
   padding: .48rem .47rem;
   border: 1px solid #c4b18b;
@@ -146,7 +146,7 @@
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 2.42rem;
+  width: 2.5rem;
   min-height: 2.75rem;
   margin: 0;
   padding: 0;
@@ -192,24 +192,24 @@
 .shop-dialog--midnight .shop-item__details {
   display: grid;
   align-content: center;
-  gap: .25rem;
+  gap: .27rem;
   min-width: 0;
 }
 .shop-dialog--midnight .shop-item__details strong {
   color: #244539;
-  font-size: .855rem;
+  font-size: 1rem;
   font-weight: 760;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 .shop-dialog--midnight .shop-item__details small {
   color: #535e51;
-  font-size: .715rem;
+  font-size: .875rem;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
 .shop-dialog--midnight .shop-item__details .shop-item__insufficient {
   color: #912d3a;
-  font-size: .68rem;
+  font-size: .825rem;
   font-weight: 750;
 }
 .shop-dialog--midnight .shop-item__action {
@@ -217,7 +217,7 @@
   display: block;
   align-self: stretch;
   min-width: 0;
-  min-height: 3.45rem;
+  min-height: 4.35rem;
   border: 1px solid #214f41;
   border-radius: .18rem;
   background: #174536;
@@ -227,12 +227,12 @@
 .shop-dialog--midnight .shop-item__price {
   position: absolute;
   z-index: 1;
-  top: .43rem;
+  top: .69rem;
   right: .1rem;
   left: .1rem;
   display: block;
   color: #ffdf98;
-  font-size: .83rem;
+  font-size: .9375rem;
   font-weight: 850;
   line-height: 1.1;
   white-space: nowrap;
@@ -245,14 +245,14 @@
   justify-content: center;
   width: 100%;
   min-width: 0;
-  min-height: 3.45rem;
+  min-height: 4.35rem;
   margin: 0;
-  padding: 1.5rem .13rem .42rem;
+  padding: 2rem .13rem .65rem;
   border: 0;
   border-radius: inherit;
   background: transparent;
   color: #fff8ea;
-  font-size: .72rem;
+  font-size: .9rem;
   font-weight: 800;
   line-height: 1.15;
   white-space: nowrap;
@@ -284,7 +284,7 @@
 .shop-dialog--midnight .shop-dialog__disclaimer {
   margin: .65rem .1rem 0;
   color: #425347;
-  font-size: .67rem;
+  font-size: .8rem;
   line-height: 1.4;
 }
 @media (max-width: 22rem) {
@@ -294,14 +294,14 @@
   }
   .shop-dialog--midnight .shop-card { padding: .75rem .5rem; }
   .shop-dialog--midnight .shop-item {
-    grid-template-columns: 2.05rem minmax(0, 1fr) 5rem;
+    grid-template-columns: 2.15rem minmax(0, 1fr) 5.4rem;
     gap: .33rem;
     padding-inline: .32rem;
   }
   .shop-dialog--midnight .shop-item__glyph { width: 2rem; }
-  .shop-dialog--midnight .shop-item__details strong { font-size: .8rem; }
-  .shop-dialog--midnight .shop-item__details small { font-size: .69rem; }
-  .shop-dialog--midnight .shop-item__price { font-size: .75rem; }
+  .shop-dialog--midnight .shop-item__details strong { font-size: .9375rem; }
+  .shop-dialog--midnight .shop-item__details small { font-size: .8125rem; }
+  .shop-dialog--midnight .shop-item__price { font-size: .875rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shop-dialog--midnight button { transition: none; }
