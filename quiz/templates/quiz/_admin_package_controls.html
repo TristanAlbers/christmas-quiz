@@ -1,21 +1,36 @@
 <div id="admin-package-controls"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
   <input class="poll-context" type="hidden" name="package_context" value="{{ package_context }}">
   {% if global_state == 'READY' %}
-    <section class="action-card" aria-labelledby="package-selection-title">
-      <h2 id="package-selection-title">Kies een spelpakket</h2>
-      <p>Starten maakt een nieuwe vaste kopie van het spel. Wijzigingen aan bronbestanden veranderen een actieve spelronde niet.</p>
-      <form id="package-selection-form" method="post" action="{% url 'admin_start' %}">
-        {% csrf_token %}
-        <input type="hidden" name="request_id" value="{{ request_id }}">
-        <label for="package-id">Spelpakket</label>
-        <select id="package-id" name="package_id" required>
-          <option value="">Kies een pakket</option>
-          {% for package in packages %}
-            <option value="{{ package.package_id }}"{% if not package.startable %} disabled{% endif %}>{{ package.package_id }}{% if not package.startable %} — niet beschikbaar{% endif %}</option>
-          {% endfor %}
-        </select>
-        <button class="button-primary" type="submit"{% if not has_startable_packages %} disabled{% endif %}>Spel starten</button>
-      </form>
+    <section class="gm-ready" aria-labelledby="package-selection-title">
+      <div class="gm-ready__heading">
+        <p class="theme-eyebrow">Nieuw spel</p>
+        <h2 id="package-selection-title" class="theme-display">Laat de kerststrijd beginnen.</h2>
+        <p class="gm-ready__intro">Kies een geldig spelpakket om een nieuwe race te starten.</p>
+      </div>
+      <div class="gm-ready__body">
+        <form id="package-selection-form" method="post" action="{% url 'admin_start' %}">
+          {% csrf_token %}
+          <input type="hidden" name="request_id" value="{{ request_id }}">
+          <label for="package-id">Spelpakket</label>
+          <select id="package-id" name="package_id" required aria-label="Beschikbare spelpakketten" aria-describedby="package-help">
+            <option value="">Selecteer een geldig pakket</option>
+            {% for package in packages %}
+              <option value="{{ package.package_id }}"{% if not package.startable %} disabled{% endif %}>{{ package.package_id }}{% if not package.startable %} — ongeldig{% endif %}</option>
+            {% endfor %}
+          </select>
+          <div class="gm-ready__verification" aria-label="Validatie spelpakketten">
+            {% include 'quiz/_admin_package_diagnostics.html' %}
+          </div>
+          <p id="package-help" class="gm-ready__help">Pakketten met de status ‘Ongeldig’ kunnen niet worden gestart. Controleer de vermelde foutreden.</p>
+          <p class="gm-ready__snapshot">Starten maakt een vaste kopie van het spel. Wijzigingen aan bronbestanden veranderen de actieve ronde niet.</p>
+          <div class="gm-ready__actions">
+            <button class="gm-ready__start" type="submit"{% if not has_startable_packages %} disabled{% endif %}>
+              Spel starten <span aria-hidden="true">→</span>
+            </button>
+            <span>Beide teams beginnen bij vakje 1.</span>
+          </div>
+        </form>
+      </div>
     </section>
   {% endif %}
 </div>
