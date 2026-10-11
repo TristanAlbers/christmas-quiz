@@ -1,0 +1,417 @@
+/* Issue #82 — V4 Challenge takeover, scoped to real active Challenge views. */
+body.game-page--overview:has(.challenge-overview) {
+  margin: 0;
+  min-height: 100vh;
+  background: #061815;
+  color: #f3ddb1;
+}
+.game-page--overview:has(.challenge-overview)::before { display: none; }
+.game-page--overview:has(.challenge-overview) .public-overview {
+  box-sizing: border-box;
+  width: calc(100% - 2rem);
+  max-width: none;
+  min-height: calc(100vh - 2rem);
+  height: calc(100dvh - 2rem);
+  margin: 1rem;
+  padding: clamp(1rem, 2.3vw, 2.6rem);
+  overflow: hidden;
+  border: 1px solid #615d3a;
+  border-radius: .4rem;
+  box-shadow: inset 0 0 0 .9rem #071b16, inset 0 0 0 calc(.9rem + 1px) #91764866;
+  background: radial-gradient(ellipse at 50% 5%, #193d2a66, transparent 60%), #081b15;
+}
+.game-page--overview:has(.challenge-overview) #live-overview,
+.game-page--overview:has(.challenge-overview) #overview-state { height: 100%; min-height: 0; }
+.game-page--overview:has(.challenge-overview) .public-status {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.game-page--overview .challenge-tv-header {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: .3vw .8vw 1.2vw;
+  min-height: 9vw;
+}
+.game-page--overview .challenge-tv-header__occasion {
+  text-align: left;
+  margin: 0;
+  font: 1.05vw/1.4 Georgia, "Times New Roman", serif;
+  color: #e1ca9e;
+}
+.game-page--overview .challenge-tv-header__occasion span { display: block; margin-top: .3rem; }
+.game-page--overview .challenge-tv-header__brand { display: grid; justify-items: center; gap: .08vw; }
+.game-page--overview .challenge-tv-header__brand > span { font-size: 1.7vw; line-height: .7; color: #e9c57e; }
+.game-page--overview .challenge-tv-header__brand h1 {
+  margin: 0;
+  color: #f7e5b9;
+  font: normal 5vw/.95 Georgia, "Times New Roman", serif;
+  letter-spacing: -.05em;
+  text-shadow: 0 .25vw 1.2vw #0009;
+}
+.game-page--overview .challenge-tv-header__brand small {
+  color: #e1c79e;
+  font: .8vw system-ui, sans-serif;
+  letter-spacing: .13em;
+}
+.game-page--overview .challenge-tv-header__clock {
+  display: grid;
+  justify-items: end;
+  margin: 0;
+  color: #dfcda7;
+  font: .9vw Georgia, "Times New Roman", serif;
+}
+.game-page--overview .challenge-tv-header__clock strong {
+  color: #f9eac4;
+  font: 600 2.65vw system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.game-page--overview .challenge-overview {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.game-page--overview .challenge-overview__live {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: .8vw;
+  margin: .2vw auto 1vw;
+  width: 40%;
+  color: #e4c79b;
+  font: 1.15vw Georgia, serif;
+  white-space: nowrap;
+}
+.game-page--overview .challenge-overview__live::before,
+.game-page--overview .challenge-overview__live::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #7c6544);
+}
+.game-page--overview .challenge-overview__live::after { transform: rotate(180deg); }
+.game-page--overview .challenge-overview__live > span { color: #ae4d5b; font-size: .65vw; }
+.game-page--overview .challenge-overview__stage {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(.35rem, .8vw, .95rem);
+  min-height: 0;
+  padding: 1.25vw 5vw;
+  border: 1px solid #94734a;
+  background: radial-gradient(circle at 50% 38%, #653a2b3d, transparent 64%), #0b211c;
+  text-align: center;
+}
+.game-page--overview .challenge-overview__kicker,
+.game-page--overview .challenge-overview__matchup {
+  margin: 0;
+  color: #dec397;
+  font: 1.15vw Georgia, serif;
+}
+.game-page--overview .challenge-overview__duel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2.8vw;
+  font: normal 3.15vw Georgia, serif;
+  color: #edcd95;
+}
+.game-page--overview .challenge-overview__duel-mark {
+  font: normal 5vw Georgia, serif;
+  color: #f2cb80;
+}
+.game-page--overview .challenge-overview__matchup {
+  font-size: .9vw;
+  color: #cbb490;
+}
+.game-page--overview .challenge-overview__stage h2 {
+  margin: .3vw 0 0;
+  font: normal 2.25vw/1.2 Georgia, serif;
+  color: #f2d69f;
+}
+.game-page--overview .challenge-overview__question {
+  box-sizing: border-box;
+  width: min(100%, 64vw);
+  max-height: 35vh;
+  overflow-y: auto;
+  padding: 1.4vw 2.4vw;
+  border: 1px solid #aa864f;
+  background: linear-gradient(145deg, #16382d, #0a241c);
+  box-shadow: inset 0 0 0 .5vw #0c251d, 0 1vw 2vw #0006;
+  overflow-wrap: anywhere;
+}
+.game-page--overview .challenge-overview__question > span {
+  display: block;
+  margin-bottom: .7vw;
+  color: #eac78c;
+  font: 650 1.1vw system-ui, sans-serif;
+  letter-spacing: .15em;
+}
+.game-page--overview .challenge-overview__question h3 {
+  margin: 0 0 .4vw;
+  color: #f3d69f;
+  font: normal 1.65vw/1.18 Georgia, serif;
+}
+.game-page--overview .challenge-overview__question p {
+  max-width: none;
+  margin: 0;
+  color: #ffebc7;
+  font: normal 2.25vw/1.26 Georgia, serif;
+}
+.game-page--overview .challenge-overview__gathering { display: grid; justify-items: center; gap: 1.25vw; }
+.game-page--overview .challenge-overview__gathering .challenge-start-timer {
+  color: #f6e4b8;
+  font: normal clamp(2.2rem, 4vw, 5rem)/1.15 Georgia, serif;
+}
+.game-page--overview .challenge-overview__paused { margin: 0; color: #ebc987; }
+.game-page--overview .challenge-overview__seal {
+  width: min(100%, 64vw);
+  margin: .3vw 0 0;
+  padding: .4vw;
+  border-block: 1px solid #8a6948;
+  color: #f1d39b;
+  font: 1.12vw Georgia, serif;
+}
+.game-page--overview .challenge-overview__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2vw;
+  padding: 1vw 0 .3vw;
+  color: #e6c795;
+  font: 1.12vw Georgia, serif;
+}
+.game-page--overview .challenge-overview__footer span { color: #a88954; }
+
+/* The same switch to a compact screen is driven by the authoritative
+   polled Challenge pane; no local timer or client-owned active state. */
+body.game-page--team:has(.challenge-stage) {
+  margin: 0;
+  min-height: 100dvh;
+  color: #f5e6c6;
+  background: radial-gradient(ellipse 90% 35% at 50% 0%, #33554380, transparent),
+              linear-gradient(145deg, #0d2a24, #061815 65%);
+}
+body.game-page--team:has(.challenge-stage)::before { display: none; }
+.game-page--team:has(.challenge-stage) .app-shell {
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  max-width: 36rem;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 1rem clamp(.8rem, 4.5vw, 1.25rem) 2rem;
+  border: 1px solid #c59c5935;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.game-page--team:has(.challenge-stage) .page-header {
+  display: flex;
+  align-items: center;
+  padding: 0 0 1rem;
+  min-height: 2.2rem;
+  margin: 0;
+  border-bottom: 1px solid #c0a16a65;
+}
+.game-page--team:has(.challenge-stage) .page-header .eyebrow {
+  margin: 0;
+  color: #f5ddb0;
+  font: normal 1.35rem Georgia, serif;
+  letter-spacing: -.04em;
+  text-transform: none;
+}
+.game-page--team:has(.challenge-stage) .page-header .eyebrow::after {
+  content: " ✦";
+  color: #f4d79e;
+}
+.game-page--team:has(.challenge-stage) .page-header h1 { display: none; }
+.game-page--team:has(.challenge-stage) .page-header form { display: none; }
+.game-page--team:has(.challenge-stage) #game-status { min-height: 0; margin: 0; }
+.game-page--team:has(.challenge-stage) .team-state-surface { margin: 0; padding: 0; background: none; border: 0; }
+.game-page--team:has(.challenge-stage) .team-advent-meta {
+  position: absolute;
+  top: 1.5rem;
+  right: clamp(.8rem, 4.5vw, 1.25rem);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #e7d3a5;
+  font: 600 .73rem system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.game-page--team:has(.challenge-stage) .team-advent-meta > span:first-child { display: none; }
+.game-page--team:has(.challenge-stage) .challenge-status--active,
+.game-page--team:has(.challenge-stage) .team-resource-bar { display: none; }
+.game-page--team:has(.challenge-stage) #question-pane {
+  margin: .6rem 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage {
+  display: grid;
+  align-content: start;
+  gap: .8rem;
+  margin: 0;
+  padding: .9rem .8rem .75rem;
+  border: 1px solid #a98755;
+  border-radius: 0;
+  background: linear-gradient(145deg, #29342c, #0b261d);
+  box-shadow: none;
+  color: #f5e4bf;
+  overflow: visible;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage::before { display: none; }
+.game-page--team:has(.challenge-stage) .challenge-stage__header {
+  display: grid;
+  gap: .3rem;
+  margin: 0;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__kicker {
+  margin: 0;
+  color: #e6c288;
+  font: 700 .7rem/1.4 system-ui, sans-serif;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__role {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__paper {
+  padding: 1.2rem .9rem;
+  border: 1px solid #e7d2aa;
+  background: linear-gradient(145deg, #dec9a8, #baa17d);
+  color: #253b30;
+  overflow-wrap: anywhere;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__paper > span {
+  color: #725031;
+  font: 750 .7rem system-ui, sans-serif;
+  letter-spacing: .12em;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__paper h2 {
+  margin: .65rem 0 .4rem;
+  color: #233a30;
+  font: normal 1.6rem/1.23 Georgia, serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__paper p {
+  margin: .4rem 0 0;
+  color: #233b30;
+  font: normal 1.42rem/1.42 Georgia, serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-image {
+  display: block;
+  width: 100%;
+  max-height: 45vh;
+  margin-top: .75rem;
+  object-fit: contain;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .65rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form label {
+  color: #f1dfbf;
+  font: .8rem system-ui, sans-serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 3.05rem;
+  padding: .75rem;
+  border: 1px solid #bca47a;
+  border-radius: 0;
+  background: #faf1df;
+  color: #263a2d;
+  font: 1rem system-ui, sans-serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form .button-challenge {
+  width: 100%;
+  min-height: 3.05rem;
+  padding: .75rem;
+  border: 1px solid #cd9874;
+  border-radius: 0;
+  background: #993d4d;
+  color: #fff4e7;
+  font: 700 1rem system-ui, sans-serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-answer-form .button-challenge:focus-visible,
+.game-page--team:has(.challenge-stage) .challenge-answer-form input:focus-visible {
+  outline: 3px solid #f2dba4;
+  outline-offset: 2px;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__footnote {
+  color: #f0d4a2;
+  text-align: center;
+  font: .75rem system-ui, sans-serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__gathering {
+  display: grid;
+  justify-items: center;
+  gap: 1.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__gathering h2 {
+  margin: 0;
+  color: #f2d8a5;
+  font: normal 2rem/1.14 Georgia, serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-stage__gathering .challenge-start-timer {
+  color: #f5e5b6;
+  font: normal 1.8rem/1.25 Georgia, serif;
+}
+.game-page--team:has(.challenge-stage) .challenge-paused {
+  border: 1px solid #b39c69;
+  background: #19372d;
+  color: #ffe9c3;
+}
+.game-page--team:has(.challenge-stage) #action-feedback { color: #f6dca5; }
+
+@media (max-width: 36rem) {
+  .game-page--overview .challenge-overview__question { max-height: 31vh; }
+  .game-page--team:has(.challenge-stage) .app-shell { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-page--overview .challenge-overview *,
+  .game-page--team:has(.challenge-stage) .challenge-stage * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
