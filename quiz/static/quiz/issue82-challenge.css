@@ -6,6 +6,9 @@ body.game-page--overview:has(.challenge-overview) {
   color: #f3ddb1;
 }
 .game-page--overview:has(.challenge-overview)::before { display: none; }
+/* Preserve the Music element for later playback; only suppress its visible
+   control panel during the full-screen Challenge scene. */
+.game-page--overview:has(.challenge-overview) #overview-audio-player { display: none; }
 .game-page--overview:has(.challenge-overview) .public-overview {
   box-sizing: border-box;
   width: calc(100% - 2rem);
@@ -259,6 +262,12 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
   font-variant-numeric: tabular-nums;
 }
 .game-page--team:has(.challenge-stage) .team-advent-meta > span:first-child { display: none; }
+.game-page--team:has(.challenge-stage) .team-advent-meta > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  white-space: nowrap;
+}
 .game-page--team:has(.challenge-stage) .challenge-status--active,
 .game-page--team:has(.challenge-stage) .team-resource-bar { display: none; }
 .game-page--team:has(.challenge-stage) #question-pane {
