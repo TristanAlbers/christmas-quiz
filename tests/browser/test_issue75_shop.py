@@ -166,7 +166,9 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
 
                 if self.screenshot_dir:
                     label = (
-                        "alternate-snapshot" if self.alt_prices else "demo-armed-reverse"
+                        "alternate-snapshot"
+                        if self.alt_prices
+                        else "demo-armed-reverse"
                     )
                     await page.screenshot(
                         path=self.screenshot_dir / f"issue75-{label}-390x844.png",
