@@ -3,7 +3,7 @@
 This guide describes the **current development demo as verified against the codebase on 2026-10-11**. It has
 two isolated teams, two named game masters, 25 distinct sample puzzles per team,
 11 shared Music questions, two separate one-per-team Challenge puzzles, and a public TV overview. It is not the authored
-Christmas event. The **approved Midnight Advent V4 visual redesign** is a pending documentation and implementation initiative, **not yet live in the current application**. See [UI contract](docs/ui/midnight-advent.md), [delivery plan](docs/ui/midnight-advent-rollout.md), and [spec #71](https://github.com/TristanAlbers/christmas-quiz/issues/71) **after documentation PR #70 lands**.
+Christmas event. The **approved Midnight Advent V4 visual redesign** is a pending documentation and implementation initiative, **not yet live in the current application**. See [UI contract](docs/ui/midnight-advent.md), [delivery plan](docs/ui/midnight-advent-rollout.md), and [spec #71](https://github.com/TristanAlbers/christmas-quiz/issues/71). The design documents were introduced by PR #70; the separate UI implementation tickets determine when each feature becomes live.
 
 ## Set up the server
 
