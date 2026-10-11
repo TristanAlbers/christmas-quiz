@@ -26,7 +26,7 @@
             {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ purchase_request_id }}">
             <span class="shop-item__glyph shop-item__glyph--hint" aria-hidden="true">?</span>
             <span class="shop-item__details"><strong>Hint</strong><small>Ontdek een extra aanwijzing</small><small class="shop-item__insufficient" data-shop-insufficient{% if state.points >= state.hint_cost %} hidden{% endif %}>Te weinig punten</small></span>
-            <span class="shop-item__action"><strong class="shop-item__price">{{ state.hint_cost }} {% if state.hint_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="Hint kopen ({{ state.hint_cost }})" data-shop-buy-label="Kopen ›">Kopen ›</button></span>
+            <span class="shop-item__action"><strong class="shop-item__price">{{ state.hint_cost }} {% if state.hint_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="Hint kopen ({{ state.hint_cost }})">Kopen ›</button></span>
           </form>
           {% if state.uno_reverse_cost != None %}
             {% if state.uno_reverse_active %}
@@ -40,7 +40,7 @@
                 {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ reverse_request_id }}">
                 <span class="shop-item__glyph shop-item__glyph--reverse" aria-hidden="true"><span class="resource-reverse-card"><span class="resource-reverse-card__brand">UNO</span><span class="resource-reverse-card__symbol"><svg viewBox="0 0 70 84" fill="none" aria-hidden="true"><path d="M20 28 C20 13 47 9 49 26 L54 26 44 40 34 26 39 26 C37 20 27 23 27 30"/><path d="M50 56 C49 71 22 74 20 57 L15 57 25 44 35 57 30 57 C32 64 43 61 43 54"/></svg></span><span class="resource-reverse-card__name">REVERSE</span></span></span>
                 <span class="shop-item__details"><strong>Uno Reverse</strong><small>Kaatst een Freeze terug</small><small class="shop-item__insufficient" data-shop-insufficient{% if state.points >= state.uno_reverse_cost %} hidden{% endif %}>Te weinig punten</small></span>
-                <span class="shop-item__action"><strong class="shop-item__price">{{ state.uno_reverse_cost }} {% if state.uno_reverse_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="Uno Reverse kopen ({{ state.uno_reverse_cost }})" data-shop-buy-label="Kopen ›">Kopen ›</button></span>
+                <span class="shop-item__action"><strong class="shop-item__price">{{ state.uno_reverse_cost }} {% if state.uno_reverse_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="Uno Reverse kopen ({{ state.uno_reverse_cost }})">Kopen ›</button></span>
               </form>
             {% endif %}
           {% endif %}
@@ -49,7 +49,7 @@
               {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ freeze_request_id }}">
               <span class="shop-item__glyph shop-item__glyph--freeze" aria-hidden="true">❄</span>
               <span class="shop-item__details"><strong>Freeze</strong><small>{% if opponent_freeze_active %}Het andere team is al bevroren{% else %}Bevries het andere team{% endif %}</small><small class="shop-item__insufficient" data-shop-insufficient{% if state.points >= state.freeze_cost %} hidden{% endif %}>Te weinig punten</small></span>
-              <span class="shop-item__action{% if opponent_freeze_active %} shop-item__action--owned{% endif %}"><strong class="shop-item__price">{{ state.freeze_cost }} {% if state.freeze_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="{% if opponent_freeze_active %}Freeze niet beschikbaar{% else %}Andere team bevriezen ({{ state.freeze_cost }}){% endif %}"{% if opponent_freeze_active %} disabled{% endif %} data-shop-buy-label="Kopen ›">{% if opponent_freeze_active %}Niet mogelijk{% else %}Kopen ›{% endif %}</button></span>
+              <span class="shop-item__action{% if opponent_freeze_active %} shop-item__action--owned{% endif %}"><strong class="shop-item__price">{{ state.freeze_cost }} {% if state.freeze_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="{% if opponent_freeze_active %}Freeze niet beschikbaar{% else %}Andere team bevriezen ({{ state.freeze_cost }}){% endif %}"{% if opponent_freeze_active %} disabled{% endif %}>{% if opponent_freeze_active %}Niet mogelijk{% else %}Kopen ›{% endif %}</button></span>
             </form>
           {% endif %}
           {% if state.challenge_cost != None %}
@@ -62,7 +62,6 @@
             </form>
           {% endif %}
         </div>
-        <p class="shop-dialog__disclaimer">Prijzen en beschikbaarheid komen uit het actieve spelpakket en worden door de server bepaald.</p>
       </section>
     </dialog>
   {% endif %}
