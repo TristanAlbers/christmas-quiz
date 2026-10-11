@@ -546,6 +546,14 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
 .game-page--overview .public-status--advent .advent-progress__board {
   position: static;
 }
+.game-page--overview .public-status--advent .advent-progress__header {
+  position: static;
+}
+@media (min-width: 701px) {
+  .game-page--overview .public-status--advent .progress-count {
+    top: 2.1cqw;
+  }
+}
 .game-page--overview .public-status--advent
 .advent-door.advent-door--current .advent-door__flap {
   background: linear-gradient(135deg, #fff0ba, #d5a65b 70%, #a77c44);
