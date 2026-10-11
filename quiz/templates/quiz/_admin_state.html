@@ -6,6 +6,7 @@
     <div>
       <p class="eyebrow">Lopende spelronde</p>
       <h2>{% if global_state == 'ADVENT_QUIZ' %}De adventrace is bezig{% elif global_state == 'PAUSED' %}Het spel is gepauzeerd{% elif global_state == 'MUSIC_QUIZ' %}De muziekquiz is bezig{% elif global_state == 'FINISHED' %}De race is afgelopen{% else %}De spelronde is actief{% endif %}</h2>
+      <span class="gm-live-mode-label">{{ global_state|state_label }}</span>
       <p class="gm-live-status__note">{% if global_state == 'PAUSED' %}Alle speeltijden staan stil tot het spel wordt hervat.{% elif global_state == 'FINISHED' %}Beide teams hebben de adventrace voltooid.{% elif global_state == 'MUSIC_QUIZ' %}Volg de vragen en score in het muziekoverzicht.{% elif challenge and challenge.status == 'active' %}De kerstuitdaging is actief; volg hieronder de wedstrijd.{% else %}Beide teams spelen hun eigen kalender.{% endif %}</p>
     </div>
   </div>
