@@ -206,6 +206,11 @@
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
+.shop-dialog--midnight .shop-item__details .shop-item__insufficient {
+  color: #912d3a;
+  font-size: .68rem;
+  font-weight: 750;
+}
 .shop-dialog--midnight .shop-item__action {
   position: relative;
   display: block;
