@@ -272,10 +272,10 @@
   width: auto; border-color: #244e3b; color: #fff2da; background: #254e3c;
 }
 #live-admin:has(.gm-admin-team-panel) .gm-admin-action-card form:has(input[name="delta"]) button:hover { background: #173d2d; }
-#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card .control-stack:last-child {
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card .control-stack:has(form[action*='force-complete']) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card .control-stack:last-child form:only-child { grid-column: 1 / -1; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card .control-stack:has(form[action*='force-complete']) form:only-child { grid-column: 1 / -1; }
 #live-admin:has(.gm-admin-team-panel) .gm-admin-action-card button:disabled { opacity: .58; }
 #live-admin:has(.gm-admin-team-panel) button:focus-visible,
 #live-admin:has(.gm-admin-team-panel) input:focus-visible {
@@ -349,3 +349,6 @@
   .gm-admin-team-header { padding: .75rem; }
   #live-admin:has(.gm-admin-team-panel) .gm-admin-action-card button { padding-inline: .4rem; font-size: .77rem; }
 }
+
+/* Admin cabinets are static operational summaries, not the TV opening animation. */
+.game-page--admin > .advent-door-opening-echo { display: none !important; }
