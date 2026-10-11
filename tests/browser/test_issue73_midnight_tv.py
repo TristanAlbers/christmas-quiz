@@ -110,7 +110,7 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                             11,
                         )
                     self.assertEqual(
-                        await page.locator(".game-clock strong").inner_text()[:5],
+                        (await page.locator(".game-clock strong").inner_text())[:5],
                         "01:24",
                     )
                     self.assertEqual(
