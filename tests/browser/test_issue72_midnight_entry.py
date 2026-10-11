@@ -109,7 +109,7 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                             await page.locator(".team-ready").wait_for()
                             self.assertTrue(page.url.endswith("/team/"))
                             self.assertIn(
-                                "Team A", await page.locator(".team-ready").inner_text()
+                                "TEAM A", await page.locator(".team-ready").inner_text()
                             )
                             self.assertEqual(
                                 await page.locator("#answer-input").count(), 0
@@ -186,8 +186,8 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                     await page.get_by_role("button", name="Naar de quiz").click()
                     await page.locator(".team-ready").wait_for()
                     waiting = await page.locator(".team-ready").inner_text()
-                    self.assertIn("Team B", waiting)
-                    self.assertNotIn("Team A", waiting)
+                    self.assertIn("TEAM B", waiting)
+                    self.assertNotIn("TEAM A", waiting)
                     self.assertNotIn("Demo A1", await page.locator("body").inner_text())
                     await self._screenshot(page, "team-ready-b-390")
                 finally:
