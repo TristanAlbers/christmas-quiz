@@ -1,6 +1,6 @@
 # Explicit product decisions
 
-This file records later user-approved product decisions that intentionally refine or supersede older wording elsewhere in the repository. It overrides older specifications **only for the specific decisions stated here**. All unrelated game rules and security/privacy requirements keep their existing authority.
+This file records later user-approved product decisions that intentionally refine or supersede older wording elsewhere in the repository. **Precedence is decision-specific rather than simply filename- or heading-based:** later explicit approved product decisions control the stated presentation questions; older guidance remains binding for everything else unless expressly superseded. It overrides older specifications **only for the specific decisions stated here**. All unrelated game rules and security/privacy requirements keep their existing authority.
 
 ## 2026-09-28 — playable runtime is Dutch-first
 
@@ -110,7 +110,7 @@ The Freeze treatment layers onto the existing festive Advent calendar so progres
 
 The normal team Puzzle View uses a deliberately simpler phone-first hierarchy. The point balance is the dominant resource element. Earned fragments and Uno Reverse state remain visible as compact persistent resources. Raw backend state/status chrome such as `Game: ADVENT_QUIZ`, generic state badges, and permanently displayed resolved-Challenge results do not belong in normal play.
 
-The earlier requirement that available Hint tokens receive deliberate visual treatment is retained but refined: Hint inventory is shown **inside the contextual Hint action bar**, not as a separate top-level Hint-token resource card. The Hint action sits directly above Skip, communicates the remaining token count, and is visibly disabled when no token can legally be used. Skip communicates its point cost and affordability/legality; puzzle 25 remains an explicitly disabled final-puzzle exception. Backend command validation remains authoritative for both actions.
+The earlier requirement that available Hint tokens receive deliberate visual treatment is retained but refined: Hint inventory is shown **inside the contextual Hint action bar**, not as a separate top-level Hint-token resource card. At the time this decision was recorded, the Hint action sat directly above Skip; the **later 2026-10-11 approval explicitly changes that arrangement to side-by-side when legible**, with vertical reflow allowed for small screens. It still communicates the remaining token count, and is visibly disabled when no token can legally be used. Skip communicates its point cost and affordability/legality; puzzle 25 remains an explicitly disabled final-puzzle exception. Backend command validation remains authoritative for both actions.
 
 The answer interaction appears before the Hint/Skip action pair so the current puzzle remains the primary task. Still-valid answer, Hint, and Skip controls must remain mounted across ordinary 500 ms polling. Resource polling may update displayed points/fragments/Reverse state and mutate the text/disabled properties of those contextual actions, but must not replace the controls while their semantic puzzle context is unchanged.
 
@@ -118,7 +118,7 @@ Action/result feedback is contextual and transient. A newly resolved Challenge m
 
 ## 2026-10-11 — approved Midnight Advent visual overhaul
 
-The product owner approves the **Midnight Advent V4** team/public visual language, **Game Master V1**, and **Pause & Victory V1**. The binding bounded design is documented in [`docs/ui/midnight-advent.md`](ui/midnight-advent.md) and its [rollout](ui/midnight-advent-rollout.md). Those documents refine **presentation only**; all unrelated normative gameplay, authorization, public/privacy, clock, challenge/music, and polling requirements remain binding.
+The product owner approves the **Midnight Advent V4** team/public visual language, **Game Master V1**, and **Pause & Victory V1**. On **2026-10-11**, the owner also approved using **Matt Pocock's `to-spec` and `to-tickets`** for the engineering handoff (skipping a separate `grill-me` interview as already done conversationally); the full spec is GitHub issue **#71** and the **13 independent, dependency-annotated implementation tickets are #72–#84**. Visual implementation uses the repo-owned `midnight-advent-ui` orchestration skill plus appropriately verified *genuine* Anthropic Frontend Design and Impeccable audits, and retains Ponytail/CI/Codex review gates. See [agent guide](ui/midnight-advent-agent-guide.md). The binding bounded design is documented in [`docs/ui/midnight-advent.md`](ui/midnight-advent.md) and its [rollout](ui/midnight-advent-rollout.md). Those documents refine **presentation only**; all unrelated normative gameplay, authorization, public/privacy, clock, challenge/music, and polling requirements remain binding.
 
 Explicit presentation refinements of older view wording:
 - On normal team phones, **Hint and Skip may sit side by side** when legible, rather than being vertically stacked; preserve contextual token/cost/disabled semantics and the no-Skip-on-puzzle-25 rule.
