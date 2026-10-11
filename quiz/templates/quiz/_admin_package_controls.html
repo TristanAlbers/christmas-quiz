@@ -3,36 +3,34 @@
   {% if global_state == 'READY' %}
     <section class="gm-ready" aria-labelledby="package-selection-title">
       <div class="gm-ready__heading">
-        <p class="theme-eyebrow">Regietafel / Voorbereiding</p>
-        <h2 id="package-selection-title" class="theme-display">Het spel kan beginnen.</h2>
-        <p class="gm-ready__intro">Kies een gevalideerd spelpakket en open de Adventquiz voor beide teams.</p>
+        <p class="theme-eyebrow">Nieuw spel</p>
+        <h2 id="package-selection-title" class="theme-display">Laat de kerststrijd beginnen.</h2>
+        <p class="gm-ready__intro">Kies een geldig spelpakket om een nieuwe race te starten.</p>
       </div>
-      <div class="gm-ready__layout">
-        <div class="gm-ready__selection">
-          <div class="gm-ready__step"><span aria-hidden="true">01</span><h3>Kies het spelpakket</h3></div>
-          <form id="package-selection-form" method="post" action="{% url 'admin_start' %}">
-            {% csrf_token %}
-            <input type="hidden" name="request_id" value="{{ request_id }}">
-            <label for="package-id">Beschikbare spelpakketten</label>
-            <select id="package-id" name="package_id" required aria-describedby="package-help">
-              <option value="">Selecteer een geldig pakket</option>
-              {% for package in packages %}
-                <option value="{{ package.package_id }}"{% if not package.startable %} disabled{% endif %}>{{ package.package_id }}{% if not package.startable %} — ongeldig{% endif %}</option>
-              {% endfor %}
-            </select>
-            <p id="package-help" class="gm-ready__help">Alleen pakketten met de status ‘Gereed’ kunnen starten.</p>
-            <button class="theme-button gm-ready__start" type="submit"{% if not has_startable_packages %} disabled{% endif %}>
-              <span aria-hidden="true">✦</span> Spel starten <span aria-hidden="true">→</span>
+      <div class="gm-ready__body">
+        <form id="package-selection-form" method="post" action="{% url 'admin_start' %}">
+          {% csrf_token %}
+          <input type="hidden" name="request_id" value="{{ request_id }}">
+          <label for="package-id">Spelpakket</label>
+          <select id="package-id" name="package_id" required aria-label="Beschikbare spelpakketten" aria-describedby="package-help">
+            <option value="">Selecteer een geldig pakket</option>
+            {% for package in packages %}
+              <option value="{{ package.package_id }}"{% if not package.startable %} disabled{% endif %}>{{ package.package_id }}{% if not package.startable %} — ongeldig{% endif %}</option>
+            {% endfor %}
+          </select>
+          <div class="gm-ready__verification" aria-label="Validatie spelpakketten">
+            {% include 'quiz/_admin_package_diagnostics.html' %}
+          </div>
+          <p id="package-help" class="gm-ready__help">Pakketten met de status ‘Ongeldig’ kunnen niet worden gestart. Controleer de vermelde foutreden.</p>
+          <p class="gm-ready__snapshot">Starten maakt een vaste kopie van het spel. Wijzigingen aan bronbestanden veranderen de actieve ronde niet.</p>
+          <div class="gm-ready__actions">
+            <button class="gm-ready__start" type="submit"{% if not has_startable_packages %} disabled{% endif %}>
+              Spel starten <span aria-hidden="true">→</span>
             </button>
-          </form>
-          <p class="gm-ready__snapshot">Bij het starten wordt een vaste kopie van de spelinhoud opgeslagen. Latere wijzigingen aan bronbestanden veranderen deze spelronde niet.</p>
-        </div>
-        <div class="gm-ready__verification" aria-label="Validatie spelpakketten">
-          <div class="gm-ready__step"><span aria-hidden="true">02</span><h3>Controleer de pakketten</h3></div>
-          {% include 'quiz/_admin_package_diagnostics.html' %}
-        </div>
+            <span>Beide teams beginnen bij vakje 1.</span>
+          </div>
+        </form>
       </div>
-      <p class="gm-ready__footer"><span aria-hidden="true">✧</span> GAME MASTER · Alleen voor de spelleiding</p>
     </section>
   {% endif %}
 </div>
