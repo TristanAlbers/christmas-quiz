@@ -268,7 +268,19 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
   gap: .25rem;
   white-space: nowrap;
 }
-.game-page--team:has(.challenge-stage) .challenge-status--active,
+/* Preserve the challenge-status region for screen readers and existing
+   transition observers without displaying redundant phone explainer chrome. */
+.game-page--team:has(.challenge-stage) .challenge-status--active {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .game-page--team:has(.challenge-stage) .team-resource-bar { display: none; }
 .game-page--team:has(.challenge-stage) #question-pane {
   margin: .6rem 0 0;
