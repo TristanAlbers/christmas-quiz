@@ -1,4 +1,6 @@
-# Visuele stijl — Kerstmis Quiz
+# Visuele stijl — Quizzmass / Midnight Advent
+
+> **2026-10-11 status:** the user-approved **Midnight Advent V4 + Game Master V1 + Pause/Victory V1** design is the active presentation direction. See `docs/product-decisions.md` (precedence) and `docs/ui/midnight-advent.md` (binding screen-state contract). This file is useful for existing design tokens and accessibility guidance, but older exploratory suggestions below **do not override** the newer design or suggest a second design system.
 
 Dit document beschrijft de visuele richting voor de **Kerstmis Quiz** en vormt de basis voor toekomstige team-, overzichts- en Game Master-schermen.
 
@@ -26,7 +28,7 @@ De visuele laag mag nooit spelregels, autorisatie of state-logica bepalen. Styli
 
 De quiz wordt in het Nederlands gespeeld.
 
-Gebruik in zichtbare vaste interface-tekst daarom Nederlandse termen. Voorbeelden:
+Gebruik in zichtbare vaste interface-tekst daarom Nederlandse termen. **De eventnaam op het openbare scherm is `Quizzmass`**, niet een nieuwe merknaam of teamnaam; identificeer teams als **Team A** en **Team B**. Voorbeelden:
 
 | Engels / niet gebruiken | Nederlands / gebruiken |
 |---|---|
@@ -242,7 +244,7 @@ Niet gebruiken achter kleine, dichte mobiele gameplay-layouts als dit de ruimte 
 
 ## 8. Motion
 
-Animaties moeten rustig zijn.
+Doorlopende achtergrondanimaties moeten rustig zijn. **Kortdurende, betekenisvolle gameplaymomenten** — deur/chocolade-onthulling, Freeze-aanval, Uno Reverse-reflectie en eerste overwinning — zijn expliciet goedgekeurd als **opvallende** animaties; dit is geen reden om ze af te zwakken tot een gewone statusmelding.
 
 Wel:
 
@@ -335,14 +337,7 @@ De basisstijl moet speciale spelmomenten duidelijk kunnen dragen.
 
 ### Freeze
 
-Gebruik een koude blauwe/ijzige overlay bovenop de bestaande interface.
-
-Belangrijk:
-
-- huidige puzzel blijft herkenbaar;
-- interacties zijn zichtbaar disabled;
-- freeze-status is expliciet met tekst;
-- kleur alleen is onvoldoende.
+Gebruik de goedgekeurde koude, blauwe, geanimeerde ijslaag. De originele puzzel en privémedia mogen **niet** aanwezig zijn in de bevroren HTML/DOM. Alleen een generiek, niet-gevoelig silhouet mag door het ijs schemeren. **Alle acties zijn niet beschikbaar**, met zichtbare toestand/tekst en een servergestuurde resterende tijd. **Globale Pauze** gebruikt afzonderlijk goud/amber, laat geen spelersacties toe en behoudt de onderliggende spelstatus.
 
 ### Muziek Quiz
 
