@@ -174,6 +174,17 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     await self._screenshot(
                         tv_page, "challenge-gathering-tv-1920x1080.png"
                     )
+                    clock = await a_page.locator(
+                        ".team-advent-meta > span:last-child"
+                    ).bounding_box()
+                    stage_box = await a_page.locator(
+                        ".challenge-stage"
+                    ).bounding_box()
+                    self.assertIsNotNone(clock)
+                    self.assertIsNotNone(stage_box)
+                    self.assertLessEqual(
+                        clock["y"] + clock["height"], stage_box["y"] - 4
+                    )
                     await self._screenshot(
                         a_page, "challenge-gathering-team-a-390x844.png"
                     )
