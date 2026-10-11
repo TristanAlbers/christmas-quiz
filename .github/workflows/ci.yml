@@ -86,6 +86,7 @@ jobs:
               tests.browser.test_issue18_incorrect_answer_feedback
               tests.browser.test_issue39_puzzle_audio
               tests.browser.test_issue41_dutch_first
+              tests.browser.test_issue72_midnight_entry
               tests.browser.test_issue42_team_ui
               tests.browser.test_issue42_review_regressions
               tests.browser.test_phase31_views
@@ -112,9 +113,14 @@ jobs:
       - name: Build development test image
         run: docker build --target dev --tag $CI_IMAGE .
 
+      - name: Create screenshot directory
+        run: mkdir -p artifacts/ui-72
+
       - name: Run browser shard
         run: >-
           docker run --rm
+          -v "${{ github.workspace }}/artifacts/ui-72:/tmp/ui72"
+          -e UI72_SCREENSHOT_DIR=/tmp/ui72
           -e DJANGO_SETTINGS_MODULE=config.test_settings
           -e DJANGO_SECRET_KEY=ci-only-not-used-in-production
           -e DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
@@ -124,6 +130,14 @@ jobs:
           python manage.py test
           ${{ matrix.tests }}
           --verbosity 2 --timing --durations 20
+
+      - name: Preserve issue 72 browser screenshots
+        if: always() && matrix.shard == 'sync-feedback'
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-72
+          path: artifacts/ui-72/*.png
+          if-no-files-found: warn
 
   quality-and-tests:
     name: Quality and tests
