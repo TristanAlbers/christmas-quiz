@@ -1,6 +1,6 @@
 {% load quiz_format %}
 <section class="status-card public-status{% if state.challenge %} public-status--challenge{% elif not state.music and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
-  {% if state.challenge %}
+  {% if state.challenge or not state.music and state.global_state != 'READY' %}
   <header class="public-advent-header">
     <p class="public-advent-event">Kerstavond 2026<span>Twee teams. Eén avontuur.</span></p>
     <div class="public-brand">
@@ -10,20 +10,10 @@
     </div>
     <p class="game-clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
   </header>
-  {% elif state.music or state.global_state == 'READY' %}
+  {% else %}
   <header class="public-brand">
     <span class="eyebrow">Kerst Escape Room</span>
     <h1 class="public-brand__name">Quizzmass</h1>
-  </header>
-  {% else %}
-  <header class="public-advent-header">
-    <p class="public-advent-event">Kerstavond 2026<span>Twee teams. Eén avontuur.</span></p>
-    <div class="public-brand">
-      <span class="public-brand__ornament" aria-hidden="true">✦</span>
-      <h1 class="public-brand__name">Quizzmass</h1>
-      <p class="public-brand__subtitle">DE KERST ESCAPE ROOM</p>
-    </div>
-    <p class="game-clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
   </header>
   {% endif %}
   {% if state.music %}
