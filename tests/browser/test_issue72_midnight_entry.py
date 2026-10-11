@@ -41,6 +41,12 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
             directory.mkdir(parents=True, exist_ok=True)
             await page.screenshot(path=str(directory / f"{name}.png"), full_page=True)
 
+    async def _assert_pine_root(self, page):
+        color = await page.locator("html").evaluate(
+            "(el) => getComputedStyle(el).backgroundColor"
+        )
+        self.assertEqual(color, "rgb(6, 24, 19)")
+
     async def _assert_narrow(self, page, width):
         dimensions = await page.evaluate(
             """() => ({
@@ -70,6 +76,7 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                                 "heading", name="Quizzmass"
                             ).wait_for()
                             await self._assert_narrow(page, width)
+                            await self._assert_pine_root(page)
                             await self._screenshot(page, f"landing-{width}")
 
                             await page.get_by_role(
@@ -79,6 +86,7 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                                 await page.locator("html").get_attribute("lang"), "nl"
                             )
                             await self._assert_narrow(page, width)
+                            await self._assert_pine_root(page)
                             await self._screenshot(page, f"team-login-{width}")
                             await page.get_by_label("Pincode").focus()
                             self.assertEqual(
@@ -131,6 +139,7 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                                 "visibilitychange[!document.hidden] from:document",
                             )
                             await self._assert_narrow(page, width)
+                            await self._assert_pine_root(page)
                             await self._screenshot(page, f"team-ready-a-{width}")
                             await page.wait_for_timeout(1100)
                             self.assertEqual(
@@ -156,6 +165,7 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                     page = await context.new_page()
                     await page.goto(f"{self.live_server_url}/admin-login/")
                     await self._assert_narrow(page, 320)
+                    await self._assert_pine_root(page)
                     await self._screenshot(page, "admin-login-320")
                     await page.get_by_label("Gebruikersnaam").focus()
                     self.assertNotEqual(
@@ -219,6 +229,12 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                     )
                     await page.locator("#answer-input").wait_for(timeout=6000)
                     self.assertEqual(await page.locator(".team-ready").count(), 0)
+                    self.assertNotEqual(
+                        await page.locator("html").evaluate(
+                            "(el) => getComputedStyle(el).backgroundColor"
+                        ),
+                        "rgb(6, 24, 19)",
+                    )
                     self.assertTrue(
                         await page.evaluate(
                             "(node) => node === document.querySelector('#poller')",
@@ -235,6 +251,7 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                         RunCommand(str(uuid4()), started.run_id),
                     )
                     await page.locator(".team-ready").wait_for(timeout=6000)
+                    await self._assert_pine_root(page)
                     self.assertEqual(await page.locator("#answer-input").count(), 0)
                     self.assertEqual(
                         await page.locator(".team-resource-bar").count(), 0
