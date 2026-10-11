@@ -10,7 +10,31 @@
     {% if not state.music and state.team_state == 'FREEZE' %}
       <div class="freeze-message" role="status" aria-live="polite"><p class="freeze-message__icon" aria-hidden="true">❄</p><p class="eyebrow">IJsblokkade actief</p><h2>Jullie team is bevroren</h2><p>Spelen is tijdelijk niet mogelijk. Jullie puzzel en hint blijven verborgen totdat de server de Freeze opheft.</p><p class="freeze-timer" data-remaining-ms="{{ state.freeze_remaining_ms }}">Nog {% widthratio state.freeze_remaining_ms 1000 1 %} seconden</p></div>
     {% else %}
-      {% if first_finisher_team_id %}<aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% elif state.team_state == 'FINISHED' %} finish-banner--winner{% else %} finish-banner--runner-up{% endif %}" role="status">{% if state.global_state == 'FINISHED' %}<p class="eyebrow">Race afgerond</p><h2>Team {{ first_finisher_team_id|upper }} was als eerste klaar</h2><p>Beide teams hebben alle 25 adventvakjes voltooid.</p>{% elif state.team_state == 'FINISHED' %}<p class="eyebrow">Winnaar adventrace</p><h2>Jullie hebben de adventrace gewonnen!</h2><p>Het andere team speelt verder totdat ook hun kalender compleet is.</p>{% else %}<p class="eyebrow">Uitslag</p><h2>Team {{ first_finisher_team_id|upper }} heeft de kalender voltooid</h2><p>Ga door: jullie huidige puzzel blijft actief.</p>{% endif %}</aside>{% endif %}
+      {% if state.team_state == 'FINISHED' and first_finisher_team_id %}
+        <section class="endgame-team-result{% if first_finisher_team_id == viewer_team_id %} endgame-team-result--winner{% else %} endgame-team-result--complete{% endif %}" role="group" aria-label="Adventrace resultaat" aria-live="off" data-persistent-result>
+          <div class="endgame-team-result__inner">
+            <span class="endgame-team-result__sigil" aria-hidden="true">✦</span>
+            {% if first_finisher_team_id == viewer_team_id %}
+              <p class="endgame-team-result__kicker">De eerste 25 deuren zijn geopend</p>
+              <h1>Jullie winnen!</h1>
+              <p class="endgame-team-result__copy">Jullie hebben als eerste alle 25 adventvakjes voltooid. Het andere team speelt verder.</p>
+              <p class="endgame-team-result__divider" aria-hidden="true">✦ · ✧ · ✦</p>
+              <p class="endgame-team-result__stamp">Team {{ viewer_team_id|upper }} · Winnaar van Quizzmass</p>
+            {% else %}
+              <p class="endgame-team-result__kicker">Alle 25 vakjes geopend</p>
+              <h1>Jullie zijn klaar!</h1>
+              <p class="endgame-team-result__copy">Ook jullie hebben de volledige adventkalender voltooid. Team {{ first_finisher_team_id|upper }} bereikte de finish als eerste.</p>
+              <p class="endgame-team-result__divider" aria-hidden="true">✦ · ✧ · ✦</p>
+              <p class="endgame-team-result__stamp">Team {{ viewer_team_id|upper }} · Adventkalender voltooid</p>
+            {% endif %}
+          </div>
+        </section>
+      {% elif first_finisher_team_id %}
+        <aside class="endgame-continuing-note" role="status">
+          <strong>Team {{ first_finisher_team_id|upper }} is als eerste klaar.</strong>
+          <span>Jullie spelen verder — de huidige puzzel blijft actief.</span>
+        </aside>
+      {% endif %}
       {% if not state.music and state.global_state == 'PAUSED' %}<div class="interruption-message"><h2>Spel gepauzeerd</h2><p>{% if state.challenge and state.challenge.status == 'active' %}De actieve uitdaging en de bijbehorende start- en antwoordstatus blijven bewaard.{% else %}Jullie exacte puzzelstatus en effecttimers blijven bewaard.{% endif %}</p></div>{% endif %}
       {% if state.music and state.music.phase == 'gathering' %}<div class="music-gathering-status"><strong>{% if state.global_state == 'PAUSED' %}Muziek Quiz gepauzeerd{% else %}De Muziek Quiz begint zo{% endif %}</strong><time class="music-countdown music-countdown--team" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span></time></div>{% endif %}
       {% if state.challenge and state.challenge.status == 'active' %}
