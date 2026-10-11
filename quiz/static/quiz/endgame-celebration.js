@@ -19,8 +19,8 @@
   }
 
   function storageKey(stateMarker) {
-    const runId = stateMarker.dataset.endgameRunId || "active";
-    const scope = surface === "team" ? currentTeam + ":" + runId : "shared";
+    const runId = stateMarker.dataset.endgameRunId || stateMarker.dataset.runId || "active";
+    const scope = surface === "team" ? currentTeam + ":" + runId : "shared:" + runId;
     return "christmas-quiz:endgame-seen:" + surface + ":" + scope;
   }
 
@@ -64,10 +64,10 @@
     if (currentTeam === winner) {
       return {
         kind: "winner",
-        icon: "🏆",
+        icon: "✦",
         eyebrow: "Jullie waren als eerste klaar",
-        title: "Jullie winnen de adventrace!",
-        copy: "Vrolijk kerstfeest, kampioenen. Het andere team kan de kalender nog afmaken.",
+        title: "Jullie winnen!",
+        copy: "Jullie hebben als eerste alle 25 adventvakjes voltooid. Het andere team speelt verder.",
       };
     }
     return {
@@ -125,7 +125,7 @@
     );
   }
 
-  function observeEndgame() {
+  function observeEndgame(initial = false) {
     const stateMarker = marker();
     if (!stateMarker) return;
     const winner = (stateMarker.dataset.endgameWinner || "").trim().toLowerCase();
@@ -135,10 +135,16 @@
       return;
     }
     if (storedValue(key) === winner) return;
+    // A fresh/reconnected page renders the durable server result but must not
+    // replay the transient celebration for a finish it did not observe.
+    if (initial) {
+      remember(key, winner);
+      return;
+    }
     remember(key, winner);
     showCelebration(winner);
   }
 
-  document.addEventListener("DOMContentLoaded", observeEndgame);
+  document.addEventListener("DOMContentLoaded", function () { observeEndgame(true); });
   document.body.addEventListener("htmx:afterSettle", observeEndgame);
 }());
