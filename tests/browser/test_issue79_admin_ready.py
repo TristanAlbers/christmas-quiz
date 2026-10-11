@@ -64,6 +64,11 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
         self.client.force_login(self.team_user)
         self.assertEqual(self.client.get("/admin-game/").status_code, 403)
         self.assertEqual(self.client.get("/admin-game/state/").status_code, 403)
+        bad_team_start = self.client.post(
+            "/admin-game/start/",
+            {"package_id": "christmas-2026-demo", "request_id": "not-a-uuid"},
+        )
+        self.assertEqual(bad_team_start.status_code, 400)
         self.assertNotContains(self.client.get("/team/"), "broken-package")
         self.client.force_login(self.admin_user)
         ready = self.client.get("/admin-game/")
@@ -173,7 +178,9 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                         await selector.evaluate("el => el === window.__readySelect")
                     )
                     await page.mouse.up()
-                    self.assertEqual(await selector.input_value(), "christmas-2026-demo")
+                    self.assertEqual(
+                        await selector.input_value(), "christmas-2026-demo"
+                    )
 
                     button = page.get_by_role("button", name="Spel starten")
                     await button.scroll_into_view_if_needed()
