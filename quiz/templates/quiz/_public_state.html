@@ -67,7 +67,7 @@
       <p class="public-overview-phase">{% if state.global_state == 'FINISHED' %}De adventrace is afgerond{% elif state.global_state == 'PAUSED' %}Spel gepauzeerd{% else %}De adventrace is begonnen{% endif %}</p>
     </div>
     <div class="public-calendar-grid">
-      {% for team in teams %}{% include 'quiz/_advent_calendar.html' with progress=team.advent_progress team_id=team.team_id is_frozen=team.is_frozen %}{% endfor %}
+      {% for team in teams %}{% include 'quiz/_advent_calendar.html' with progress=team.advent_progress team_id=team.team_id is_frozen=team.is_frozen winner_team_id=first_finisher_team_id %}{% endfor %}
     </div>
     {% if first_finisher_team_id and state.global_state != 'FINISHED' %}
       <div class="endgame-tv-ribbon" role="status">✦ Team {{ first_finisher_team_id|upper }} heeft gewonnen · Team {% if first_finisher_team_id == 'a' %}B{% else %}A{% endif %} speelt verder ✦</div>
