@@ -88,6 +88,7 @@ jobs:
               tests.browser.test_issue41_dutch_first
               tests.browser.test_issue72_midnight_entry
               tests.browser.test_issue74_team_advent_panel
+              tests.browser.test_issue75_shop
               tests.browser.ui74_capture_temp
               tests.browser.test_issue79_admin_ready
               tests.browser.test_issue42_team_ui
@@ -118,17 +119,19 @@ jobs:
         run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Create screenshot directory
-        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74
+        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-75
 
       - name: Run browser shard
         run: >-
           docker run --rm
           -v "${{ github.workspace }}/artifacts/ui-72:/tmp/ui72"
           -v "${{ github.workspace }}/artifacts/ui-74:/tmp/ui74"
+          -v "${{ github.workspace }}/artifacts/ui-75:/tmp/ui75"
           -v "${{ github.workspace }}/artifacts/ui-79:/tmp/ui79"
           -v "${{ github.workspace }}/artifacts/ui-73:/tmp/ui73"
           -e UI72_SCREENSHOT_DIR=/tmp/ui72
           -e UI74_SCREENSHOT_DIR=/tmp/ui74
+          -e UI75_SCREENSHOT_DIR=/tmp/ui75
           -e UI79_SCREENSHOT_DIR=/tmp/ui79
           -e UI73_SCREENSHOT_DIR=/tmp/ui73
           -e DJANGO_SETTINGS_MODULE=config.test_settings
@@ -156,6 +159,14 @@ jobs:
         with:
           name: midnight-advent-issue-74
           path: artifacts/ui-74/*.png
+          if-no-files-found: warn
+
+      - name: Preserve issue 75 shop screenshot and price snapshots
+        if: always() && matrix.shard == 'sync-feedback'
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-75
+          path: artifacts/ui-75/*
           if-no-files-found: warn
 
       - name: Preserve issue 73 TV V4 screenshots
