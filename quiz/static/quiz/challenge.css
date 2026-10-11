@@ -309,11 +309,6 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
   font: 700 .875rem system-ui, sans-serif;
   letter-spacing: .08em;
 }
-.game-page--team:has(.challenge-stage) .challenge-stage__role {
-  margin: -.5rem 0 0;
-  color: #ddceaa;
-  font-size: .77rem;
-}
 .game-page--team:has(.challenge-stage) .challenge-stage__gathering {
   display: grid;
   gap: 1.3rem;
@@ -476,8 +471,7 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
 }
 .game-page--team:has(.challenge-stage) .challenge-status--active .challenge-status__icon,
 .game-page--team:has(.challenge-stage) .challenge-status--active .eyebrow,
-.game-page--team:has(.challenge-stage) .challenge-status--active p:not(.eyebrow),
-.game-page--team:has(.challenge-stage) .challenge-stage__role { display: none; }
+.game-page--team:has(.challenge-stage) .challenge-status--active p:not(.eyebrow) { display: none; }
 .game-page--team:has(.challenge-stage) .challenge-status--active strong {
   color: #ddceaa;
   font-size: .875rem;
