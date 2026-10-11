@@ -507,10 +507,10 @@ sequenceDiagram
     participant B as Team B
 
     A->>S: Start Challenge
-    S->>S: Validate + deduct cost + consume opportunity
-    S-->>A: Challenge active
-    S-->>B: Challenge active
-
+    S->>S: Validate + consume free opportunity + select initiator's question
+    S-->>A: 15-second gathering, question hidden
+    S-->>B: 15-second gathering, question hidden
+    Note over A,B: After 15 active Advent seconds, shared question opens
     A->>S: Answer
     B->>S: Answer
     S->>S: Atomically accept first valid correct answer
