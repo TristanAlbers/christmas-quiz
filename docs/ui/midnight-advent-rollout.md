@@ -9,22 +9,33 @@
 - Use existing `.agents/skills/work-polling-ui/SKILL.md`, `work-github-issue`, `execution-router`, `run-health`; use Impeccable critique as a **design review method** if not installed as an executable skill. Run Ponytail only on a complete implementation diff at the mandatory gate, not to block design exploration.
 - Keep PRs small, single-purpose and draft until ready. Focused browser tests during implementation; full GitHub Actions on PR commits. Exactly-base/head `PONYTAIL PASS` and green CI precede Codex review; address comments in draft; never merge without explicit user authorization.
 
-## Dependency-ordered PR slices
+## Approved tracer-bullet delivery backlog (Matt Pocock `to-tickets`)
 
-| Order | Deliverable | Primary owner / execution | Must prove |
+The parent [specification #71](https://github.com/TristanAlbers/christmas-quiz/issues/71) was converted into **13 approved, independently demonstrable tickets**; each issue now records its authoritative `Blocked by` references and its own acceptance criteria. This replaces the earlier nine broad presentation slices. The documentation-only PR #70 is the common prerequisite: implementation must not begin until this contract is merged.
+
+| Ticket | Complete real-app outcome | Blocked by other tickets | Suggested route |
 | --- | --- | --- | --- |
-| 0 | This contract and ticket packets | Chat/GitHub, docs-only | Approved decisions, user intent and authoritative rules reconciled |
-| 1 | Shared Midnight Advent visual tokens and one noncritical entry surface (landing/login) | Chat/GitHub or Codex Medium if visual iterations needed | coherent reusable tokens, offline assets, no unexpected gameplay changes |
-| 2 | Public TV Advent cabinet + door/chocolate motifs | Local Codex `ui_experience`; chat CI/review | 2 × 25, authoritative state, opening one-shot, readable on TV, public freeze boolean only |
-| 3 | Compact team Advent puzzle + resources/media/Hint/Skip | Local Codex `ui_experience` | no 25-door team grid, focus stability, image/audio/long content, legal puzzle-25 Skip |
-| 4 | Shop, costs, armed Reverse card | Local Codex `ui_experience` | authoritative dynamic prices, affordability/rejections, modal lifecycle and visibility |
-| 5 | Player Freeze, attack/reflection, event-motion polish | Local Codex `ui_experience`; optional `integrator` if projection missing | correct event order, no leakage in frozen DOM, one-shot/reduced-motion |
-| 6 | Music (visual preservation) and Challenge takeovers | Chat review + focused Codex UI work | Music unchanged semantically; public Challenge question only at proper phase; controls stable |
-| 7 | Global Pause + first-winner/second-finish/finale views | Local Codex `ui_experience`, independent `test_invariants` | all pause submodes, actual music pause, first winner terminal, other team continues, final only after both |
-| 8 | Game Master READY/active/modes/reset interface | Local Codex `ui_experience` | controls faithful, readable mobile/tablet, stable during polls, destructive action safe |
-| 9 | Cross-screen polish/QA (may yield independent fixes) | Chat + CI, local Codex for hardware inspection only | representative phone/tablet/real TV, all flows, contrast/accessibility, reduced motion, long media |
+| [#72](https://github.com/TristanAlbers/christmas-quiz/issues/72) | Shared visual primitives and working login/waiting | None | Chat/GitHub; optional local Codex |
+| [#73](https://github.com/TristanAlbers/christmas-quiz/issues/73) | TV 25-door cabinets, chocolate and public frost | #72 | Local Codex `ui_experience` |
+| [#74](https://github.com/TristanAlbers/christmas-quiz/issues/74) | Compact phone puzzle, media and Hint/Skip | #72 | Local Codex `ui_experience` |
+| [#75](https://github.com/TristanAlbers/christmas-quiz/issues/75) | Usable shop, dynamic price cards and armed red Reverse | #74 | Local Codex `ui_experience` |
+| [#76](https://github.com/TristanAlbers/christmas-quiz/issues/76) | Safe, persistent frozen-team phone UI | #74 | Local Codex `ui_experience` |
+| [#81](https://github.com/TristanAlbers/christmas-quiz/issues/81) | Attacking, impact and red-card Reverse choreography | #75, #76 | Local Codex `ui_experience` |
+| [#77](https://github.com/TristanAlbers/christmas-quiz/issues/77) | Approved real Music TV/phone experience | #73, #74 | Local Codex `ui_experience` |
+| [#82](https://github.com/TristanAlbers/christmas-quiz/issues/82) | Shared TV Challenge puzzle and minimal phone answer | #73, #74 | Local Codex `ui_experience` |
+| [#78](https://github.com/TristanAlbers/christmas-quiz/issues/78) | Global gold Pause across modes, resume semantics | #76, #77, #82 | Local Codex `ui_experience` |
+| [#83](https://github.com/TristanAlbers/christmas-quiz/issues/83) | One first winner, opponent continues, final tableau | #73, #74 | Local Codex `ui_experience` + invariant review |
+| [#79](https://github.com/TristanAlbers/christmas-quiz/issues/79) | Admin READY, valid package selection and Start | #72 | Chat/GitHub or local Codex |
+| [#84](https://github.com/TristanAlbers/christmas-quiz/issues/84) | Active Game Master control desk and safe Reset | #73, #79 | Local Codex `ui_experience` |
+| [#80](https://github.com/TristanAlbers/christmas-quiz/issues/80) | Full integrated real-device/game-flow acceptance | #81, #78, #83, #84 | Chat + CI + local device rehearsal |
 
-**Avoid an oversized single PR.** Slices 2–8 should become separate GitHub issues with concrete acceptance, touched areas, owners and regression tests. Prefer serial integration because `app.css`, shared templates, and CSS tokens overlap. Merge foundations first; refresh main between PRs. For an issue, do not add speculative product features in the name of visual alignment.
+A ticket's listed blockers are **hard prerequisites**. Other tickets need not be implemented in exact row order. For example, after #72 lands, #73, #74 and #79 can be prepared concurrently in isolated branches; shared CSS/template changes should still be integrated sequentially against refreshed main. GitHub tool access currently offers text-based `Blocked by` references, not native dependency or sub-issue links. Follow the issue text to establish the frontier.
+
+These are **vertical presentation slices**, not architectural layers: each connects existing server state/projection through actual rendered Django/HTMX UI and browser acceptance. No new schema or API is necessary by default; introducing one is a separately justified architecture decision, not a ticket-sizing trick.
+
+**Mandatory reuse and prefactoring:** the repository already has entry theme tokens, a 25-door component and opening mechanism, Freeze/Reverse event handling, and confetti logic. Extend and converge on existing component boundaries before adding new ones. The small shared-style #72 ticket precedes themed gameplay changes; do not create a broad parallel CSS rewrite. Use the approved V4, Game Master V1 and Pause/Victory V1 mockups only as visual references, never as sources of fake clocks/costs/state.
+
+**Visual-reference portability:** the standalone prototype pack exists outside the repository. An implementation agent must receive it in its workspace when screenshot/visual comparison is required; repository contract and issue acceptance remain authoritative, and the agent must never silently improvise missing mock details. No runtime dependency may be introduced on the reference pack.
 
 ## Each ticket's definition of done
 
@@ -52,4 +63,4 @@ and the pushed commit SHA. Stop after one bounded issue/PR. Do not merge.
 
 ## First implementation gate
 
-Complete this **documentation-only PR** first, so future tickets cite one durable repository path. Then create and select the narrow first implementation issue. Avoid spending Codex credits asking it to reconstruct the visual conversation or to monitor CI. A follow-up review can inspect complete screens using preserved prototype screenshots and the shared acceptance criteria.
+Complete this **documentation-only PR** first, so future tickets cite one durable repository path. The ticket set #72–#84 has been published through the approved `to-tickets` flow. Select a frontier ticket, beginning with #72. Avoid spending Codex credits asking it to reconstruct the visual conversation or to monitor CI. A follow-up review can inspect complete screens using preserved prototype screenshots and the shared acceptance criteria.
