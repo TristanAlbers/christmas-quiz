@@ -1,5 +1,5 @@
 {% load quiz_format %}
-<section class="status-card public-status{% if not state.music and not state.challenge and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
+<section class="status-card public-status{% if state.music %} public-status--music{% endif %}{% if not state.music and not state.challenge and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
   {% if state.music or state.challenge or state.global_state == 'READY' %}
   <header class="public-brand">
     <span class="eyebrow">Kerst Escape Room</span>
@@ -13,35 +13,37 @@
       <h1 class="public-brand__name">Quizzmass</h1>
       <p class="public-brand__subtitle">DE KERST ESCAPE ROOM</p>
     </div>
-    <p class="game-clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
-  </header>
-  {% endif %}
-  {% if state.music %}
-    <div class="music-stage">
-      <p class="eyebrow">Muziek Quiz</p>
-      {% if state.music.phase == 'gathering' %}
-        <div class="music-gathering music-gathering--public">
-          <span class="music-gathering__note" aria-hidden="true">♫</span>
+    <p class="game-clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></    <div class="music-stage music-stage--midnight music-stage--{{ state.music.phase }}">
+      <div class="music-stage__vinyl" aria-hidden="true">
+        <div class="music-stage__disc"></div>
+        <p>Het lied staat centraal</p>
+      </div>
+      <div class="music-stage__content">
+        {% if state.music.phase == 'gathering' %}
+          <p class="music-stage__kicker">Muziek Quiz · Voorbereiding</p>
           <h1>Maak je klaar!</h1>
-          <p class="music-gathering__lead">De Muziek Quiz begint zo</p>
-          <p>Verzamel je team en ga klaarstaan.</p>
+          <p>De Muziek Quiz begint zo. Verzamel je team en ga klaarstaan.</p>
           <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span></time>
           {% if state.global_state == 'PAUSED' %}<p class="music-paused-message">Gepauzeerd · de tijd staat stil</p>{% endif %}
+        {% elif state.music.phase == 'question' %}
+          <p class="music-stage__kicker">Muziek Quiz · Vraag {{ state.music.question_number }} van {{ state.music.question_total }}</p>
+          <h1>Herken het lied</h1>
+          <h2>{{ state.music.title }}</h2>
+          <p class="music-stage__question">{{ state.music.body }}</p>
+          <div class="music-player-progress" data-music-player-progress role="img" aria-label="Decoratieve muziekspeler, geen werkelijke afspeelvoortgang"><span class="music-player-progress__fill" aria-hidden="true"></span></div>
+        {% else %}
+          <p class="music-stage__kicker">Muziek Quiz · Afgerond</p>
+          <h1>Eindstand Muziek Quiz</h1>
+          <p>De Adventquiz gaat verder over {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconden.</p>
+        {% endif %}
+        {% include 'quiz/_music_progress.html' with music=state.music %}
+        <div class="music-scores public-music-scores">
+          {% for score in state.music.scores %}<article><span>Team {{ score.team_id|upper }}</span><strong>{{ score.score }}</strong></article>{% endfor %}
         </div>
-      {% elif state.music.phase == 'question' %}
-        <h1>Vraag {{ state.music.question_number }} van {{ state.music.question_total }}</h1>
-        <h2>{{ state.music.title }}</h2>
-        <p>{{ state.music.body }}</p>
-        <div class="music-player-progress" data-music-player-progress><progress aria-label="Voortgang Muziek Quiz" max="180000" value="{{ state.music.question_elapsed_ms }}">{% widthratio state.music.question_elapsed_ms 180000 100 %}%</progress></div>
-      {% else %}
-        <h1>Eindstand Muziek Quiz</h1>
-        <p>De Adventquiz gaat verder over {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconden.</p>
-      {% endif %}
-      {% include 'quiz/_music_progress.html' with music=state.music %}
-      <div class="music-scores public-music-scores">
-        {% for score in state.music.scores %}<article><span>Team {{ score.team_id|upper }}</span><strong>{{ score.score }}</strong></article>{% endfor %}
+        {% if state.music.previous_winner_team_id %}<p class="music-winner">Laatste punt: Team {{ state.music.previous_winner_team_id|upper }}</p>{% endif %}
       </div>
-      {% if state.music.previous_winner_team_id %}<p class="music-winner">Laatste punt: Team {{ state.music.previous_winner_team_id|upper }}</p>{% endif %}
+    </div>
+s_winner_team_id|upper }}</p>{% endif %}
     </div>
   {% elif state.challenge %}
     <div class="music-stage challenge-overview challenge-overview--{{ state.challenge.phase }}">
