@@ -6,12 +6,12 @@
 
 - Product/spec review, GitHub ticket drafting, bounded text/CSS fixes, CI/log triage, independent diff review and merge orchestration: **this chat + GitHub** (minimize local Codex consumption).
 - Multi-file CSS/template/JavaScript work requiring rapid live Playwright/screenshot iterations or local Docker/browser/device testing: **local Codex**, `ui_experience` (Medium), scoped to **one ticket**. Use `integrator` only when a concrete projection/HTMX boundary must change; escalate `architect` or `persistence_security` only for a real cross-boundary ambiguity.
-- Use existing `.agents/skills/midnight-advent-ui/SKILL.md`, `work-polling-ui`, `work-github-issue`, `execution-router`, `run-health`; use **installed** Anthropic Frontend Design and **installed, actually executed** Impeccable `critique`, `audit`, `polish`, and selective `animate` for real UI screens. If unavailable, mark those checks **NOT RUN** and distinguish manual review. Do not silently install third-party code or enable hooks; details in the agent guide. Run Ponytail only on a completed implementation diff at the mandatory gate, not to block exploration.
-- Keep PRs small, single-purpose and draft until ready. Focused browser tests during implementation; full GitHub Actions on PR commits. Exactly-base/head `PONYTAIL PASS` and green CI precede Codex review; address comments in draft; never merge without explicit user authorization.
+- Use `midnight-advent-ui` and relevant repo skills. `frontend-design` and Impeccable are **optional, targeted tools**, not a multi-pass per-ticket checklist. Never claim a skill ran unless it did; do not repeat provenance research or install tools without authorization. Compare one representative real Django screen against approved references **before** broad validation. Run the mandatory Ponytail review only on a completed, visually approved diff.
+- Keep PRs small, single-purpose and draft while styling. CI may run automatically on commits; avoid repeated unnecessary manual reruns. Request **user visual approval** after a representative screenshot and brief gap report; only then finish all applicable tests/required green CI and the exact-base/head `PONYTAIL PASS` before Codex review. Never merge without explicit authorization.
 
 ## Approved tracer-bullet delivery backlog (Matt Pocock `to-tickets`)
 
-The parent [specification #71](https://github.com/TristanAlbers/christmas-quiz/issues/71) was converted into **13 approved, independently demonstrable tickets**; each issue now records its authoritative `Blocked by` references and its own acceptance criteria. This replaces the earlier nine broad presentation slices. The documentation-only PR #70 is the common prerequisite: implementation must not begin until this contract is merged.
+The parent [specification #71](https://github.com/TristanAlbers/christmas-quiz/issues/71) was converted into **13 approved, independently demonstrable tickets**; each issue now records its authoritative `Blocked by` references and its own acceptance criteria. This replaces the earlier nine broad presentation slices. Documentation PR #70 has landed. Remaining issue-specific blockers must still be verified before work.
 
 | Ticket | Complete real-app outcome | Blocked by other tickets | Suggested route |
 | --- | --- | --- | --- |
@@ -39,31 +39,25 @@ These are **vertical presentation slices**, not architectural layers: each conne
 
 ## Each ticket's definition of done
 
-1. Identify active state and available backend view context from repo; do not manufacture values.
-2. Implement the smallest coherent screen/function; no domain changes unless explicitly approved.
-3. Browser acceptance on changed device targets and edge cases, including actual 500ms polling, click/pointer/focus/modal continuity, no private data, no hidden controls.
-4. Reduced-motion and Dutch copy check; viewport contrast and overflow verified.
-5. Green required GitHub Actions for the exact head; independent invariant review only where behavior warrants.
-6. Mandatory full-diff Ponytail review for exact base/head `PONYTAIL PASS`; ready-for-Codex review only after pass and green; fix meaningful remarks and repeat gates.
-7. Chat performs safe-landing workflow **only when user requests merge**.
+1. **Early visual:** verify the relevant approved reference exists; implement a small real Django/HTMX slice, render one ordinary representative viewport and compare geometry/components/hierarchy. Run minimal render/security smoke checks. Missing reference means VISUAL BLOCKED.
+2. **Owner checkpoint:** fix dominant discrepancies, show the user a reference-versus-real-Django capture, up to five differences and the SHA, then **STOP for explicit visual approval**. Do not spend tokens on routine design-skill chains or broad test/review cycles first.
+3. **Required safety verification:** after approval, exercise applicable phone/tablet/TV sizes, long/media edge cases, accessibility, reduced motion, authorized public/private DOM, audio, focus/caret/pointer across 500ms polls, domain and recovery invariants. Preserve existing tests. GitHub CI owns the full suite and must be green at delivery.
+4. **Review/landing:** mandatory current-base/head Ponytail PASS, green CI and Codex review, with valid findings resolved. Merge **only** with separate user authorization. #80 reuses prior accepted visual evidence and audits integrated gaps, including already-landed #72/#79.
 
-## First ticket starter — copyable handoff for Codex
+## Issue starter — copyable handoff for Codex
 
 ```text
-Implement only the named Midnight Advent issue on a fresh branch and draft PR.
-Read AGENTS.md, docs/product-decisions.md, docs/ui/midnight-advent.md,
-docs/ui/midnight-advent-agent-guide.md, .agents/skills/midnight-advent-ui/SKILL.md,
-docs/ui/midnight-advent-rollout.md, the issue acceptance criteria, and
-.agents/skills/work-polling-ui/SKILL.md. Route to ui_experience; use integrator
-only for an explicit projection or HTMX contract need. Preserve all backend
-rules, existing URLs, 500ms polling identity, private/public boundaries and
-existing tests. Do not import standalone prototype mock state/JS wholesale.
-Use installed Anthropic frontend-design and Impeccable critique/audit/polish where
-available, with honest evidence of which commands actually ran. Use focused
-Django-backed Playwright/browser screenshot iterations and report exact tests
-and the pushed commit SHA. Stop after one bounded issue/PR. Do not merge.
+Work only on the selected Midnight Advent issue; continue its existing draft PR
+if present. Check dependencies, AGENTS.md and the lean agent guide. Reuse the
+current Django/HTMX app and protect server state/privacy/500ms polling. Verify
+the approved local reference, render one comparable real-app screenshot, fix
+significant layout mismatches, run small smoke checks and STOP for user visual
+approval with the screenshot, remaining deltas and SHA. No blanket design
+skills, multi-agent reviews or broad testing before this checkpoint. After
+approval run required tests/CI, exact-base/head Ponytail and Codex review.
+Never merge without separate authorization.
 ```
 
-## First implementation gate
+## Current frontier and visual gate
 
-Complete this **documentation-only PR** first, so future tickets cite one durable repository path. The ticket set #72–#84 has been published through the approved `to-tickets` flow; each ticket now includes a targeted, copyable **Agent implementation prompt**, skills and verification ownership. Select a frontier ticket, beginning with #72 **only after this PR is landed**. Avoid spending Codex credits asking it to reconstruct the visual conversation or to monitor CI. A follow-up review can inspect complete screens using preserved prototype screenshots and the shared acceptance criteria.
+PR #70 and foundation #72/#79 are merged. The open #74 PR #87 has not passed product visual acceptance: continue that PR in a small corrective pass, capture the actual V4-versus-Django phone screen and stop for owner approval before final testing/review. A good CI result is not approval of appearance. Future tickets follow only their `Blocked by` prerequisites and the same lean workflow; avoid spending local Codex tokens re-reading long historical conversations or monitoring unchanged CI.

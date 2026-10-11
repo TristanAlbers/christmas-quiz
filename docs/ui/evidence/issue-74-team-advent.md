@@ -128,3 +128,20 @@ CI retains the after captures as artifact `midnight-advent-issue-74` on PR #87.
 Exact final CI and base/head Ponytail evidence are recorded in the PR description
 so this document need not embed its own commit SHA. Codex review is prepared only
 once CI and exact-pair Ponytail pass. No merge or issue closure is authorized.
+
+
+## Final visual approval and integration (2026-10-11)
+
+The initial checkpoint above predates the final user-approved visual remediation.
+The completed phone view has readable larger typography at 390/320px, one contained
+Hint/Skip title and status line per control, and two static red/gold ornament cards
+instead of earned-fragment letter badges. Actual fragment earning/accounting has
+not changed. The points label is separated from its number, and the parchment
+reserves image-like height without media. Resolved Challenges no longer hide the
+clock or trigger repetitive live announcements. Poll-safe answer/Hint/Skip, native
+media, team isolation, and final-puzzle Skip restrictions are retained.
+
+The four temporary root-level visual exploration scripts were omitted during
+landing cleanup; the CI-backed Django screenshot fixture is retained. The actual
+current-head screenshot artifact, CI result and current exact-pair Ponytail review
+are linked from PR #87.

@@ -226,7 +226,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                               }
                             }
                           }
-                        }).observe(document.body, {childList: true});"""
+                        }).observe(document.body, {childList: true, subtree: true});"""
                     )
 
                     self.assertEqual(

@@ -1,30 +1,36 @@
 ---
 name: midnight-advent-ui
-description: Implement and review one approved Midnight Advent UI ticket with true source-of-truth Django state, polling-safe controls, and explicitly verified visual quality skills. Use for Quizzmass issues #72–#84 and final UI acceptance #80.
+description: Implement one approved Midnight Advent Django/HTMX UI issue with a cheap reference-matching screenshot checkpoint, then rigorous safety tests and review after visual approval.
 ---
 
-# Midnight Advent UI — implementation skill
+# Midnight Advent UI — lean integration skill
 
-Read `AGENTS.md`, the issue, `docs/product-decisions.md`, `docs/ui/midnight-advent.md`, and `docs/ui/midnight-advent-agent-guide.md`. This is a local integration skill and does **not** install or impersonate Anthropic/Impeccable.
+Read `AGENTS.md`, the selected issue and the **relevant** parts of `docs/product-decisions.md`, `docs/ui/midnight-advent.md` and `docs/ui/midnight-advent-agent-guide.md`. This repo skill does not install or impersonate Anthropic/Impeccable.
 
-## Before coding
+## Before work
 
-- Confirm issue `Blocked by` edges including **PR #70 merged** and all predecessor issues **landed on main**. `ready-for-agent` label does not override blockers.
-- Route to the smallest specialist(s) per `.agents/skills/work-github-issue/SKILL.md` and `.agents/skills/execution-router/SKILL.md`. Prefer `ui_experience` for UI; add `integrator` only for a demonstrated missing approved projection.
-- Read the existing code/test seam. Existing shared `theme.css`, calendar opening, sound, Freeze, attack, endgame and HTMX behaviors should be reused, not cloned into new helpers by default.
-- Confirm actual external design skills installed **before claiming use**: https://github.com/anthropics/skills/tree/main/skills/frontend-design and https://github.com/pbakaus/impeccable. On Codex, prefer installed `$frontend-design` / `$impeccable`. No silent install/hook approval; report any unavailable skill.
+1. Verify the issue's `Blocked by` items are landed on `main` (PR #70 already landed). Continue an existing draft PR when applicable; do not duplicate.
+2. Verify the **actual** approved local reference HTML/PNG in `/home/tris/quizzmas-design-references/approved/`. If missing, report **VISUAL BLOCKED** and stop significant styling; do not claim a screenshot comparison.
+3. Read only relevant current code/test seams. Reuse existing theme, 25-door, Freeze/Reverse, audio, confetti and HTMX component boundaries. Default to one implementer; escalate only for a concrete missing projection or protected invariant.
 
-## During work
+## Work cheaply before extensive verification
 
-- Protect role-specific projections: no public balances/fragments/hints/Reverse or private media; no actual private puzzle/hint/media DOM behind the frozen overlay.
-- Use state/event values supplied by Django, never fake frontend prices/clocks/rules. Global Pause is **gold**, per-team Freeze is **blue**, and 25th-puzzle first-finish doesn't globally end game.
-- Stable interactive DOM identity under **500ms polling**; semantic context changes may swap. Use `.agents/skills/work-polling-ui/SKILL.md` with focus, caret, pointer, modal, audio and animation-once checks.
-- Render actual Django pages, not only an HTML demo. Compare before/after screenshot against approved references, test narrow phone, relevant TV/tablet, media fixtures, keyboard and reduced-motion.
-- When installed, apply Anthropic `frontend-design` to the **approved** direction and Impeccable `critique`, `audit`, `polish`; for theatrical interaction also `animate`. Inspect findings and address meaningful issues.
-- Mark missing external skill runs **NOT RUN** rather than asserting equivalent execution. Manual visual critique can be recorded separately.
+1. Implement the smallest issue-specific Django view change with real server-derived state, not prototype mock scripts, costs, timers or effects.
+2. Immediately render one ordinary representative viewport/state and compare with the approved reference. Match composition, hierarchy, signature components and proportions—not just palette. Use separate stress fixtures later.
+3. Run the smallest real-app render and implicated security/polling smoke checks. Preserve every existing assertion.
+4. Show one accessible reference-versus-actual screenshot, up to five material deltas, changed files and SHA. After at most two non-improving attempts, **STOP for user visual approval or a specific blocker**. No blanket Impeccable, provenance verification, independent agent chain, broad test loops or review yet.
 
-## End of bounded ticket
+## Protected guarantees
 
-Run focused tests and browser checks, green CI on draft PR; independent `test_invariants` when protected behavior is touched; current SHA-bounded `ponytail-review` for minimal correct diff; then ready-for-Codex review. Report exact tests/screens/skill execution, changes and blockers. Never merge without explicit instruction.
+- All server-authoritative game data, isolated team/public/admin projections and private media boundaries remain intact; no hidden private content under ice.
+- Preserve 500ms HTMX stable controls, focus/caret, pointer-down/up, native input/audio nodes, one-shot event identity, server clocks, canonical completion, accessibility and reduced-motion outcomes.
+- The first puzzle-25 winner does not end the global game; 25th puzzle Skip is disabled. Pause gold and Freeze blue must remain distinct.
+- If an action affects security, concurrent state, replay or recovery, run the **corresponding focused invariant immediately** even before visual approval.
 
-Read the detailed acceptance/handoff: `docs/ui/midnight-advent-agent-guide.md`.
+## After user visual approval
+
+Run changed-scope browser/media/keyboard/reduced-motion tests and related existing invariants, then required GitHub CI. Current-base/head `PONYTAIL PASS` is mandatory before Codex review; rereview after meaningful changes. Do not weaken tests, claim unavailable skill execution, or merge without separate user authorization.
+
+External `frontend-design` and Impeccable commands are **optional targeted tools** for real problems, not automatic compliance gates. For final integrated #80, reuse earlier evidence and perform a holistic audit only where helpful.
+
+Detailed procedure: `docs/ui/midnight-advent-agent-guide.md`.

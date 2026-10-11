@@ -1,9 +1,21 @@
 {% load quiz_format %}
-<section class="status-card public-status" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
+<section class="status-card public-status{% if not state.music and not state.challenge and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
+  {% if state.music or state.challenge or state.global_state == 'READY' %}
   <header class="public-brand">
     <span class="eyebrow">Kerst Escape Room</span>
     <h1 class="public-brand__name">Quizzmass</h1>
   </header>
+  {% else %}
+  <header class="public-advent-header">
+    <p class="public-advent-event">Kerstavond 2026<span>Twee teams. Eén avontuur.</span></p>
+    <div class="public-brand">
+      <span class="public-brand__ornament" aria-hidden="true">✦</span>
+      <h1 class="public-brand__name">Quizzmass</h1>
+      <p class="public-brand__subtitle">DE KERST ESCAPE ROOM</p>
+    </div>
+    <p class="game-clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
+  </header>
+  {% endif %}
   {% if state.music %}
     <div class="music-stage">
       <p class="eyebrow">Muziek Quiz</p>
@@ -52,8 +64,7 @@
     <div class="public-ready-state"><p class="public-overview-phase">Wachten op de Game Master</p></div>
   {% else %}
     <div class="public-advent-summary">
-      <p class="public-overview-phase">{% if state.global_state == 'FINISHED' %}De adventrace is afgerond{% elif state.global_state == 'PAUSED' %}Spel gepauzeerd{% else %}De kerststrijd is begonnen{% endif %}</p>
-      <p class="game-clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
+      <p class="public-overview-phase">{% if state.global_state == 'FINISHED' %}De adventrace is afgerond{% elif state.global_state == 'PAUSED' %}Spel gepauzeerd{% else %}De adventrace is begonnen{% endif %}</p>
     </div>
     {% if first_finisher_team_id %}
       <aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% else %} finish-banner--winner{% endif %}" role="status">
@@ -65,6 +76,7 @@
     <div class="public-calendar-grid">
       {% for team in teams %}{% include 'quiz/_advent_calendar.html' with progress=team.advent_progress team_id=team.team_id is_frozen=team.is_frozen %}{% endfor %}
     </div>
+    <p class="public-advent-footer"><span aria-hidden="true">✧</span> Elke deur brengt jullie dichter bij kerst. <span aria-hidden="true">✧</span></p>
   {% endif %}
 </section>
 {% if replace_audio %}{% include 'quiz/_public_audio.html' with oob=True %}{% endif %}
