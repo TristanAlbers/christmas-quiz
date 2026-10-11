@@ -185,6 +185,15 @@ def _admin_package_context(state):
     return "|".join((mode, package_context))
 
 
+def _admin_package_diagnostics_context(state):
+    return repr(
+        (
+            state.discovery_error,
+            tuple((item.package_id, item.diagnostic) for item in state.packages),
+        )
+    )
+
+
 def _admin_team_context(state, team_id):
     team = next((item for item in state.teams if item.team_id == team_id), None)
     if team is None:
@@ -206,6 +215,7 @@ def _admin_context(
     state,
     *,
     replace_package_controls=False,
+    replace_package_diagnostics=False,
     replace_global_controls=False,
     replace_team_a_controls=False,
     replace_team_b_controls=False,
@@ -236,9 +246,11 @@ def _admin_context(
         "has_startable_packages": any(item.startable for item in state.packages),
         "global_context": _admin_global_context(state),
         "package_context": _admin_package_context(state),
+        "package_diagnostics_context": _admin_package_diagnostics_context(state),
         "team_a_context": _admin_team_context(state, "a"),
         "team_b_context": _admin_team_context(state, "b"),
         "replace_package_controls": replace_package_controls,
+        "replace_package_diagnostics": replace_package_diagnostics,
         "replace_global_controls": replace_global_controls,
         "replace_team_a_controls": replace_team_a_controls,
         "replace_team_b_controls": replace_team_b_controls,
@@ -503,6 +515,10 @@ def admin_state(request):
             state,
             replace_package_controls=(
                 request.GET.get("package_context") != _admin_package_context(state)
+            ),
+            replace_package_diagnostics=(
+                request.GET.get("package_diagnostics_context")
+                != _admin_package_diagnostics_context(state)
             ),
             replace_global_controls=(
                 request.GET.get("global_context") != _admin_global_context(state)
