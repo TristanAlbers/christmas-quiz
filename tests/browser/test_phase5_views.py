@@ -179,14 +179,18 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
 
                     await answer.fill("north")
                     await team.locator(".answer-form .button-primary").click()
-                    await team.locator(".endgame-team-result--complete").wait_for(timeout=5000)
+                    await team.locator(
+                        ".endgame-team-result--complete"
+                    ).wait_for(timeout=5000)
                     self.assertEqual(await team.locator("#answer-input").count(), 0)
                     self.assertEqual(await team.locator(".advent-door").count(), 0)
                     await tv.get_by_text("De adventrace is voorbij").wait_for(
                         timeout=5000
                     )
                     self.assertEqual(
-                        await tv.locator(".endgame-tv-final__team--winner strong").inner_text(),
+                        await tv.locator(
+                            ".endgame-tv-final__team--winner strong"
+                        ).inner_text(),
                         "Team A",
                     )
                     await admin.get_by_text("Team A was als eerste klaar").wait_for(
