@@ -464,6 +464,6 @@
 }
 /* The television's music controls resume their normal state on reset, but
    do not compete with the separate final-results takeover. */
-.game-page--overview:has(.endgame-tv-final) #overview-audio-state {
+.game-page--overview:has(.endgame-tv-final) #overview-audio-player {
   visibility: hidden;
 }
