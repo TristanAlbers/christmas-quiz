@@ -205,6 +205,33 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertIn("Het eerste juiste antwoord", tv_live)
                     self.assertNotIn("rudolph", tv_live.lower())
                     self.assertNotIn("challenge-a-reindeer", tv_live)
+                    # Match the accepted #74 phone legibility floor, while
+                    # keeping the V4 Challenge question visibly dominant.
+                    for selector, minimum_px in (
+                        (".team-advent-meta > span:last-child", 15),
+                        (".challenge-status--active strong", 14),
+                        (".challenge-stage__kicker", 14),
+                        (".challenge-question-phone > span", 14),
+                        (".challenge-question-phone h2", 18),
+                        (".challenge-question-phone p", 22),
+                        (".challenge-answer-form label", 15),
+                        (".challenge-answer-form button", 16),
+                        (".challenge-stage__footnote", 14),
+                    ):
+                        font_px = await a_page.locator(selector).evaluate(
+                            "el => parseFloat(getComputedStyle(el).fontSize)"
+                        )
+                        self.assertGreaterEqual(
+                            font_px, minimum_px, f"{selector}: {font_px}px"
+                        )
+                    self.assertGreaterEqual(
+                        await tv_page.locator(
+                            ".challenge-overview__question p"
+                        ).evaluate(
+                            "el => parseFloat(getComputedStyle(el).fontSize)"
+                        ),
+                        36,
+                    )
                     # Let the one-shot start acknowledgement clear before comparison.
                     await a_page.wait_for_timeout(5200)
                     await self._screenshot(
