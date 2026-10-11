@@ -60,6 +60,17 @@ def elapsed_hhmmss(value):
 
 
 @register.filter
+def remaining_mmss(value):
+    """Display the server-projected remaining duration, rounded up to a second."""
+    try:
+        seconds = max(0, (int(value) + 999) // 1000)
+    except (TypeError, ValueError):
+        seconds = 0
+    minutes, seconds = divmod(seconds, 60)
+    return f"{minutes:02d}:{seconds:02d}"
+
+
+@register.filter
 def state_label(value):
     """Map internal state identifiers to Dutch presentation labels."""
     return STATE_LABELS.get(str(value), str(value).replace("_", " ").title())
