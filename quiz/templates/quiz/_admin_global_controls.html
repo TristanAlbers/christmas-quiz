@@ -16,7 +16,7 @@
           <h2 id="gm-reset-title">Spel beëindigen</h2>
           <p>Een volledige reset beëindigt de actieve spelronde en brengt de Game Master terug naar de pakketkeuze. De spelgeschiedenis blijft bewaard.</p>
         </div>
-      <form method="post" action="{% url 'admin_action' 'reset' %}" hx-post="{% url 'admin_action' 'reset' %}" hx-sync="#live-admin:replace" hx-disabled-elt="find button[type='submit']" hx-target="#admin-state" hx-swap="innerHTML" onsubmit="return confirm('Dit spel beëindigen en terugkeren naar de pakketkeuze? De spelgeschiedenis blijft bewaard.');">
+      <form method="post" action="{% url 'admin_action' 'reset' %}" hx-post="{% url 'admin_action' 'reset' %}" hx-sync="#live-admin:replace" hx-disabled-elt="find button[type='submit']" hx-target="#admin-state" hx-swap="innerHTML" hx-confirm="Dit spel beëindigen en terugkeren naar de pakketkeuze? De spelgeschiedenis blijft bewaard." onsubmit="return window.htmx ? true : confirm(this.getAttribute('hx-confirm'));">
         {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}"><input type="hidden" name="request_id" value="{{ reset_request_id }}"><button class="button-danger" type="submit">Hele spel resetten</button>
       </form>
       </aside>
