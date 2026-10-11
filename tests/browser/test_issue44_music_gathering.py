@@ -241,6 +241,52 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 1
                     )
+                    # A compact phone and reduced-motion settings must keep
+                    # the live answer input usable through multiple polls.
+                    await team_a.set_viewport_size({"width": 320, "height": 720})
+                    await team_a.emulate_media(reduced_motion="reduce")
+                    await tv.emulate_media(reduced_motion="reduce")
+                    field = team_a.locator("#music-answer-input")
+                    await field.fill("nog bezig")
+                    await field.focus()
+                    await field.evaluate("el => el.setSelectionRange(3, 6)")
+                    await team_a.evaluate(
+                        "window.musicInputBeforePoll = "
+                        "document.querySelector('#music-answer-input')"
+                    )
+                    await team_a.wait_for_timeout(1200)
+                    self.assertTrue(
+                        await team_a.evaluate(
+                            "document.querySelector('#music-answer-input') "
+                            "=== window.musicInputBeforePoll"
+                        )
+                    )
+                    self.assertEqual(await field.input_value(), "nog bezig")
+                    self.assertEqual(
+                        await field.evaluate("el => el.selectionStart"), 3
+                    )
+                    self.assertEqual(
+                        await field.evaluate("el => el.selectionEnd"), 6
+                    )
+                    self.assertLessEqual(
+                        await team_a.evaluate(
+                            "document.documentElement.scrollWidth"
+                        ),
+                        321,
+                    )
+                    self.assertTrue(
+                        await tv.evaluate(
+                            "matchMedia('(prefers-reduced-motion: reduce)').matches"
+                        )
+                    )
+                    scores = {}
+                    for article in await tv.locator(
+                        ".public-music-scores article"
+                    ).all():
+                        name = await article.locator("span").inner_text()
+                        points = await article.locator("strong").inner_text()
+                        scores[name] = points
+                    self.assertEqual(scores, {"Team A": "1", "Team B": "0"})
                 finally:
                     await tv_context.close()
                     await b_context.close()

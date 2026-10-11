@@ -40,11 +40,6 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
   color: #f6e4bd;
   text-shadow: 0 .25rem 1rem #0005;
 }
-.game-page--overview .public-status--music .public-brand .eyebrow {
-  color: #d6b77e;
-  font: normal clamp(.7rem, .85vw, 1rem) Georgia, serif;
-  letter-spacing: .12em;
-}
 .game-page--overview .public-status--music .music-stage--midnight {
   display: grid;
   grid-template-columns: 1fr 1.18fr;
@@ -146,7 +141,6 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
   background: #122e27;
   box-shadow: none;
 }
-.music-stage--midnight .music-player-progress::before { display: none; }
 .music-stage--midnight .music-player-progress::after {
   content: "";
   position: absolute;
