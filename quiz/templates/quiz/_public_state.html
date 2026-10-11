@@ -57,7 +57,7 @@
     <section class="challenge-overview challenge-overview--{{ state.challenge.phase }}" aria-label="Kerstuitdaging op TV">
       <p class="challenge-overview__live"><span aria-hidden="true">●</span> Een kerstuitdaging is begonnen</p>
       <div class="challenge-overview__stage">
-        <p class="challenge-overview__kicker">De kerstuitdaging · Ronde {{ state.challenge.challenge_number }} van 2</p>
+        <p class="challenge-overview__kicker">De kerstuitdaging · {{ state.challenge.challenge_number }} van 2</p>
         <div class="challenge-overview__duel" aria-label="Deelnemende teams">
           <span>Team {{ state.challenge.initiator_team_id|upper }}</span>
           <span class="challenge-overview__duel-mark" aria-hidden="true">✣</span>
@@ -79,7 +79,7 @@
             <p>{{ state.challenge.body }}</p>
           </div>
         {% endif %}
-        <p class="challenge-overview__seal">Eerste juiste antwoord wint</p>
+        <p class="challenge-overview__seal">Het eerste juiste antwoord wint</p>
       </div>
       <footer class="challenge-overview__footer"><span aria-hidden="true">✧</span> Eén puzzel. Twee teams. <span aria-hidden="true">✧</span></footer>
     </section>
