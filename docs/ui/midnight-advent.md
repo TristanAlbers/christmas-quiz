@@ -1,6 +1,6 @@
 # Midnight Advent — approved Quizzmass UI contract
 
-**Status:** user-approved visual/presentation contract, 2026-10-11. **Scope:** the existing Quizzmass Django/HTMX presentation; **not** new game rules or a new frontend stack. See [rollout](midnight-advent-rollout.md) and [agent/skills handoff](midnight-advent-agent-guide.md).
+**Status:** user-approved visual/presentation contract, 2026-10-11. **Scope:** the existing Quizzmass Django/HTMX presentation; **not** new game rules or a new frontend stack. See [rollout](midnight-advent-rollout.md) and [agent/skills handoff](midnight-advent-agent-guide.md) and [visual reference index](midnight-advent-visual-reference-index.md).
 
 ## 1. Authority and acceptance
 
