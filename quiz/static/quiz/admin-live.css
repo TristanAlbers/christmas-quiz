@@ -352,3 +352,16 @@
 
 /* Admin cabinets are static operational summaries, not the TV opening animation. */
 .game-page--admin > .advent-door-opening-echo { display: none !important; }
+
+/* Legible, authoritative mode badge within the live status. */
+#live-admin:has(.gm-admin-team-panel) .gm-live-mode-label {
+  display: inline-flex; align-items: center; margin: .12rem 0;
+  padding: .25rem .55rem; border: 1px solid #aa8d58; border-radius: .2rem;
+  color: #f1d6a5; background: rgba(229,190,116,.11);
+  font-size: .72rem; font-weight: 800; letter-spacing: .03em;
+}
+@media (max-width: 46rem) {
+  #live-admin:has(.gm-admin-team-panel) .admin-team-metrics > span:last-child strong {
+    font-size: .66rem; line-height: 1.25; white-space: nowrap;
+  }
+}
