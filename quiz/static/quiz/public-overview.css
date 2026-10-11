@@ -208,13 +208,13 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
 .game-page--overview .public-advent-event {
   margin: 0;
   color: #d8c59b;
-  font: normal clamp(12px, 1cqw, 22px)/1.35 Georgia, serif;
+  font: normal clamp(19px, 1.55cqw, 32px)/1.3 Georgia, serif;
 }
 .game-page--overview .public-advent-event span {
   display: block;
   margin-top: .35cqw;
   color: #bda47c;
-  font-size: .82em;
+  font-size: .88em;
 }
 
 .game-page--overview .public-status--advent .public-brand {
@@ -425,13 +425,19 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
 }
 .game-page--overview .public-status--advent .advent-door__reveal::before { content: none; }
 .game-page--overview .public-status--advent .advent-door__chocolate {
+  /* Anchor the chocolate to the opening itself, including during the
+     one-shot echo animation. The previous drop shadow was bottom-heavy. */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 46%;
   max-height: 82%;
   aspect-ratio: .8;
   border: .1cqw solid #9f6d40;
   border-radius: 21% 21% 14% 14%;
   background: linear-gradient(145deg, #754429, #392118 70%, #26160f);
-  box-shadow: inset .13cqw .13cqw .1cqw #af744fbb, 0 .22cqw .4cqw #000b;
+  box-shadow: inset .13cqw .13cqw .1cqw #af744fbb, 0 0 .36cqw #000b;
 }
 .game-page--overview .public-status--advent .advent-door__chocolate::before {
   inset: 17% 17%;
