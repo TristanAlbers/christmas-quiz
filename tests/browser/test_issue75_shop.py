@@ -185,7 +185,8 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                             '.shop-item__details, .shop-item__action'
                         )].every(node => {
                             const child = node.getBoundingClientRect();
-                            const parent = node.closest('.shop-item').getBoundingClientRect();
+                            const parent = node.closest('.shop-item')
+                                .getBoundingClientRect();
                             return child.left >= parent.left - 1
                                 && child.right <= parent.right + 1;
                         })"""
