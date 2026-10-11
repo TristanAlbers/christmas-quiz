@@ -114,7 +114,7 @@ jobs:
         run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Create screenshot directory
-        run: mkdir -p artifacts/ui-72
+        run: install -d -m 0777 artifacts/ui-72
 
       - name: Run browser shard
         run: >-
