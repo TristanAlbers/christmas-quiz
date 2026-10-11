@@ -221,7 +221,9 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         50,
                     )
                     self.assertEqual(
-                        await tv.locator(".endgame-tv-final__team--winner strong").inner_text(),
+                        await tv.locator(
+                            ".endgame-tv-final__team--winner strong"
+                        ).inner_text(),
                         "Team A",
                     )
                     await self._shot(team_b, "a-first-second-team-complete-390.png")
