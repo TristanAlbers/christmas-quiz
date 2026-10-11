@@ -288,6 +288,8 @@
 .team-advent-sheet {
   position: relative;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   min-height: 23rem;
   padding: .75rem .8rem .7rem;
   overflow: hidden;
@@ -375,8 +377,9 @@
   letter-spacing: 0;
 }
 .team-advent-panel .puzzle-audio { width: 100%; min-height: 2rem; height: 2rem; }
+/* In media-free questions, the revealed hint takes the image area's lower edge. */
 .team-advent-panel .hint-card {
-  margin: .45rem 0 0;
+  margin: auto 0 0;
   padding: .5rem;
   border-radius: .2rem;
   color: #25372f;
@@ -499,6 +502,7 @@
     width: calc(100% - .35rem);
     padding-inline: .45rem;
   }
+  .team-advent-sheet { min-height: 25rem; }
   .resource-reverse-card { width: 2.25rem; }
   .resource-reverse-copy small { display: none; }
   .team-advent-panel .answer-form { grid-template-columns: minmax(0, 1fr) 6.25rem; }
