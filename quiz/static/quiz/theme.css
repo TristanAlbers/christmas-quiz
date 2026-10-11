@@ -62,7 +62,7 @@ body.game-page--team:has(.team-ready) {
 
 html:has(body.landing-page),
 html:has(body.auth-page),
-html:has(body.game-page--team:has(.team-ready)) {
+html:has(body.game-page--team .team-ready) {
   min-height: 100%;
   background: var(--color-bg);
   -webkit-text-size-adjust: 100%;
