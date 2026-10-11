@@ -113,6 +113,29 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         (await page.locator(".game-clock strong").inner_text())[:5],
                         "01:24",
                     )
+                    # The event label must be legible from TV viewing distance.
+                    sizes = await page.evaluate("""() => {
+                        const event = document.querySelector('.public-advent-event');
+                        return [
+                            parseFloat(getComputedStyle(event).fontSize),
+                            parseFloat(getComputedStyle(event.querySelector('span')).fontSize)
+                        ];
+                    }""")
+                    self.assertGreaterEqual(sizes[0], 26)
+                    self.assertGreaterEqual(sizes[1], 22)
+                    # Measure the CHOCOLATE against the opening, not merely
+                    # the decorative SVG against its chocolate wrapper.
+                    self.assertTrue(await page.locator(
+                        ".public-status--advent .advent-door--completed"
+                    ).evaluate_all("""doors => doors.every(door => {
+                        const r = door.querySelector('.advent-door__reveal')
+                            .getBoundingClientRect();
+                        const c = door.querySelector('.advent-door__chocolate')
+                            .getBoundingClientRect();
+                        return Math.abs(c.left+c.width/2-r.left-r.width/2) < 1.5 &&
+                               Math.abs((c.top-r.top)-(r.bottom-c.bottom)) < 1.5;
+                    })"""))
+
                     self.assertEqual(
                         await page.locator("#overview-poller").get_attribute(
                             "hx-trigger"
@@ -223,7 +246,7 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                                 }
                                 });
                             });
-                        }).observe(document.body, {childList: true});
+                        }).observe(document.body, {childList: true, subtree: true});
                     }""")
                     await asyncio.to_thread(
                         force_complete_current,
@@ -234,7 +257,46 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         '.advent-progress[data-team-id="a"][data-completed-count="14"]'
                     ).wait_for(timeout=5000)
                     await page.wait_for_function("() => window.__issue73Echoes === 1")
+                    # The transient animation MUST inherit the same TV
+                    # compartment palette as the permanent completed door.
+                    await page.locator(
+                        ".public-status--advent > .advent-door-opening-echo"
+                    ).wait_for(timeout=2000)
+                    echo_checks = await page.evaluate("""() => {
+                        const echo = document.querySelector(
+                            '.public-status--advent > .advent-door-opening-echo'
+                        );
+                        const source = document.querySelector(
+                            '.advent-progress[data-team-id="a"] ' +
+                            '.advent-door[data-door-number="14"]'
+                        );
+                        const echoReveal = echo.querySelector('.advent-door__reveal');
+                        const liveReveal = source.querySelector('.advent-door__reveal');
+                        const reveal = echoReveal.getBoundingClientRect();
+                        const choc = echo.querySelector('.advent-door__chocolate')
+                            .getBoundingClientRect();
+                        const liveChoc = source.querySelector(
+                            '.advent-door__chocolate'
+                        ).getBoundingClientRect();
+                        return {
+                            backgroundMatches: getComputedStyle(echoReveal)
+                                .backgroundImage === getComputedStyle(liveReveal)
+                                .backgroundImage,
+                            chocolateCentered:
+                                Math.abs(choc.x+choc.width/2 -
+                                         reveal.x-reveal.width/2) < 1.5 &&
+                                Math.abs((choc.top-reveal.top) -
+                                         (reveal.bottom-choc.bottom)) < 1.5,
+                            chocolateSameSize: Math.abs(choc.width-liveChoc.width) < 2 &&
+                                               Math.abs(choc.height-liveChoc.height) < 2
+                        };
+                    }""")
+                    self.assertTrue(echo_checks["backgroundMatches"], echo_checks)
+                    self.assertTrue(echo_checks["chocolateCentered"], echo_checks)
+                    self.assertTrue(echo_checks["chocolateSameSize"], echo_checks)
                     await self._screenshot(page, "tv-v4-opening-a14-b10-1920x1080")
+                    await page.wait_for_timeout(350)
+                    await self._screenshot(page, "tv-v4-opening-midframe-a14-b10-1920x1080")
                     await page.wait_for_timeout(1200)
                     self.assertEqual(
                         await page.evaluate("window.__issue73Echoes"), 1
