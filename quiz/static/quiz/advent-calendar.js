@@ -24,8 +24,14 @@
     if (sourceFlap && echoFlap) {
       echoFlap.style.background = window.getComputedStyle(sourceFlap).background;
     }
-    document.body.appendChild(echo);
-    echo.addEventListener("animationend", function () { echo.remove(); }, { once: true });
+    // Keep the echo in the same TV-themed subtree as the real door.
+    // A body-level clone falls back to the legacy red reveal for ~1.5s.
+    const overlay = door.closest(".public-status--advent") || document.body;
+    overlay.appendChild(echo);
+    echo.addEventListener("animationend", function (event) {
+      // The flap's animation bubbles first; wait for the echo fade to finish.
+      if (event.target === echo) echo.remove();
+    });
     window.setTimeout(function () { echo.remove(); }, 1800);
   }
 
