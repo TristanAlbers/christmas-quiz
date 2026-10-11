@@ -35,26 +35,24 @@
     {% endif %}
   {% elif state.challenge and state.challenge.status == 'active' %}
     <section class="challenge-stage challenge-stage--{{ state.challenge.phase }}" aria-labelledby="challenge-question-title">
-      <div class="challenge-stage__header">
-        <div>
-          <p class="eyebrow">{% if state.challenge.phase == 'starting' %}Voorbereiding uitdaging{% else %}Gezamenlijke race{% endif %}</p>
-          <h2 id="challenge-question-title">{% if state.challenge.phase == 'starting' %}Verzamel je team — de uitdaging begint zo{% else %}{{ state.challenge.question.title }}{% endif %}</h2>
-        </div>
-        <span class="challenge-role challenge-role--{{ state.challenge.role }}">
-          {% if state.challenge.role == 'initiator' %}Jullie zijn deze uitdaging gestart{% else %}Jullie zijn uitgedaagd{% endif %}
-        </span>
-      </div>
+      <p class="challenge-stage__kicker">UITDAGING · TEAM {{ state.challenge.initiator_team_id|upper }} TEGEN TEAM {{ state.challenge.challenged_team_id|upper }}</p>
+      <p class="challenge-stage__role">{% if state.challenge.role == 'initiator' %}Jullie zijn deze uitdaging gestart{% else %}Jullie zijn uitgedaagd{% endif %}</p>
       {% if state.challenge.phase == 'starting' %}
-        <p class="challenge-stage__rules">De puzzel blijft verborgen totdat beide teams tijd hebben gehad om te verzamelen. Niemand kan eerder antwoorden.</p>
-        <p class="music-timer challenge-start-timer" data-remaining-ms="{{ state.challenge.grace_remaining_ms }}">
-          {% if state.global_state == 'PAUSED' %}Gepauzeerd met nog {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% else %}Begint over {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% endif %}
-        </p>
+        <div class="challenge-stage__gathering">
+          <h2 id="challenge-question-title">Verzamel je team — de uitdaging begint zo</h2>
+          <time class="challenge-start-timer" data-remaining-ms="{{ state.challenge.grace_remaining_ms }}">
+            {% if state.global_state == 'PAUSED' %}Gepauzeerd met nog {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% else %}Begint over {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% endif %}
+          </time>
+        </div>
       {% else %}
-        <p class="challenge-stage__rules">Het eerste juiste antwoord dat de server accepteert wint. Pogingen zijn onbeperkt en zonder straf.</p>
-        <p class="challenge-stage__question">{{ state.challenge.question.body }}</p>
-        {% for media_url in state.challenge.question.media_urls %}
-          <img class="puzzle-image challenge-image" src="{{ media_url }}" alt="Privé-aanwijzing voor de uitdaging">
-        {% endfor %}
+        <div class="challenge-question-phone">
+          <span>DE PUZZEL</span>
+          <h2 id="challenge-question-title">{{ state.challenge.question.title }}</h2>
+          <p>{{ state.challenge.question.body }}</p>
+          {% for media_url in state.challenge.question.media_urls %}
+            <img class="puzzle-image challenge-image" src="{{ media_url }}" alt="Privé-aanwijzing voor de uitdaging">
+          {% endfor %}
+        </div>
         {% if state.global_state == 'ADVENT_QUIZ' %}
           <form class="answer-form challenge-answer-form" method="post" action="{% url 'team_challenge_answer' %}"
                 hx-post="{% url 'team_challenge_answer' %}" hx-trigger="submit"
@@ -65,10 +63,11 @@
             <input type="hidden" name="challenge_id" value="{{ state.challenge.id }}">
             <input type="hidden" name="question_id" value="{{ state.challenge.question.id }}">
             <input type="hidden" name="request_id" value="{{ challenge_answer_request_id }}">
-            <label for="challenge-answer-input">Antwoord op de uitdaging</label>
+            <label for="challenge-answer-input">Jullie antwoord</label>
             <input id="challenge-answer-input" name="answer" autocomplete="off" required>
             <button class="button-challenge" type="submit">Antwoord insturen</button>
           </form>
+          <p class="challenge-stage__footnote">Eerste juiste antwoord wint.</p>
         {% else %}
           <div class="challenge-paused" role="status"><strong>Uitdaging gepauzeerd</strong><span>Je kunt weer antwoorden zodra het spel wordt hervat. Tijdens de pauze kan niemand winnen.</span></div>
         {% endif %}
