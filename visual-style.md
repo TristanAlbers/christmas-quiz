@@ -32,7 +32,7 @@ Gebruik in zichtbare vaste interface-tekst daarom Nederlandse termen. **De event
 
 | Engels / niet gebruiken | Nederlands / gebruiken |
 |---|---|
-| Christmas Quiz | Kerstmis Quiz |
+| Christmas Quiz / event title | **Quizzmass** |
 | Team login | Teaminlog |
 | Admin login | Game Master-inlog |
 | Sign in | Inloggen / Naar de quiz |
