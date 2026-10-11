@@ -315,6 +315,118 @@ class PhaseSixBrowserTests(LiveServerTestCase):
 
         asyncio.run(check())
 
+
+    def test_team_b_initiates_reconnects_and_narrow_long_text_stays_readable(self):
+        initiate_challenge(self.b, RunCommand(str(uuid4()), self.run_id))
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                phone_context, phone = await self._page(
+                    browser,
+                    "/team/",
+                    {"width": 320, "height": 720},
+                    self.cookies["a"],
+                )
+                tv_context, tv = await self._page(
+                    browser, "/overview/", {"width": 1920, "height": 1080}
+                )
+                try:
+                    await phone.locator(".challenge-stage--starting").wait_for()
+                    await tv.locator(".challenge-overview--starting").wait_for()
+                    for page in (phone, tv):
+                        self.assertNotIn(
+                            "De vijfde kerstdag",
+                            await page.locator("body").inner_text(),
+                        )
+                    self.assertEqual(
+                        await phone.locator("#challenge-answer-input").count(), 0
+                    )
+
+                    # Refresh cannot expose the question before grace expiry.
+                    await phone.reload()
+                    await tv.reload()
+                    self.assertEqual(
+                        await phone.locator("#challenge-answer-input").count(), 0
+                    )
+                    self.assertNotIn(
+                        "gouden ringen",
+                        await tv.locator(".challenge-overview").inner_text(),
+                    )
+
+                    await self._finish_grace_period()
+                    await phone.locator("#challenge-answer-input").wait_for(
+                        timeout=5000
+                    )
+                    await tv.get_by_text(
+                        "De vijfde kerstdag", exact=True
+                    ).wait_for(timeout=5000)
+                    await phone.emulate_media(reduced_motion="reduce")
+                    self.assertTrue(
+                        await phone.evaluate(
+                            "matchMedia('(prefers-reduced-motion: reduce)').matches"
+                        )
+                    )
+                    self.assertLessEqual(
+                        await phone.evaluate(
+                            "document.documentElement.scrollWidth"
+                        ),
+                        320,
+                    )
+                    # Layout-only stress: long server-shaped content must wrap.
+                    await phone.locator(".challenge-question-phone p").evaluate(
+                        "el => el.textContent = el.textContent.repeat(9)"
+                    )
+                    self.assertLessEqual(
+                        await phone.evaluate(
+                            "document.documentElement.scrollWidth"
+                        ),
+                        320,
+                    )
+                    await phone.reload()
+                    await phone.locator("#challenge-answer-input").wait_for(
+                        timeout=5000
+                    )
+                    self.assertIn(
+                        "gouden ringen",
+                        await phone.locator(".challenge-question-phone").inner_text(),
+                    )
+                    await phone.set_viewport_size({"width": 768, "height": 1024})
+                    self.assertLessEqual(
+                        await phone.evaluate(
+                            "document.documentElement.scrollWidth"
+                        ),
+                        768,
+                    )
+                    challenge = await asyncio.to_thread(
+                        Challenge.objects.get, run_id=self.run_id
+                    )
+                    await asyncio.to_thread(
+                        submit_challenge_answer,
+                        self.b,
+                        SubmitChallengeAnswer(
+                            str(uuid4()),
+                            self.run_id,
+                            str(challenge.id),
+                            challenge.question_id,
+                            "5",
+                        ),
+                    )
+                    await phone.locator(".freeze-message").wait_for(
+                        timeout=5000
+                    )
+                    await tv.locator(".public-calendar-grid").wait_for(
+                        timeout=5000
+                    )
+                finally:
+                    await tv_context.close()
+                    await phone_context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
     def test_initiator_win_freeze_admin_monitoring_and_tv_state(self):
         initiate_challenge(self.a, RunCommand(str(uuid4()), self.run_id))
 
