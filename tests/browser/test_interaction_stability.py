@@ -204,9 +204,12 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     await controls.get_by_role(
                         "button", name="Punten toepassen"
                     ).click()
-                    await page.get_by_text("5 punten", exact=False).wait_for(
-                        timeout=5000
-                    )
+                    # The new Game Master resource card separates the
+                    # numeric value from its visible "Punten" label.
+                    await page.locator(
+                        ".gm-admin-team-panel[data-team='a'] "
+                        ".admin-team-metrics > span:first-child strong"
+                    ).get_by_text("5", exact=True).wait_for(timeout=5000)
                 finally:
                     await context.close()
                     await browser.close()
