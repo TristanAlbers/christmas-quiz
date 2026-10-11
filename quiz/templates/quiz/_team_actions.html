@@ -12,40 +12,58 @@
     </div>
   {% endif %}
   {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
-    <dialog id="team-shop-dialog" class="shop-dialog" aria-labelledby="team-shop-title"><section class="shop-card">
-      <header class="shop-dialog__header"><div><p class="eyebrow">Teamwinkel</p><h2 id="team-shop-title">Power-ups en sabotage</h2></div><form method="dialog"><button class="shop-dialog__close" type="submit" aria-label="Winkel sluiten">×</button></form></header>
-      <p id="shop-feedback" class="feedback" role="status">{% if feedback %}{{ feedback|dutch_feedback }}{% endif %}</p>
-      <h3 class="shop-section-title"><span aria-hidden="true">🎁</span> Power-ups</h3>
-      <div class="action-grid">
-        <form class="shop-item shop-item--hint" method="post" action="{% url 'team_action' 'purchase-hint' %}" hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit" hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']" hx-target="#game-status" hx-swap="innerHTML">
-          {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ purchase_request_id }}"><span class="shop-item__icon hint-token" aria-hidden="true">?</span><strong>Hint</strong><span>Onthul hulp voor de huidige puzzel.</span><button type="submit">Hint kopen ({{ state.hint_cost }})</button>
-        </form>
-        {% if state.uno_reverse_cost != None and not state.uno_reverse_active %}
-          <form class="shop-item shop-item--reverse" method="post" action="{% url 'team_action' 'purchase-reverse' %}" hx-post="{% url 'team_action' 'purchase-reverse' %}" hx-trigger="submit" hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']" hx-target="#game-status" hx-swap="innerHTML">
-            {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ reverse_request_id }}"><span class="shop-item__icon reverse-mark" aria-hidden="true">↶</span><strong>Uno Reverse</strong><span>Kaats de volgende inkomende Freeze terug.</span><button type="submit">Uno Reverse kopen ({{ state.uno_reverse_cost }})</button>
+    <dialog id="team-shop-dialog" class="shop-dialog shop-dialog--midnight" aria-labelledby="team-shop-title" aria-describedby="team-shop-description">
+      <section class="shop-card">
+        <header class="shop-dialog__header">
+          <div><p class="shop-dialog__eyebrow">Jullie voorraadkast</p><h2 id="team-shop-title">De kerstwinkel</h2></div>
+          <form method="dialog"><button class="shop-dialog__close" type="submit" aria-label="Winkel sluiten">×</button></form>
+        </header>
+        <div class="shop-dialog__balance" aria-live="off"><span>Huidig saldo</span><strong>✦ <span data-shop-balance>{{ state.points }}</span> <span data-shop-balance-unit>{% if state.points == 1 %}punt{% else %}punten{% endif %}</span></strong></div>
+        <p id="team-shop-description" class="shop-dialog__description">Kies een power-up of sabotage. Prijzen en beschikbaarheid komen uit het actieve spelpakket.</p>
+        <p id="shop-feedback" class="feedback" role="status">{% if feedback %}{{ feedback|dutch_feedback }}{% endif %}</p>
+        <div class="shop-dialog__items">
+          <form class="shop-item shop-item--hint" method="post" action="{% url 'team_action' 'purchase-hint' %}" hx-post="{% url 'team_action' 'purchase-hint' %}" hx-trigger="submit" hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']" hx-target="#game-status" hx-swap="innerHTML" data-shop-cost="{{ state.hint_cost }}">
+            {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ purchase_request_id }}">
+            <span class="shop-item__glyph shop-item__glyph--hint" aria-hidden="true">?</span>
+            <span class="shop-item__details"><strong>Hint</strong><small>Ontdek een extra aanwijzing</small></span>
+            <span class="shop-item__action"><strong class="shop-item__price">{{ state.hint_cost }} {% if state.hint_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="Hint kopen ({{ state.hint_cost }})" data-shop-buy-label="Kopen ›">Kopen ›</button></span>
           </form>
-        {% endif %}
-      </div>
-      <section class="sabotage-shop" aria-labelledby="sabotage-title">
-        <div class="sabotage-shop__heading"><div><p class="eyebrow">Acties tegen het andere team</p><h3 id="sabotage-title">Sabotage</h3></div><span class="sabotage-mark" aria-hidden="true">⚔</span></div>
-        <p>Een Freeze kost punten. De kerstuitdaging is een aparte gratis race die ieder team één keer kan starten.</p>
-        <div class="action-grid">
+          {% if state.uno_reverse_cost != None %}
+            {% if state.uno_reverse_active %}
+              <div class="shop-item shop-item--reverse shop-item--owned" aria-label="Uno Reverse, al actief">
+                <span class="shop-item__glyph shop-item__glyph--reverse" aria-hidden="true"><span class="resource-reverse-card"><span class="resource-reverse-card__brand">UNO</span><span class="resource-reverse-card__symbol"><svg viewBox="0 0 70 84" fill="none" aria-hidden="true"><path d="M20 28 C20 13 47 9 49 26 L54 26 44 40 34 26 39 26 C37 20 27 23 27 30"/><path d="M50 56 C49 71 22 74 20 57 L15 57 25 44 35 57 30 57 C32 64 43 61 43 54"/></svg></span><span class="resource-reverse-card__name">REVERSE</span></span></span>
+                <span class="shop-item__details"><strong>Uno Reverse</strong><small>Kaatst een Freeze terug</small></span>
+                <span class="shop-item__action shop-item__action--owned"><strong class="shop-item__price">{{ state.uno_reverse_cost }} {% if state.uno_reverse_cost == 1 %}punt{% else %}punten{% endif %}</strong><span class="shop-item__unavailable">Al actief</span></span>
+              </div>
+            {% else %}
+              <form class="shop-item shop-item--reverse" method="post" action="{% url 'team_action' 'purchase-reverse' %}" hx-post="{% url 'team_action' 'purchase-reverse' %}" hx-trigger="submit" hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']" hx-target="#game-status" hx-swap="innerHTML" data-shop-cost="{{ state.uno_reverse_cost }}">
+                {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ reverse_request_id }}">
+                <span class="shop-item__glyph shop-item__glyph--reverse" aria-hidden="true"><span class="resource-reverse-card"><span class="resource-reverse-card__brand">UNO</span><span class="resource-reverse-card__symbol"><svg viewBox="0 0 70 84" fill="none" aria-hidden="true"><path d="M20 28 C20 13 47 9 49 26 L54 26 44 40 34 26 39 26 C37 20 27 23 27 30"/><path d="M50 56 C49 71 22 74 20 57 L15 57 25 44 35 57 30 57 C32 64 43 61 43 54"/></svg></span><span class="resource-reverse-card__name">REVERSE</span></span></span>
+                <span class="shop-item__details"><strong>Uno Reverse</strong><small>Kaatst een Freeze terug</small></span>
+                <span class="shop-item__action"><strong class="shop-item__price">{{ state.uno_reverse_cost }} {% if state.uno_reverse_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="Uno Reverse kopen ({{ state.uno_reverse_cost }})" data-shop-buy-label="Kopen ›">Kopen ›</button></span>
+              </form>
+            {% endif %}
+          {% endif %}
           {% if state.freeze_cost != None and state.first_finisher_team_id == None %}
-            <form class="shop-item shop-item--freeze{% if opponent_freeze_active %} shop-item--unavailable{% endif %}" method="post" action="{% url 'team_action' 'freeze' %}" hx-post="{% url 'team_action' 'freeze' %}" hx-trigger="submit" hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']" hx-include="#event-context" hx-target="#game-status" hx-swap="innerHTML">
-              {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ freeze_request_id }}"><span class="shop-item__icon freeze-shop-mark" aria-hidden="true">❄</span><strong>Freeze</strong>
-              {% if opponent_freeze_active %}<span class="shop-item__availability">Het andere team is al bevroren. Freeze wordt weer beschikbaar zodra ze ontdooid zijn.</span><button type="submit" disabled>Freeze niet beschikbaar</button>{% else %}<span>Start een grote ijsaanval en blokkeer het andere team tijdelijk.</span><button type="submit">Andere team bevriezen ({{ state.freeze_cost }})</button>{% endif %}
+            <form class="shop-item shop-item--freeze{% if opponent_freeze_active %} shop-item--unavailable{% endif %}" method="post" action="{% url 'team_action' 'freeze' %}" hx-post="{% url 'team_action' 'freeze' %}" hx-trigger="submit" hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']" hx-include="#event-context" hx-target="#game-status" hx-swap="innerHTML" data-shop-cost="{{ state.freeze_cost }}">
+              {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ freeze_request_id }}">
+              <span class="shop-item__glyph shop-item__glyph--freeze" aria-hidden="true">❄</span>
+              <span class="shop-item__details"><strong>Freeze</strong><small>{% if opponent_freeze_active %}Het andere team is al bevroren{% else %}Bevries het andere team{% endif %}</small></span>
+              <span class="shop-item__action{% if opponent_freeze_active %} shop-item__action--owned{% endif %}"><strong class="shop-item__price">{{ state.freeze_cost }} {% if state.freeze_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="Andere team bevriezen ({{ state.freeze_cost }})"{% if opponent_freeze_active %} disabled{% endif %} data-shop-buy-label="Kopen ›">{% if opponent_freeze_active %}Niet mogelijk{% else %}Kopen ›{% endif %}</button></span>
             </form>
           {% endif %}
           {% if state.challenge_cost != None %}
             <form class="shop-item shop-item--challenge{% if not state.can_initiate_challenge %} shop-item--disabled{% endif %}" method="post" action="{% url 'team_action' 'challenge' %}" hx-post="{% url 'team_action' 'challenge' %}" hx-trigger="submit" hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']" hx-target="#game-status" hx-swap="innerHTML">
-              {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ challenge_request_id }}"><span class="shop-item__icon challenge-mark" aria-hidden="true">★</span><strong>Kerstuitdaging</strong><span>Start jullie ene gratis race. Na een korte voorbereiding krijgen beide teams dezelfde puzzel; het eerste juiste antwoord wint.</span>
-              <p class="challenge-opportunity{% if state.challenge_available %} challenge-opportunity--available{% else %} challenge-opportunity--used{% endif %}">Kans: <strong>{% if state.challenge_available %}gratis en beschikbaar{% else %}gebruikt{% endif %}</strong></p>
-              <button class="button-challenge" type="submit"{% if not state.can_initiate_challenge %} disabled aria-describedby="challenge-ineligible-reason"{% endif %}>Gratis uitdaging starten</button>
-              {% if not state.can_initiate_challenge %}<p id="challenge-ineligible-reason" class="challenge-reason" role="status">{% if state.challenge_ineligible_reason == 'opportunity_spent' %}Jullie ene uitdaging is al gebruikt.{% elif state.challenge_ineligible_reason == 'opponent_unavailable' %}Het andere team is nu niet beschikbaar voor een uitdaging.{% else %}De uitdaging is in deze spelstatus niet beschikbaar.{% endif %}</p>{% endif %}
+              {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ challenge_request_id }}">
+              <span class="shop-item__glyph shop-item__glyph--challenge" aria-hidden="true">✦</span>
+              <span class="shop-item__details"><strong>Kerstuitdaging</strong><small>{% if state.challenge_ineligible_reason == 'opportunity_spent' %}Jullie kans is al gebruikt{% elif not state.can_initiate_challenge %}Nu niet beschikbaar{% else %}Eén keer per team beschikbaar{% endif %}</small></span>
+              <span class="shop-item__action{% if not state.can_initiate_challenge %} shop-item__action--owned{% else %} shop-item__action--free{% endif %}"><strong class="shop-item__price">{% if state.challenge_cost == 0 %}Gratis{% else %}{{ state.challenge_cost }} {% if state.challenge_cost == 1 %}punt{% else %}punten{% endif %}{% endif %}</strong><button class="button-challenge" type="submit" aria-label="Gratis uitdaging starten"{% if not state.can_initiate_challenge %} disabled aria-describedby="challenge-ineligible-reason"{% endif %}>{% if state.can_initiate_challenge %}Starten ›{% else %}Niet mogelijk{% endif %}</button></span>
+              {% if not state.can_initiate_challenge %}<span id="challenge-ineligible-reason" class="visually-hidden">{% if state.challenge_ineligible_reason == 'opportunity_spent' %}Jullie ene uitdaging is al gebruikt.{% elif state.challenge_ineligible_reason == 'opponent_unavailable' %}Het andere team is nu niet beschikbaar voor een uitdaging.{% else %}De uitdaging is in deze spelstatus niet beschikbaar.{% endif %}</span>{% endif %}
             </form>
           {% endif %}
         </div>
+        <p class="shop-dialog__disclaimer">Prijzen en beschikbaarheid worden door de server bepaald.</p>
       </section>
-    </section></dialog>
+    </dialog>
   {% endif %}
 </div>
