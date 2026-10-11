@@ -81,9 +81,13 @@
       <span class="freeze-surface__crystal freeze-surface__crystal--three">❅</span>
     </div>
   {% elif state.question %}
-    <h2>{{ state.question.title }}</h2>
-    <p>{{ state.question.body }}</p>
-    {% if state.question.media %}
+    <section class="team-advent-panel" aria-labelledby="team-advent-title">
+      <header class="team-advent-panel__header">
+        <p class="team-advent-panel__number">Adventvakje {{ state.current_number }}</p>
+        <h2 id="team-advent-title">{{ state.question.title }}</h2>
+      </header>
+      <p class="team-advent-panel__question">{{ state.question.body }}</p>
+      {% if state.question.media %}
       <div class="puzzle-media-list" aria-label="Media bij de puzzel">
         {% for media in state.question.media %}
           {% if media.type == 'audio' %}
@@ -98,13 +102,13 @@
           {% endif %}
         {% endfor %}
       </div>
-    {% else %}
+      {% else %}
       {% for media_url in state.question.media_urls %}
         <img class="puzzle-image" src="{{ media_url }}" alt="Privé-aanwijzing bij de puzzel">
       {% endfor %}
-    {% endif %}
-    {% if state.question.hint %}<aside class="hint-card"><span class="hint-token" aria-hidden="true">?</span><div><strong>Hint onthuld</strong><p>{{ state.question.hint }}</p></div></aside>{% endif %}
-    <form class="answer-form" method="post" action="{% url 'team_answer' %}"
+      {% endif %}
+      {% if state.question.hint %}<aside class="hint-card"><span class="hint-token" aria-hidden="true">?</span><div><strong>Hint onthuld</strong><p>{{ state.question.hint }}</p></div></aside>{% endif %}
+      <form class="answer-form" method="post" action="{% url 'team_answer' %}"
           hx-post="{% url 'team_answer' %}" hx-trigger="submit"
           hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
           hx-target="#game-status" hx-swap="innerHTML">
@@ -115,8 +119,8 @@
       <label for="answer-input">Antwoord</label>
       <input id="answer-input" name="answer" autocomplete="off" required>
       <button class="button-primary" type="submit">Antwoord insturen</button>
-    </form>
-    <div class="puzzle-action-stack" aria-label="Hulp en overslaan">
+      </form>
+      <div class="puzzle-action-stack" aria-label="Hulp en overslaan">
       {% if state.question.hint %}
         <div class="puzzle-action-static">
           <button class="puzzle-action-button puzzle-action-button--hint" type="button"
@@ -181,6 +185,7 @@
           </form>
         {% endif %}
       {% endif %}
-    </div>
+      </div>
+    </section>
   {% endif %}
 </div>
