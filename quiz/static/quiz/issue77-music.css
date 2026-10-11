@@ -362,3 +362,95 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
   .music-stage--midnight .music-step--current,
   .music-quiz--phone .music-step--current { box-shadow: none; }
 }
+
+/* Reuse the authoritative TV playing clock in the V4 three-column header. */
+.game-page--overview .public-status--music .public-music-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0;
+  padding: .4rem 1rem .7rem;
+  border-bottom: 0;
+}
+.game-page--overview .public-status--music .public-music-header .public-brand {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.game-page--overview .public-status--music .public-music-header .public-brand__ornament {
+  display: block;
+  font: normal 1.6rem Georgia, serif;
+  color: #c99c61;
+}
+.game-page--overview .public-status--music .public-music-header .public-brand__subtitle {
+  margin-top: .4rem;
+  color: #c7bca4;
+  font-size: clamp(.6rem, .75vw, 1rem);
+  letter-spacing: .15em;
+}
+.game-page--overview .public-status--music .public-music-header .public-advent-event {
+  margin: 0;
+  color: #e3c995;
+  font: normal clamp(.9rem, 1.15vw, 1.3rem) Georgia, serif;
+  text-align: left;
+}
+.game-page--overview .public-status--music .public-music-header .public-advent-event span {
+  display: block;
+  margin-top: .55rem;
+  color: #bdb39c;
+  font: normal clamp(.65rem, .8vw, 1rem) system-ui, sans-serif;
+}
+.game-page--overview .public-status--music .public-music-header .game-clock {
+  display: grid;
+  justify-items: end;
+  gap: .4rem;
+  margin: 0;
+  color: #c7bba2;
+  font-size: clamp(.65rem, .85vw, 1rem);
+}
+.game-page--overview .public-status--music .public-music-header .game-clock strong {
+  color: #f8e9c8;
+  font: 600 clamp(1.55rem, 2.4vw, 3rem) system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.game-page--overview .public-status--music .public-music-phase {
+  margin: 0 auto .7rem;
+  color: #d5b77a;
+  font: normal clamp(.85rem, 1vw, 1.15rem) Georgia, serif;
+  text-align: center;
+}
+.game-page--overview .public-status--music .public-music-phase::before {
+  content: "✦";
+  padding-right: .75rem;
+  color: #a97451;
+}
+.game-page--overview .public-status--music .public-music-footer {
+  margin: .7rem auto 0;
+  color: #d5b77a;
+  font: normal clamp(.75rem, 1vw, 1.1rem) Georgia, serif;
+  text-align: center;
+}
+.game-page--overview .public-status--music .public-music-footer span {
+  padding: 0 1rem;
+}
+@media (max-width: 780px) {
+  .game-page--overview .public-status--music .public-music-header {
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+  }
+  .game-page--overview .public-status--music .public-music-header .public-brand {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .game-page--overview .public-status--music .public-music-header .public-advent-event {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .game-page--overview .public-status--music .public-music-header .game-clock {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
