@@ -35,7 +35,7 @@
     {% endif %}
   {% elif state.challenge and state.challenge.status == 'active' %}
     <section class="challenge-stage challenge-stage--{{ state.challenge.phase }}" aria-labelledby="challenge-question-title">
-      <p class="challenge-stage__kicker">UITDAGING · TEAM {{ state.challenge.initiator_team_id|upper }} TEGEN TEAM {{ state.challenge.challenged_team_id|upper }}</p>
+      <p class="challenge-stage__kicker">UITDAGING · TEAM A TEGEN TEAM B</p>
       <p class="challenge-stage__role">{% if state.challenge.role == 'initiator' %}Jullie zijn deze uitdaging gestart{% else %}Jullie zijn uitgedaagd{% endif %}</p>
       {% if state.challenge.phase == 'starting' %}
         <div class="challenge-stage__gathering">
