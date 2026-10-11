@@ -124,6 +124,17 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         await page.evaluate("document.documentElement.scrollWidth"),
                         1921,
                     )
+                    self.assertLessEqual(
+                        await page.evaluate("document.documentElement.scrollHeight"),
+                        1081,
+                    )
+                    self.assertEqual(
+                        await page.locator(
+                            '.advent-progress[data-team-id="b"] '
+                            '.advent-door--current .advent-door__flap'
+                        ).evaluate("el => getComputedStyle(el).color"),
+                        "rgb(64, 44, 22)",
+                    )
                     await page.wait_for_timeout(1100)
                     self.assertEqual(
                         await page.locator(".advent-door-opening-echo").count(), 0
