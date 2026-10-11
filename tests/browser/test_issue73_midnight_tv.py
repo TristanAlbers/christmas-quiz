@@ -175,6 +175,18 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                             ".advent-door--completed .advent-door__hinge"
                         ).count(), 23
                     )
+                    self.assertEqual(
+                        await page.locator(
+                            ".advent-door--completed .advent-door__hinge"
+                        ).first.evaluate("el => getComputedStyle(el).display"),
+                        "block",
+                    )
+                    self.assertEqual(
+                        await page.locator(
+                            ".advent-door--future .advent-door__hinge"
+                        ).first.evaluate("el => getComputedStyle(el).display"),
+                        "none",
+                    )
                     self.assertTrue(await page.locator(
                         ".advent-door--completed"
                     ).first.evaluate("""door =>
