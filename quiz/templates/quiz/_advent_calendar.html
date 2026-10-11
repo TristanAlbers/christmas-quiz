@@ -1,11 +1,12 @@
-<section class="advent-progress{% if progress.is_finished %} advent-progress--finished{% endif %}{% if is_frozen %} advent-progress--frozen{% endif %}"
+<section class="advent-progress{% if progress.is_finished %} advent-progress--finished{% endif %}{% if team_id and team_id == winner_team_id and progress.is_finished %} advent-progress--winner{% endif %}{% if is_frozen %} advent-progress--frozen{% endif %}"
          {% if team_id %}data-team-id="{{ team_id }}"{% endif %}
          data-completed-count="{{ progress.completed_count }}"
          data-frozen="{% if is_frozen %}true{% else %}false{% endif %}"
-         aria-label="{% if team_id %}Team {{ team_id|upper }} {% endif %}voortgang adventkalender{% if is_frozen %}, bevroren{% endif %}">
+         aria-label="{% if team_id %}Team {{ team_id|upper }} {% endif %}voortgang adventkalender{% if team_id and team_id == winner_team_id and progress.is_finished %}, winnaar adventrace{% endif %}{% if is_frozen %}, bevroren{% endif %}">
   {% if team_id %}
     <div class="advent-team-heading-row">
       <h2 class="advent-team-heading">Team {{ team_id|upper }}</h2>
+      {% if team_id == winner_team_id and progress.is_finished %}<span class="advent-victory-badge"><span aria-hidden="true">✦</span> Winnaar</span>{% endif %}
       {% if is_frozen %}<span class="advent-freeze-badge"><span aria-hidden="true">❄</span> Bevroren</span>{% endif %}
     </div>
   {% endif %}
@@ -49,6 +50,6 @@
         </li>
       {% endfor %}
     </ol>
-    {% if progress.is_finished %}<p class="calendar-complete">Alle 25 vakjes voltooid</p>{% endif %}
+    {% if progress.is_finished %}<p class="calendar-complete{% if team_id == winner_team_id %} calendar-complete--winner{% endif %}">{% if team_id == winner_team_id %}✦ Als eerste alle 25 vakjes voltooid ✦{% else %}Alle 25 vakjes voltooid{% endif %}</p>{% endif %}
   </div>
 </section>
