@@ -1,7 +1,7 @@
 /* Issue #75: approved V4 parchment shop. Prices and actions stay server-rendered. */
 .shop-dialog--midnight {
   box-sizing: border-box;
-  width: min(calc(100% - 2rem), 21.65rem);
+  width: min(calc(100% - 2rem), 21.25rem);
   max-width: none;
   max-height: calc(100dvh - 2.5rem);
   margin: auto;
@@ -14,13 +14,14 @@
   color: #223d31;
   box-shadow: 0 1.1rem 3.8rem #000b, inset 0 0 0 1px #f9edcd;
   scrollbar-width: thin;
+  translate: 0 -.85rem;
 }
 .shop-dialog--midnight::backdrop {
   background: rgba(2, 10, 8, .84);
 }
 .shop-dialog--midnight .shop-card {
   margin: 0;
-  padding: 1rem .9rem .85rem;
+  padding: 1.35rem .9rem .85rem;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -31,7 +32,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: .55rem;
-  margin: 0 0 .65rem;
+  margin: 0 0 1.02rem;
 }
 .shop-dialog--midnight .shop-dialog__eyebrow {
   margin: .2rem 0 .24rem;

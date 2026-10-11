@@ -49,20 +49,20 @@
               {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ freeze_request_id }}">
               <span class="shop-item__glyph shop-item__glyph--freeze" aria-hidden="true">❄</span>
               <span class="shop-item__details"><strong>Freeze</strong><small>{% if opponent_freeze_active %}Het andere team is al bevroren{% else %}Bevries het andere team{% endif %}</small><small class="shop-item__insufficient" data-shop-insufficient{% if state.points >= state.freeze_cost %} hidden{% endif %}>Te weinig punten</small></span>
-              <span class="shop-item__action{% if opponent_freeze_active %} shop-item__action--owned{% endif %}"><strong class="shop-item__price">{{ state.freeze_cost }} {% if state.freeze_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="Andere team bevriezen ({{ state.freeze_cost }})"{% if opponent_freeze_active %} disabled{% endif %} data-shop-buy-label="Kopen ›">{% if opponent_freeze_active %}Niet mogelijk{% else %}Kopen ›{% endif %}</button></span>
+              <span class="shop-item__action{% if opponent_freeze_active %} shop-item__action--owned{% endif %}"><strong class="shop-item__price">{{ state.freeze_cost }} {% if state.freeze_cost == 1 %}punt{% else %}punten{% endif %}</strong><button type="submit" aria-label="{% if opponent_freeze_active %}Freeze niet beschikbaar{% else %}Andere team bevriezen ({{ state.freeze_cost }}){% endif %}"{% if opponent_freeze_active %} disabled{% endif %} data-shop-buy-label="Kopen ›">{% if opponent_freeze_active %}Niet mogelijk{% else %}Kopen ›{% endif %}</button></span>
             </form>
           {% endif %}
           {% if state.challenge_cost != None %}
             <form class="shop-item shop-item--challenge{% if not state.can_initiate_challenge %} shop-item--disabled{% endif %}" method="post" action="{% url 'team_action' 'challenge' %}" hx-post="{% url 'team_action' 'challenge' %}" hx-trigger="submit" hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']" hx-target="#game-status" hx-swap="innerHTML">
               {% csrf_token %}<input type="hidden" name="run_id" value="{{ state.run_id }}"><input type="hidden" name="request_id" value="{{ challenge_request_id }}">
               <span class="shop-item__glyph shop-item__glyph--challenge" aria-hidden="true">✦</span>
-              <span class="shop-item__details"><strong>Kerstuitdaging</strong><small>{% if state.challenge_ineligible_reason == 'opportunity_spent' %}Jullie kans is al gebruikt{% elif not state.can_initiate_challenge %}Nu niet beschikbaar{% else %}Eén keer per team beschikbaar{% endif %}</small></span>
+              <span class="shop-item__details"><strong>Kerstuitdaging</strong><small>{% if state.challenge_ineligible_reason == 'opportunity_spent' %}Jullie kans is al gebruikt{% elif not state.can_initiate_challenge %}Nu niet beschikbaar{% else %}Eén kans · gratis en beschikbaar{% endif %}</small></span>
               <span class="shop-item__action{% if not state.can_initiate_challenge %} shop-item__action--owned{% else %} shop-item__action--free{% endif %}"><strong class="shop-item__price">{% if state.challenge_cost == 0 %}Gratis{% else %}{{ state.challenge_cost }} {% if state.challenge_cost == 1 %}punt{% else %}punten{% endif %}{% endif %}</strong><button class="button-challenge" type="submit" aria-label="Gratis uitdaging starten"{% if not state.can_initiate_challenge %} disabled aria-describedby="challenge-ineligible-reason"{% endif %}>{% if state.can_initiate_challenge %}Starten ›{% else %}Niet mogelijk{% endif %}</button></span>
               {% if not state.can_initiate_challenge %}<span id="challenge-ineligible-reason" class="visually-hidden">{% if state.challenge_ineligible_reason == 'opportunity_spent' %}Jullie ene uitdaging is al gebruikt.{% elif state.challenge_ineligible_reason == 'opponent_unavailable' %}Het andere team is nu niet beschikbaar voor een uitdaging.{% else %}De uitdaging is in deze spelstatus niet beschikbaar.{% endif %}</span>{% endif %}
             </form>
           {% endif %}
         </div>
-        <p class="shop-dialog__disclaimer">Prijzen en beschikbaarheid worden door de server bepaald.</p>
+        <p class="shop-dialog__disclaimer">Prijzen en beschikbaarheid komen uit het actieve spelpakket en worden door de server bepaald.</p>
       </section>
     </dialog>
   {% endif %}
