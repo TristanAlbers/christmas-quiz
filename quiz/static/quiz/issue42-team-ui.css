@@ -42,6 +42,21 @@
   font-size: .92rem;
 }
 
+/* Neutral fallback for resource projections outside the Advent puzzle surface. */
+.game-page--team .resource-reverse-card {
+  display: none;
+}
+
+.game-page--team .resource-reverse-copy {
+  display: contents;
+}
+
+.game-page--team .resource-reverse-copy b,
+.game-page--team .resource-reverse-copy small {
+  font-size: .72rem;
+  font-weight: 500;
+}
+
 .fragment-track {
   display: flex;
   flex-wrap: wrap;

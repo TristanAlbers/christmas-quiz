@@ -82,8 +82,9 @@
     </div>
   {% elif state.question %}
     <section class="team-advent-panel" aria-labelledby="team-advent-title">
+      <article class="team-advent-sheet">
       <header class="team-advent-panel__header">
-        <p class="team-advent-panel__number">Adventvakje {{ state.current_number }}</p>
+        <p class="team-advent-panel__number">Puzzel {{ state.current_number }}</p>
         <h2 id="team-advent-title">{{ state.question.title }}</h2>
       </header>
       <p class="team-advent-panel__question">{{ state.question.body }}</p>
@@ -108,6 +109,7 @@
       {% endfor %}
       {% endif %}
       {% if state.question.hint %}<aside class="hint-card"><span class="hint-token" aria-hidden="true">?</span><div><strong>Hint onthuld</strong><p>{{ state.question.hint }}</p></div></aside>{% endif %}
+      </article>
       <form class="answer-form" method="post" action="{% url 'team_answer' %}"
           hx-post="{% url 'team_answer' %}" hx-trigger="submit"
           hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
@@ -116,9 +118,9 @@
       <input type="hidden" name="run_id" value="{{ state.run_id }}">
       <input type="hidden" name="question_id" value="{{ state.question.id }}">
       <input type="hidden" name="request_id" value="{{ request_id }}">
-      <label for="answer-input">Antwoord</label>
-      <input id="answer-input" name="answer" autocomplete="off" required>
-      <button class="button-primary" type="submit">Antwoord insturen</button>
+      <label for="answer-input">Jullie antwoord</label>
+      <input id="answer-input" name="answer" autocomplete="off" placeholder="Vul jullie antwoord in" required>
+      <button class="button-primary" type="submit" aria-label="Antwoord insturen">Insturen <span aria-hidden="true">›</span></button>
       </form>
       <div class="puzzle-action-stack" aria-label="Hulp en overslaan">
       {% if state.question.hint %}

@@ -1,11 +1,12 @@
 {% load quiz_format %}
 <div class="team-state-surface state-panel-{{ state.team_state|lower }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}" data-endgame-run-id="{{ state.run_id|default:'' }}">
   {% if state.run_id %}
-    {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.question and not state.challenge %}
-      <div class="team-advent-meta" aria-label="Speeltijd">
-        <span>Speeltijd <strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></span>
+    {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.question %}{% if not state.challenge or state.challenge.status == 'resolved' %}
+      <div class="team-advent-meta" aria-label="Speeltijd" aria-live="off">
+        <span>Adventrace · Puzzel {{ state.current_number }} van 25</span>
+        <span>◷ <strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></span>
       </div>
-    {% endif %}
+    {% endif %}{% endif %}
     {% if not state.music and state.team_state == 'FREEZE' %}
       <div class="freeze-message" role="status" aria-live="polite"><p class="freeze-message__icon" aria-hidden="true">❄</p><p class="eyebrow">IJsblokkade actief</p><h2>Jullie team is bevroren</h2><p>Spelen is tijdelijk niet mogelijk. Jullie puzzel en hint blijven verborgen totdat de server de Freeze opheft.</p><p class="freeze-timer" data-remaining-ms="{{ state.freeze_remaining_ms }}">Nog {% widthratio state.freeze_remaining_ms 1000 1 %} seconden</p></div>
     {% else %}
