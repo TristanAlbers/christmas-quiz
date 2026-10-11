@@ -1,6 +1,4 @@
 :root {
-  color-scheme: dark;
-
   /* Brand palette */
   --christmas-pine-950: #061813;
   --christmas-pine-900: #0a211a;
@@ -48,6 +46,12 @@
 
   --content-max: 44rem;
   --page-pad: clamp(1rem, 3vw, 2rem);
+}
+
+body.landing-page,
+body.auth-page,
+body.game-page--team:has(.team-ready) {
+  color-scheme: dark;
 }
 
 *,
