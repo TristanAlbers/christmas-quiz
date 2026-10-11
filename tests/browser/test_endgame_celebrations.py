@@ -240,10 +240,10 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         await tv.locator(".advent-progress--winner").count(), 1
                     )
                     self.assertEqual(
-                        await tv.locator(
+                        (await tv.locator(
                             '.advent-progress--winner[data-team-id="a"] '
                             ".advent-victory-badge"
-                        ).inner_text().upper().split(),
+                        ).inner_text()).upper().split(),
                         ["✦", "WINNAAR"],
                     )
                     await self._shot(team_a, "a-first-winner-phone-settled-390.png")
