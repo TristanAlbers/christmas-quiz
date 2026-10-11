@@ -137,7 +137,7 @@
   font-size: .85rem; line-height: 1.55;
 }
 .gm-ready__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem; margin-top: .4rem; }
-.gm-ready__actions span:not([aria-hidden]) { color: #536650; font-size: .83rem; }
+.gm-ready__actions span:not([aria-hidden]) { color: #52634f; font-size: .83rem; }
 .gm-ready__start {
   display: inline-flex; align-items: center; justify-content: center; gap: 1rem;
   min-height: 3rem; padding: .72rem 1.2rem; border: 1px solid #31533f;
