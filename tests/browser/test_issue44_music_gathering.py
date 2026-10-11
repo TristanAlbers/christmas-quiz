@@ -169,14 +169,15 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     )
                     if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
                         Path(capture_dir).mkdir(parents=True, exist_ok=True)
-                        await tv.screenshot(path=str(Path(capture_dir) / "issue77-tv-music-1920x1080.png"))
-                        await team_a.screenshot(path=str(Path(capture_dir) / "issue77-team-music-390x844.png"))
+                        output = Path(capture_dir)
+                        await tv.screenshot(path=str(output / "tv-1920x1080.png"))
+                        await team_a.screenshot(path=str(output / "phone-390x844.png"))
 
                     await asyncio.to_thread(self._set_music_time, 150_000)
                     await tv.wait_for_timeout(800)
                     self.assertAlmostEqual(
                         await bar.locator(".music-player-progress__fill").evaluate(
-                            "node => getComputedStyle(node).width / node.parentElement.clientWidth"
+                            "n => n.offsetWidth / n.parentElement.clientWidth"
                         ),
                         0.4,
                         places=2,
@@ -203,7 +204,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     self.assertEqual(await bar.locator("progress").count(), 0)
                     self.assertAlmostEqual(
                         await bar.locator(".music-player-progress__fill").evaluate(
-                            "node => getComputedStyle(node).width / node.parentElement.clientWidth"
+                            "n => n.offsetWidth / n.parentElement.clientWidth"
                         ),
                         0.4,
                         places=2,
@@ -216,7 +217,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     self.assertEqual(await bar.locator("progress").count(), 0)
                     self.assertAlmostEqual(
                         await bar.locator(".music-player-progress__fill").evaluate(
-                            "node => getComputedStyle(node).width / node.parentElement.clientWidth"
+                            "n => n.offsetWidth / n.parentElement.clientWidth"
                         ),
                         0.4,
                         places=2,
