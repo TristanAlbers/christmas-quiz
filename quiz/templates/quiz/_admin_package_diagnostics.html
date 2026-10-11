@@ -1,0 +1,28 @@
+<div id="admin-package-diagnostics"{% if oob %} hx-swap-oob="outerHTML"{% endif %} aria-label="Validatiestatus spelpakketten">
+  <input class="poll-context" type="hidden" name="package_diagnostics_context" value="{{ package_diagnostics_context }}">
+  {% if discovery_error %}
+    <p class="gm-ready__discovery-error" role="alert">De spelpakketten konden niet worden geladen. Controleer de ingestelde games-map. <small lang="en">{{ discovery_error }}</small></p>
+  {% elif packages %}
+    <ul class="gm-ready__packages">
+      {% for package in packages %}
+        <li class="gm-ready__package{% if package.startable %} gm-ready__package--valid{% else %} gm-ready__package--invalid{% endif %}">
+          <div class="gm-ready__package-line">
+            <strong>{{ package.package_id }}</strong>
+            {% if package.startable %}
+              <span class="gm-ready__status gm-ready__status--valid"><span aria-hidden="true">✓</span> Gereed</span>
+            {% else %}
+              <span class="gm-ready__status gm-ready__status--invalid"><span aria-hidden="true">!</span> Ongeldig</span>
+            {% endif %}
+          </div>
+          {% if not package.startable %}
+            <p class="gm-ready__diagnostic">Controleer het bronpakket. Technische reden: <span lang="en">{{ package.diagnostic }}</span></p>
+          {% else %}
+            <p class="gm-ready__valid-note">Gecontroleerd en beschikbaar om te starten.</p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="gm-ready__empty">Er zijn geen spelpakketten gevonden in de ingestelde games-map.</p>
+  {% endif %}
+</div>
