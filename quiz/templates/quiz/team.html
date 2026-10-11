@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="{% static 'quiz/theme.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue42-team-ui.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/issue74-team-advent.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
@@ -25,12 +26,13 @@
     </header>
     <section id="live-game" aria-label="Huidig spel">
       <p id="connection-status" role="status"></p>
+      <p id="game-announcement" class="visually-hidden" role="status"></p>
       <input id="event-context" type="hidden" name="event_context" value="{{ event_context }}">
       <div id="poller" hx-get="{% url 'team_state' %}"
            hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
            hx-sync="#live-game:drop" hx-include="#view-context, #actions-context, #event-context"
            hx-target="#game-status" hx-swap="innerHTML"></div>
-      <div id="game-status" aria-live="polite">
+      <div id="game-status" aria-live="off">
         {% include 'quiz/_team_state.html' with replace_pane=False replace_actions=False %}
       </div>
       {% include 'quiz/_team_actions.html' %}
@@ -87,10 +89,6 @@
       const balance = Number.parseInt(resources.dataset.balance || '0', 10);
       const hintTokens = Number.parseInt(resources.dataset.hintTokens || '0', 10);
 
-      document.querySelectorAll('[data-hint-inventory]').forEach(function (node) {
-        node.textContent = String(hintTokens);
-      });
-
       const hintButton = document.querySelector('[data-hint-action]');
       if (hintButton) {
         const legal = hintButton.dataset.hintLegal === '1';
@@ -98,9 +96,9 @@
         hintButton.disabled = !enabled;
         const status = hintButton.querySelector('[data-hint-status]');
         if (status) {
-          status.textContent = enabled
-            ? 'Beschikbaar'
-            : (legal ? 'Geen hints' : (hintButton.dataset.hintDisabledLabel || 'Niet beschikbaar'));
+          status.textContent = legal
+            ? `${hintTokens} beschikbaar`
+            : (hintButton.dataset.hintDisabledLabel || 'Niet beschikbaar');
         }
       }
 
@@ -112,14 +110,10 @@
         skipButton.disabled = !enabled;
         const status = skipButton.querySelector('[data-skip-status]');
         if (status) {
-          if (enabled) {
-            status.textContent = 'Beschikbaar';
-          } else if (!legal) {
-            status.textContent = skipButton.dataset.skipDisabledLabel || 'Niet mogelijk';
-          } else {
-            const missing = Math.max(0, cost - balance);
-            status.textContent = `${missing} ${missing === 1 ? 'punt' : 'punten'} tekort`;
-          }
+          const costText = `${cost} ${cost === 1 ? 'punt' : 'punten'}`;
+          status.textContent = !legal
+            ? (skipButton.dataset.skipDisabledLabel || 'Niet mogelijk')
+            : (enabled ? costText : `${costText} · tekort`);
         }
       }
     }
@@ -138,6 +132,8 @@
       if (startFromObservedTransition && activeChallengeResultKey !== resultKey) {
         activeChallengeResultKey = resultKey;
         activeChallengeResultExpiresAt = Date.now() + 5000;
+        const announcement = document.getElementById('game-announcement');
+        if (announcement) announcement.textContent = result.textContent.trim();
       }
 
       if (activeChallengeResultKey !== resultKey) {

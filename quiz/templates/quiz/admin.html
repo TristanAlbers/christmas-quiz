@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="{% static 'quiz/admin-live.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'quiz/advent-calendar.js' %}"></script>
+  <script defer src="{% static 'quiz/admin-live.js' %}"></script>
 </head>
 <body class="game-page game-page--admin">
   <main class="app-shell app-shell-wide">
@@ -40,6 +41,7 @@
       <div id="admin-poller" hx-get="{% url 'admin_state' %}" hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
            hx-sync="#live-admin:drop" hx-include="#admin-controls .poll-context"
            hx-target="#admin-state" hx-swap="innerHTML"></div>
+      <div id="admin-command-feedback" role="status" aria-live="polite" hidden></div>
       <div id="admin-state">{% include 'quiz/_admin_state.html' with replace_package_controls=False replace_global_controls=False replace_team_a_controls=False replace_team_b_controls=False %}</div>
       {% include 'quiz/_admin_controls.html' %}
     </section>

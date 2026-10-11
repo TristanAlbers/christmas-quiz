@@ -118,7 +118,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                     final_skip = team.locator("[data-skip-action]")
                     self.assertEqual(await final_skip.count(), 1)
                     self.assertTrue(await final_skip.is_disabled())
-                    self.assertIn("Vraag overslaan", await final_skip.inner_text())
+                    self.assertIn("Overslaan", await final_skip.inner_text())
                     self.assertIn("Laatste vraag", await final_skip.inner_text())
                     self.assertEqual(
                         await team.locator(".shop-item--freeze").count(), 1

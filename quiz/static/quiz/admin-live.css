@@ -365,3 +365,14 @@
     font-size: .66rem; line-height: 1.25; white-space: nowrap;
   }
 }
+
+/* Status of authenticated commands, outside the polled state fragment. */
+#admin-command-feedback[hidden] { display: none !important; }
+#live-admin:has(.gm-admin-team-panel) #admin-command-feedback {
+  grid-column: 1 / -1; order: 1; padding: .7rem 1rem; margin: 0 0 .9rem;
+  border: 1px solid #8cbfa1; border-radius: .25rem;
+  background: #1b4c37; color: #f7f5e8; font-size: .85rem;
+}
+#live-admin:has(.gm-admin-team-panel) #admin-command-feedback.gm-admin-feedback--error {
+  border-color: #d39190; background: #592830; color: #fff7ed;
+}

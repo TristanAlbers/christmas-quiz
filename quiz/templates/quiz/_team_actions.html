@@ -6,7 +6,7 @@
       {% include 'quiz/_team_resources.html' %}
       {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
         <button class="resource-card resource-card--shop" type="button" aria-haspopup="dialog" aria-controls="team-shop-dialog" onclick="document.getElementById('team-shop-dialog').showModal()">
-          <span class="cart-mark" aria-hidden="true">🛒</span><strong>Winkel</strong><span>Power-ups en sabotage</span>
+          <span class="shop-mark" aria-hidden="true">✦</span><strong>Winkel &amp; sabotage</strong><span aria-hidden="true">›</span>
         </button>
       {% endif %}
     </div>
