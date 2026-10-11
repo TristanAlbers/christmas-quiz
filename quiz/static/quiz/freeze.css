@@ -158,10 +158,11 @@ body:has(.state-panel-freeze) { overflow: hidden; }
   position: relative;
   z-index: 81;
   box-sizing: border-box;
-  flex: 0 1 29rem;
-  width: min(100%, 29rem);
+  flex: 0 1 auto;
+  width: min(calc(100% - 1.5rem), 29rem);
   margin: auto;
-  padding: 1.55rem 1.1rem 1.85rem;
+  padding: 1.1rem 1rem 1.35rem;
+  transform: translateY(-.6rem);
   border: 1px solid #d0f7ff9a;
   border-radius: 0;
   background: #0e374d9c;
@@ -189,7 +190,10 @@ body:has(.state-panel-freeze) { overflow: hidden; }
   font: normal clamp(2rem, 9.7vw, 2.4rem)/1.13 Georgia, serif;
   letter-spacing: .05em;
 }
-.freeze-message__description { margin: .7rem 0 0; color: #d7eff6; font-size: .84rem; line-height: 1.5; }
+.freeze-message__description { margin: .7rem 0 0; color: #d7eff6; font-size: .84rem; line-height: 1.4; }
+.freeze-message__description span { display: block; }
+.freeze-message__description span:first-child { font-size: .75rem; font-weight: 600; }
+.freeze-message__description span + span { margin-top: .12rem; }
 .freeze-message .freeze-timer {
   margin: 1.15rem 0 0;
   color: #fff4cf;
