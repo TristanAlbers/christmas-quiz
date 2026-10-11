@@ -289,7 +289,9 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                         "button", name="Spel pauzeren"
                     ).click()
                     alert = page.locator("#admin-command-feedback")
-                    await alert.get_by_text("Opdracht geweigerd", exact=False).wait_for()
+                    await alert.get_by_text(
+                        "Opdracht geweigerd", exact=False
+                    ).wait_for()
                     self.assertEqual(await alert.get_attribute("role"), "alert")
                     self.assertTrue(
                         await page.get_by_role(
@@ -305,10 +307,9 @@ class InteractionStabilityBrowserTests(LiveServerTestCase):
                     await page.get_by_role(
                         "button", name="Spel hervatten"
                     ).wait_for()
-                    self.assertIn(
-                        "Opdracht door de server verwerkt",
-                        await alert.inner_text(),
-                    )
+                    await alert.get_by_text(
+                        "Opdracht door de server verwerkt", exact=False
+                    ).wait_for(timeout=5000)
                     await page.get_by_role(
                         "button", name="Spel hervatten"
                     ).click()
