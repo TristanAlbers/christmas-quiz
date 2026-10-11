@@ -184,6 +184,11 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertIn("Het eerste juiste antwoord", tv_live)
                     self.assertNotIn("rudolph", tv_live.lower())
                     self.assertNotIn("challenge-a-reindeer", tv_live)
+                    # The test advances the 15-second grace artificially; let the
+                    # genuine short-lived start notification expire before capture.
+                    await a_page.get_by_text(
+                        "De uitdaging begint. Verzamel je team!", exact=True
+                    ).wait_for(state="hidden", timeout=7000)
                     await self._screenshot(tv_page, "challenge-active-tv-1920x1080")
                     await self._screenshot(a_page, "challenge-active-phone-390x844")
 
