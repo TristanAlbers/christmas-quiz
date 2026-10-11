@@ -72,7 +72,7 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                     visible = await page.locator("body").inner_text()
                     self.assertIn("Uitloggen", visible)
                     self.assertIn("Jullie antwoord", visible)
-                    self.assertIn("Winkel", visible)
+                    self.assertIn("WINKEL", visible)
                     self.assertNotIn("ADVENT_QUIZ", visible)
                     self.assertNotIn("PUZZLE", visible)
                     self.assertNotIn("Submit answer", visible)

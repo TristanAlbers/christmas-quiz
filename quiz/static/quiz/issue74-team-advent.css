@@ -11,6 +11,7 @@
 .game-page--team:has(.team-advent-panel) .app-shell {
   position: relative;
   width: min(calc(100% - 1rem), 44rem);
+  min-height: calc(100svh - 1.6rem);
   margin: .5rem auto 1rem;
   padding: .55rem .85rem 1rem;
   border: 1px solid rgba(197, 156, 89, .24);
@@ -79,7 +80,7 @@
 .team-advent-meta strong { color: #f0d49b; font-weight: 650; }
 .team-advent-meta > span:last-child {
   position: absolute;
-  top: 1.05rem;
+  top: -4.75rem;
   right: .85rem;
   font-size: .68rem;
 }
@@ -487,7 +488,8 @@
   .resource-reverse-card { width: 2.25rem; }
   .resource-reverse-copy small { display: none; }
   .team-advent-panel .answer-form { grid-template-columns: minmax(0, 1fr) 5.5rem; }
-  .team-advent-panel .puzzle-action-button { padding-inline: .4rem; }
+  .team-advent-panel .puzzle-action-stack { grid-template-columns: 1fr; }
+  .team-advent-panel .puzzle-action-button { padding-inline: .55rem; }
 }
 @media (min-width: 40rem) {
   .game-page--team:has(.team-advent-panel) .app-shell { margin-top: 1rem; padding: .8rem 1rem 1.25rem; }
