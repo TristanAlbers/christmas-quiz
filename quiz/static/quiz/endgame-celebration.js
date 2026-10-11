@@ -55,10 +55,10 @@
     if (surface === "overview") {
       return {
         kind: "overview-winner",
-        icon: "🎉",
-        eyebrow: "Winnaar adventrace",
+        icon: "✦",
+        eyebrow: "De eerste 25 deuren zijn geopend",
         title: "Team " + teamName + " wint!",
-        copy: "Als eerste alle 25 adventvakjes voltooid. Het andere team speelt verder.",
+        copy: "Het andere team speelt verder",
       };
     }
     if (currentTeam === winner) {
