@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue42-team-ui.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue74-team-advent.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/issue75-shop.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
@@ -118,6 +119,25 @@
       }
     }
 
+    // Shop controls never remount on ordinary polls. Update only read-only
+    // balance/affordability from the server's latest team resource projection.
+    function syncShopResources() {
+      const resources = document.getElementById('team-resource-values');
+      const shop = document.getElementById('team-shop-dialog');
+      if (!resources || !shop) return;
+      const balance = Number.parseInt(resources.dataset.balance, 10);
+      if (!Number.isFinite(balance)) return;
+      const amount = shop.querySelector('[data-shop-balance]');
+      const unit = shop.querySelector('[data-shop-balance-unit]');
+      if (amount) amount.textContent = String(balance);
+      if (unit) unit.textContent = balance === 1 ? 'punt' : 'punten';
+      for (const item of shop.querySelectorAll('[data-shop-cost]')) {
+        const cost = Number.parseInt(item.dataset.shopCost, 10);
+        const indicator = item.querySelector('[data-shop-insufficient]');
+        if (indicator && Number.isFinite(cost)) indicator.hidden = balance >= cost;
+      }
+    }
+
     let challengeResultTimer = null;
     let activeChallengeResultKey = null;
     let activeChallengeResultExpiresAt = 0;
@@ -188,6 +208,15 @@
     });
     let reopenShop = false;
     document.body.addEventListener('htmx:beforeSwap', function (event) {
+      // A server-accepted shop command closes its dialog *before* OOB
+      // projections and transient effects arrive. Rejections do not close it.
+      const origin = event.detail.elt;
+      const trigger = event.detail.xhr?.getResponseHeader('HX-Trigger-After-Swap');
+      if (origin?.closest('#team-shop-dialog') && trigger === 'shopPurchaseSucceeded') {
+        const shop = document.getElementById('team-shop-dialog');
+        if (shop?.open) shop.close();
+        reopenShop = false;
+      }
       if (event.detail.target.id === 'game-status') {
         challengeWasActiveBeforeSwap = Boolean(
           document.querySelector('#game-status .challenge-status--active')
@@ -208,6 +237,10 @@
       }
       if (event.detail.target.id === 'team-resource-values' || event.detail.target.id === 'question-pane') {
         syncPuzzleActionAvailability();
+        syncShopResources();
+      }
+      if (event.detail.target.id === 'team-actions') {
+        syncShopResources();
       }
       if (event.detail.target.id === 'action-feedback') {
         armActionFeedbackTimer();
@@ -226,6 +259,7 @@
     });
 
     syncPuzzleActionAvailability();
+    syncShopResources();
     syncTransientChallengeResult(false);
     armActionFeedbackTimer();
   </script>
