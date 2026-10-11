@@ -55,6 +55,13 @@ class PhaseSixBrowserTests(LiveServerTestCase):
             client.force_login(user)
             self.cookies[name] = client.cookies["sessionid"].value
 
+    async def _screenshot(self, page, name):
+        directory = os.environ.get("UI82_SCREENSHOT_DIR")
+        if directory:
+            output = Path(directory)
+            output.mkdir(parents=True, exist_ok=True)
+            await page.screenshot(path=str(output / f"{name}.png"))
+
     async def _page(self, browser, path, viewport, cookie=None):
         context = await browser.new_context(viewport=viewport)
         if cookie:
@@ -156,6 +163,15 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await tv_page.locator(".public-calendar-grid").count(), 0
                     )
+                    self.assertNotIn("gloeiende rode neus", tv_starting.lower())
+                    self.assertNotIn("rudolph", tv_starting.lower())
+                    for page in (a_page, b_page):
+                        self.assertNotIn(
+                            "gloeiende rode neus",
+                            (await page.locator(".challenge-stage").inner_text()).lower(),
+                        )
+                    await self._screenshot(tv_page, "challenge-gathering-tv-1920x1080")
+                    await self._screenshot(a_page, "challenge-gathering-phone-390x844")
 
                     await self._finish_grace_period()
                     for page in (a_page, b_page):
@@ -168,6 +184,10 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     tv_live = await tv_page.locator(".challenge-overview").inner_text()
                     self.assertIn("gloeiende rode neus", tv_live)
                     self.assertIn("Het eerste juiste antwoord", tv_live)
+                    self.assertNotIn("rudolph", tv_live.lower())
+                    self.assertNotIn("challenge-a-reindeer", tv_live)
+                    await self._screenshot(tv_page, "challenge-active-tv-1920x1080")
+                    await self._screenshot(a_page, "challenge-active-phone-390x844")
 
                     answer = a_page.locator("#challenge-answer-input")
                     request_id = a_page.locator(
