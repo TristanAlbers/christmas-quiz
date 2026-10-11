@@ -235,7 +235,9 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                         50,
                     )
                     self.assertEqual(
-                        await page.get_by_role("button", name="Hele spel resetten").count(),
+                        await page.get_by_role(
+                            "button", name="Hele spel resetten"
+                        ).count(),
                         1,
                     )
                     for width in (1024, 390):
