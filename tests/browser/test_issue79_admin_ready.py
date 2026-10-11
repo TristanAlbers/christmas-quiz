@@ -12,8 +12,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, LiveServerTestCase, override_settings
 
-from quiz.contracts import Actor, RunCommand
 from quiz.application import reset_game
+from quiz.contracts import Actor, RunCommand
 from quiz.models import AccountRole, Run, StartReceipt
 
 
@@ -111,9 +111,14 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                     selector = page.get_by_label("Beschikbare spelpakketten")
                     self.assertEqual(await selector.count(), 1)
                     self.assertTrue(
-                        await page.locator("option[value='broken-package']").is_disabled()
+                        await page.locator(
+                            "option[value='broken-package']"
+                        ).is_disabled()
                     )
-                    self.assertEqual(await page.locator("#admin-poller").get_attribute("hx-trigger"),
+                    self.assertEqual(
+                        await page.locator("#admin-poller").get_attribute(
+                            "hx-trigger"
+                        ),
                         "every 500ms [!document.hidden], "
                         "visibilitychange[!document.hidden] from:document",
                     )
@@ -132,25 +137,41 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                     await page.evaluate("""() => {
                         window.__readyPolls = 0;
                         new MutationObserver(records => {
-                            if (records.some(r => r.type === 'childList')) window.__readyPolls++;
-                        }).observe(document.getElementById('admin-state'), {childList: true});
+                            if (records.some(r => r.type === 'childList')) {
+                                window.__readyPolls++;
+                            }
+                        }).observe(
+                            document.getElementById('admin-state'),
+                            {childList: true}
+                        );
                     }""")
                     await page.wait_for_function("() => window.__readyPolls >= 2")
-                    self.assertTrue(await selector.evaluate(
-                        "el => el === window.__readySelect && document.activeElement === el"
-                    ))
-                    self.assertEqual(await selector.input_value(), "christmas-2026-demo")
+                    self.assertTrue(
+                        await selector.evaluate(
+                            "el => el === window.__readySelect && "
+                            "document.activeElement === el"
+                        )
+                    )
+                    self.assertEqual(
+                        await selector.input_value(), "christmas-2026-demo"
+                    )
                     self.assertNotEqual(
-                        await selector.evaluate("el => getComputedStyle(el).outlineStyle"),
+                        await selector.evaluate(
+                            "el => getComputedStyle(el).outlineStyle"
+                        ),
                         "none",
                     )
 
-                    # Exercise native select pointer-down across multiple real status swaps.
+                    # Hold native select pointer through real status swaps.
                     bounds = await selector.bounding_box()
-                    await page.mouse.move(bounds["x"] + 15, bounds["y"] + bounds["height"] / 2)
+                    await page.mouse.move(
+                        bounds["x"] + 15, bounds["y"] + bounds["height"] / 2
+                    )
                     await page.mouse.down()
                     await page.wait_for_function("() => window.__readyPolls >= 4")
-                    self.assertTrue(await selector.evaluate("el => el === window.__readySelect"))
+                    self.assertTrue(
+                        await selector.evaluate("el => el === window.__readySelect")
+                    )
                     await page.mouse.up()
                     self.assertEqual(await selector.input_value(), "christmas-2026-demo")
 
@@ -162,7 +183,9 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                     await button.evaluate("el => window.__readyStart = el")
                     await page.mouse.down()
                     await page.wait_for_function("() => window.__readyPolls >= 6")
-                    self.assertTrue(await button.evaluate("el => el === window.__readyStart"))
+                    self.assertTrue(
+                        await button.evaluate("el => el === window.__readyStart")
+                    )
                     await page.mouse.up()
                     await page.get_by_role("button", name="Spel pauzeren").wait_for()
                     self.assertEqual(await page.locator("#package-id").count(), 0)
@@ -178,7 +201,10 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                     await page.reload()
                     await page.get_by_label("Beschikbare spelpakketten").wait_for()
                     self.assertEqual(
-                        await page.get_by_label("Beschikbare spelpakketten").input_value(), ""
+                        await page.get_by_label(
+                            "Beschikbare spelpakketten"
+                        ).input_value(),
+                        "",
                     )
                     await self._screenshot(page, "admin-ready-after-reset-390")
                 finally:
