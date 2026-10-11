@@ -78,7 +78,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
         await page.goto(f"{self.live_server_url}/team/")
         return context, page
 
-    def test_gathering_and_authoritative_player_progress_journey(self):
+    def test_gathering_and_cosmetic_player_progress_journey(self):
         async def check():
             from playwright.async_api import async_playwright
 
@@ -151,93 +151,72 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         self.assertEqual(
                             await team.locator(".music-step--current").inner_text(), "1"
                         )
-                    progress = tv.locator(".music-player-progress progress")
-                    self.assertLess(int(await progress.get_attribute("value")), 2_000)
+                    # The V4 player bar is illustration only: the 180s graphic
+                    # stays fixed, even as the authoritative question clock changes.
+                    bar = tv.locator(".music-player-progress")
+                    self.assertEqual(await bar.count(), 1)
                     self.assertEqual(
-                        await progress.get_attribute("aria-label"),
-                        "Voortgang Muziek Quiz",
+                        await bar.get_attribute("role"), "img"
                     )
                     self.assertEqual(
-                        await tv.get_by_text("0:00", exact=True).count(), 0
+                        await bar.locator("progress").count(), 0
                     )
                     self.assertEqual(
-                        await tv.get_by_text("3:00", exact=True).count(), 0
+                        await bar.locator(".music-player-progress__fill").count(), 1
                     )
                     self.assertEqual(
-                        await tv.get_by_text("Muziek Quiz", exact=True).count(), 1
+                        await tv.locator(".music-step").count(), 11
                     )
-                    self.assertEqual(
-                        await tv.get_by_text("Muziekquiz", exact=True).count(), 0
-                    )
+                    if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
+                        Path(capture_dir).mkdir(parents=True, exist_ok=True)
+                        await tv.screenshot(path=str(Path(capture_dir) / "issue77-tv-music-1920x1080.png"))
+                        await team_a.screenshot(path=str(Path(capture_dir) / "issue77-team-music-390x844.png"))
 
                     await asyncio.to_thread(self._set_music_time, 150_000)
-                    await tv.wait_for_function(
-                        "Number(document.querySelector("
-                        "'.music-player-progress progress'"
-                        ").getAttribute('value')) >= 90000"
-                    )
-                    midpoint = int(await progress.get_attribute("value"))
-                    self.assertGreaterEqual(midpoint, 90_000)
-                    self.assertLess(midpoint, 92_000)
+                    await tv.wait_for_timeout(800)
                     self.assertEqual(
-                        await tv.get_by_text("90 seconds", exact=False).count(), 0
+                        await bar.locator(".music-player-progress__fill").evaluate(
+                            "node => getComputedStyle(node).width / node.parentElement.clientWidth"
+                        ),
+                        0.4,
                     )
                     self.assertEqual(
                         await team_a.locator(".music-player-progress").count(), 0
                     )
 
                     await asyncio.to_thread(
-                        pause_game,
-                        self.admin,
-                        RunCommand(str(uuid4()), self.run_id),
+                        pause_game, self.admin, RunCommand(str(uuid4()), self.run_id)
                     )
                     await tv.wait_for_function(
                         "document.querySelector('#overview-audio-state')"
                         ".dataset.globalState === 'PAUSED'"
                     )
-                    paused_value = await progress.get_attribute("value")
-                    await tv.wait_for_timeout(1_100)
-                    self.assertEqual(
-                        await progress.get_attribute("value"), paused_value
-                    )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 0
                     )
-
                     await asyncio.to_thread(
-                        resume_game,
-                        self.admin,
-                        RunCommand(str(uuid4()), self.run_id),
+                        resume_game, self.admin, RunCommand(str(uuid4()), self.run_id)
                     )
-                    await asyncio.to_thread(self._set_music_time, 160_000)
-                    await tv.wait_for_function(
-                        "Number(document.querySelector("
-                        "'.music-player-progress progress'"
-                        ").getAttribute('value')) >= 100000"
-                    )
-                    self.assertGreaterEqual(
-                        int(await progress.get_attribute("value")), 100_000
-                    )
-
                     await asyncio.to_thread(self._set_music_time, 300_000)
-                    await tv.wait_for_function(
-                        "Number(document.querySelector("
-                        "'.music-player-progress progress'"
-                        ").getAttribute('value')) >= 240000"
-                    )
+                    await tv.wait_for_timeout(800)
+                    self.assertEqual(await bar.locator("progress").count(), 0)
                     self.assertEqual(
-                        await progress.evaluate("element => element.value"), 180_000
+                        await bar.locator(".music-player-progress__fill").evaluate(
+                            "node => getComputedStyle(node).width / node.parentElement.clientWidth"
+                        ),
+                        0.4,
                     )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 1
                     )
                     await tv.reload()
-                    progress = tv.locator(".music-player-progress progress")
-                    self.assertGreaterEqual(
-                        int(await progress.get_attribute("value")), 240_000
-                    )
+                    bar = tv.locator(".music-player-progress")
+                    self.assertEqual(await bar.locator("progress").count(), 0)
                     self.assertEqual(
-                        await progress.evaluate("element => element.value"), 180_000
+                        await bar.locator(".music-player-progress__fill").evaluate(
+                            "node => getComputedStyle(node).width / node.parentElement.clientWidth"
+                        ),
+                        0.4,
                     )
 
                     await team_a.locator("#music-answer-input").fill("jingle bells")
@@ -248,13 +227,8 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await tv.locator(".music-step--current").inner_text(), "2"
                     )
-                    self.assertLess(
-                        int(
-                            await tv.locator(
-                                ".music-player-progress progress"
-                            ).get_attribute("value")
-                        ),
-                        2_000,
+                    self.assertEqual(
+                        await tv.locator(".music-player-progress progress").count(), 0
                     )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 1
