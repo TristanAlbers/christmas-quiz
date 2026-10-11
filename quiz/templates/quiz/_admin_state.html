@@ -75,6 +75,7 @@
 {% endif %}
 
 {% if replace_package_controls %}{% include 'quiz/_admin_package_controls.html' with oob=True %}{% endif %}
+{% if replace_package_diagnostics and not replace_package_controls %}{% include 'quiz/_admin_package_diagnostics.html' with oob=True %}{% endif %}
 {% if replace_global_controls %}{% include 'quiz/_admin_global_controls.html' with oob=True %}{% endif %}
 {% if replace_team_a_controls %}{% include 'quiz/_admin_team_controls.html' with oob=True team_id='a' control=team_a_control context_value=team_a_context %}{% endif %}
 {% if replace_team_b_controls %}{% include 'quiz/_admin_team_controls.html' with oob=True team_id='b' control=team_b_control context_value=team_b_context %}{% endif %}
