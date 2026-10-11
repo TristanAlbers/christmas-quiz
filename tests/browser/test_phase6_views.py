@@ -45,6 +45,11 @@ class PhaseSixBrowserTests(LiveServerTestCase):
             self.admin, StartGame(str(uuid4()), "christmas-2026-demo")
         ).run_id
 
+        screenshot_dir = os.environ.get("UI82_SCREENSHOT_DIR")
+        self.screenshot_dir = Path(screenshot_dir) if screenshot_dir else None
+        if self.screenshot_dir:
+            self.screenshot_dir.mkdir(parents=True, exist_ok=True)
+
         self.cookies = {}
         for name, user in (
             ("admin", self.admin_user),
@@ -65,6 +70,10 @@ class PhaseSixBrowserTests(LiveServerTestCase):
         page = await context.new_page()
         await page.goto(f"{self.live_server_url}{path}")
         return context, page
+
+    async def _screenshot(self, page, name):
+        if self.screenshot_dir:
+            await page.screenshot(path=self.screenshot_dir / name, full_page=True)
 
     async def _finish_grace_period(self):
         challenge = await asyncio.to_thread(
@@ -151,8 +160,17 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         ".challenge-overview"
                     ).inner_text()
                     self.assertIn("kerstuitdaging · 1 van 2", tv_starting.lower())
-                    self.assertIn("Team A daagt Team B uit", tv_starting)
+                    self.assertEqual(
+                        await tv_page.get_by_role(
+                            "heading", name="Team A daagt Team B uit"
+                        ).count(),
+                        1,
+                    )
                     self.assertNotIn("Rendierenappel", tv_starting)
+                    self.assertNotIn("gloeiende rode neus",
+                                     await tv_page.locator(".challenge-overview").text_content())
+                    await self._screenshot(tv_page, "challenge-gathering-tv-1920x1080.png")
+                    await self._screenshot(a_page, "challenge-gathering-team-a-390x844.png")
                     self.assertEqual(
                         await tv_page.locator(".public-calendar-grid").count(), 0
                     )
@@ -168,6 +186,10 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     tv_live = await tv_page.locator(".challenge-overview").inner_text()
                     self.assertIn("gloeiende rode neus", tv_live)
                     self.assertIn("Het eerste juiste antwoord", tv_live)
+                    self.assertNotIn("rudolph", tv_live.lower())
+                    self.assertNotIn("challenge-a-reindeer", tv_live)
+                    await self._screenshot(tv_page, "challenge-active-tv-1920x1080.png")
+                    await self._screenshot(a_page, "challenge-active-team-a-390x844.png")
 
                     answer = a_page.locator("#challenge-answer-input")
                     request_id = a_page.locator(
@@ -296,7 +318,12 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     tv_text = await tv_page.locator(
                         ".challenge-overview"
                     ).inner_text()
-                    self.assertIn("Team A daagt Team B uit", tv_text)
+                    self.assertEqual(
+                        await tv_page.get_by_role(
+                            "heading", name="Team A daagt Team B uit"
+                        ).count(),
+                        1,
+                    )
                     self.assertNotIn("rudolph", tv_text.lower())
                     self.assertNotIn("challenge-a-reindeer", tv_text)
 
