@@ -1,0 +1,351 @@
+/* Issue #84 — approved Game Master V1 live regietafel.
+   All commands remain server-rendered in the existing, stable HTMX control panes.
+   This file owns only operator presentation; the TV Advent cabinet is unchanged. */
+.game-page--admin .gm-title-ready { display: none; }
+.game-page--admin:has(.gm-ready) .gm-title-ready { display: block; }
+.game-page--admin:has(.gm-ready) .gm-title-live { display: none; }
+
+.game-page--admin:has(.gm-admin-team-panel) {
+  color-scheme: dark;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  color: #f4e2bd;
+  background: radial-gradient(ellipse at 50% 0, #284635, transparent 52rem),
+    linear-gradient(145deg, #071c17, #0c211b 60%, #10211b);
+}
+.game-page--admin:has(.gm-admin-team-panel)::before { display: none; }
+.game-page--admin:has(.gm-admin-team-panel) .app-shell {
+  width: min(calc(100% - 2rem), 75rem);
+  margin: 1.25rem auto 3rem;
+  padding: 0; border: 0; box-shadow: none; background: transparent;
+}
+.game-page--admin:has(.gm-admin-team-panel) .page-header {
+  padding: .25rem 0 1.3rem;
+  border-bottom: 1px solid rgba(231,201,127,.19);
+}
+.game-page--admin:has(.gm-admin-team-panel) .page-header button {
+  min-height: 2.8rem; border: 1px solid #526b5d; border-radius: .3rem;
+  background: #0e241e; color: #f4e5c9;
+}
+.game-page--admin:has(.gm-admin-team-panel) .page-header button:hover { background: #1b3c2d; }
+.game-page--admin:has(.gm-admin-team-panel) .gm-page-title {
+  margin: 1.8rem 0 1rem; align-items: center;
+}
+.game-page--admin:has(.gm-admin-team-panel) .gm-page-title .eyebrow,
+.game-page--admin:has(.gm-admin-team-panel) .eyebrow {
+  color: #d9ba78; font-size: .69rem; letter-spacing: .16em; text-transform: uppercase;
+}
+.game-page--admin:has(.gm-admin-team-panel) .gm-page-title h1 {
+  margin: .25rem 0 .15rem; font: normal clamp(2.2rem, 4.3vw, 3.15rem)/1.07 Georgia, serif;
+  color: #f7e1ba;
+}
+.game-page--admin:has(.gm-admin-team-panel) .gm-header-caption {
+  margin-top: .4rem; color: #c6d1c4; font-size: .9rem;
+}
+.game-page--admin:has(.gm-admin-team-panel) .app-shell > [role="alert"] {
+  padding: .8rem 1rem; border: 1px solid #d39490; border-radius: .25rem;
+  color: white; background: #612c34;
+}
+
+/* Flatten only layout wrappers. HTMX poller, context inputs and form nodes
+   remain in their original DOM location and are never moved by script. */
+#live-admin:has(.gm-admin-team-panel) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1rem; row-gap: 0;
+  align-items: stretch;
+}
+#live-admin:has(.gm-admin-team-panel) #admin-poller { display: none; }
+#live-admin:has(.gm-admin-team-panel) #admin-state,
+#live-admin:has(.gm-admin-team-panel) #admin-controls,
+#live-admin:has(.gm-admin-team-panel) #admin-global-controls,
+#live-admin:has(.gm-admin-team-panel) #admin-global-controls .toolbar,
+#live-admin:has(.gm-admin-team-panel) #admin-controls > .team-grid,
+#live-admin:has(.gm-admin-team-panel) #admin-state > .team-grid,
+#live-admin:has(.gm-admin-team-panel) #admin-team-controls-a,
+#live-admin:has(.gm-admin-team-panel) #admin-team-controls-b {
+  display: contents;
+}
+#live-admin:has(.gm-admin-team-panel) .poll-context { display: none; }
+#live-admin:has(.gm-admin-team-panel) #admin-package-controls { display: none; }
+
+/* Server-authoritative banner plus the *existing* Pause/Resume form. */
+#live-admin:has(.gm-admin-team-panel) .gm-live-status {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  order: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 1.25rem;
+  min-width: 0; min-height: 8.6rem; margin: 0 0 2.1rem;
+  padding: 1.35rem 12.25rem 1.35rem 1.5rem;
+  border: 1px solid #b18b51; border-radius: .36rem;
+  background: linear-gradient(118deg, #143e30, #0f3026 72%);
+  color: #f2d9a7;
+  box-shadow: inset 0 0 0 2px #081b16;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-live-status--paused {
+  border-color: #e0bb70;
+  background: linear-gradient(118deg, #4c3d24, #263c2b);
+}
+.gm-live-status__intro { display: flex; align-items: center; gap: 1.2rem; min-width: 0; }
+.gm-live-status__star {
+  flex: none; display: grid; place-items: center; width: 4rem; height: 4rem;
+  border: 1px solid #977946; border-radius: 50%; font-size: 2rem;
+}
+.gm-live-status__intro h2 {
+  margin: .25rem 0; font: normal clamp(1.45rem, 3vw, 2rem)/1.13 Georgia, serif;
+}
+.gm-live-status__note { margin: .2rem 0 0; color: #c6d7c9; font-size: .84rem; }
+.gm-live-status__time { flex: none; display: grid; gap: .3rem; text-align: right; }
+.gm-live-status__time > span { color: #d9ba78; font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 800; }
+.gm-live-status__time .game-clock {
+  font: normal clamp(1.55rem, 3vw, 2.05rem)/1.1 Georgia, serif;
+  color: #f5deae; font-variant-numeric: tabular-nums;
+}
+#live-admin:has(.gm-admin-team-panel) #admin-global-controls form:has([name="run_id"]):has(button[type="submit"]):not(.gm-admin-reset form) {
+  min-width: 0;
+}
+#live-admin:has(.gm-admin-team-panel) #admin-global-controls form:has(button):not(.gm-admin-reset form) {
+  grid-row: 1; grid-column: 2; z-index: 1;
+  justify-self: end; align-self: center;
+  margin: 0 1.4rem 2rem 0;
+}
+#live-admin:has(.gm-admin-team-panel) #admin-global-controls form:has(button):not(.gm-admin-reset form) button {
+  min-height: 2.95rem; padding: .65rem .95rem;
+  border: 1px solid #dabc80; border-radius: .25rem;
+  background: #d0ae75; color: #21392c;
+  white-space: nowrap; font-size: .9rem;
+}
+#live-admin:has(.gm-admin-team-panel) #admin-global-controls form:has(button):not(.gm-admin-reset form) button:hover { background: #e5c38a; }
+
+#live-admin:has(.gm-admin-team-panel) .finish-banner,
+#live-admin:has(.gm-admin-team-panel) .music-status,
+#live-admin:has(.gm-admin-team-panel) .admin-challenge {
+  grid-column: 1 / -1; order: 1; min-width: 0;
+  margin: 0 0 1rem; border-radius: .4rem;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-live-section-heading {
+  grid-column: 1 / -1; order: 2;
+  display: flex; justify-content: space-between; align-items: end; gap: 1rem;
+  padding: 0 0 1rem;
+}
+.gm-live-section-heading h2 {
+  margin: .25rem 0 0; color: #f5dba7;
+  font: normal clamp(1.45rem, 3vw, 1.9rem)/1.12 Georgia, serif;
+}
+.gm-live-section-heading > p { margin: 0; color: #bbcbbd; font-size: .77rem; }
+
+/* The two state projections and the two stable command cards are adjacent
+   grid rows, producing continuous team cards without remounting form inputs. */
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel {
+  order: 3; min-width: 0; margin: 0; padding: 0;
+  border: 1px solid #bba074; border-bottom: none;
+  border-radius: .37rem .37rem 0 0; overflow: hidden;
+  background: #e9d6b3; color: #244734;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card {
+  order: 4; min-width: 0; margin: 0 0 1.4rem; padding: 1.1rem 1.2rem 1.25rem;
+  border: 1px solid #bba074; border-top: none;
+  border-radius: 0 0 .37rem .37rem; background: #e9d6b3; color: #244734;
+}
+.gm-admin-team-header {
+  display: flex; gap: .7rem; align-items: center; min-height: 4.7rem;
+  padding: .95rem 1.1rem;
+  background: #154434; border-bottom: 2px solid #be9860; color: #f7e2b7;
+}
+.gm-admin-team-panel[data-team="b"] .gm-admin-team-header { background: #153a30; }
+.gm-admin-team-letter {
+  flex: none; display: grid; place-items: center;
+  width: 2.55rem; height: 2.55rem; border: 1px solid #d2ae68; border-radius: 50%;
+  font: normal 1.45rem/1 Georgia,serif; color: #f1d39a;
+}
+.gm-admin-team-panel[data-team="b"] .gm-admin-team-letter { background: #543039; }
+.gm-admin-team-header h3 {
+  margin: 0; font: normal 1.55rem/1.1 Georgia,serif;
+}
+.gm-admin-team-header p { margin: .2rem 0 0; font-size: .72rem; color: #d1d8c4; }
+.gm-admin-team-count { margin-left: auto; font: normal 1.45rem/1 Georgia,serif; white-space: nowrap; }
+.gm-admin-team-count span { font: normal .75rem/1 var(--font-ui, sans-serif); color: #ddc9a0; }
+.gm-admin-team-body { padding: 1.1rem 1.2rem .1rem; }
+.gm-admin-team-label,
+.gm-admin-action-card h2 {
+  display: block; margin: 0 0 .55rem; color: #365b47;
+  font-size: .72rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase;
+}
+.gm-admin-action-card h2 { padding-top: .75rem; border-top: 1px solid #cfb790; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress {
+  margin: 0; padding: 0; background: transparent; border: none; box-shadow: none;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-team-heading-row,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__header,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__snow,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__board::before,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__board::after,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__reveal,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__hinge,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__knob { display: none; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__board {
+  padding: .55rem; overflow: hidden; border: 4px ridge #74543c; border-radius: .2rem;
+  background: #102f26; box-shadow: inset 0 0 0 2px #c6a36b;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-calendar { gap: .27rem; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door {
+  aspect-ratio: 1.27; min-width: 0;
+  border: 1px solid #836b4c; border-radius: 0;
+  box-shadow: none; background: #20382f; perspective: none;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__flap,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door:nth-child(3n+2) .advent-door__flap,
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door:nth-child(4n) .advent-door__flap {
+  border: 0; border-radius: 0; transform: none; box-shadow: none;
+  background: #325747; color: #d1b07b;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door:nth-child(2n+1) .advent-door__flap { background: #54363e; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--completed .advent-door__flap {
+  background: linear-gradient(135deg, #95633f, #593b2b) !important;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--completed .advent-door__number { display: none; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--completed .advent-door__ornament {
+  display: block; position: static; width: auto; aspect-ratio: auto;
+  border: 0; color: #caa370; font-size: .7rem;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__ornament { display: none; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__number {
+  color: #d2b47c; font: bold clamp(.7rem, 1.35vw, .92rem)/1 Georgia,serif;
+  text-shadow: none;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--current {
+  border: 2px solid #fae7a6; box-shadow: inset 0 0 0 2px #ad7f2b, 0 0 0 1px #a5844c;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--current .advent-door__flap {
+  background: #9f7e3e !important; color: #fff3ca;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--current .advent-door__number { color: #fff3ca; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door-opening-echo { display: none; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--future { filter: none; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--future .advent-door__flap::after { display: none; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .calendar-complete { color: #244734; }
+
+/* Four factual resource cards; no click affordance for read-only values. */
+#live-admin:has(.gm-admin-team-panel) .admin-team-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .45rem; margin: .75rem 0 0;
+}
+#live-admin:has(.gm-admin-team-panel) .admin-team-metrics > span {
+  min-width: 0; min-height: 4.5rem; padding: .45rem .2rem;
+  gap: .35rem; align-content: center; border: 1px solid #d1bc9a;
+  border-radius: .19rem; background: #f8efd9; color: #234534;
+}
+#live-admin:has(.gm-admin-team-panel) .admin-team-metrics strong {
+  font: normal clamp(.86rem, 1.6vw, 1.35rem)/1.05 Georgia,serif;
+  overflow-wrap: anywhere;
+}
+#live-admin:has(.gm-admin-team-panel) .admin-team-metrics small {
+  font-size: clamp(.57rem, 1vw, .69rem); font-weight: 700; overflow-wrap: anywhere;
+}
+#live-admin:has(.gm-admin-team-panel) .admin-team-metrics .mini-reverse--active {
+  background: #f7e3dd !important; color: #7f2538;
+}
+#live-admin:has(.gm-admin-team-panel) .admin-team-metrics .mini-reverse strong { color: #9d3242; }
+#live-admin:has(.gm-admin-team-panel) .freeze-timer {
+  margin: .7rem 0 .25rem; color: #24586a; font-size: .9rem;
+}
+
+/* Command forms stay outside the 500ms state-swap target. */
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card .control-stack { gap: .5rem; margin-top: .45rem; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card form { min-width: 0; margin: 0; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card form:has(input[name="delta"]) {
+  display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .5rem; align-items: end;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card label {
+  display: grid; gap: .35rem; min-width: 0; color: #3b5d49; font-size: .74rem; font-weight: 800;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card input[type="number"] {
+  width: 100%; min-width: 0; min-height: 2.9rem; padding: .55rem .65rem;
+  border: 1px solid #ac9472; border-radius: .24rem; background: #fff9eb; color: #274333;
+  font-size: 1rem;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card button {
+  width: 100%; min-height: 2.9rem; padding: .55rem .8rem;
+  border: 1px solid #b49a77; border-radius: .25rem;
+  background: #e8dcc4; color: #274735; font-size: .85rem; font-weight: 800;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card button:hover { background: #f6ebd6; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card form:has(input[name="delta"]) button {
+  width: auto; border-color: #244e3b; color: #fff2da; background: #254e3c;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card form:has(input[name="delta"]) button:hover { background: #173d2d; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card .control-stack:last-child {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card .control-stack:last-child form:only-child { grid-column: 1 / -1; }
+#live-admin:has(.gm-admin-team-panel) .gm-admin-action-card button:disabled { opacity: .58; }
+#live-admin:has(.gm-admin-team-panel) button:focus-visible,
+#live-admin:has(.gm-admin-team-panel) input:focus-visible {
+  outline: 3px solid #67d4d6; outline-offset: 3px;
+}
+
+/* High-risk action is physically separate and always requires confirmation. */
+#live-admin:has(.gm-admin-team-panel) .gm-admin-reset {
+  grid-column: 1 / -1; order: 5;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: 1.1rem; min-width: 0; margin: .85rem 0 0; padding: 1.35rem 1.5rem;
+  border: 1px solid #765052; border-radius: .35rem; color: #f1dfd0;
+  background: #24201f;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-reset h2 {
+  margin: 0; font: normal 1.3rem/1.2 Georgia,serif; color: #f1dccb;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-reset p {
+  margin: .4rem 0 0; max-width: 65ch; color: #c9bcb4; font-size: .79rem;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-reset button {
+  min-height: 3rem; padding: .6rem 1rem; border: 1px solid #cf8888;
+  border-radius: .24rem; color: #fff1eb; background: #582b30;
+}
+#live-admin:has(.gm-admin-team-panel) .gm-admin-reset button:hover { background: #77343b; }
+
+@media (max-width: 46rem) {
+  .game-page--admin:has(.gm-admin-team-panel) .app-shell { width: calc(100% - 1rem); margin: .75rem auto 2rem; }
+  .game-page--admin:has(.gm-admin-team-panel) .page-header { gap: .75rem; }
+  .game-page--admin:has(.gm-admin-team-panel) .gm-brand-wordmark { font-size: 1.55rem; }
+  .game-page--admin:has(.gm-admin-team-panel) .gm-brand-seal { width: 2.6rem; height: 2.6rem; font-size: 1.7rem; }
+  .game-page--admin:has(.gm-admin-team-panel) .page-header button { width: auto; padding-inline: .65rem; }
+  .game-page--admin:has(.gm-admin-team-panel) .gm-page-title { margin: 1.1rem 0 .85rem; }
+  .game-page--admin:has(.gm-admin-team-panel) .gm-page-title h1 { font-size: 2.05rem; }
+  #live-admin:has(.gm-admin-team-panel) { grid-template-columns: minmax(0,1fr); }
+  #live-admin:has(.gm-admin-team-panel) .gm-live-status {
+    grid-column: 1; display: block; min-height: 10.5rem; margin-bottom: 1.25rem;
+    padding: 1rem 1rem 4.15rem;
+  }
+  #live-admin:has(.gm-admin-team-panel) .gm-live-status__intro { gap: .7rem; }
+  #live-admin:has(.gm-admin-team-panel) .gm-live-status__star { width: 2.6rem; height: 2.6rem; font-size: 1.5rem; }
+  #live-admin:has(.gm-admin-team-panel) .gm-live-status__intro h2 { font-size: 1.3rem; }
+  #live-admin:has(.gm-admin-team-panel) .gm-live-status__note { font-size: .76rem; }
+  #live-admin:has(.gm-admin-team-panel) .gm-live-status__time {
+    position: absolute; left: 1.1rem; bottom: 1.1rem; text-align: left;
+  }
+  #live-admin:has(.gm-admin-team-panel) .gm-live-status { position: relative; }
+  #live-admin:has(.gm-admin-team-panel) #admin-global-controls form:has(button):not(.gm-admin-reset form) {
+    grid-column: 1; grid-row: 1; align-self: end; justify-self: end; margin: 0 .95rem 2.3rem 0;
+  }
+  #live-admin:has(.gm-admin-team-panel) #admin-global-controls form:has(button):not(.gm-admin-reset form) button {
+    width: auto; min-height: 2.8rem; padding: .55rem .7rem; font-size: .8rem;
+  }
+  #live-admin:has(.gm-admin-team-panel) .gm-live-section-heading { grid-column: 1; align-items: start; }
+  .gm-live-section-heading h2 { font-size: 1.65rem; }
+  .gm-live-section-heading > p { max-width: 11rem; font-size: .7rem; text-align: right; }
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel[data-team="a"] { order: 3; }
+  #live-admin:has(.gm-admin-team-panel) #admin-team-controls-a .gm-admin-action-card { order: 4; }
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel[data-team="b"] { order: 5; }
+  #live-admin:has(.gm-admin-team-panel) #admin-team-controls-b .gm-admin-action-card { order: 6; }
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-reset { grid-column: 1; order: 7; padding: 1.1rem; }
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-reset form,
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-reset button { width: 100%; }
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-team-body { padding: .85rem .85rem .1rem; }
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-action-card { padding: .95rem .85rem; }
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__number { font-size: .8rem; }
+  #live-admin:has(.gm-admin-team-panel) .admin-team-metrics strong { font-size: 1rem; }
+  #live-admin:has(.gm-admin-team-panel) .admin-team-metrics small { font-size: .61rem; }
+}
+@media (max-width: 22rem) {
+  .gm-admin-team-header { padding: .75rem; }
+  #live-admin:has(.gm-admin-team-panel) .gm-admin-action-card button { padding-inline: .4rem; font-size: .77rem; }
+}
