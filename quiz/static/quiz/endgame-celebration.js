@@ -82,14 +82,15 @@
   function addConfetti() {
     if (reducedMotion || !confetti) return;
     confetti.replaceChildren();
-    for (let index = 0; index < 42; index += 1) {
+    const pieceCount = surface === "overview" ? 120 : 88;
+    for (let index = 0; index < pieceCount; index += 1) {
       const piece = document.createElement("i");
       piece.className = "endgame-confetti__piece";
       piece.style.setProperty("--confetti-left", ((index * 37) % 101) + "%");
       piece.style.setProperty("--confetti-drift", (((index * 29) % 17) - 8) + "vw");
       piece.style.setProperty("--confetti-rotate", ((index * 53) % 180) + "deg");
-      piece.style.setProperty("--confetti-delay", ((index % 9) * -0.16) + "s");
-      piece.style.setProperty("--confetti-duration", (2.7 + (index % 7) * 0.18) + "s");
+      piece.style.setProperty("--confetti-delay", (-0.5 - (index % 13) * 0.16) + "s");
+      piece.style.setProperty("--confetti-duration", (3.9 + (index % 7) * 0.19) + "s");
       confetti.appendChild(piece);
     }
   }
