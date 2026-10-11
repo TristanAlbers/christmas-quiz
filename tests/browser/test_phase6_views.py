@@ -145,11 +145,11 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                             await page.locator("#challenge-answer-input").count(), 0
                         )
                     self.assertIn(
-                        "Jullie zijn deze uitdaging gestart",
+                        "Jullie zijn de uitdaging gestart",
                         await a_page.locator(".challenge-status--active").inner_text(),
                     )
                     self.assertIn(
-                        "Jullie zijn uitgedaagd",
+                        "Het andere team heeft jullie uitgedaagd",
                         await b_page.locator(".challenge-status--active").inner_text(),
                     )
                     await tv_page.get_by_text(
