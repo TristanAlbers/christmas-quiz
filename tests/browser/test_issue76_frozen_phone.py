@@ -55,7 +55,7 @@ class Issue76FrozenPhoneBrowserTests(Issue31BrowserCase):
                     self.assertEqual(await page.locator("#team-shop-dialog").count(), 0)
                     self.assertNotIn("answer-input", await page.content())
                     time_text = await page.locator(".freeze-timer").inner_text()
-                    self.assertRegex(time_text, re.compile(r"^\\d{2}:\\d{2}$"))
+                    self.assertRegex(time_text, re.compile(r"^\d{2}:\d{2}$"))
                     await page.evaluate("window.__freezeBackdrop = document.getElementById('freeze-backdrop')")
                     if output_dir:
                         await page.wait_for_timeout(180)
