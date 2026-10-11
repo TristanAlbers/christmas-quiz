@@ -530,6 +530,17 @@ def admin_start(request):
             ),
         )
     except ApplicationError as exc:
+        if exc.code == "invalid_input":
+            # A rejected READY Start must show a Dutch, recoverable error while
+            # leaving package validation and snapshot semantics server-owned.
+            state = get_admin_state(actor)
+            if state.global_state == "READY":
+                context = _admin_context(state)
+                context["error"] = (
+                    "Spel starten is niet gelukt. Kies een geldig spelpakket "
+                    "en controleer de validatiemeldingen."
+                )
+                return render(request, "quiz/admin.html", context, status=400)
         return _error(exc)
     return redirect("admin_game")
 

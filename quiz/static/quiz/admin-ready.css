@@ -1,0 +1,279 @@
+@import url("./theme.css");
+
+/* Issue #79: READY regietafel only. Live controls remain unchanged for #84. */
+.game-page--admin .gm-header-caption {
+  margin: .25rem 0 0;
+  font-size: .85rem;
+  color: var(--muted);
+}
+
+.game-page--admin:has(.gm-ready) {
+  color-scheme: dark;
+  color: var(--christmas-cream-50);
+  background:
+    radial-gradient(ellipse at 50% -16%, rgba(231, 201, 127, .19), transparent 43rem),
+    linear-gradient(160deg, #133e30, var(--christmas-pine-950) 65%);
+  background-attachment: fixed;
+}
+.game-page--admin:has(.gm-ready)::before {
+  background: linear-gradient(90deg, var(--christmas-pine-700), var(--christmas-gold-400), var(--christmas-red-700));
+}
+.game-page--admin:has(.gm-ready) .app-shell {
+  width: min(calc(100% - 1.5rem), 73rem);
+  padding: clamp(1rem, 3vw, 2.3rem);
+  border: 1px solid var(--color-border);
+  background: rgba(6, 24, 19, .58);
+  box-shadow: var(--shadow-card);
+}
+.game-page--admin:has(.gm-ready) .page-header {
+  gap: 1.3rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.game-page--admin:has(.gm-ready) .page-header h1 {
+  color: var(--christmas-cream-50);
+}
+.game-page--admin:has(.gm-ready) .page-header .eyebrow {
+  color: var(--christmas-gold-400);
+}
+.game-page--admin:has(.gm-ready) .gm-header-caption,
+.game-page--admin:has(.gm-ready) .status-card .muted {
+  color: var(--color-text-muted);
+}
+.game-page--admin:has(.gm-ready) .page-header button {
+  min-height: 2.9rem;
+  border-color: var(--color-border);
+  color: var(--christmas-cream-50);
+  background: rgba(255, 255, 255, .08);
+}
+.game-page--admin:has(.gm-ready) .page-header button:hover {
+  background: rgba(255, 255, 255, .16);
+}
+.game-page--admin:has(.gm-ready) .status-card {
+  margin: 1.2rem 0;
+  padding: .9rem 1.1rem;
+  border-color: var(--color-border);
+  background: rgba(255, 250, 240, .055);
+}
+.game-page--admin:has(.gm-ready) .status-card .eyebrow {
+  color: var(--christmas-cream-200);
+}
+.game-page--admin:has(.gm-ready) .status-card .state-badge {
+  border: 1px solid var(--christmas-gold-500);
+  color: #201800;
+  background: var(--christmas-gold-300);
+}
+.game-page--admin:has(.gm-ready) > .app-shell > [role="alert"] {
+  padding: .85rem 1rem;
+  border: 1px solid #ff9da1;
+  border-radius: var(--radius-sm);
+  color: #fff8f5;
+  background: #72202b;
+}
+.gm-ready {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 93% 0%, rgba(231, 201, 127, .12), transparent 22rem),
+    linear-gradient(145deg, rgba(24, 81, 63, .94), rgba(10, 33, 26, .97));
+  box-shadow: var(--shadow-card), var(--shadow-glow-gold);
+}
+.gm-ready__heading {
+  padding: clamp(1.3rem, 4vw, 2.6rem) clamp(1.2rem, 4vw, 2.6rem) 1.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.gm-ready .theme-eyebrow {
+  color: var(--christmas-gold-300);
+}
+.gm-ready__heading h2 {
+  margin: .6rem 0 0;
+  max-width: 17ch;
+  font-size: clamp(2.1rem, 5vw, 3.75rem);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+.gm-ready__intro {
+  max-width: 53ch;
+  margin: 1rem 0 0;
+  color: var(--christmas-cream-100);
+  line-height: 1.65;
+}
+.gm-ready__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.gm-ready__selection, .gm-ready__verification {
+  min-width: 0;
+  padding: clamp(1.2rem, 3vw, 2rem);
+}
+.gm-ready__selection {
+  border-right: 1px solid var(--color-border);
+}
+.gm-ready__step {
+  display: flex;
+  gap: .85rem;
+  align-items: center;
+  margin-bottom: 1.3rem;
+}
+.gm-ready__step > span {
+  display: grid;
+  width: 2.35rem;
+  min-width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 1px solid var(--christmas-gold-500);
+  border-radius: 50%;
+  color: var(--christmas-gold-300);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.gm-ready__step h3 {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.25;
+  color: var(--christmas-cream-50);
+}
+.gm-ready form {
+  display: grid;
+  gap: .8rem;
+}
+.gm-ready label {
+  color: var(--christmas-cream-100);
+  font-weight: 750;
+}
+.gm-ready select {
+  width: 100%;
+  min-height: 3.3rem;
+  padding: .65rem .8rem;
+  border: 1px solid var(--christmas-gold-500);
+  border-radius: var(--radius-sm);
+  color: #122b22;
+  background: var(--christmas-cream-50);
+  font-size: 1rem;
+}
+.gm-ready select option {
+  color: #122b22;
+  background: #fffaf0;
+}
+.gm-ready select:focus-visible,
+.gm-ready button:focus-visible,
+.game-page--admin:has(.gm-ready) .page-header button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+.gm-ready__help, .gm-ready__snapshot, .gm-ready__valid-note {
+  color: var(--color-text-muted);
+  font-size: .88rem;
+  line-height: 1.55;
+}
+.gm-ready__help {
+  margin: 0;
+}
+.gm-ready__start {
+  width: 100%;
+  margin-top: .3rem;
+  font-size: 1.02rem;
+}
+.gm-ready__start:disabled {
+  opacity: .53;
+  cursor: not-allowed;
+  filter: grayscale(.55);
+}
+.gm-ready__snapshot {
+  margin: 1.2rem 0 0;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--color-border);
+}
+.gm-ready__packages {
+  display: grid;
+  gap: .75rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.gm-ready__package {
+  min-width: 0;
+  padding: .9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, .15);
+}
+.gm-ready__package--valid {
+  border-color: rgba(150, 226, 175, .52);
+}
+.gm-ready__package--invalid {
+  border-color: rgba(255, 167, 160, .65);
+}
+.gm-ready__package-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .55rem;
+}
+.gm-ready__package-line strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: .93rem;
+}
+.gm-ready__status {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .24rem .55rem;
+  border-radius: 2rem;
+  font-size: .78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.gm-ready__status--valid {
+  color: #0a3521;
+  background: #b8e8bf;
+}
+.gm-ready__status--invalid {
+  color: #4c111a;
+  background: #ffc6c2;
+}
+.gm-ready__valid-note, .gm-ready__diagnostic {
+  margin: .6rem 0 0;
+  overflow-wrap: anywhere;
+}
+.gm-ready__diagnostic, .gm-ready__discovery-error {
+  color: #ffe1d9;
+  font-size: .9rem;
+  line-height: 1.55;
+}
+.gm-ready__discovery-error small {
+  display: block;
+  margin-top: .35rem;
+  overflow-wrap: anywhere;
+}
+.gm-ready__empty {
+  color: var(--christmas-cream-100);
+}
+.gm-ready__footer {
+  margin: 0;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--christmas-gold-300);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .15em;
+  text-align: center;
+}
+@media (max-width: 47rem) {
+  .gm-ready__layout { grid-template-columns: minmax(0, 1fr); }
+  .gm-ready__selection { border-right: 0; border-bottom: 1px solid var(--color-border); }
+}
+@media (max-width: 36rem) {
+  .game-page--admin:has(.gm-ready) .app-shell {
+    width: min(calc(100% - .8rem), 73rem);
+    margin: .4rem auto;
+    padding: .7rem;
+  }
+  .gm-ready__heading { padding: 1.2rem; }
+  .gm-ready__selection, .gm-ready__verification { padding: 1.1rem; }
+  .gm-ready__heading h2 { font-size: clamp(2rem, 9vw, 2.6rem); }
+  .gm-ready__package-line { align-items: flex-start; }
+}

@@ -61,19 +61,6 @@
   </section>
 {% endif %}
 
-{% if global_state == 'READY' %}
-  {% if discovery_error %}<p role="alert">Spelpakketten konden niet worden geladen: {{ discovery_error }}</p>{% endif %}
-  {% if packages %}
-    <ul class="package-status-list" aria-label="Validatiestatus spelpakketten">
-      {% for package in packages %}
-        <li><strong>{{ package.package_id }}</strong> — {% if package.startable %}klaar om te starten{% else %}niet beschikbaar: {{ package.diagnostic }}{% endif %}</li>
-      {% endfor %}
-    </ul>
-  {% elif not discovery_error %}
-    <p>Er zijn geen spelpakketten gevonden in de ingestelde games-map.</p>
-  {% endif %}
-{% endif %}
-
 {% if run_id %}
   <div class="team-grid" data-run-id="{{ run_id }}">
     {% for control in team_controls %}

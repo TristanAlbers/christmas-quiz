@@ -3,9 +3,11 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#061813">
   <title>Kerstmis Quiz · Game Master</title>
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/admin-ready.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/advent-calendar.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
@@ -13,7 +15,7 @@
 </head>
 <body class="game-page game-page--admin">
   <main class="app-shell app-shell-wide">
-    <header class="page-header"><div><p class="eyebrow">Kerst Escape Room</p><h1>Game Master</h1></div>
+    <header class="page-header"><div><p class="eyebrow">Quizzmass · Midnight Advent</p><h1>Game Master</h1><p class="gm-header-caption">Regietafel · Spelvoorbereiding en spelbeheer</p></div>
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Uitloggen</button></form>
     </header>
     {% if error %}<p role="alert">{{ error }}</p>{% endif %}
