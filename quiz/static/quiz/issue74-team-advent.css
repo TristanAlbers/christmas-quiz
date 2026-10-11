@@ -73,7 +73,7 @@
   gap: .55rem;
   margin: .35rem 0 .48rem;
   color: #dac8a9;
-  font-size: .875rem;
+  font-size: .9375rem;
   line-height: 1.25;
   font-variant-numeric: tabular-nums;
 }
@@ -82,7 +82,7 @@
   position: absolute;
   top: -4.75rem;
   right: .85rem;
-  font-size: .875rem;
+  font-size: .9375rem;
 }
 .game-page--team:has(.team-advent-panel) .team-resource-bar {
   display: grid;
@@ -125,7 +125,7 @@
 .game-page--team:has(.team-advent-panel) .resource-card--coins .resource-points-label {
   order: -1;
   color: #e0c99f;
-  font-size: .875rem;
+  font-size: .9375rem;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -142,7 +142,7 @@
 }
 .game-page--team:has(.team-advent-panel) .resource-card--fragments > strong {
   flex: 0 0 auto;
-  font-size: .825rem;
+  font-size: .875rem;
   font-weight: 500;
 }
 .game-page--team:has(.team-advent-panel) .fragment-track {
@@ -236,12 +236,12 @@
 .game-page--team:has(.team-advent-panel) .resource-reverse-copy { display: grid; min-width: 0; gap: .06rem; }
 .resource-reverse-copy strong {
   color: #f0bf8c;
-  font-size: .8rem;
+  font-size: .875rem;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
 .game-page--team:has(.team-advent-panel) .resource-reverse-copy b { color: #fff2cc; font-size: 1.05rem; line-height: 1.1; text-transform: uppercase; }
-.game-page--team:has(.team-advent-panel) .resource-reverse-copy small { color: #efd8c0; font-size: .8rem; line-height: 1.25; }
+.game-page--team:has(.team-advent-panel) .resource-reverse-copy small { color: #efd8c0; font-size: .875rem; line-height: 1.25; }
 .game-page--team:has(.team-advent-panel) .resource-card--shop {
   grid-column: 2;
   grid-row: 2;
@@ -254,7 +254,7 @@
   border-color: #f3d49b;
   background: linear-gradient(140deg, #e4bc79, #b88643);
   color: #182f26;
-  font-size: .82rem;
+  font-size: .875rem;
   text-align: center;
 }
 .game-page--team:has(.team-advent-panel) .resource-card--shop::after { content: none; }
@@ -283,8 +283,12 @@
   color: inherit;
   box-shadow: none;
 }
+/* Reserve a stable parchment footprint even when a puzzle has no image.
+   This remains a minimum so long questions, hints and media never clip. */
 .team-advent-sheet {
   position: relative;
+  box-sizing: border-box;
+  min-height: 23rem;
   padding: .75rem .8rem .7rem;
   overflow: hidden;
   border: 1px solid #e8deca;
@@ -305,7 +309,7 @@
 .team-advent-panel__number {
   margin: 0 0 .28rem;
   color: #70482d;
-  font-size: .8rem;
+  font-size: .875rem;
   font-weight: 650;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -314,7 +318,7 @@
   margin: 0;
   color: #2d3f31;
   font-family: var(--font-display);
-  font-size: 1.72rem;
+  font-size: 1.8rem;
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: -.025em;
@@ -323,7 +327,7 @@
   margin: .28rem 0 .5rem;
   color: #344034;
   font-family: var(--font-display);
-  font-size: 1.125rem;
+  font-size: 1.1875rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -351,7 +355,7 @@
 .team-advent-panel .puzzle-image-figure figcaption {
   padding: .22rem .45rem;
   color: #ecdbb8;
-  font-size: .82rem;
+  font-size: .875rem;
   line-height: 1.3;
 }
 .team-advent-panel .puzzle-audio-card {
@@ -366,7 +370,7 @@
 }
 .team-advent-panel .puzzle-audio-card figcaption {
   color: #4f4d3d;
-  font-size: .82rem;
+  font-size: .875rem;
   font-weight: 700;
   letter-spacing: 0;
 }
@@ -389,7 +393,7 @@
 .team-advent-panel .answer-form label {
   grid-column: 1 / -1;
   color: #eee0bf;
-  font-size: .9rem;
+  font-size: .9375rem;
   font-weight: 500;
 }
 .team-advent-panel .answer-form input,
@@ -415,16 +419,24 @@
   border-color: #e2b57b;
   background: #9c3644;
   color: #fff9e9;
-  font-size: .95rem;
+  font-size: 1rem;
   white-space: nowrap;
 }
 .team-advent-panel .answer-form button:hover:not(:disabled) { background: #b14050; }
 .team-advent-panel .puzzle-action-stack {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
   gap: .42rem;
   margin: 0;
   padding: 0;
+}
+.team-advent-panel .puzzle-action-stack > form,
+.team-advent-panel .puzzle-action-stack > .puzzle-action-static {
+  display: flex;
+  min-width: 0;
+  margin: 0;
 }
 .team-advent-panel .puzzle-action-button {
   display: grid;
@@ -432,7 +444,9 @@
   align-items: center;
   gap: .38rem;
   width: 100%;
-  min-height: 4rem;
+  height: 100%;
+  box-sizing: border-box;
+  min-height: 5.25rem;
   padding: .4rem .5rem;
   border: 1px solid #816f50;
   border-radius: .3rem;
@@ -458,10 +472,10 @@
   font-size: .9rem;
 }
 .team-advent-panel .puzzle-action-copy { gap: .05rem; }
-.team-advent-panel .puzzle-action-copy strong { font-size: .95rem; }
+.team-advent-panel .puzzle-action-copy strong { font-size: 1rem; }
 .team-advent-panel .puzzle-action-copy small {
   color: #c8c0a3;
-  font-size: .8rem;
+  font-size: .875rem;
   line-height: 1.3;
   opacity: 1;
 }
@@ -470,7 +484,7 @@
   display: block;
   grid-column: 2;
   color: #f0c694;
-  font-size: .8rem;
+  font-size: .875rem;
   line-height: 1.2;
 }
 .team-advent-panel .puzzle-action-button:disabled {
