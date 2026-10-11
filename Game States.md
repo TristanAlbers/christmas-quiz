@@ -1,10 +1,10 @@
 # Game States
 
-This document is used to describe the general game states. This is needed to guide things in the correct direction.
+This is supporting state documentation. The later approved decisions in `docs/product-decisions.md` and normative rules in `christmas-2026-game-rules-state-semantics.md` take precedence over older wording. The approved presentation of Pause, Freeze, first victory and the final result is in `docs/ui/midnight-advent.md`.
 
 ## General Quiz State
 
-Should be mainly influenced by the administrators of the game. Giving them the ability to start/pause/reset the game. The end state can be inferred automatically, when one team finished all questions.
+Should be mainly influenced by the administrators of the game. Giving them the ability to start/pause/reset the game. The global `FINISHED` state occurs **only after both teams complete puzzle 25**; the first team to finish enters its own terminal team state and is celebrated while the other team continues.
 
 ```mermaid
 flowchart LR
@@ -29,7 +29,7 @@ ADVENT_QUIZ --> FINISHED
 |**Advent Quiz**| This is the normal puzzle / quiz game. Team states during this period are described below.|
 |**Paused**| Should only be triggerable by an admin. Essentially pauses all gameplay and moves to a special state. No interactions are possible. When leaving this state everything should be returned to as it was before entering this state. E.g. if a team was in the 3rd minute of waiting out a 5 minute freeze, when they return they should only have to wait 2 minutes.|
 |**Music Quiz**| The Music Quiz begins immediately when either team completes puzzle 13. The other team's current Advent Quiz state is suspended regardless of its current puzzle. This is a seperate gamemode, no interactables or quiz progression can be made here. There are some "points" that can be earned. All gameplay timers, including Freeze timers, are suspended while the global game is in **Music Quiz**. The later issue-#44 refinement begins this global state with a 60-second Music gathering subphase before question 1.|
-|**Finished**| When the last puzzle had been reached the team reaches the finished state. They are unable to move from this state back to the **Ready** state, only administrators should be allowed to perform this. |
+|**Finished**| Global `FINISHED` begins when **both** teams complete puzzle 25. The first finisher is recorded immediately but does **not** end the global race; only an authorized Game Master can Reset to `READY`. |
 
 ## Team Activity States
 
@@ -61,6 +61,6 @@ end
 |---    |---            |
 |**Ready**| Not able to open advent boxes yet. Before a run exists this is a waiting condition; Start initializes the team's durable run state and moves it to **Puzzle**.|
 |**Puzzle**| Normal quiz progression, advent boxes are interactable, answers can be submitted, powerups can be bought, essentially all functionality is available|
-|**Challenge**| Only functionality needed for the challenge is active, no main game progression can be made during this time. Also no shop interactions. Only the puzzle interactions for the challaenge. If the challenged team loses the puzzle they move to the freeze state. |
+|**Challenge**| Both teams join the same Challenge puzzle after the server-authoritative 15-second gathering period. The initiator spends its once-per-game opportunity **for free**. No shop or Advent progression is available during the Challenge. The first server-accepted correct answer wins; only an initiator win freezes the challenged team on return to Advent. |
 |**Freeze**| Not able to interact with the game at all, essentially a pause button for a single team. No shop, no advent boxes. After 5 minutes you will return to the **Puzzle** state|
-|**Finished**| When the last puzzle had been reached the team reaches the finished state. They are unable to move from this state back to the **Ready** state, only administrators should be allowed to perform this. |
+|**Finished**| This **team** has completed puzzle 25 and cannot perform further gameplay actions. The other team remains playable until it also completes puzzle 25. The Game Master may use only supported administrative recovery/Reset commands. |

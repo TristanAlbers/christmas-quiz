@@ -1,9 +1,9 @@
 # Using the Christmas Quiz today
 
-This guide describes the **phase 5 development demo** implemented now. It has
+This guide describes the **current development demo as verified against the codebase on 2026-10-11**. It has
 two isolated teams, two named game masters, 25 distinct sample puzzles per team,
-11 shared Music questions, and a public TV overview. It is not the authored
-Christmas event.
+11 shared Music questions, two separate one-per-team Challenge puzzles, and a public TV overview. It is not the authored
+Christmas event. The **approved Midnight Advent V4 visual redesign** is a pending documentation and implementation initiative, **not yet live in the current application**. See [UI contract](docs/ui/midnight-advent.md), [delivery plan](docs/ui/midnight-advent-rollout.md), and [spec #71](https://github.com/TristanAlbers/christmas-quiz/issues/71). The design documents were introduced by PR #70; the separate UI implementation tickets determine when each feature becomes live.
 
 ## Set up the server
 
@@ -77,7 +77,7 @@ current puzzle reveals its hint only to that team and consumes one token. The
 same hint cannot consume a second token. An admin can reveal it without using a
 token. A team can Skip its current puzzle immediately for the configured cost
 (2 points in the demo); Skip grants the same completion reward and fragment as
-a correct answer. Insufficient points reject the purchase or Skip. There is no
+a correct answer **on puzzles 1–24 only**. **Players cannot Skip puzzle 25** even with enough points; admin force-completion remains separately authorized. Insufficient points reject the purchase or legal Skip. There is no
 Skip inventory.
 
 The admin page shows both teams and supports pause/resume, signed point changes,
@@ -103,7 +103,7 @@ attacker, and Freezes the attacker instead. Admin Freeze applies directly and
 does not consume Reverse.
 
 Completing puzzle 13 by correct answer, paid Skip, or admin completion starts the
-Music Quiz immediately and only once. Both teams see the same current question
+Music Quiz immediately and only once. It begins with a **60-second server-authoritative gathering period**, while normal Advent play is already suspended. The first Music question and answers remain hidden until gathering finishes; Pause freezes this countdown. After gathering, both teams see the same current question
 and may submit unlimited penalty-free attempts. The first correct transaction
 accepted by SQLite wins, increases that team's public Music score by one, adds
 the configured Music reward (2 demo points) to its private normal balance, and
@@ -121,7 +121,7 @@ served, never future Music audio or either team's private puzzle media.
 
 After Music, each team continues through its own puzzles 14–25. Puzzle 25 asks
 the team to combine the ordered fragments earned during its journey. Correct
-answer, paid Skip, and admin completion all use the same completion path. The
+answer and admin completion use the normal completion path; player Skip is **prohibited** on puzzle 25. The
 first team to complete puzzle 25 is durably recorded and becomes inactive while
 the other team remains playable. The game enters `FINISHED` and stops the
 Advent clock only when both teams have completed puzzle 25. Reload and restart
@@ -132,9 +132,7 @@ refresh, disconnect, and restart. Unexpected downtime while the persisted state
 is `ADVENT_QUIZ` counts as gameplay time; downtime while persistently `PAUSED`
 does not. Client countdown values never authorize expiry.
 
-Each team has one paid Challenge opportunity during normal Advent play. Both
-teams receive the same snapshotted Challenge puzzle and may answer repeatedly
-without penalty; the first accepted correct answer wins. If the initiating team
+Each team has exactly **one free Challenge opportunity** during normal Advent play. Each initiator has its **own distinct snapshotted Challenge puzzle** (Team A's or Team B's). Both teams receive that **same puzzle within a particular Challenge**, only after a **15-second server-authoritative gathering period**, and may then answer repeatedly without penalty; the first accepted correct answer wins. Challenge initiation never deducts points. If the initiating team
 wins, the challenged team receives a direct five-minute Freeze. If the
 challenged team wins, neither team is frozen. Challenge never awards points or
 advances Advent progress, and pause/restart preserves an active Challenge.
@@ -152,7 +150,7 @@ implemented yet.
 The current top level requires exactly `schema_version: 6`, `package_id`,
 `initial_points`, `hint_cost`, `skip_cost`, `freeze_cost`,
 `uno_reverse_cost`, `music_question_reward`,
-`music_score_display_duration_ms`, `challenge_cost`, `challenge_puzzle`,
+`music_score_display_duration_ms`, `challenge_cost`, `challenge_puzzles`,
 `teams`, and `music_questions`. Prices and rewards are nonnegative integers;
 the display duration is positive. Existing version 1–5 snapshots remain
 readable and retain their original behavior.
@@ -169,11 +167,7 @@ unique `id`, `number`, nonempty `title` and `body`, a supported `validator`, and
 optional `audio` (`null` or a safe package-relative path). Music audio is copied
 into the immutable run snapshot just like private puzzle media.
 
-`challenge_puzzle` contains one shared `id`, nonempty `title` and `body`, a
-supported `validator`, and a `media` list. It deliberately has no reward, Hint,
-or fragment fields. `challenge_cost` is a nonnegative integer. Challenge media
-is copied into the run snapshot and is served only to active participants and
-administrators.
+`challenge_puzzles` is an object with **exactly `a` and `b`**, each containing a **distinct** `id`, nonempty `title` and `body`, a supported `validator`, and a `media` list. Each initiator's puzzle has no reward, Hint or fragment fields. `challenge_cost` is a schema-compatibility assertion that **must equal 0**, never a purchasable amount. Challenge media is copied into the run snapshot and served only to authorized participants/admins in the active Challenge; the public TV receives **title/body text only after the 15-second gathering**, not private Challenge media.
 
 The supported validators are:
 
@@ -233,7 +227,7 @@ A tested backup and restore procedure is not available yet.
 For validation, use a separate Compose project and disposable `/app/var`
 mount. Follow the exact isolation setup in [docs/scaffold.md](docs/scaffold.md)
 before running migrations or tests, so an existing event database is not
-touched. After that setup, the phase-5 checks are:
+touched. After that setup, the existing app checks (including implemented Phase 5/6 behavior) are:
 
 ```sh
 docker compose --profile dev build app dev
@@ -241,9 +235,9 @@ docker compose up -d app
 docker compose exec app python manage.py check
 docker compose exec app python manage.py makemigrations --check --dry-run
 docker compose run --rm --entrypoint ruff dev check .
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase5-tests.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-current-tests.sqlite3 \
   dev test tests.domain tests.integration tests.security
-docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-phase5-browser.sqlite3 \
+docker compose run --rm -e TEST_DATABASE_PATH=/tmp/quiz-current-browser.sqlite3 \
   dev test tests.browser
 ```
 
@@ -252,6 +246,10 @@ Django's test runner. The browser suite uses Chromium and an isolated live
 server; it exercises real polling, answer submission, and reconnect behavior.
 
 ## Continue development with Codex
+
+> **Current approved UI route:** the live redesign work is split across issues **#72–#84**; the parent design specification is **#71** and the execution guide is [Midnight Advent agent handoff](docs/ui/midnight-advent-agent-guide.md). Do not run the example historical **Phase 5** prompts below to redo functionality that is already implemented. Check the current issue's blockers before starting, use the required design/polling skills, and keep PRs draft until CI/Ponytail/Codex gates pass. No automatic merge.
+
+The historical staged phase workflow below remains background information for other explicitly authorized major features.
 
 This repository uses a staged Codex workflow to keep Plus-plan usage bounded
 without giving up the specialist review needed for correctness. Do **not** ask
@@ -281,7 +279,7 @@ The normal sequence is:
 handoff identifies a concrete domain problem that needs the separately
 configured high-reasoning escalation.
 
-For example, the next phase starts with:
+**Historical example only** (not the next action for the currently approved UI redesign):
 
 ```text
 @architect Execute only Phase 5 Stage A from implementation_plan.md.

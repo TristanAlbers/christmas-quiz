@@ -1,6 +1,8 @@
 # Christmas quiz implementation plan
 
-Status: phases 1–4 are complete and validated as of 2026-09-24. Phases 5–9 remain plans. This file never authorizes work by itself; the user authorizes one named stage of one named phase.
+> **Historical plan / legacy phase inventory (2026-09-24).** Phase status labels below reflect their original planning date and **MUST NOT** be treated as the current implementation status or used to restart work. The repository has progressed through later issues/PRs since then. **The active, approved 2026-10-11 UI redesign is governed by `docs/ui/midnight-advent.md`, its `docs/ui/midnight-advent-rollout.md` tracer-bullet backlog and parent [GitHub spec #71](https://github.com/TristanAlbers/christmas-quiz/issues/71).** For any future legacy Phase 5–9 request, verify current code, tests and GitHub history first, then update the phase plan as a separate explicitly scoped effort. This document alone does not authorize implementation.
+
+**Original status as written on 2026-09-24:** phases 1–4 complete; 5–9 planned. **Verified later as of 2026-10-11:** Phase 5 functionality (25 doors/first winner) and Phase 6 Challenge functionality were subsequently implemented and have Django-backed browser coverage; Challenge PR #35 and first-winner PR #30 are merged. The original phase plan below is a historical specification, not an active execution queue. Use the current implementation code and approved redesign backlog instead. This file never authorizes work by itself.
 
 Historical behavior/evidence for completed phases lives in the phase contracts, architecture docs, `USER.md`, Git history, and CI. Do not reread completed-phase history unless the current stage depends on it.
 
@@ -20,7 +22,7 @@ Phase 4 is complete and MUST NOT be reimplemented. See `docs/phase-4-contract.md
 
 ## Active UI debt
 
-Completed backend phases still leave presentation debt. Retire it incrementally, beginning with Phase 5 unless a separate UI-only repair is explicitly authorized:
+Completed backend phases still leave presentation debt. Retire it incrementally, following the then-planned Phase 5 unless a separate UI-only repair was explicitly authorized. **Now superseded for visual work by the 2026-10-11 approved UI issue backlog**:
 - coherent reusable Christmas shell/visual language;
 - Advent-calendar progression on the admin and public/TV surfaces rather than text/percentage alone;
 - prominent 11-step Music progress;
@@ -182,7 +184,7 @@ Already settled include immediate Skip, generic Hint inventory, `completed` stat
 
 Do not restart a phase. Inspect its latest contract/handoff/diff/CI evidence, identify exactly one unfinished stage and run only that stage with the generic invocation above.
 
-## Progress summary
+## Progress summary (historical snapshot, 2026-09-24 — NOT current status)
 
 | Phase | Status |
 | --- | --- |
@@ -191,8 +193,8 @@ Do not restart a phase. Inspect its latest contract/handoff/diff/CI evidence, id
 | 3 | Complete — gameplay clock, Freeze, Uno Reverse, protected reads, restart/pause/race/browser coverage. |
 | 3.1 | Complete — READY lifecycle, archival Reset, package selection/snapshots, legacy migration, recovery/browser coverage. |
 | 4 | Complete — Music trigger/questions/rewards/timing/recovery/team-admin-TV synchronization/audio isolation; full Phase-4 validation and CI green. |
-| 5 | Not started — 25-puzzle progression/two-team finish + Advent/public progression + inherited UI debt. |
-| 6 | Not started — Challenge gameplay + Challenge/Sabotage UI. |
-| 7 | Not started — UI consolidation + media/package authoring. |
-| 8 | Not started — emergency recovery controls + intentional admin UX. |
-| 9 | Not started — backup/restore/deployment/device rehearsal/event readiness. |
+| 5 | **Historical status outdated.** Core 25-puzzle/first-finisher behavior and browser tests have since landed; the **new approved visual presentation** is separately scheduled in Midnight Advent tickets. Do not reimplement. |
+| 6 | **Historical status outdated.** Challenge gameplay landed via PR #35 with later approved free/two-puzzle/gathering refinements and tests. The visual Challenge takeover is separately scheduled in #82. Do not reimplement. |
+| 7 | **Partially progressed outside this original phase plan.** Public/team UI, typed private audio (PR #62), polling and other functionality have landed. The remaining visual consolidation is now #71/#72–#84; re-evaluate any non-UI authoring work separately before scheduling. |
+| 8 | **Historical plan item; not audited in this UI design session.** Do not infer current status or introduce extra Game Master controls without current code verification and explicit authorization. |
+| 9 | **Historical plan item; not audited here.** Midnight Advent ticket #80 covers UI/device acceptance only, not the complete backup/deployment readiness program. |

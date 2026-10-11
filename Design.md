@@ -1,5 +1,7 @@
 # Christmas Escape Room Quiz
 
+> **Current authority and UI status (2026-10-11):** This is the original product narrative, not a current feature/phase checklist. The later explicit decisions in `docs/product-decisions.md` supersede conflicting older narrative where stated (for example **Challenge is free, has two distinct initiating-team puzzles and a 15-second gathering period; player Skip is forbidden on puzzle 25; Music has a 60-second gathering period; global FINISHED requires both teams to finish**). The approved visual implementation follows `docs/ui/midnight-advent.md` and GitHub spec #71. **Do not infer new game rules from old examples below.**
+
 During the Christmas evening we would like to host a quiz / escape room game where multiple participants are split into two groups and these two groups will race to finish all the quizzes as soon as possible. The group that first finishes all the quizzes wins. There will also be two admins keeping everything in check.
 
 ## Participants, Setup and Context
@@ -216,7 +218,7 @@ A team can initiate a challenge. The team that starts the challenge is the *init
 
 Each team can only initiate this once during the entire game.
 
-It will cost the initiating team a certain amount of points, for example 5 points.
+**Current approved rule:** starting Challenge costs **0 points**, consumes only that team's one opportunity, and selects a distinct question for that initiating team. A 15-second gathering stage precedes answer availability. The old paid example is superseded.
 
 Both teams will receive the same puzzle which they need to solve.
 
