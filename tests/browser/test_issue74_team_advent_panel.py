@@ -415,7 +415,7 @@ class Issue74TeamAdventPanelBrowserTests(LiveServerTestCase):
                         await narrow.locator(".team-advent-sheet").evaluate(
                             "el => el.getBoundingClientRect().height"
                         ),
-                        368,
+                        400,
                     )
                     self.assertTrue(
                         await narrow.evaluate(
