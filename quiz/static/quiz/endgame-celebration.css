@@ -442,3 +442,28 @@
 @media (prefers-reduced-motion: reduce) {
   .endgame-team-result, .endgame-tv-final, .endgame-tv-ribbon { animation: none !important; transition: none !important; }
 }
+
+/* Winner phone: the durable tableau IS the result. One confetti layer only,
+   never a second foreground card with duplicate text over the same headline. */
+.endgame-celebration--winner .endgame-celebration__veil {
+  background: transparent;
+}
+.endgame-celebration--winner .endgame-celebration__card {
+  display: none;
+}
+
+/* First-finisher TV keyframe follows the approved full-scale brass star. */
+.endgame-celebration--overview-winner .endgame-celebration__icon {
+  font-size: clamp(6rem, 8cqw, 9.5rem);
+}
+.endgame-celebration--overview-winner .endgame-celebration__card h2 {
+  font-size: clamp(3.5rem, 6cqw, 7.2rem);
+}
+.endgame-celebration--overview-winner .endgame-celebration__card p:last-child {
+  font-size: clamp(1.125rem, 1.5cqw, 2rem);
+}
+/* The television's music controls resume their normal state on reset, but
+   do not compete with the separate final-results takeover. */
+.game-page--overview:has(.endgame-tv-final) #overview-audio-state {
+  visibility: hidden;
+}
