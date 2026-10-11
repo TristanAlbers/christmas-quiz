@@ -10,7 +10,7 @@
     </div>
     <p class="game-clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
   </header>
-  <p class="public-music-phase">{% if state.music.phase == 'gathering' %}De Muziek Quiz begint zo{% elif state.music.phase == 'question' %}De Muziek Quiz is begonnen{% else %}De Muziek Quiz is afgerond{% endif %}</p>
+  <p class="public-music-phase">{% if state.music.phase == 'gathering' %}Teams verzamelen{% elif state.music.phase == 'question' %}De Muziek Quiz is begonnen{% else %}De Muziek Quiz is afgerond{% endif %}</p>
   {% elif state.challenge or state.global_state == 'READY' %}
   <header class="public-brand"><span class="eyebrow">Kerst Escape Room</span><h1 class="public-brand__name">Quizzmass</h1></header>
   {% else %}
