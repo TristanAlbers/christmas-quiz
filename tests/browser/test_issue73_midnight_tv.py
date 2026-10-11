@@ -294,6 +294,33 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     self.assertTrue(echo_checks["backgroundMatches"], echo_checks)
                     self.assertTrue(echo_checks["chocolateCentered"], echo_checks)
                     self.assertTrue(echo_checks["chocolateSameSize"], echo_checks)
+                    # The clock continues polling while the opening flap animates.
+                    # Those polls must not replace the temporary echo or cabinet.
+                    await page.evaluate("""() => {
+                        window.__openingEcho = document.querySelector(
+                            '.public-status--advent > .advent-door-opening-echo'
+                        );
+                        window.__openingCabinet = document.querySelector(
+                            '.advent-progress[data-team-id="a"] .advent-calendar'
+                        );
+                        window.__openingPolls = 0;
+                        document.body.addEventListener('htmx:afterRequest', e => {
+                            if (e.detail.elt.id === 'overview-poller') {
+                                window.__openingPolls += 1;
+                            }
+                        });
+                    }""")
+                    await page.wait_for_function(
+                        "() => window.__openingPolls >= 1", timeout=3500
+                    )
+                    self.assertTrue(await page.evaluate("""() => (
+                        document.querySelector(
+                            '.public-status--advent > .advent-door-opening-echo'
+                        ) === window.__openingEcho &&
+                        document.querySelector(
+                            '.advent-progress[data-team-id="a"] .advent-calendar'
+                        ) === window.__openingCabinet
+                    )"""))
                     await self._screenshot(page, "tv-v4-opening-a14-b10-1920x1080")
                     await page.wait_for_timeout(350)
                     await self._screenshot(page, "tv-v4-opening-midframe-a14-b10-1920x1080")
