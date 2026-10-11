@@ -200,7 +200,7 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         (".challenge-answer-form button", 16.0),
                     ):
                         rendered_px = await a_page.locator(selector).evaluate(
-                            "(element) => parseFloat(getComputedStyle(element).fontSize)"
+                            "el => parseFloat(getComputedStyle(el).fontSize)"
                         )
                         self.assertGreaterEqual(
                             rendered_px, minimum_px, selector
