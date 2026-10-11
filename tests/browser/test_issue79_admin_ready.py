@@ -64,7 +64,7 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
         self.client.force_login(self.team_user)
         self.assertEqual(self.client.get("/admin-game/").status_code, 403)
         self.assertEqual(self.client.get("/admin-game/state/").status_code, 403)
-        self.assertNotContains(self.client.get("/"), "broken-package")
+        self.assertNotContains(self.client.get("/team/"), "broken-package")
         self.client.force_login(self.admin_user)
         ready = self.client.get("/admin-game/")
         self.assertContains(ready, "broken-package")
@@ -167,10 +167,13 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                     await page.get_by_role("button", name="Spel pauzeren").wait_for()
                     self.assertEqual(await page.locator("#package-id").count(), 0)
                     await self._screenshot(page, "admin-after-start-390")
+                    run_id = await asyncio.to_thread(
+                        lambda: str(Run.objects.get(active=True).id)
+                    )
                     await asyncio.to_thread(
                         reset_game,
                         self.admin,
-                        RunCommand(str(uuid4()), Run.objects.get(active=True).id.hex),
+                        RunCommand(str(uuid4()), run_id),
                     )
                     await page.reload()
                     await page.get_by_label("Beschikbare spelpakketten").wait_for()
