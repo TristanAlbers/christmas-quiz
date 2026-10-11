@@ -24,7 +24,9 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
         settings.enable()
         self.addCleanup(settings.disable)
         users = get_user_model()
-        self.admin = users.objects.create_user("midnight-admin", password="admin-secret")
+        self.admin = users.objects.create_user(
+            "midnight-admin", password="admin-secret"
+        )
         AccountRole.objects.create(user=self.admin, role="admin")
         for letter in ("a", "b"):
             user = users.objects.create_user(
@@ -64,11 +66,15 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                         page = await context.new_page()
                         try:
                             await page.goto(f"{self.live_server_url}/")
-                            await page.get_by_role("heading", name="Quizzmass").wait_for()
+                            await page.get_by_role(
+                                "heading", name="Quizzmass"
+                            ).wait_for()
                             await self._assert_narrow(page, width)
                             await self._screenshot(page, f"landing-{width}")
 
-                            await page.get_by_role("link", name="Inloggen als team").click()
+                            await page.get_by_role(
+                                "link", name="Inloggen als team"
+                            ).click()
                             self.assertEqual(
                                 await page.locator("html").get_attribute("lang"), "nl"
                             )
@@ -84,33 +90,52 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                             )
                             self.assertNotEqual(focus, "none")
 
-                            await page.get_by_label("Team", exact=True).select_option("a")
+                            await page.get_by_label(
+                                "Team", exact=True
+                            ).select_option("a")
                             await page.get_by_label("Pincode").fill("incorrect")
-                            await page.get_by_role("button", name="Naar de quiz").click()
-                            await page.get_by_text("Ongeldige inloggegevens.").wait_for()
-                            self.assertEqual(page.url.split("?")[0].split("/")[-2], "login")
+                            await page.get_by_role(
+                                "button", name="Naar de quiz"
+                            ).click()
+                            await page.get_by_text(
+                                "Ongeldige inloggegevens."
+                            ).wait_for()
+                            self.assertTrue(page.url.endswith("/login/"))
 
                             await page.get_by_label("Pincode").fill("team-a-secret")
-                            await page.get_by_role("button", name="Naar de quiz").click()
+                            await page.get_by_role(
+                                "button", name="Naar de quiz"
+                            ).click()
                             await page.locator(".team-ready").wait_for()
                             self.assertTrue(page.url.endswith("/team/"))
                             self.assertIn(
                                 "Team A", await page.locator(".team-ready").inner_text()
                             )
-                            self.assertEqual(await page.locator("#answer-input").count(), 0)
-                            self.assertEqual(await page.locator(".team-resource-bar").count(), 0)
-                            self.assertEqual(await page.locator("#question-pane img").count(), 0)
+                            self.assertEqual(
+                                await page.locator("#answer-input").count(), 0
+                            )
+                            self.assertEqual(
+                                await page.locator(".team-resource-bar").count(), 0
+                            )
+                            self.assertEqual(
+                                await page.locator("#question-pane img").count(), 0
+                            )
                             self.assertNotIn(
                                 "Demo A1", await page.locator("#live-game").inner_text()
                             )
                             self.assertEqual(
-                                await page.locator("#poller").get_attribute("hx-trigger"),
-                                "every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document",
+                                await page.locator("#poller").get_attribute(
+                                    "hx-trigger"
+                                ),
+                                "every 500ms [!document.hidden], "
+                                "visibilitychange[!document.hidden] from:document",
                             )
                             await self._assert_narrow(page, width)
                             await self._screenshot(page, f"team-ready-a-{width}")
                             await page.wait_for_timeout(1100)
-                            self.assertEqual(await page.locator(".team-ready").count(), 1)
+                            self.assertEqual(
+                                await page.locator(".team-ready").count(), 1
+                            )
                         finally:
                             await context.close()
                 finally:
@@ -188,7 +213,9 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                             poller,
                         )
                     )
-                    self.assertEqual(await page.locator(".team-resource-bar").count(), 1)
+                    self.assertEqual(
+                        await page.locator(".team-resource-bar").count(), 1
+                    )
                     await self._screenshot(page, "team-active-transition-390")
                 finally:
                     await context.close()
