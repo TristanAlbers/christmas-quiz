@@ -151,6 +151,35 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await tv.get_by_text(
                         "Team A heeft gewonnen", exact=False
                     ).wait_for()
+                    self.assertEqual(
+                        await winner.locator(".endgame-confetti__piece").count(), 88
+                    )
+                    self.assertEqual(
+                        await overview.locator(".endgame-confetti__piece").count(), 120
+                    )
+                    await tv.locator(
+                        '.advent-progress[data-team-id="a"].advent-progress--winner '
+                        ".advent-victory-badge"
+                    ).wait_for()
+                    self.assertEqual(
+                        await tv.locator(
+                            '.advent-progress[data-team-id="b"] '
+                            ".advent-victory-badge"
+                        ).count(),
+                        0,
+                    )
+                    # Shoot during the actual fall, not at the start off-screen.
+                    await tv.wait_for_timeout(450)
+                    self.assertGreaterEqual(
+                        await overview.locator(
+                            ".endgame-confetti__piece"
+                        ).evaluate_all("""els => els.filter(el => {
+                            const r = el.getBoundingClientRect();
+                            return r.top > 0 && r.top < innerHeight
+                                && r.left > 0 && r.left < innerWidth;
+                        }).length"""),
+                        55,
+                    )
                     await self._shot(team_a, "a-first-winner-phone-keyframe-390.png")
                     await self._shot(tv, "a-first-tv-burst-keyframe-1920.png")
 
@@ -207,6 +236,16 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     self.assertEqual(await team_a.locator(".shop-item form").count(), 0)
                     self.assertEqual(await tv.locator(".endgame-tv-ribbon").count(), 1)
                     self.assertEqual(await tv.locator(".advent-progress").count(), 2)
+                    self.assertEqual(
+                        await tv.locator(".advent-progress--winner").count(), 1
+                    )
+                    self.assertEqual(
+                        await tv.locator(
+                            '.advent-progress--winner[data-team-id="a"] '
+                            ".advent-victory-badge"
+                        ).inner_text(),
+                        "✦ Winnaar",
+                    )
                     await self._shot(team_a, "a-first-winner-phone-settled-390.png")
                     await self._shot(tv, "a-first-continuing-tv-1920.png")
                     await asyncio.to_thread(
@@ -273,6 +312,20 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         await tv.locator(".endgame-tv-ribbon").count(), 1
                     )
                     self.assertEqual(await tv.locator(".advent-progress").count(), 2)
+                    self.assertEqual(
+                        await tv.locator(
+                            '.advent-progress--winner[data-team-id="b"] '
+                            ".advent-victory-badge"
+                        ).count(),
+                        1,
+                    )
+                    self.assertEqual(
+                        await tv.locator(
+                            '.advent-progress[data-team-id="a"] '
+                            ".advent-victory-badge"
+                        ).count(),
+                        0,
+                    )
                     self.assertFalse(
                         await team_b.locator("#endgame-celebration").evaluate(
                             "el => el.classList.contains("
