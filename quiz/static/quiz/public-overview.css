@@ -248,8 +248,6 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   font: normal clamp(11px, .84cqw, 18px) system-ui, sans-serif;
   text-transform: none;
   letter-spacing: 0;
-}
-.game-page--overview .public-advent-header .game-clock {
   transform: translateY(-10px);
 }
 .game-page--overview .public-advent-header .game-clock strong {
