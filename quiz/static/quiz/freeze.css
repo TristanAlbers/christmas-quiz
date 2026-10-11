@@ -1,20 +1,30 @@
+/* Frozen team view (#76): stable, generic decor outside the 500ms HTMX swap.
+   The live server remains the only authority for Freeze and its remaining time. */
+body:has(.state-panel-freeze) { overflow: hidden; }
+
 #game-status:has(.state-panel-freeze) {
   position: fixed;
   z-index: 80;
   inset: 0;
   box-sizing: border-box;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  touch-action: pan-y;
-  padding: max(1.25rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+  padding: max(1.2rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1.2rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
   background: transparent;
   pointer-events: auto;
 }
 
 .state-panel-freeze {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  width: 100%;
   min-height: 100%;
   border: 0;
   border-radius: 0;
@@ -22,71 +32,171 @@
   box-shadow: none;
 }
 
-.state-panel-freeze > .freeze-message {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  width: min(30rem, 100%);
-  margin-block: auto;
-  margin-inline: 0;
-  padding: clamp(1.25rem, 5vw, 2rem);
-  border: 1px solid rgba(188, 238, 255, .96);
-  border-radius: 1rem;
-  background: rgba(232, 249, 255, .96);
-  box-shadow: 0 1rem 3rem rgba(4, 55, 88, .35);
-  text-align: center;
-}
-.freeze-message h2 { color: #07577c; font-size: clamp(1.8rem, 8vw, 3rem); }
-.freeze-message__icon {
-  margin: 0;
-  color: #168cb5;
-  font-size: clamp(2.4rem, 12vw, 4.5rem);
-  line-height: 1;
-  text-shadow: 0 .2rem .8rem rgba(28, 145, 185, .3);
-}
-
-.freeze-surface {
+.freeze-backdrop {
   position: fixed;
-  z-index: 70;
+  z-index: 75;
   inset: 0;
+  isolation: isolate;
   overflow: hidden;
-  border: 0;
-  background:
-    radial-gradient(circle at 50% 45%, rgba(220, 247, 255, .36), rgba(24, 116, 157, .67) 72%),
-    repeating-linear-gradient(125deg, rgba(255,255,255,.16) 0 .12rem, transparent .12rem 1.7rem);
-  box-shadow: inset 0 0 clamp(2rem, 14vw, 8rem) #d7f6ff, inset 0 0 1.2rem rgba(255,255,255,.92);
+  background: #163c35;
   pointer-events: auto;
 }
+.freeze-backdrop[hidden] { display: none; }
 
-.freeze-surface::before,
-.freeze-surface::after {
+.freeze-ghost {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.4rem 1rem;
+  background: #163c35;
+  color: #d4dfd7;
+  filter: blur(7px);
+  opacity: .62;
+}
+.freeze-ghost__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #aac9b0;
+  padding-bottom: 1.2rem;
+  color: #ecd9a8;
+  font: 1.35rem Georgia, serif;
+}
+.freeze-ghost__header span:last-child { font: .75rem system-ui, sans-serif; }
+.freeze-ghost__resources {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.4rem .85rem;
+  border: 1px solid #b09b62;
+  background: #38594d;
+  font-size: .9rem;
+}
+.freeze-ghost__paper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  height: min(21rem, 43svh);
+  margin-top: .9rem;
+  padding: 2rem 1.2rem;
+  background: #b9b19e;
+}
+.freeze-ghost__title { display: block; width: 75%; height: 1.65rem; background: #68766e; }
+.freeze-ghost__line { display: block; width: 100%; height: .8rem; background: #89958b; }
+.freeze-ghost__line--short { width: 65%; }
+.freeze-ghost__paper strong {
+  margin-top: 2.25rem;
+  color: #445647;
+  text-align: center;
+  font-size: 1.1rem;
+  letter-spacing: .1em;
+}
+.freeze-ghost__bar { height: 3rem; background: #843c4d; }
+
+.freeze-ice {
+  position: absolute;
+  inset: 0;
+  border: 10px ridge #9bd5e594;
+  box-sizing: border-box;
+  background:
+    linear-gradient(160deg, #b6eaff47, #54a2c26b 50%, #15384bb6),
+    repeating-linear-gradient(20deg, transparent 0 19px, #d4f6ff13 20px 21px),
+    radial-gradient(circle at 30% 10%, #ebfaffc9, transparent 39%);
+  box-shadow: inset 0 0 80px 20px #a0efffb0, 0 0 36px #96dcec;
+}
+.freeze-ice::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle, rgba(255,255,255,.92) 0 .15rem, transparent .19rem) 0 0 / 4.2rem 4.2rem;
-  opacity: .55;
-  animation: frozen-haze 7s linear infinite;
+  background: repeating-conic-gradient(
+    from 10deg at 5% 8%, #c4f5ff00 0 8deg, #eafaff3d 8deg 8.5deg, #c4f5ff00 9deg 30deg
+  );
+  clip-path: polygon(0 0, 100% 0, 100% 22%, 50% 65%, 0 30%);
+  animation: freeze-ice-settle 1.1s ease-out both;
 }
-.freeze-surface::after {
-  background-size: 6.7rem 6.7rem;
-  animation-duration: 11s;
-  animation-direction: reverse;
-}
-.freeze-surface__crystal {
+.freeze-ice::after {
+  content: "";
   position: absolute;
-  color: rgba(236, 251, 255, .82);
-  font-size: clamp(5rem, 28vw, 15rem);
-  filter: drop-shadow(0 0 1rem rgba(255,255,255,.65));
+  inset: 0;
+  background: repeating-linear-gradient(150deg, #fff0 0 42px, #e1f9ff47 43px 44px, #fff0 45px 73px);
+  opacity: .5;
 }
-.freeze-surface__crystal--one { top: -3rem; left: -2rem; transform: rotate(-18deg); }
-.freeze-surface__crystal--two { right: -2rem; bottom: -3rem; transform: rotate(16deg); }
-.freeze-surface__crystal--three { top: 28%; right: -3rem; font-size: clamp(3rem, 17vw, 9rem); }
-
-@keyframes frozen-haze {
-  to { transform: translate3d(2rem, 4.2rem, 0); }
+.freeze-ice__ridge {
+  position: absolute;
+  top: 5%;
+  left: 18%;
+  width: 65%;
+  height: 30%;
+  border-left: 4px solid #e8faff8a;
+  border-top: 2px solid #e8faff55;
+  transform: skew(20deg) rotate(-15deg);
+  filter: blur(.6px);
+}
+.freeze-ice__snow {
+  position: absolute;
+  color: #d7faff;
+  opacity: .7;
+  font-size: 3.75rem;
+  filter: blur(1px);
+  animation: freeze-snow-settle 2.6s ease-out both;
+}
+.freeze-ice__snow--one { left: -18px; top: 17%; }
+.freeze-ice__snow--two { right: -15px; bottom: 10%; font-size: 5.9rem; animation-delay: .15s; }
+.freeze-ice__snow--three { right: 7%; top: -28px; font-size: 3rem; animation-delay: .3s; }
+@keyframes freeze-ice-settle {
+  from { transform: scale(1.6); opacity: .1; }
+  to { transform: scale(1); opacity: .8; }
+}
+@keyframes freeze-snow-settle {
+  from { transform: translateY(-15px) rotate(-8deg); opacity: .25; }
+  to { transform: translateY(14px) rotate(16deg); opacity: .7; }
 }
 
+.state-panel-freeze > .freeze-message {
+  position: relative;
+  z-index: 81;
+  box-sizing: border-box;
+  flex: 0 1 29rem;
+  width: min(100%, 29rem);
+  margin: auto;
+  padding: 1.55rem 1.1rem 1.85rem;
+  border: 1px solid #d0f7ff9a;
+  border-radius: 0;
+  background: #0e374d9c;
+  box-shadow: 0 0 40px #b7efff33, inset 0 0 30px #d8f9ff1f;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #d7eff6;
+  text-align: center;
+}
+.freeze-message__icon {
+  display: block;
+  color: #e2faff;
+  font: normal 5.1rem/.95 Georgia, serif;
+  text-shadow: 0 0 20px #fff8;
+}
+.freeze-message__eyebrow {
+  margin: .75rem 0 .55rem;
+  color: #a5eaf6;
+  font: 800 .69rem/1.3 system-ui, sans-serif;
+  letter-spacing: .2em;
+}
+.freeze-message h2 {
+  margin: .65rem 0;
+  color: #ecfbff;
+  font: normal clamp(2rem, 9.7vw, 2.4rem)/1.13 Georgia, serif;
+  letter-spacing: .05em;
+}
+.freeze-message__description { margin: .7rem 0 0; color: #d7eff6; font-size: .84rem; line-height: 1.5; }
+.freeze-message .freeze-timer {
+  margin: 1.15rem 0 0;
+  color: #fff4cf;
+  font: normal 2.15rem/1.2 Georgia, serif;
+  font-variant-numeric: tabular-nums;
+}
 @media (prefers-reduced-motion: reduce) {
-  .freeze-surface::before,
-  .freeze-surface::after { animation: none; }
+  .freeze-ice::before, .freeze-ice__snow { animation: none !important; }
+  .freeze-ice::before { opacity: .8; }
 }
