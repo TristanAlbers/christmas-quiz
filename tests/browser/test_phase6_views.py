@@ -190,6 +190,26 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         "De uitdaging begint. Verzamel je team!", exact=True
                     ).wait_for(state="hidden", timeout=7000)
                     await self._screenshot(tv_page, "challenge-active-tv-1920x1080")
+                    # Compare computed typography against the approved #74
+                    # Advent phone sizes rather than trusting visual scaling.
+                    for selector, minimum_px in (
+                        (".challenge-stage__paper h2", 28.7),
+                        (".challenge-stage__paper p", 19.0),
+                        (".challenge-answer-form label", 15.0),
+                        ("#challenge-answer-input", 16.0),
+                        (".challenge-answer-form button", 16.0),
+                    ):
+                        rendered_px = await a_page.locator(selector).evaluate(
+                            "(element) => parseFloat(getComputedStyle(element).fontSize)"
+                        )
+                        self.assertGreaterEqual(
+                            rendered_px, minimum_px, selector
+                        )
+                    self.assertTrue(
+                        await a_page.evaluate(
+                            "document.documentElement.scrollWidth <= innerWidth"
+                        )
+                    )
                     await self._screenshot(a_page, "challenge-active-phone-390x844")
 
                     answer = a_page.locator("#challenge-answer-input")
