@@ -1,8 +1,6 @@
 # Christmas Escape Room Quiz — Architecture
 
-Status: approved architecture through the Phase 6 Stage A contract. Phase
-implementation and validation status is tracked by `implementation_plan.md` and
-the phase contracts.
+Status: approved architecture through the Phase 6 Stage A contract. Historical phase contracts and `implementation_plan.md` describe **earlier planning snapshots**; do not infer the current implementation status from their old phase labels. The **approved 2026-10-11 presentation redesign** lives in `docs/ui/midnight-advent.md`, `docs/ui/midnight-advent-rollout.md`, and GitHub spec #71. It **does not change this architecture**; all runtime, privacy, state, and polling rules remain authoritative.
 
 Phase 2 implementation decisions are recorded in
 [`phase-2-contract.md`](phase-2-contract.md): one durable Hint reveal per
