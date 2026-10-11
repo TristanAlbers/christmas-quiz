@@ -230,6 +230,10 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         "Team A",
                     )
                     await self._shot(team_b, "a-first-second-team-complete-390.png")
+                    await tv.wait_for_timeout(1900)
+                    self.assertFalse(
+                        await tv.locator("#overview-audio-player").is_visible()
+                    )
                     await self._shot(tv, "a-first-final-tv-1920.png")
                 finally:
                     await tv_context.close()
@@ -299,6 +303,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         ).count(),
                         50,
                     )
+                    await tv.wait_for_timeout(1900)
                     await self._shot(tv, "b-first-final-tv-1920.png")
                 finally:
                     await tv_context.close()
