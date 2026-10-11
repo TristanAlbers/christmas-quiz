@@ -1,6 +1,8 @@
 # Christmas Escape Room Quiz — Game Rules & State Semantics
 
 > Normative rules for the game-state engine. This document is intended as a **plugin/specification alongside the main application specification**, not as a replacement for it.
+>
+> **Current precedence (2026-10-11):** Later explicit approvals in `docs/product-decisions.md` override the older conflicting descriptions **only where specified**: in particular Challenge is **free**, there is a distinct puzzle per initiating team, both teams answer the same puzzle within a Challenge, a 15-second gathering phase comes first, the public TV may display the shared Challenge question during the active phase, player Skip on puzzle 25 is forbidden, and the Music display rules are refined. Other authoritative gameplay, privacy, clock, recovery and concurrency rules here continue to apply. See `docs/ui/midnight-advent.md` for presentation and `docs/ui/midnight-advent-rollout.md` for the redesign ticket route.
 
 ## 1. Normative language
 
