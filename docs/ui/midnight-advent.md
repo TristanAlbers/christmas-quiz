@@ -1,17 +1,17 @@
 # Midnight Advent — approved Quizzmass UI contract
 
-**Status:** user-approved visual/presentation contract, 2026-10-11. **Scope:** the existing Quizzmass Django/HTMX presentation; **not** new game rules or a new frontend stack. See [rollout](midnight-advent-rollout.md).
+**Status:** user-approved visual/presentation contract, 2026-10-11. **Scope:** the existing Quizzmass Django/HTMX presentation; **not** new game rules or a new frontend stack. See [rollout](midnight-advent-rollout.md) and [agent/skills handoff](midnight-advent-agent-guide.md).
 
 ## 1. Authority and acceptance
 
-Follow `AGENTS.md` and its authority order. The dated decision in `docs/product-decisions.md` authorizes the presentation refinements below, including the explicit exceptions to older `Views.md` wording. Domain, security, public/private projection, timing, snapshot, gameplay, concurrency, recoverability, and authorization rules remain unchanged. If this contract seems to require new projection fields or state-transition behavior, report the exact discrepancy and route it to `architect`/`integrator` before coding; do not infer new authority from a standalone prototype.
+Follow `AGENTS.md` and its authority order. The latest dated *approved* presentation decisions here and in `docs/product-decisions.md` supersede conflicting old aesthetic/layout advice, **not** normative game, security, privacy, clock, concurrency, polling, accessibility or recovery guarantees. The issue tracker [parent spec #71](https://github.com/TristanAlbers/christmas-quiz/issues/71) is the complete accepted user-story/testing statement; implementation issues #72–#84 take their directly applicable, bounded behavior from it. The dated decision in `docs/product-decisions.md` authorizes the presentation refinements below, including the explicit exceptions to older `Views.md` wording. Domain, security, public/private projection, timing, snapshot, gameplay, concurrency, recoverability, and authorization rules remain unchanged. If this contract seems to require new projection fields or state-transition behavior, report the exact discrepancy and route it to `architect`/`integrator` before coding; do not infer new authority from a standalone prototype.
 
 The following have been explicitly approved by the product owner:
 - **Midnight Advent V4:** TV and team screens; shop; chocolate; Uno Reverse; Freeze/attack effects; Music and Challenge treatments.
 - **Game Master V1:** READY/ADVENT/PAUSED/MUSIC/CHALLENGE/FINISHED control desk.
 - **Pause & Victory supplement V1:** global pause in all underlying modes; first finisher, continuing team, final results.
 
-The exploratory standalone HTML prototypes are **visual references, not implementation source**. They use illustrative content/counters, mock actions, and no backend. Port only verified presentation patterns, not mocked game state or local timers.
+The approved prototype archive is a **handoff artifact currently outside GitHub**. If an implementation agent cannot see the actual screenshots/reference files, it must say so and use this written contract plus existing UI as its baseline, not claim visual fidelity to unseen pixels. Plan an explicit comparison review once those images are available. The exploratory standalone HTML prototypes are **visual references, not implementation source**. They use illustrative content/counters, mock actions, and no backend. Port only verified presentation patterns, not mocked game state or local timers.
 
 ## 2. Creative direction and foundation
 
