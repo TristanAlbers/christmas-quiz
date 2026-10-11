@@ -146,7 +146,7 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         1025,
                     )
                     await self._screenshot(page, "tv-v4-advent-a13-b10-1024x768")
-                    await page.set_viewport_size({"width": 1920, "height": 1080")
+                    await page.set_viewport_size({"width": 1920, "height": 1080})
                     await page.evaluate("""() => {
                         window.__issue73Echoes = 0;
                         new MutationObserver(records => {
