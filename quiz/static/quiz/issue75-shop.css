@@ -281,12 +281,6 @@
 .shop-dialog--midnight .shop-item__action--free .shop-item__price {
   color: #fff0b7;
 }
-.shop-dialog--midnight .shop-dialog__disclaimer {
-  margin: .65rem .1rem 0;
-  color: #425347;
-  font-size: .8rem;
-  line-height: 1.4;
-}
 @media (max-width: 22rem) {
   .shop-dialog--midnight {
     width: calc(100% - .75rem);
