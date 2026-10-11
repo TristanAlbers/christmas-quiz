@@ -9,8 +9,8 @@ from uuid import uuid4
 from django.contrib.auth import get_user_model
 from django.test import LiveServerTestCase, override_settings
 
-from quiz.application import start_game
-from quiz.contracts import Actor, StartGame
+from quiz.application import reset_game, start_game
+from quiz.contracts import Actor, RunCommand, StartGame
 from quiz.models import AccountRole
 
 
@@ -200,7 +200,7 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                     await page.get_by_role("button", name="Naar de quiz").click()
                     await page.locator(".team-ready").wait_for()
                     poller = await page.locator("#poller").element_handle()
-                    await asyncio.to_thread(
+                    started = await asyncio.to_thread(
                         start_game,
                         Actor(self.admin.pk, "admin"),
                         StartGame(str(uuid4()), "christmas-2026-demo"),
@@ -217,6 +217,21 @@ class MidnightEntryBrowserTests(LiveServerTestCase):
                         await page.locator(".team-resource-bar").count(), 1
                     )
                     await self._screenshot(page, "team-active-transition-390")
+                    await asyncio.to_thread(
+                        reset_game,
+                        Actor(self.admin.pk, "admin"),
+                        RunCommand(str(uuid4()), started.run_id),
+                    )
+                    await page.locator(".team-ready").wait_for(timeout=6000)
+                    self.assertEqual(await page.locator("#answer-input").count(), 0)
+                    self.assertEqual(
+                        await page.locator(".team-resource-bar").count(), 0
+                    )
+                    self.assertEqual(await page.locator("#question-pane img").count(), 0)
+                    self.assertNotIn(
+                        "Demo A1", await page.locator("body").inner_text()
+                    )
+                    await self._screenshot(page, "team-ready-after-reset-390")
                 finally:
                     await context.close()
                     await browser.close()
