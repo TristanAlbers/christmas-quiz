@@ -55,7 +55,7 @@
     </div>
   {% elif state.challenge %}
     <section class="challenge-overview challenge-overview--{{ state.challenge.phase }}" aria-label="Kerstuitdaging">
-      <p class="challenge-kicker">De kerstuitdaging · Ronde {{ state.challenge.challenge_number }}</p>
+      <p class="challenge-kicker">Kerstuitdaging · {{ state.challenge.challenge_number }} van 2</p>
       <h2 class="visually-hidden">Team {{ state.challenge.initiator_team_id|upper }} daagt Team {{ state.challenge.challenged_team_id|upper }} uit</h2>
       <div class="challenge-duel" aria-label="Team {{ state.challenge.initiator_team_id|upper }} tegen Team {{ state.challenge.challenged_team_id|upper }}">
         <span>Team {{ state.challenge.initiator_team_id|upper }}</span>
