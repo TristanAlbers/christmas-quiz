@@ -145,7 +145,9 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await overview.get_by_role(
                         "heading", name="Team A wint!"
                     ).wait_for()
-                    await tv.get_by_text("Team A heeft gewonnen", exact=False).wait_for()
+                    await tv.get_by_text(
+                        "Team A heeft gewonnen", exact=False
+                    ).wait_for()
                     await self._shot(team_a, "a-first-winner-phone-keyframe-390.png")
                     await self._shot(tv, "a-first-tv-burst-keyframe-1920.png")
 
@@ -191,7 +193,9 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await team_b.get_by_text(
                         "Team A heeft de kalender voltooid"
                     ).wait_for()
-                    await tv.get_by_text("Team A heeft gewonnen", exact=False).wait_for()
+                    await tv.get_by_text(
+                        "Team A heeft gewonnen", exact=False
+                    ).wait_for()
                     self.assertEqual(await team_b.locator("#answer-input").count(), 1)
                     self.assertEqual(
                         await team_a.locator(".endgame-team-result--winner").count(), 1
@@ -210,8 +214,16 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await tv.locator(".endgame-tv-final").wait_for(timeout=5000)
                     await team_b.locator(".endgame-team-result--complete").wait_for()
                     self.assertEqual(await team_b.locator("#answer-input").count(), 0)
-                    self.assertEqual(await tv.locator(".advent-door--completed").count(), 50)
-                    self.assertEqual(await tv.get_by_text("Team A", exact=True).count() >= 1, True)
+                    self.assertEqual(
+                        await tv.locator(
+                            ".advent-progress .advent-door--completed"
+                        ).count(),
+                        50,
+                    )
+                    self.assertEqual(
+                        await tv.locator(".endgame-tv-final__team--winner strong").inner_text(),
+                        "Team A",
+                    )
                     await self._shot(team_b, "a-first-second-team-complete-390.png")
                     await self._shot(tv, "a-first-final-tv-1920.png")
                 finally:
@@ -254,7 +266,8 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     self.assertEqual(await tv.locator(".advent-progress").count(), 2)
                     self.assertFalse(
                         await team_b.locator("#endgame-celebration").evaluate(
-                            "el => el.classList.contains('endgame-celebration--visible')"
+                            "el => el.classList.contains("
+                            "'endgame-celebration--visible')"
                         )
                     )
                     await self._shot(team_b, "b-first-winner-phone-settled-390.png")
@@ -275,7 +288,12 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await team_a.locator(".endgame-team-result--winner").count(), 0
                     )
-                    self.assertEqual(await tv.locator(".advent-door--completed").count(), 50)
+                    self.assertEqual(
+                        await tv.locator(
+                            ".advent-progress .advent-door--completed"
+                        ).count(),
+                        50,
+                    )
                     await self._shot(tv, "b-first-final-tv-1920.png")
                 finally:
                     await tv_context.close()
@@ -310,7 +328,9 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         '.endgame-celebration--visible'
                     )
                     await overlay.wait_for(timeout=5000)
-                    await tv.get_by_text("Team A heeft gewonnen", exact=False).wait_for()
+                    await tv.get_by_text(
+                        "Team A heeft gewonnen", exact=False
+                    ).wait_for()
                     self.assertEqual(
                         await overlay.locator(".endgame-confetti__piece").count(), 0
                     )
