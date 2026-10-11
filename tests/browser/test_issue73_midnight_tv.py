@@ -131,7 +131,7 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await page.locator(
                             '.advent-progress[data-team-id="b"] '
-                            '.advent-door--current .advent-door__flap'
+                            '.advent-door--current .advent-door__number'
                         ).evaluate("el => getComputedStyle(el).color"),
                         "rgb(64, 44, 22)",
                     )
