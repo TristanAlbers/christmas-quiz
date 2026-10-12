@@ -43,7 +43,7 @@
     </section>
   </main>
   {# This inert ghost contains no puzzle, hint, points or media. It stays mounted through 500ms polls. #}
-  <div id="freeze-backdrop" class="freeze-backdrop freeze-surface" data-active="0" hidden aria-hidden="true">
+  <div id="freeze-backdrop" class="freeze-backdrop" data-active="0" hidden aria-hidden="true">
     <div class="freeze-ghost">
       <div class="freeze-ghost__header"><span>Quizzmass ✦</span><span>◷ --:--:--</span></div>
       <div class="freeze-ghost__resources"><b>TEAM {{ team_name }}</b><b>PUNTEN</b></div>
@@ -119,6 +119,7 @@
         backdrop.classList.remove('freeze-backdrop--instant');
       }
       backdrop.hidden = !frozen;
+      backdrop.classList.toggle('freeze-surface', frozen);
       backdrop.dataset.active = frozen ? '1' : '0';
       if (wasFrozen !== frozen) {
         const announcement = document.getElementById('game-announcement');
