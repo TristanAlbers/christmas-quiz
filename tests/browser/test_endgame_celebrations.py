@@ -78,6 +78,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                 new MutationObserver(() => {
                     if (overlay.classList.contains('endgame-celebration--visible')) {
                         window.__endgameShows += 1;
+                        window.__endgameShownAt = performance.now();
                     }
                 }).observe(overlay, {attributes: true, attributeFilter: ['class']});
             }"""
@@ -236,7 +237,17 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         "none",
                     )
 
-                    await team_b.wait_for_timeout(1200)
+                    # The losing team's toast must remain readable past the
+                    # old 3.2s cutoff, then disappear at about six seconds.
+                    await team_b.wait_for_function(
+                        "() => window.__endgameShownAt && "
+                        "performance.now() - window.__endgameShownAt >= 4100",
+                        timeout=6500,
+                    )
+                    self.assertTrue(await runner_up.is_visible())
+                    await runner_up.wait_for(state="hidden", timeout=3500)
+                    self.assertEqual(await answer.input_value(), "still playing")
+
                     for page in (team_a, team_b, tv):
                         self.assertEqual(
                             await page.evaluate("window.__endgameShows"),
