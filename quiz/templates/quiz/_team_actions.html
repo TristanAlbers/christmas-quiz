@@ -1,17 +1,17 @@
 {% load quiz_format %}
 <div id="team-actions"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
   <input id="actions-context" type="hidden" name="actions_context" value="{{ actions_context }}">
-  {% if state.run_id and not state.music and state.team_state != 'FREEZE' %}
+  {% if state.run_id and not state.music and state.team_state != 'FREEZE' and state.challenge.status != 'active' %}
     <div class="team-resource-bar" aria-label="Teamvoorraad">
       {% include 'quiz/_team_resources.html' %}
-      {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
+      {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None and state.challenge.status != 'active' %}
         <button class="resource-card resource-card--shop" type="button" aria-haspopup="dialog" aria-controls="team-shop-dialog" onclick="document.getElementById('team-shop-dialog').showModal()">
           <span class="shop-mark" aria-hidden="true">✦</span><strong>Winkel &amp; sabotage</strong><span aria-hidden="true">›</span>
         </button>
       {% endif %}
     </div>
   {% endif %}
-  {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
+  {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None and state.challenge.status != 'active' %}
     <dialog id="team-shop-dialog" class="shop-dialog" aria-labelledby="team-shop-title"><section class="shop-card">
       <header class="shop-dialog__header"><div><p class="eyebrow">Teamwinkel</p><h2 id="team-shop-title">Power-ups en sabotage</h2></div><form method="dialog"><button class="shop-dialog__close" type="submit" aria-label="Winkel sluiten">×</button></form></header>
       <p id="shop-feedback" class="feedback" role="status">{% if feedback %}{{ feedback|dutch_feedback }}{% endif %}</p>
