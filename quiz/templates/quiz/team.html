@@ -219,7 +219,7 @@
             restoreAnswer.setSelectionRange(selection[0], selection[1]);
           }
         }
-      }, 4600);
+      }, Number.parseFloat(getComputedStyle(film).animationDuration) * 1000);
     }
 
     let challengeResultTimer = null;
