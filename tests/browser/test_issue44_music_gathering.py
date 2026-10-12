@@ -206,12 +206,18 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
 
                     await asyncio.to_thread(self._set_music_time, 150_000)
                     await tv.wait_for_timeout(800)
-                    self.assertAlmostEqual(
-                        await bar.locator(".music-player-progress__fill").evaluate(
-                            "n => n.offsetWidth / n.parentElement.clientWidth"
-                        ),
-                        0.4,
-                        places=2,
+                    # HTMX may replace the bar during its 500 ms poll;
+                    # measure only a connected, laid-out current element.
+                    await tv.wait_for_function(
+                        """() => {
+                          const fill = document.querySelector(
+                            '.music-player-progress__fill');
+                          const parent = fill?.parentElement;
+                          return !!parent && parent.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / parent.clientWidth - 0.4)
+                              < 0.02;
+                        }""",
+                        timeout=5000,
                     )
                     self.assertEqual(
                         await team_a.locator(".music-player-progress").count(), 0
@@ -237,12 +243,18 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await asyncio.to_thread(self._set_music_time, 300_000)
                     await tv.wait_for_timeout(800)
                     self.assertEqual(await bar.locator("progress").count(), 0)
-                    self.assertAlmostEqual(
-                        await bar.locator(".music-player-progress__fill").evaluate(
-                            "n => n.offsetWidth / n.parentElement.clientWidth"
-                        ),
-                        0.4,
-                        places=2,
+                    # HTMX may replace the bar during its 500 ms poll;
+                    # measure only a connected, laid-out current element.
+                    await tv.wait_for_function(
+                        """() => {
+                          const fill = document.querySelector(
+                            '.music-player-progress__fill');
+                          const parent = fill?.parentElement;
+                          return !!parent && parent.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / parent.clientWidth - 0.4)
+                              < 0.02;
+                        }""",
+                        timeout=5000,
                     )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 1
@@ -250,12 +262,18 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await tv.reload()
                     bar = tv.locator(".music-player-progress")
                     self.assertEqual(await bar.locator("progress").count(), 0)
-                    self.assertAlmostEqual(
-                        await bar.locator(".music-player-progress__fill").evaluate(
-                            "n => n.offsetWidth / n.parentElement.clientWidth"
-                        ),
-                        0.4,
-                        places=2,
+                    # HTMX may replace the bar during its 500 ms poll;
+                    # measure only a connected, laid-out current element.
+                    await tv.wait_for_function(
+                        """() => {
+                          const fill = document.querySelector(
+                            '.music-player-progress__fill');
+                          const parent = fill?.parentElement;
+                          return !!parent && parent.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / parent.clientWidth - 0.4)
+                              < 0.02;
+                        }""",
+                        timeout=5000,
                     )
 
                     await team_a.locator("#music-answer-input").fill("jingle bells")
