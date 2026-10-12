@@ -197,7 +197,7 @@
       if (!film || film.classList.contains('gameplay-event--idle')) return;
       const shell = document.querySelector('.app-shell');
       const previouslyFocused = document.activeElement;
-      const restoreAnswer = previouslyFocused?.id === 'answer-input'
+      const restoreAnswer = previouslyFocused?.matches('input[name="answer"]')
         ? previouslyFocused : null;
       let selection = null;
       if (restoreAnswer) {
