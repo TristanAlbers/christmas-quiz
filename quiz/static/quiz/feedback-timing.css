@@ -2,7 +2,6 @@
   --incorrect-feedback-duration: 2.75s;
   --transient-feedback-duration: 3s;
   --freeze-sequence-duration: 4.6s;
-  --freeze-launch-duration: 1.8s;
   --freeze-sequence-first-stage-duration: 1.8s;
   --freeze-sequence-second-stage-duration: 2.8s;
 }
@@ -31,17 +30,7 @@
   --event-duration: var(--freeze-sequence-duration);
 }
 
-.gameplay-event--attacker-reversed,
-.gameplay-event--saved,
-.gameplay-event--victim {
-  --event-duration: var(--freeze-sequence-duration);
-}
-
 .gameplay-event__stage--attack {
-  animation-duration: var(--freeze-launch-duration);
-}
-
-.gameplay-event--attacker-reversed .gameplay-event__stage--attack {
   animation-duration: var(--freeze-sequence-first-stage-duration);
 }
 
@@ -225,7 +214,7 @@
   }
 
   .gameplay-event__stage--attack {
-    animation: gameplay-static-first var(--freeze-launch-duration) steps(1, end) both !important;
+    animation: gameplay-static-first var(--freeze-sequence-first-stage-duration) steps(1, end) both !important;
   }
 
   .gameplay-event__stage--impact,
