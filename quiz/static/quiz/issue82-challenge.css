@@ -393,6 +393,10 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
   color: #263a2d;
   font: 1rem system-ui, sans-serif;
 }
+.game-page--team:has(.challenge-stage) .challenge-answer-form input::placeholder {
+  color: #465447;
+  opacity: 1;
+}
 .game-page--team:has(.challenge-stage) .challenge-answer-form .button-challenge {
   width: 100%;
   min-height: 3.05rem;
