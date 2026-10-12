@@ -275,6 +275,13 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         ).evaluate("el => el.getBoundingClientRect().top"),
                         heading_y - 50,
                     )
+                    card_bottom = await tv_page.locator(
+                        ".challenge-overview__question"
+                    ).evaluate("el => el.getBoundingClientRect().bottom")
+                    seal_top = await tv_page.locator(
+                        ".challenge-overview__seal"
+                    ).evaluate("el => el.getBoundingClientRect().top")
+                    self.assertLess(card_bottom, seal_top)
                     await self._screenshot(
                         tv_page, "challenge-long-question-tv-1920x1080"
                     )
