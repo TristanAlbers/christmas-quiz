@@ -42,7 +42,7 @@
       {% if state.challenge.phase == 'starting' %}
         <div class="challenge-stage__gathering">
           <h2 id="challenge-question-title">Verzamel je team — de uitdaging begint zo</h2>
-          <time class="challenge-start-timer" data-remaining-ms="{{ state.challenge.grace_remaining_ms }}">
+          <time class="challenge-start-timer" data-challenge-countdown data-remaining-ms="{{ state.challenge.grace_remaining_ms }}" aria-live="off">
             {% if state.global_state == 'PAUSED' %}Gepauzeerd met nog {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% else %}Begint over {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% endif %}
           </time>
         </div>
