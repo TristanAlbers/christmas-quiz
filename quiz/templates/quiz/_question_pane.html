@@ -124,6 +124,7 @@
       {% endif %}
       {% if state.question.hint %}<aside class="hint-card"><span class="hint-token" aria-hidden="true">?</span><div><strong>Hint onthuld</strong><p>{{ state.question.hint }}</p></div></aside>{% endif %}
       </article>
+      {% if state.global_state != 'PAUSED' %}
       <form class="answer-form" method="post" action="{% url 'team_answer' %}"
           hx-post="{% url 'team_answer' %}" hx-trigger="submit"
           hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
@@ -197,6 +198,7 @@
         {% endif %}
       {% endif %}
       </div>
+      {% endif %}
     </section>
   {% endif %}
 </div>
