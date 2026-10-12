@@ -518,6 +518,46 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
 
         asyncio.run(check())
 
+    def test_finished_tableau_keeps_scroll_on_short_phone_across_polls(self):
+        self._put_both_teams_on_door_25()
+        force_complete_current(
+            self.admin,
+            AdminPuzzle(str(uuid4()), self.run_id, "a", "a-25"),
+        )
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                context, page = await self._page(
+                    browser, "/team/", {"width": 390, "height": 420},
+                    self.cookies["a"],
+                )
+                try:
+                    result = page.locator(".endgame-team-result--winner")
+                    await result.wait_for()
+                    await page.wait_for_timeout(650)
+                    initial = await result.evaluate(
+                        """el => {
+                            el.scrollTop = el.scrollHeight;
+                            return el.scrollTop;
+                        }"""
+                    )
+                    self.assertGreater(initial, 40)
+                    await page.wait_for_timeout(1500)
+                    self.assertAlmostEqual(
+                        await result.evaluate("el => el.scrollTop"),
+                        initial,
+                        delta=1,
+                    )
+                    self.assertEqual(await page.locator("#answer-input").count(), 0)
+                finally:
+                    await context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
     def test_reduced_motion_keeps_static_winner_result_without_confetti(self):
         self._put_both_teams_on_door_25()
 
