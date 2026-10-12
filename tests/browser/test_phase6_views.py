@@ -242,6 +242,27 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         return Math.max(0, p.bottom - r.bottom);
                     }""")
                     self.assertLessEqual(clipped, 2)
+                    tv_layout = await tv_page.evaluate("""() => {
+                        const rect = selector => document.querySelector(
+                            selector
+                        ).getBoundingClientRect();
+                        return {
+                            liveBottom: rect(".challenge-overview__live").bottom,
+                            stageTop: rect(".challenge-overview__stage").top,
+                            stageBottom: rect(".challenge-overview__stage").bottom,
+                            sealBottom: rect(".challenge-overview__seal").bottom,
+                            footerTop: rect(".challenge-overview__footer").top,
+                        };
+                    }""")
+                    self.assertLessEqual(
+                        tv_layout["liveBottom"], tv_layout["stageTop"]
+                    )
+                    self.assertLess(
+                        tv_layout["sealBottom"], tv_layout["stageBottom"]
+                    )
+                    self.assertLessEqual(
+                        tv_layout["stageBottom"], tv_layout["footerTop"]
+                    )
                     await self._screenshot(tv_page, "challenge-active-tv-1731x863")
                     await tv_page.set_viewport_size(
                         {"width": 1920, "height": 1080}
