@@ -40,9 +40,13 @@
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     finaleOverlay.replaceChildren();
     const colors = ["#ebcb87", "#fff0c2", "#a53746", "#69977d"];
-    for (let i = 0; i < 46; i += 1) {
+    // Phone celebrations frame the result instead of covering the words.
+    const count = surface === "tv" ? 46 : 26;
+    for (let i = 0; i < count; i += 1) {
       const piece = document.createElement("i");
-      piece.style.setProperty("--left", ((i * 31) % 99) + "%");
+      const left = surface === "tv" ? (i * 31) % 99
+        : i % 2 === 0 ? (i * 13) % 17 : 83 + (i * 19) % 17;
+      piece.style.setProperty("--left", left + "%");
       piece.style.setProperty("--drift", (((i * 23) % 17) - 8) + "vw");
       piece.style.setProperty("--color", colors[i % colors.length]);
       piece.style.setProperty("--delay", ((i % 9) * 0.07) + "s");

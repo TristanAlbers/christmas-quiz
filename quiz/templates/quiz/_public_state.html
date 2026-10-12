@@ -63,7 +63,7 @@
         <div class="music-scores public-music-scores">
           {% for score in state.music.scores %}<article><span>Team {{ score.team_id|upper }}</span><strong>{{ score.score }}</strong></article>{% endfor %}
         </div>
-        {% if state.music.previous_winner_team_id %}<p class="music-winner">Laatste punt: Team {{ state.music.previous_winner_team_id|upper }}</p>{% endif %}
+        {% if state.music.phase == 'question' and state.music.previous_winner_team_id %}<p class="music-winner">Laatste punt: Team {{ state.music.previous_winner_team_id|upper }}</p>{% endif %}
       </div>
     </div>
     <p class="public-music-footer"><span aria-hidden="true">✧</span> Elf vragen. Eén gezamenlijk podium. <span aria-hidden="true">✧</span></p>

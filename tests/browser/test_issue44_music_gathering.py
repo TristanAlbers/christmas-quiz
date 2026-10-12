@@ -413,7 +413,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         await tv.locator(".music-finale-confetti i").count(), 46
                     )
                     self.assertEqual(
-                        await a.locator(".music-finale-confetti i").count(), 46
+                        await a.locator(".music-finale-confetti i").count(), 26
                     )
                     self.assertEqual(
                         await b.locator(".music-finale-confetti i").count(), 0
@@ -435,6 +435,21 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         )
                         await b.screenshot(
                             path=str(output / "phone-finale-runner-390x844.png")
+                        )
+                    # After the one-time celebratory burst, polling must
+                    # leave the readable final-result cards unobstructed.
+                    await tv.wait_for_timeout(5100)
+                    for page in (a, b, tv):
+                        self.assertEqual(
+                            await page.locator(".music-finale-confetti i").count(), 0
+                        )
+                    if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
+                        output = Path(capture_dir)
+                        await tv.screenshot(
+                            path=str(output / "tv-finale-settled-1920x1080.png")
+                        )
+                        await a.screenshot(
+                            path=str(output / "phone-finale-settled-390x844.png")
                         )
 
                     await asyncio.to_thread(
@@ -511,7 +526,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         await a.locator(".music-finale-confetti i").count(), 0
                     )
                     self.assertEqual(
-                        await b.locator(".music-finale-confetti i").count(), 46
+                        await b.locator(".music-finale-confetti i").count(), 26
                     )
                     self.assertEqual(
                         await tv.locator(

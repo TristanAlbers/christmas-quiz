@@ -679,3 +679,9 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
   letter-spacing: .14em;
   text-transform: uppercase;
 }
+
+/* Phone finale confetti frames, rather than obscures, the centered winner. */
+.game-page--team .music-finale-confetti i {
+  width: .5rem;
+  height: .85rem;
+}
