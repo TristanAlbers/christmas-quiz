@@ -190,6 +190,52 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         "De uitdaging begint. Verzamel je team!", exact=True
                     ).wait_for(state="hidden", timeout=7000)
                     await self._screenshot(tv_page, "challenge-active-tv-1920x1080")
+                    # A longer public question must remain readable on an
+                    # unattended TV even through 500ms HTMX replacements.
+                    # Stress only the rendered public text, not game authority.
+                    long_body = ("Een vraag voor beide teams. " * 90).strip()
+                    await tv_page.evaluate(
+                        """body => {
+                            const render = () => {
+                                const card = document.querySelector(
+                                    "[data-tv-challenge-key]"
+                                );
+                                if (card) card.querySelector("p").textContent = body;
+                            };
+                            window.__longTvQuestion = event => {
+                                if (event.detail.target?.id === "overview-state") {
+                                    render();
+                                }
+                            };
+                            document.body.addEventListener(
+                                "htmx:afterSwap", window.__longTvQuestion
+                            );
+                            render();
+                        }""",
+                        long_body,
+                    )
+                    self.assertGreater(
+                        await tv_page.locator("[data-tv-challenge-key]").evaluate(
+                            "el => el.scrollHeight - el.clientHeight"
+                        ),
+                        300,
+                    )
+                    await tv_page.wait_for_function(
+                        "() => document.querySelector("
+                        "'[data-tv-challenge-key]')?.scrollTop > 80",
+                        timeout=10000,
+                    )
+                    self.assertEqual(
+                        await tv_page.locator(
+                            ".challenge-overview__question"
+                        ).count(),
+                        1,
+                    )
+                    await tv_page.evaluate(
+                        """() => document.body.removeEventListener(
+                            "htmx:afterSwap", window.__longTvQuestion
+                        )"""
+                    )
                     # Compare computed typography against the approved #74
                     # Advent phone sizes rather than trusting visual scaling.
                     for selector, minimum_px in (
