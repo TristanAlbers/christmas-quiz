@@ -105,6 +105,19 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await tv.locator(".music-player-progress").count(), 0
                     )
+                    # Persistent TV sound tray is visually centered below stage.
+                    await tv.wait_for_function(
+                        """() => {
+                          const a = document.querySelector(
+                            '.music-stage')?.getBoundingClientRect();
+                          const b = document.querySelector(
+                            '.music-audio-panel')?.getBoundingClientRect();
+                          return !!a && !!b && b.width > 0 &&
+                            Math.abs((a.left + a.width/2) -
+                              (b.left + b.width/2)) <= 5;
+                        }""",
+                        timeout=5000,
+                    )
                     self.assertEqual(
                         await tv.locator("#overview-audio-state").get_attribute(
                             "data-question-number"
@@ -182,8 +195,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                             ).inner_text(),
                             "Muziek Quiz",
                         )
-                    # The V4 player bar is illustration only: the 180s graphic
-                    # stays fixed, even as the authoritative question clock changes.
+                    # The decorative bar uses a fixed 180s visual scale.
                     bar = tv.locator(".music-player-progress")
                     self.assertEqual(await bar.count(), 1)
                     self.assertEqual(
@@ -198,6 +210,18 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await tv.locator(".music-step").count(), 11
                     )
+                    # The 3-minute scale must begin near empty each question.
+                    await tv.wait_for_function(
+                        """() => {
+                          const bar = document.querySelector(
+                            '[data-music-player-progress]');
+                          const percent = parseFloat(
+                            bar?.style.getPropertyValue('--music-progress'));
+                          return Number.isFinite(percent) &&
+                            percent >= 0 && percent < 2;
+                        }""",
+                        timeout=5000,
+                    )
                     if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
                         Path(capture_dir).mkdir(parents=True, exist_ok=True)
                         output = Path(capture_dir)
@@ -206,16 +230,16 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
 
                     await asyncio.to_thread(self._set_music_time, 150_000)
                     await tv.wait_for_timeout(800)
-                    # HTMX may replace the bar during its 500 ms poll;
-                    # measure only a connected, laid-out current element.
+                    # Inspect a connected HTMX-rendered bar.
                     await tv.wait_for_function(
                         """() => {
-                          const fill = document.querySelector(
+                          const bar = document.querySelector(
+                            '[data-music-player-progress]');
+                          const fill = bar?.querySelector(
                             '.music-player-progress__fill');
-                          const parent = fill?.parentElement;
-                          return !!parent && parent.clientWidth > 0 &&
-                            Math.abs(fill.offsetWidth / parent.clientWidth - 0.4)
-                              < 0.02;
+                          return !!fill && bar.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / bar.clientWidth -
+                              0.5) < 0.025;
                         }""",
                         timeout=5000,
                     )
@@ -243,16 +267,16 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await asyncio.to_thread(self._set_music_time, 300_000)
                     await tv.wait_for_timeout(800)
                     self.assertEqual(await bar.locator("progress").count(), 0)
-                    # HTMX may replace the bar during its 500 ms poll;
-                    # measure only a connected, laid-out current element.
+                    # Inspect a connected HTMX-rendered bar.
                     await tv.wait_for_function(
                         """() => {
-                          const fill = document.querySelector(
+                          const bar = document.querySelector(
+                            '[data-music-player-progress]');
+                          const fill = bar?.querySelector(
                             '.music-player-progress__fill');
-                          const parent = fill?.parentElement;
-                          return !!parent && parent.clientWidth > 0 &&
-                            Math.abs(fill.offsetWidth / parent.clientWidth - 0.4)
-                              < 0.02;
+                          return !!fill && bar.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / bar.clientWidth -
+                              1) < 0.025;
                         }""",
                         timeout=5000,
                     )
@@ -262,16 +286,16 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await tv.reload()
                     bar = tv.locator(".music-player-progress")
                     self.assertEqual(await bar.locator("progress").count(), 0)
-                    # HTMX may replace the bar during its 500 ms poll;
-                    # measure only a connected, laid-out current element.
+                    # Inspect a connected HTMX-rendered bar.
                     await tv.wait_for_function(
                         """() => {
-                          const fill = document.querySelector(
+                          const bar = document.querySelector(
+                            '[data-music-player-progress]');
+                          const fill = bar?.querySelector(
                             '.music-player-progress__fill');
-                          const parent = fill?.parentElement;
-                          return !!parent && parent.clientWidth > 0 &&
-                            Math.abs(fill.offsetWidth / parent.clientWidth - 0.4)
-                              < 0.02;
+                          return !!fill && bar.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / bar.clientWidth -
+                              1) < 0.025;
                         }""",
                         timeout=5000,
                     )
