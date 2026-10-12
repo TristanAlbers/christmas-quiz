@@ -143,7 +143,7 @@
   grid-area: eyebrow;
   margin: 0;
   color: #e7c78e;
-  font: 750 .72rem/1.2 system-ui, sans-serif;
+  font: 750 .8rem/1.2 system-ui, sans-serif;
   letter-spacing: .075em;
   text-transform: uppercase;
 }
@@ -152,14 +152,14 @@
   grid-area: title;
   margin: 0;
   color: #fff0cb;
-  font: normal clamp(1.18rem, 4.5vw, 1.55rem)/1.12 Georgia, serif;
+  font: normal clamp(1.3rem, 4.5vw, 1.55rem)/1.12 Georgia, serif;
 }
 
 .endgame-celebration--runner-up .endgame-celebration__card p:last-child {
   grid-area: copy;
   margin: .06rem 0 0;
   color: #e0d0ae;
-  font: 500 .86rem/1.35 system-ui, sans-serif;
+  font: 500 .95rem/1.4 system-ui, sans-serif;
 }
 
 .endgame-celebration--visible.endgame-celebration--runner-up .endgame-celebration__card {
