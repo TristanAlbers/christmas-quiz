@@ -72,10 +72,10 @@
     }
     return {
       kind: "runner-up",
-      icon: "🦌",
-      eyebrow: "De race heeft een winnaar",
+      icon: "",
+      eyebrow: "De race gaat door",
       title: "Team " + teamName + " was eerder",
-      copy: "Rudolph kijkt wat beteuterd, maar jullie huidige puzzel is nog actief. Ga door!",
+      copy: "Rudolph kijkt even beteuterd. Jullie puzzel blijft actief — speel verder!",
     };
   }
 
