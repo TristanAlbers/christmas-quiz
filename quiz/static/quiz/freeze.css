@@ -337,6 +337,20 @@ body:has(.state-panel-freeze) { overflow: hidden; }
 .freeze-backdrop--instant .freeze-ice::after,
 .freeze-backdrop--instant .freeze-ice__snow { animation: none; }
 
+/* Short landscape displays and large text must scroll instead of clipping
+   the authoritative countdown below the visible area. */
+@media (max-height: 400px) {
+  .state-panel-freeze { justify-content: flex-start; }
+  .state-panel-freeze > .freeze-message {
+    margin: 0 auto;
+    padding-bottom: 1rem;
+  }
+  .freeze-message__clock {
+    position: sticky;
+    bottom: .25rem;
+    z-index: 1;
+  }
+}
 @media (max-height: 740px) {
   .freeze-message__brand { margin-bottom: .7rem; }
   .freeze-message__crest { width: 7.8rem; height: 7.8rem; margin-bottom: .75rem; }
