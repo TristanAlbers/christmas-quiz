@@ -259,12 +259,13 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                     ).click()
                     saved = a.locator("#gameplay-event.gameplay-event--saved")
                     await saved.wait_for(state="visible", timeout=6000)
-                    self.assertFalse(
-                        await a.locator("#team-shop-dialog").evaluate("el => el.open")
+                    # OOB DOM can be visible before the after-swap callback fires.
+                    await a.wait_for_function(
+                        "() => document.body.classList.contains("
+                        "'gameplay-film-active') && "
+                        "!document.getElementById('team-shop-dialog')?.open",
+                        timeout=2500,
                     )
-                    self.assertTrue(await a.evaluate(
-                        "document.body.classList.contains('gameplay-film-active')"
-                    ))
                     # Poll/OOB team-actions replacements must not reopen the modal.
                     await a.wait_for_timeout(900)
                     self.assertFalse(
@@ -328,13 +329,27 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                         "fill": "both",
                         "initialOpacity": "0",
                     })
-                    await b.wait_for_function(
-                        "window.__filmSpeech.some(t => t.includes('IJSAANVAL!'))",
-                        timeout=6500,
+                    await b.wait_for_timeout(2400)
+                    state = await b.evaluate("""() => ({
+                      spoken: window.__filmSpeech,
+                      live: document.getElementById(
+                        'gameplay-film-announcement'
+                      )?.textContent,
+                      active: document.body.classList.contains(
+                        'gameplay-film-active'
+                      ),
+                      filmId: document.getElementById(
+                        'gameplay-event'
+                      )?.dataset.eventId
+                    })""")
+                    self.assertTrue(state["spoken"], state)
+                    self.assertTrue(
+                        state["spoken"][0].startswith("PAS OP!"), state
                     )
-                    spoken = await b.evaluate("window.__filmSpeech")
-                    self.assertTrue(spoken[0].startswith("PAS OP!"))
-                    self.assertTrue(any(t.startswith("IJSAANVAL!") for t in spoken[1:]))
+                    self.assertTrue(
+                        any(t.startswith("IJSAANVAL!") for t in state["spoken"][1:]),
+                        state,
+                    )
                 finally:
                     await ca.close()
                     await ba.close()
