@@ -1,0 +1,191 @@
+/* Issue #78 — approved Pause/Victory V1: quiet, server-driven global Pause.
+   The double-bar pause glyph is CSS, not a platform-dependent emoji. */
+.pause-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: max(28px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(ellipse at 50% 31%, rgba(125, 96, 43, .23), transparent 56%),
+    linear-gradient(115deg, rgba(6, 21, 17, .94), rgba(15, 38, 30, .90) 52%, rgba(6, 18, 16, .96));
+  -webkit-backdrop-filter: blur(2.5px);
+  backdrop-filter: blur(2.5px);
+  color: #f6e7c4;
+  text-align: center;
+  font-family: Georgia, "Times New Roman", serif;
+}
+.pause-veil::before,
+.pause-veil::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 3.45vw;
+  border: 1px solid rgba(225, 196, 142, .32);
+  pointer-events: none;
+}
+.pause-veil::after {
+  inset: 4.35vw;
+  border-color: rgba(225, 196, 142, .17);
+}
+.pause-veil__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(92%, 1100px);
+  margin: 0 auto;
+  min-width: 0;
+}
+.pause-veil__emblem {
+  width: clamp(88px, 7.15vw, 138px);
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  display: block;
+  position: relative;
+  border: 1px solid #b89d69;
+  border-radius: 50%;
+  background: rgba(32, 60, 44, .9);
+  box-shadow: 0 0 0 clamp(7px, .75vw, 14px) rgba(219, 193, 146, .07),
+              inset 0 0 0 clamp(4px, .35vw, 7px) rgba(247, 215, 165, .09);
+}
+.pause-veil__emblem::before,
+.pause-veil__emblem::after {
+  content: "";
+  position: absolute;
+  top: 32%;
+  bottom: 32%;
+  width: 5%;
+  min-width: 4px;
+  background: #f5dfac;
+}
+.pause-veil__emblem::before { left: 43%; }
+.pause-veil__emblem::after { right: 43%; }
+.pause-veil__kicker {
+  margin: clamp(19px, 1.5vw, 30px) 0 clamp(11px, 1.15vw, 24px);
+  color: #ecc98e;
+  font: 800 clamp(12px, 1vw, 19px)/1.35 system-ui, sans-serif;
+  letter-spacing: .25em;
+}
+.pause-veil h2 {
+  margin: 0;
+  font: 400 clamp(44px, 5.55vw, 108px)/1.08 Georgia, "Times New Roman", serif;
+  letter-spacing: -.045em;
+  color: #fff0d5;
+}
+.pause-veil__description {
+  margin: clamp(13px, 1.15vw, 24px) 0 0;
+  font: 400 clamp(17px, 1.4vw, 28px)/1.45 Georgia, "Times New Roman", serif;
+  color: #e6d4b0;
+  max-width: 860px;
+}
+.pause-veil__time {
+  display: flex;
+  gap: .35em;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 290px;
+  margin: clamp(24px, 2.1vw, 42px) 0 clamp(14px, 1vw, 20px);
+  padding: clamp(12px, .75vw, 16px) clamp(18px, 3vw, 65px);
+  border-top: 1px solid rgba(169, 138, 92, .7);
+  border-bottom: 1px solid rgba(169, 138, 92, .7);
+  color: #f8e9c8;
+  font-size: clamp(26px, 2.45vw, 47px);
+  line-height: 1.18;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pause-veil__clock-icon {
+  display: block;
+  position: relative;
+  width: .82em;
+  height: .82em;
+  border: .075em solid currentColor;
+  border-radius: 50%;
+  flex: none;
+  box-sizing: border-box;
+}
+.pause-veil__clock-icon::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 48%;
+  top: 14%;
+  height: 39%;
+  width: 33%;
+  border-left: .055em solid currentColor;
+  border-bottom: .055em solid currentColor;
+}
+.pause-veil__foot {
+  margin: 0;
+  font: 400 clamp(12px, .98vw, 18px)/1.55 system-ui, sans-serif;
+  color: #c6d5ca;
+}
+.pause-veil--team {
+  background: radial-gradient(ellipse at 50% 30%, rgba(179, 150, 80, .23), transparent 64%),
+    linear-gradient(155deg, rgba(17, 44, 37, .91), rgba(9, 26, 23, .97));
+}
+.pause-veil--team::before { inset: 12px; border-color: rgba(189, 156, 102, .55); }
+.pause-veil--team::after { display: none; }
+.pause-veil--team .pause-veil__content { width: 100%; max-width: 390px; }
+.pause-veil--team .pause-veil__emblem { width: 90px; }
+.pause-veil--team .pause-veil__kicker {
+  margin: 30px 0 13px;
+  font-size: 11px;
+  letter-spacing: .23em;
+}
+.pause-veil--team h2 { font-size: clamp(36px, 10.25vw, 40px); line-height: 1.06; letter-spacing: -.036em; }
+.pause-veil--team .pause-veil__description {
+  margin: 31px 0 0;
+  font-size: clamp(17px, 4.6vw, 18px);
+  line-height: 1.45;
+  max-width: 300px;
+}
+.pause-veil--team .pause-veil__time {
+  min-width: 0;
+  width: 182px;
+  margin: 45px 0 24px;
+  padding: 12px 0;
+  font-size: 28px;
+}
+.pause-veil--team .pause-veil__foot {
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 295px;
+}
+.pause-veil--team .pause-veil__foot span { display: block; }
+.pause-veil__silhouette { display: none; }
+.pause-veil--frozen .pause-veil__silhouette {
+  display: flex;
+  position: absolute;
+  z-index: -1;
+  flex-direction: column;
+  gap: 12px;
+  width: min(85%, 340px);
+  height: 55%;
+  top: 8%;
+  padding: 25px;
+  box-sizing: border-box;
+  border: 1px solid rgba(183, 212, 220, .11);
+  opacity: .14;
+  filter: blur(3px);
+}
+.pause-veil__silhouette span { display: block; height: 19%; background: rgba(197, 222, 229, .35); }
+.pause-veil__silhouette span:nth-child(2) { height: 40%; }
+.pause-veil__silhouette span:nth-child(3) { height: 12%; }
+@media (max-width: 380px) {
+  .pause-veil--team h2 { font-size: clamp(33px, 9.7vw, 38px); }
+  .pause-veil--team .pause-veil__description { margin-top: 22px; }
+  .pause-veil--team .pause-veil__time { margin: 30px 0 18px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .pause-veil--team .pause-veil__emblem { width: 55px; }
+  .pause-veil--team .pause-veil__kicker { margin: 9px 0 5px; }
+  .pause-veil--team h2 { font-size: clamp(26px, 6vw, 35px); }
+  .pause-veil--team .pause-veil__description { margin-top: 8px; font-size: 15px; }
+  .pause-veil--team .pause-veil__time { margin: 10px 0 8px; padding: 7px 0; font-size: 23px; }
+}
