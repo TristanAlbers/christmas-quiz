@@ -155,7 +155,9 @@ body.game-page--overview:has(.challenge-overview) {
   display: flex;
   flex-direction: column;
   width: min(100%, 64vw);
-  max-height: 35vh;
+  min-height: min(27vh, 270px);
+  max-height: 45vh;
+  flex-shrink: 0;
   overflow: hidden;
   padding: 1.4vw 2.4vw;
   border: 1px solid #aa864f;
@@ -164,7 +166,8 @@ body.game-page--overview:has(.challenge-overview) {
   overflow-wrap: anywhere;
 }
 .game-page--overview .challenge-overview__body-scroll {
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 3.2em;
   overflow-y: auto;
   scrollbar-width: none;
 }
