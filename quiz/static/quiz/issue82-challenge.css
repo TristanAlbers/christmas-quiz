@@ -152,16 +152,23 @@ body.game-page--overview:has(.challenge-overview) {
 }
 .game-page--overview .challenge-overview__question {
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   width: min(100%, 64vw);
   max-height: 35vh;
-  overflow-y: auto;
-  scrollbar-width: none;
+  overflow: hidden;
   padding: 1.4vw 2.4vw;
   border: 1px solid #aa864f;
   background: linear-gradient(145deg, #16382d, #0a241c);
   box-shadow: inset 0 0 0 .5vw #0c251d, 0 1vw 2vw #0006;
   overflow-wrap: anywhere;
 }
+.game-page--overview .challenge-overview__body-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.game-page--overview .challenge-overview__body-scroll::-webkit-scrollbar { display: none; }
 .game-page--overview .challenge-overview__question > span {
   display: block;
   margin-bottom: .7vw;
