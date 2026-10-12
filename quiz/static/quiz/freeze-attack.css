@@ -233,7 +233,9 @@
   100% { opacity: 0; }
 }
 @keyframes gameplay-static-second {
-  0%, 99% { opacity: 1; }
+  /* fill-mode: both applies frame zero during the 1.8s delay. */
+  0% { opacity: 0; }
+  1%, 99% { opacity: 1; }
   100% { opacity: 0; }
 }
 @media (max-width: 22rem), (max-height: 570px) {
