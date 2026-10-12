@@ -1,6 +1,6 @@
 {% if viewer_team_id == event.attacker_team_id %}
   {% if event.reversed %}
-<div id="gameplay-event" class="gameplay-event gameplay-event--attacker-reversed" role="status" aria-live="assertive" aria-label="Freeze-aanval" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
+<div id="gameplay-event" class="gameplay-event gameplay-event--attacker-reversed" aria-hidden="true" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
   <div class="gameplay-event__rays" aria-hidden="true"></div>
   <div class="gameplay-event__frame" aria-hidden="true"></div>
   <span class="gameplay-event__brand" aria-hidden="true">QUIZZMASS <span>✦</span> 2026</span>
@@ -18,7 +18,7 @@
     </section>
 </div>
   {% else %}
-<div id="gameplay-event" class="gameplay-event gameplay-event--attacker" role="status" aria-live="assertive" aria-label="Freeze-aanval" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
+<div id="gameplay-event" class="gameplay-event gameplay-event--attacker" aria-hidden="true" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
   <div class="gameplay-event__rays" aria-hidden="true"></div>
   <div class="gameplay-event__frame" aria-hidden="true"></div>
   <span class="gameplay-event__brand" aria-hidden="true">QUIZZMASS <span>✦</span> 2026</span>
@@ -38,7 +38,7 @@
   {% endif %}
 {% elif viewer_team_id == event.target_team_id %}
   {% if event.reversed %}
-<div id="gameplay-event" class="gameplay-event gameplay-event--saved" role="status" aria-live="assertive" aria-label="Freeze-aanval" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
+<div id="gameplay-event" class="gameplay-event gameplay-event--saved" aria-hidden="true" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
   <div class="gameplay-event__rays" aria-hidden="true"></div>
   <div class="gameplay-event__frame" aria-hidden="true"></div>
   <span class="gameplay-event__brand" aria-hidden="true">QUIZZMASS <span>✦</span> 2026</span>
@@ -56,7 +56,7 @@
     </section>
 </div>
   {% else %}
-<div id="gameplay-event" class="gameplay-event gameplay-event--victim" role="status" aria-live="assertive" aria-label="Freeze-aanval" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
+<div id="gameplay-event" class="gameplay-event gameplay-event--victim" aria-hidden="true" data-event-id="{{ event.id }}" hx-swap-oob="outerHTML">
   <div class="gameplay-event__rays" aria-hidden="true"></div>
   <div class="gameplay-event__frame" aria-hidden="true"></div>
   <span class="gameplay-event__brand" aria-hidden="true">QUIZZMASS <span>✦</span> 2026</span>
