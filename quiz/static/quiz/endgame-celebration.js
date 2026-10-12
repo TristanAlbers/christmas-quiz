@@ -116,6 +116,10 @@
     title.textContent = result.title;
     copy.textContent = result.copy;
     if (result.kind !== "runner-up") addConfetti();
+    if (result.kind === "winner") {
+      const announcement = document.getElementById("game-announcement");
+      if (announcement) announcement.textContent = result.title + " " + result.copy;
+    }
     overlay.setAttribute("aria-hidden", "false");
     window.requestAnimationFrame(function () {
       overlay.classList.add("endgame-celebration--visible");
@@ -131,6 +135,12 @@
     if (!stateMarker) return;
     const winner = (stateMarker.dataset.endgameWinner || "").trim().toLowerCase();
     const key = storageKey(stateMarker);
+    if (stateMarker.dataset.endgameFinal === "true") {
+      window.clearTimeout(hideTimer);
+      hideCelebration();
+      if (winner) remember(key, winner);
+      return;
+    }
     if (!winner) {
       forget(key);
       return;

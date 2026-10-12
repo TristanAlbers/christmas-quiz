@@ -1,5 +1,5 @@
 {% load quiz_format %}
-<section class="status-card public-status{% if state.music %} public-status--music{% endif %}{% if not state.music and not state.challenge and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
+<section class="status-card public-status{% if state.music %} public-status--music{% endif %}{% if not state.music and not state.challenge and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}" data-endgame-final="{% if state.global_state == 'FINISHED' %}true{% else %}false{% endif %}">
   {% if state.music %}
   <header class="public-advent-header public-music-header">
     <p class="public-advent-event">Kerstavond 2026<span>Twee teams. Eén avontuur.</span></p>
