@@ -14,11 +14,12 @@ from django.utils import timezone
 
 from quiz.application import (
     force_complete_current,
+    submit_music_answer,
     pause_game,
     resume_game,
     start_game,
 )
-from quiz.contracts import Actor, AdminPuzzle, RunCommand, StartGame
+from quiz.contracts import Actor, AdminPuzzle, RunCommand, StartGame, SubmitMusicAnswer
 from quiz.models import AccountRole, MusicQuiz
 
 
@@ -114,6 +115,25 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         await team.get_by_text(
                             "Maak je klaar voor de Muziek Quiz", exact=True
                         ).wait_for()
+                        status = team.locator(".music-gathering-status")
+                        self.assertEqual(await status.count(), 1)
+                        # Catch the exact old pastel/cream contrast regression.
+                        bg = await status.evaluate(
+                            "el => getComputedStyle(el).backgroundImage"
+                        )
+                        self.assertIn("rgb(25, 58, 48)", bg)
+                        label = await status.locator("strong").evaluate(
+                            "el => getComputedStyle(el).color"
+                        )
+                        self.assertEqual(label, "rgb(246, 223, 173)")
+                    if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
+                        Path(capture_dir).mkdir(parents=True, exist_ok=True)
+                        await team_a.screenshot(
+                            path=str(Path(capture_dir) / "phone-gathering-390x844.png")
+                        )
+                        await tv.screenshot(
+                            path=str(Path(capture_dir) / "tv-gathering-1920x1080.png")
+                        )
                         self.assertEqual(
                             await team.locator("#music-answer-input").count(), 0
                         )
@@ -299,6 +319,197 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await tv_context.close()
                     await b_context.close()
                     await a_context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def _finish_music_with_winner(self, final_winner):
+        """Advance real server commands to final results, with one score leader."""
+        self._set_music_time(60_000)
+        answers = (
+            "jingle bells",
+            "silent night",
+            "white christmas",
+            "feliz navidad",
+            "last christmas",
+            "santa baby",
+            "winter wonderland",
+            "let it snow",
+            "the christmas song",
+            "rudolph",
+            "deck the halls",
+        )
+        # The overall champion earns six of eleven song wins.
+        for number, answer in enumerate(answers, start=1):
+            team_id = final_winner if number % 2 else (
+                "b" if final_winner == "a" else "a"
+            )
+            user = self.a_user if team_id == "a" else self.b_user
+            result = submit_music_answer(
+                Actor(user.pk, "team", team_id),
+                SubmitMusicAnswer(
+                    str(uuid4()), self.run_id, f"music-{number}", answer
+                ),
+            )
+            self.assertEqual(result.outcome, "won")
+        music = MusicQuiz.objects.get(run_id=self.run_id)
+        self.assertEqual(music.phase, "final_results")
+        return music.final_results_started_ms
+
+    def _put_finale_near_expiry(self, final_started_ms):
+        MusicQuiz.objects.filter(run_id=self.run_id).update(
+            music_elapsed_ms=final_started_ms + 58_700,
+            music_clock_anchor=timezone.now(),
+        )
+
+    def test_finale_tv_phones_countdown_celebration_and_advent_resume(self):
+        start_ms = self._finish_music_with_winner("a")
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            errors = []
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                a_ctx, a = await self._team_page(browser, "a")
+                b_ctx, b = await self._team_page(browser, "b")
+                tv_ctx = await browser.new_context(
+                    viewport={"width": 1920, "height": 1080}
+                )
+                tv = await tv_ctx.new_page()
+                for page in (a, b, tv):
+                    page.on("pageerror", lambda exc: errors.append(str(exc)))
+                try:
+                    await tv.goto(f"{self.live_server_url}/overview/")
+                    await tv.get_by_text("Team A wint!", exact=True).wait_for()
+                    await a.get_by_text(
+                        "Jullie winnen de Muziek Quiz!", exact=True
+                    ).wait_for()
+                    await b.get_by_text(
+                        "Team A wint de Muziek Quiz!", exact=True
+                    ).wait_for()
+                    self.assertEqual(
+                        await tv.locator(".music-stage--final_results").count(), 1
+                    )
+                    self.assertEqual(
+                        await tv.locator(".public-music-scores article").count(), 2
+                    )
+                    for page in (a, b, tv):
+                        clock = page.locator(
+                            ".music-finale__return [data-music-countdown-value]"
+                        )
+                        await clock.wait_for()
+                        self.assertRegex(
+                            await clock.inner_text(),
+                            re.compile(r"^00:(5[0-9]|4[0-9])$"),
+                        )
+                        self.assertEqual(
+                            await page.locator("#music-answer-input").count(), 0
+                        )
+                    self.assertEqual(
+                        await tv.locator(".music-finale-confetti i").count(), 46
+                    )
+                    self.assertEqual(
+                        await a.locator(".music-finale-confetti i").count(), 46
+                    )
+                    self.assertEqual(
+                        await b.locator(".music-finale-confetti i").count(), 0
+                    )
+                    self.assertIn(
+                        "tijdelijk stil",
+                        await tv.locator(".public-music-header .game-clock").inner_text(),
+                    )
+                    if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
+                        output = Path(capture_dir)
+                        output.mkdir(parents=True, exist_ok=True)
+                        await tv.screenshot(path=str(output / "tv-finale-1920x1080.png"))
+                        await a.screenshot(path=str(output / "phone-finale-winner-390x844.png"))
+                        await b.screenshot(path=str(output / "phone-finale-runner-390x844.png"))
+
+                    await asyncio.to_thread(
+                        pause_game, self.admin, RunCommand(str(uuid4()), self.run_id)
+                    )
+                    await tv.wait_for_function(
+                        "document.querySelector('#overview-audio-state')"
+                        ".dataset.globalState === 'PAUSED'"
+                    )
+                    paused = await tv.locator(
+                        ".music-finale__return [data-music-countdown-value]"
+                    ).inner_text()
+                    await tv.wait_for_timeout(1300)
+                    self.assertEqual(
+                        await tv.locator(
+                            ".music-finale__return [data-music-countdown-value]"
+                        ).inner_text(), paused
+                    )
+                    await asyncio.to_thread(
+                        resume_game, self.admin, RunCommand(str(uuid4()), self.run_id)
+                    )
+                    await tv.wait_for_function(
+                        "document.querySelector('#overview-audio-state')"
+                        ".dataset.globalState === 'MUSIC_QUIZ'"
+                    )
+                    # Countdown is based on the existing authoritative Music
+                    # clock; expiry switches every display back to Advent.
+                    await asyncio.to_thread(self._put_finale_near_expiry, start_ms)
+                    await tv.wait_for_function(
+                        "document.querySelector('.music-finale__return"
+                        " [data-music-countdown-value]')?.textContent"
+                        " === '00:02'", timeout=5000
+                    )
+                    await tv.get_by_text(
+                        "De adventrace is begonnen", exact=False
+                    ).wait_for(timeout=6000)
+                    for page in (a, b):
+                        await page.locator(".music-quiz--phone").wait_for(
+                            state="detached", timeout=6000
+                        )
+                    self.assertEqual(errors, [])
+                finally:
+                    await tv_ctx.close()
+                    await b_ctx.close()
+                    await a_ctx.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_finale_other_team_is_declared_music_champion(self):
+        self._finish_music_with_winner("b")
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                a_ctx, a = await self._team_page(browser, "a")
+                b_ctx, b = await self._team_page(browser, "b")
+                tv_ctx = await browser.new_context(
+                    viewport={"width": 1920, "height": 1080}
+                )
+                tv = await tv_ctx.new_page()
+                try:
+                    await tv.goto(f"{self.live_server_url}/overview/")
+                    await tv.get_by_text("Team B wint!", exact=True).wait_for()
+                    await b.get_by_text(
+                        "Jullie winnen de Muziek Quiz!", exact=True
+                    ).wait_for()
+                    await a.get_by_text(
+                        "Team B wint de Muziek Quiz!", exact=True
+                    ).wait_for()
+                    self.assertEqual(
+                        await a.locator(".music-finale-confetti i").count(), 0
+                    )
+                    self.assertEqual(
+                        await b.locator(".music-finale-confetti i").count(), 46
+                    )
+                    self.assertEqual(
+                        await tv.locator(".public-music-scores strong").all_inner_texts(),
+                        ["5", "6"],
+                    )
+                finally:
+                    await tv_ctx.close()
+                    await b_ctx.close()
+                    await a_ctx.close()
                     await browser.close()
 
         asyncio.run(check())
