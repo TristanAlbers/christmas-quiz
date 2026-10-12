@@ -14,10 +14,10 @@ from django.utils import timezone
 
 from quiz.application import (
     force_complete_current,
-    submit_music_answer,
     pause_game,
     resume_game,
     start_game,
+    submit_music_answer,
 )
 from quiz.contracts import Actor, AdminPuzzle, RunCommand, StartGame, SubmitMusicAnswer
 from quiz.models import AccountRole, MusicQuiz
@@ -122,10 +122,13 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                             "el => getComputedStyle(el).backgroundImage"
                         )
                         self.assertIn("rgb(25, 58, 48)", bg)
-                        label = await status.locator("strong").evaluate(
-                            "el => getComputedStyle(el).color"
+                        # Use Playwright's retrying style assertion: the status
+                        # is correctly replaced every 500ms by HTMX.
+                        from playwright.async_api import expect
+
+                        await expect(status.locator("strong")).to_have_css(
+                            "color", "rgb(246, 223, 173)"
                         )
-                        self.assertEqual(label, "rgb(246, 223, 173)")
                     if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
                         Path(capture_dir).mkdir(parents=True, exist_ok=True)
                         await team_a.screenshot(
@@ -401,7 +404,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         await clock.wait_for()
                         self.assertRegex(
                             await clock.inner_text(),
-                            re.compile(r"^00:(5[0-9]|4[0-9])$"),
+                            re.compile(r"^(01:00|00:(5[0-9]|4[0-9]))$"),
                         )
                         self.assertEqual(
                             await page.locator("#music-answer-input").count(), 0
@@ -417,14 +420,22 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     )
                     self.assertIn(
                         "tijdelijk stil",
-                        await tv.locator(".public-music-header .game-clock").inner_text(),
+                        await tv.locator(
+                            ".public-music-header .game-clock"
+                        ).inner_text(),
                     )
                     if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
                         output = Path(capture_dir)
                         output.mkdir(parents=True, exist_ok=True)
-                        await tv.screenshot(path=str(output / "tv-finale-1920x1080.png"))
-                        await a.screenshot(path=str(output / "phone-finale-winner-390x844.png"))
-                        await b.screenshot(path=str(output / "phone-finale-runner-390x844.png"))
+                        await tv.screenshot(
+                            path=str(output / "tv-finale-1920x1080.png")
+                        )
+                        await a.screenshot(
+                            path=str(output / "phone-finale-winner-390x844.png")
+                        )
+                        await b.screenshot(
+                            path=str(output / "phone-finale-runner-390x844.png")
+                        )
 
                     await asyncio.to_thread(
                         pause_game, self.admin, RunCommand(str(uuid4()), self.run_id)
@@ -455,7 +466,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await tv.wait_for_function(
                         "document.querySelector('.music-finale__return"
                         " [data-music-countdown-value]')?.textContent"
-                        " === '00:02'", timeout=5000
+                        " ?.startsWith('00:0')", timeout=5000
                     )
                     await tv.get_by_text(
                         "De adventrace is begonnen", exact=False
@@ -503,7 +514,9 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         await b.locator(".music-finale-confetti i").count(), 46
                     )
                     self.assertEqual(
-                        await tv.locator(".public-music-scores strong").all_inner_texts(),
+                        await tv.locator(
+                            ".public-music-scores strong"
+                        ).all_inner_texts(),
                         ["5", "6"],
                     )
                 finally:

@@ -670,3 +670,12 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .music-finale-confetti i { animation: none; display: none; }
 }
+
+/* Keep the finale eyebrow distinct from ordinary Music question paragraphs. */
+.music-stage--midnight.music-stage--final_results .music-stage__content > p.music-finale__eyebrow,
+.music-quiz--phone.music-quiz--phone--final > p.music-finale__eyebrow {
+  color: #e9c783;
+  font: 700 clamp(.8rem, 1.1vw, 1.1rem) system-ui, sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}

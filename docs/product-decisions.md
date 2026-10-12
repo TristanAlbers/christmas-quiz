@@ -130,3 +130,32 @@ Explicit presentation refinements of older view wording:
 - No invented team names: label teams **Team A** and **Team B**. Runtime remains Dutch-first. All new presentation effects support reduced motion and polling-stable interaction.
 
 Standalone design prototypes are references, **not** production code or permission to hardcode sample values. This UI decision does not authorize a frontend framework migration, game-engine rewrite, new admin powers, or weakening existing tests.
+
+## 2026-10-12 — Music gathering and final results are visually distinct
+
+The approved dark Midnight Advent presentation covers the full Music lifecycle,
+including the gathering countdown and the final-results interstitial. The
+preparation countdown must have strong light-on-dark contrast, not the former
+pastel Advent component colors.
+
+The active Music question remains minimal on team phones under the 2026-09-24
+decision. **Once question 11 is resolved**, the separate phone final-results
+screen may show a prominent Music winner announcement, a celebratory one-shot
+effect for the winning team, and a live countdown until Advent resumes. This
+is distinct from the normal active-question *status area* prohibition on a
+final-results countdown. The other team sees a respectful completion state,
+without falsely being declared the Music winner; phone views do not expose
+Music scores or opponent-private game information.
+
+The TV is the shared scoreboard and must visibly declare the overall Music
+champion from the authoritative accumulated score (not merely the winner of
+question 11), with a legible final score and countdown until Advent returns.
+Any brief confetti must respect reduced motion and must not replay on every
+500ms poll or after reload. The Music champion is **not** the Advent first
+finisher: there are no extra awards, puzzle completions, or rule changes.
+
+Advent's authoritative gameplay clock intentionally stays stopped during
+Music's gathering, questions, and final results, while Music's separate
+authoritative clock governs the transition back. The UI must make this
+distinction explicit. Game Master Pause freezes the Music countdown as well;
+refresh, recovery, and return to Advent remain server-derived.
