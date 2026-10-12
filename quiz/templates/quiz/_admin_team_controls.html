@@ -1,14 +1,14 @@
 <div id="admin-team-controls-{{ team_id }}"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
   <input class="poll-context" type="hidden" name="team_{{ team_id }}_context" value="{{ context_value }}">
   {% if control %}
-    <section class="action-card" aria-label="Bediening voor Team {{ control.team.team_id|upper }}">
-      <h2>Bediening Team {{ control.team.team_id|upper }}</h2>
+    <section class="action-card gm-admin-action-card" aria-label="Bediening voor Team {{ control.team.team_id|upper }}">
+      <h2>Team {{ control.team.team_id|upper }} bedienen</h2>
       {% if not music %}
       {% if global_state == 'ADVENT_QUIZ' or global_state == 'PAUSED' %}
         <div class="control-stack">
           <form method="post" action="{% url 'admin_action' 'points' %}" hx-post="{% url 'admin_action' 'points' %}" hx-sync="#live-admin:replace" hx-disabled-elt="find button[type='submit']" hx-target="#admin-state" hx-swap="innerHTML">
             {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}"><input type="hidden" name="team_id" value="{{ control.team.team_id }}"><input type="hidden" name="request_id" value="{{ control.points_request_id }}">
-            <label>Punten wijzigen <input type="number" name="delta" required step="1"></label><button type="submit">Punten toepassen</button>
+            <label>Punten wijzigen <input type="number" name="delta" required step="1" placeholder="+ of −" aria-label="Punten wijzigen voor Team {{ control.team.team_id|upper }}"></label><button type="submit" aria-label="Punten toepassen">Toepassen</button>
           </form>
           {% if control.team.activity_state == 'FREEZE' %}
             <form method="post" action="{% url 'admin_action' 'unfreeze' %}" hx-post="{% url 'admin_action' 'unfreeze' %}" hx-sync="#live-admin:replace" hx-disabled-elt="find button[type='submit']" hx-target="#admin-state" hx-swap="innerHTML">
@@ -25,14 +25,14 @@
 
       {% if global_state == 'ADVENT_QUIZ' and control.team.activity_state == 'PUZZLE' and control.team.current_question_id %}
         <div class="control-stack">
-          <form method="post" action="{% url 'admin_action' 'force-complete' %}" hx-post="{% url 'admin_action' 'force-complete' %}" hx-sync="#live-admin:replace" hx-disabled-elt="find button[type='submit']" hx-target="#admin-state" hx-swap="innerHTML">
-            {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}"><input type="hidden" name="team_id" value="{{ control.team.team_id }}"><input type="hidden" name="question_id" value="{{ control.team.current_question_id }}"><input type="hidden" name="request_id" value="{{ control.force_request_id }}"><button type="submit">Huidige puzzel afronden</button>
-          </form>
           {% if not control.team.hint_revealed %}
             <form method="post" action="{% url 'admin_action' 'provide-hint' %}" hx-post="{% url 'admin_action' 'provide-hint' %}" hx-sync="#live-admin:replace" hx-disabled-elt="find button[type='submit']" hx-target="#admin-state" hx-swap="innerHTML">
               {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}"><input type="hidden" name="team_id" value="{{ control.team.team_id }}"><input type="hidden" name="question_id" value="{{ control.team.current_question_id }}"><input type="hidden" name="request_id" value="{{ control.hint_request_id }}"><button type="submit">Hint onthullen</button>
             </form>
           {% endif %}
+          <form method="post" action="{% url 'admin_action' 'force-complete' %}" hx-post="{% url 'admin_action' 'force-complete' %}" hx-sync="#live-admin:replace" hx-disabled-elt="find button[type='submit']" hx-target="#admin-state" hx-swap="innerHTML">
+            {% csrf_token %}<input type="hidden" name="run_id" value="{{ run_id }}"><input type="hidden" name="team_id" value="{{ control.team.team_id }}"><input type="hidden" name="question_id" value="{{ control.team.current_question_id }}"><input type="hidden" name="request_id" value="{{ control.force_request_id }}"><button type="submit" aria-label="Huidige puzzel afronden">Puzzel afronden</button>
+          </form>
         </div>
       {% endif %}
     </section>

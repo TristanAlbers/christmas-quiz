@@ -10,13 +10,14 @@
   <link rel="stylesheet" href="{% static 'quiz/admin-ready.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/advent-calendar.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/admin-live.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'quiz/advent-calendar.js' %}"></script>
+  <script defer src="{% static 'quiz/admin-live.js' %}"></script>
 </head>
 <body class="game-page game-page--admin">
   <main class="app-shell app-shell-wide">
-    {% if global_state == 'READY' %}
-    <header class="page-header">
+    <header class="page-header gm-admin-header">
       <div class="gm-page-brand">
         <span class="gm-brand-seal" aria-hidden="true">Q</span>
         <div>
@@ -27,20 +28,20 @@
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Uitloggen</button></form>
     </header>
     <div class="gm-page-title">
-      <div><p class="eyebrow">Spelbeheer / Kerst 2026</p><h1>Game Master</h1><p class="gm-header-caption">De regietafel · Overzicht en bediening van het kerstspel.</p></div>
+      <div>
+        <p class="eyebrow">Spelbeheer / Kerst 2026</p>
+        <h1 class="gm-title-ready">Game Master</h1>
+        <h1 class="gm-title-live">De regietafel</h1>
+        <p class="gm-header-caption">Overzicht en bediening van het kerstspel.</p>
+      </div>
       <span class="gm-ready-pill" aria-hidden="true">Klaarzetten</span>
     </div>
-    {% else %}
-    <header class="page-header">
-      <div><p class="eyebrow">Kerst Escape Room</p><h1>Game Master</h1></div>
-      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Uitloggen</button></form>
-    </header>
-    {% endif %}
     {% if error %}<p role="alert">{{ error }}</p>{% endif %}
     <section id="live-admin" aria-label="Live spelbeheer">
       <div id="admin-poller" hx-get="{% url 'admin_state' %}" hx-trigger="every 500ms [!document.hidden], visibilitychange[!document.hidden] from:document"
            hx-sync="#live-admin:drop" hx-include="#admin-controls .poll-context"
            hx-target="#admin-state" hx-swap="innerHTML"></div>
+      <div id="admin-command-feedback" role="status" aria-live="polite" hidden></div>
       <div id="admin-state">{% include 'quiz/_admin_state.html' with replace_package_controls=False replace_global_controls=False replace_team_a_controls=False replace_team_b_controls=False %}</div>
       {% include 'quiz/_admin_controls.html' %}
     </section>
