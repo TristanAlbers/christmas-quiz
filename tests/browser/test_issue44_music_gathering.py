@@ -17,8 +17,9 @@ from quiz.application import (
     pause_game,
     resume_game,
     start_game,
+    submit_music_answer,
 )
-from quiz.contracts import Actor, AdminPuzzle, RunCommand, StartGame
+from quiz.contracts import Actor, AdminPuzzle, RunCommand, StartGame, SubmitMusicAnswer
 from quiz.models import AccountRole, MusicQuiz
 
 
@@ -78,7 +79,7 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
         await page.goto(f"{self.live_server_url}/team/")
         return context, page
 
-    def test_gathering_and_authoritative_player_progress_journey(self):
+    def test_gathering_and_cosmetic_player_progress_journey(self):
         async def check():
             from playwright.async_api import async_playwright
 
@@ -104,6 +105,19 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await tv.locator(".music-player-progress").count(), 0
                     )
+                    # Persistent TV sound tray is visually centered below stage.
+                    await tv.wait_for_function(
+                        """() => {
+                          const a = document.querySelector(
+                            '.music-stage')?.getBoundingClientRect();
+                          const b = document.querySelector(
+                            '.music-audio-panel')?.getBoundingClientRect();
+                          return !!a && !!b && b.width > 0 &&
+                            Math.abs((a.left + a.width/2) -
+                              (b.left + b.width/2)) <= 5;
+                        }""",
+                        timeout=5000,
+                    )
                     self.assertEqual(
                         await tv.locator("#overview-audio-state").get_attribute(
                             "data-question-number"
@@ -114,6 +128,28 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         await team.get_by_text(
                             "Maak je klaar voor de Muziek Quiz", exact=True
                         ).wait_for()
+                        status = team.locator(".music-gathering-status")
+                        self.assertEqual(await status.count(), 1)
+                        # Catch the exact old pastel/cream contrast regression.
+                        bg = await status.evaluate(
+                            "el => getComputedStyle(el).backgroundImage"
+                        )
+                        self.assertIn("rgb(25, 58, 48)", bg)
+                        # Use Playwright's retrying style assertion: the status
+                        # is correctly replaced every 500ms by HTMX.
+                        from playwright.async_api import expect
+
+                        await expect(status.locator("strong")).to_have_css(
+                            "color", "rgb(246, 223, 173)"
+                        )
+                    if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
+                        Path(capture_dir).mkdir(parents=True, exist_ok=True)
+                        await team_a.screenshot(
+                            path=str(Path(capture_dir) / "phone-gathering-390x844.png")
+                        )
+                        await tv.screenshot(
+                            path=str(Path(capture_dir) / "tv-gathering-1920x1080.png")
+                        )
                         self.assertEqual(
                             await team.locator("#music-answer-input").count(), 0
                         )
@@ -151,93 +187,117 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         self.assertEqual(
                             await team.locator(".music-step--current").inner_text(), "1"
                         )
-                    progress = tv.locator(".music-player-progress progress")
-                    self.assertLess(int(await progress.get_attribute("value")), 2_000)
+                        # Phone progress is communicated only by the tracker;
+                        # the TV owns the separate question-number label.
+                        self.assertEqual(
+                            await team.locator(
+                                ".music-quiz--phone__kicker"
+                            ).inner_text(),
+                            "Muziek Quiz",
+                        )
+                    # The decorative bar uses a fixed 180s visual scale.
+                    bar = tv.locator(".music-player-progress")
+                    self.assertEqual(await bar.count(), 1)
                     self.assertEqual(
-                        await progress.get_attribute("aria-label"),
-                        "Voortgang Muziek Quiz",
+                        await bar.get_attribute("role"), "img"
                     )
                     self.assertEqual(
-                        await tv.get_by_text("0:00", exact=True).count(), 0
+                        await bar.locator("progress").count(), 0
                     )
                     self.assertEqual(
-                        await tv.get_by_text("3:00", exact=True).count(), 0
+                        await bar.locator(".music-player-progress__fill").count(), 1
                     )
                     self.assertEqual(
-                        await tv.get_by_text("Muziek Quiz", exact=True).count(), 1
+                        await tv.locator(".music-step").count(), 11
                     )
-                    self.assertEqual(
-                        await tv.get_by_text("Muziekquiz", exact=True).count(), 0
+                    # The 3-minute scale must begin near empty each question.
+                    await tv.wait_for_function(
+                        """() => {
+                          const bar = document.querySelector(
+                            '[data-music-player-progress]');
+                          const percent = parseFloat(
+                            bar?.style.getPropertyValue('--music-progress'));
+                          return Number.isFinite(percent) &&
+                            percent >= 0 && percent < 2;
+                        }""",
+                        timeout=5000,
                     )
+                    if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
+                        Path(capture_dir).mkdir(parents=True, exist_ok=True)
+                        output = Path(capture_dir)
+                        await tv.screenshot(path=str(output / "tv-1920x1080.png"))
+                        await team_a.screenshot(path=str(output / "phone-390x844.png"))
 
                     await asyncio.to_thread(self._set_music_time, 150_000)
+                    await tv.wait_for_timeout(800)
+                    # Inspect a connected HTMX-rendered bar.
                     await tv.wait_for_function(
-                        "Number(document.querySelector("
-                        "'.music-player-progress progress'"
-                        ").getAttribute('value')) >= 90000"
-                    )
-                    midpoint = int(await progress.get_attribute("value"))
-                    self.assertGreaterEqual(midpoint, 90_000)
-                    self.assertLess(midpoint, 92_000)
-                    self.assertEqual(
-                        await tv.get_by_text("90 seconds", exact=False).count(), 0
+                        """() => {
+                          const bar = document.querySelector(
+                            '[data-music-player-progress]');
+                          const fill = bar?.querySelector(
+                            '.music-player-progress__fill');
+                          return !!fill && bar.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / bar.clientWidth -
+                              0.5) < 0.025;
+                        }""",
+                        timeout=5000,
                     )
                     self.assertEqual(
                         await team_a.locator(".music-player-progress").count(), 0
                     )
 
                     await asyncio.to_thread(
-                        pause_game,
-                        self.admin,
-                        RunCommand(str(uuid4()), self.run_id),
+                        pause_game, self.admin, RunCommand(str(uuid4()), self.run_id)
                     )
                     await tv.wait_for_function(
                         "document.querySelector('#overview-audio-state')"
                         ".dataset.globalState === 'PAUSED'"
                     )
-                    paused_value = await progress.get_attribute("value")
-                    await tv.wait_for_timeout(1_100)
-                    self.assertEqual(
-                        await progress.get_attribute("value"), paused_value
+                    # Team and TV have independent 500 ms pollers.
+                    await team_a.locator("#music-answer-input").wait_for(
+                        state="detached", timeout=5000
                     )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 0
                     )
-
                     await asyncio.to_thread(
-                        resume_game,
-                        self.admin,
-                        RunCommand(str(uuid4()), self.run_id),
+                        resume_game, self.admin, RunCommand(str(uuid4()), self.run_id)
                     )
-                    await asyncio.to_thread(self._set_music_time, 160_000)
-                    await tv.wait_for_function(
-                        "Number(document.querySelector("
-                        "'.music-player-progress progress'"
-                        ").getAttribute('value')) >= 100000"
-                    )
-                    self.assertGreaterEqual(
-                        int(await progress.get_attribute("value")), 100_000
-                    )
-
                     await asyncio.to_thread(self._set_music_time, 300_000)
+                    await tv.wait_for_timeout(800)
+                    self.assertEqual(await bar.locator("progress").count(), 0)
+                    # Inspect a connected HTMX-rendered bar.
                     await tv.wait_for_function(
-                        "Number(document.querySelector("
-                        "'.music-player-progress progress'"
-                        ").getAttribute('value')) >= 240000"
-                    )
-                    self.assertEqual(
-                        await progress.evaluate("element => element.value"), 180_000
+                        """() => {
+                          const bar = document.querySelector(
+                            '[data-music-player-progress]');
+                          const fill = bar?.querySelector(
+                            '.music-player-progress__fill');
+                          return !!fill && bar.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / bar.clientWidth -
+                              1) < 0.025;
+                        }""",
+                        timeout=5000,
                     )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 1
                     )
                     await tv.reload()
-                    progress = tv.locator(".music-player-progress progress")
-                    self.assertGreaterEqual(
-                        int(await progress.get_attribute("value")), 240_000
-                    )
-                    self.assertEqual(
-                        await progress.evaluate("element => element.value"), 180_000
+                    bar = tv.locator(".music-player-progress")
+                    self.assertEqual(await bar.locator("progress").count(), 0)
+                    # Inspect a connected HTMX-rendered bar.
+                    await tv.wait_for_function(
+                        """() => {
+                          const bar = document.querySelector(
+                            '[data-music-player-progress]');
+                          const fill = bar?.querySelector(
+                            '.music-player-progress__fill');
+                          return !!fill && bar.clientWidth > 0 &&
+                            Math.abs(fill.offsetWidth / bar.clientWidth -
+                              1) < 0.025;
+                        }""",
+                        timeout=5000,
                     )
 
                     await team_a.locator("#music-answer-input").fill("jingle bells")
@@ -248,21 +308,312 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await tv.locator(".music-step--current").inner_text(), "2"
                     )
-                    self.assertLess(
-                        int(
-                            await tv.locator(
-                                ".music-player-progress progress"
-                            ).get_attribute("value")
-                        ),
-                        2_000,
+                    self.assertEqual(
+                        await tv.locator(".music-player-progress progress").count(), 0
                     )
                     self.assertEqual(
                         await team_a.locator("#music-answer-input").count(), 1
                     )
+                    # A compact phone and reduced-motion settings must keep
+                    # the live answer input usable through multiple polls.
+                    await team_a.set_viewport_size({"width": 320, "height": 720})
+                    await team_a.emulate_media(reduced_motion="reduce")
+                    await tv.emulate_media(reduced_motion="reduce")
+                    field = team_a.locator("#music-answer-input")
+                    await field.fill("nog bezig")
+                    await field.focus()
+                    await field.evaluate("el => el.setSelectionRange(3, 6)")
+                    await team_a.evaluate(
+                        "window.musicInputBeforePoll = "
+                        "document.querySelector('#music-answer-input')"
+                    )
+                    await team_a.wait_for_timeout(1200)
+                    self.assertTrue(
+                        await team_a.evaluate(
+                            "document.querySelector('#music-answer-input') "
+                            "=== window.musicInputBeforePoll"
+                        )
+                    )
+                    self.assertEqual(await field.input_value(), "nog bezig")
+                    self.assertEqual(
+                        await field.evaluate("el => el.selectionStart"), 3
+                    )
+                    self.assertEqual(
+                        await field.evaluate("el => el.selectionEnd"), 6
+                    )
+                    self.assertLessEqual(
+                        await team_a.evaluate(
+                            "document.documentElement.scrollWidth"
+                        ),
+                        321,
+                    )
+                    self.assertTrue(
+                        await tv.evaluate(
+                            "matchMedia('(prefers-reduced-motion: reduce)').matches"
+                        )
+                    )
+                    scores = {}
+                    for article in await tv.locator(
+                        ".public-music-scores article"
+                    ).all():
+                        name = await article.locator("span").inner_text()
+                        points = await article.locator("strong").inner_text()
+                        scores[name] = points
+                    self.assertEqual(scores, {"Team A": "1", "Team B": "0"})
                 finally:
                     await tv_context.close()
                     await b_context.close()
                     await a_context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def _finish_music_with_winner(self, final_winner):
+        """Advance real server commands to final results, with one score leader."""
+        self._set_music_time(60_000)
+        answers = (
+            "jingle bells",
+            "silent night",
+            "white christmas",
+            "feliz navidad",
+            "last christmas",
+            "santa baby",
+            "winter wonderland",
+            "let it snow",
+            "the christmas song",
+            "rudolph",
+            "deck the halls",
+        )
+        # The overall champion earns six of eleven song wins.
+        for number, answer in enumerate(answers, start=1):
+            team_id = final_winner if number % 2 else (
+                "b" if final_winner == "a" else "a"
+            )
+            user = self.a_user if team_id == "a" else self.b_user
+            result = submit_music_answer(
+                Actor(user.pk, "team", team_id),
+                SubmitMusicAnswer(
+                    str(uuid4()), self.run_id, f"music-{number}", answer
+                ),
+            )
+            self.assertEqual(result.outcome, "won")
+        music = MusicQuiz.objects.get(run_id=self.run_id)
+        self.assertEqual(music.phase, "final_results")
+        return music.final_results_started_ms
+
+    def _put_finale_near_expiry(self, final_started_ms):
+        MusicQuiz.objects.filter(run_id=self.run_id).update(
+            music_elapsed_ms=final_started_ms + 58_700,
+            music_clock_anchor=timezone.now(),
+        )
+
+    def test_finale_tv_phones_countdown_celebration_and_advent_resume(self):
+        start_ms = self._finish_music_with_winner("a")
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            errors = []
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                a_ctx, a = await self._team_page(browser, "a")
+                b_ctx, b = await self._team_page(browser, "b")
+                tv_ctx = await browser.new_context(
+                    viewport={"width": 1920, "height": 1080}
+                )
+                tv = await tv_ctx.new_page()
+                for page in (a, b, tv):
+                    page.on("pageerror", lambda exc: errors.append(str(exc)))
+                try:
+                    await tv.goto(f"{self.live_server_url}/overview/")
+                    await tv.get_by_text("Team A wint!", exact=True).wait_for()
+                    await a.get_by_text(
+                        "Jullie winnen de Muziek Quiz!", exact=True
+                    ).wait_for()
+                    await b.get_by_text(
+                        "Team A wint de Muziek Quiz!", exact=True
+                    ).wait_for()
+                    self.assertEqual(
+                        await tv.locator(".music-stage--final_results").count(), 1
+                    )
+                    self.assertEqual(
+                        await tv.locator(".public-music-scores article").count(), 2
+                    )
+                    for page in (a, b, tv):
+                        clock = page.locator(
+                            ".music-finale__return [data-music-countdown-value]"
+                        )
+                        await clock.wait_for()
+                        self.assertRegex(
+                            await clock.inner_text(),
+                            re.compile(r"^(01:00|00:(5[0-9]|4[0-9]))$"),
+                        )
+                        self.assertEqual(
+                            await page.locator("#music-answer-input").count(), 0
+                        )
+                    # HTMX preserves the finale pane across polls, but
+                    # a fresh server timing snapshot must animate its clock.
+                    await a.evaluate(
+                        "window.musicPane = document.querySelector('#question-pane')"
+                    )
+                    phone_clock = a.locator(
+                        ".music-finale__return [data-music-countdown-value]"
+                    )
+                    initial = await phone_clock.inner_text()
+                    await a.wait_for_timeout(1450)
+                    self.assertNotEqual(await phone_clock.inner_text(), initial)
+                    self.assertTrue(
+                        await a.evaluate(
+                            "window.musicPane === "
+                            "document.querySelector('#question-pane')"
+                        )
+                    )
+                    self.assertEqual(
+                        await tv.locator(".music-finale-confetti i").count(), 46
+                    )
+                    self.assertEqual(
+                        await a.locator(".music-finale-confetti i").count(), 26
+                    )
+                    self.assertEqual(
+                        await b.locator(".music-finale-confetti i").count(), 0
+                    )
+                    self.assertIn(
+                        "tijdelijk stil",
+                        await tv.locator(
+                            ".public-music-header .game-clock"
+                        ).inner_text(),
+                    )
+                    if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
+                        output = Path(capture_dir)
+                        output.mkdir(parents=True, exist_ok=True)
+                        await tv.screenshot(
+                            path=str(output / "tv-finale-1920x1080.png")
+                        )
+                        await a.screenshot(
+                            path=str(output / "phone-finale-winner-390x844.png")
+                        )
+                        await b.screenshot(
+                            path=str(output / "phone-finale-runner-390x844.png")
+                        )
+                    # After the one-time celebratory burst, polling must
+                    # leave the readable final-result cards unobstructed.
+                    await tv.wait_for_timeout(5100)
+                    for page in (a, b, tv):
+                        self.assertEqual(
+                            await page.locator(".music-finale-confetti i").count(), 0
+                        )
+                    if capture_dir := os.environ.get("UI77_SCREENSHOT_DIR"):
+                        output = Path(capture_dir)
+                        await tv.screenshot(
+                            path=str(output / "tv-finale-settled-1920x1080.png")
+                        )
+                        await a.screenshot(
+                            path=str(output / "phone-finale-settled-390x844.png")
+                        )
+
+                    await asyncio.to_thread(
+                        pause_game, self.admin, RunCommand(str(uuid4()), self.run_id)
+                    )
+                    await tv.wait_for_function(
+                        "document.querySelector('#overview-audio-state')"
+                        ".dataset.globalState === 'PAUSED'"
+                    )
+                    await a.wait_for_function(
+                        """() => document.querySelector(
+                          '[data-music-final-sync]')?.dataset.running === 'false'"""
+                    )
+                    paused = await tv.locator(
+                        ".music-finale__return [data-music-countdown-value]"
+                    ).inner_text()
+                    paused_phone = await phone_clock.inner_text()
+                    await tv.wait_for_timeout(1300)
+                    self.assertEqual(
+                        await tv.locator(
+                            ".music-finale__return [data-music-countdown-value]"
+                        ).inner_text(), paused
+                    )
+                    self.assertEqual(
+                        await phone_clock.inner_text(), paused_phone
+                    )
+                    await asyncio.to_thread(
+                        resume_game, self.admin, RunCommand(str(uuid4()), self.run_id)
+                    )
+                    await tv.wait_for_function(
+                        "document.querySelector('#overview-audio-state')"
+                        ".dataset.globalState === 'MUSIC_QUIZ'"
+                    )
+                    await a.wait_for_function(
+                        """() => document.querySelector(
+                          '[data-music-final-sync]')?.dataset.running === 'true'"""
+                    )
+                    before_resume = await phone_clock.inner_text()
+                    await a.wait_for_timeout(1450)
+                    self.assertNotEqual(
+                        await phone_clock.inner_text(), before_resume
+                    )
+                    # Countdown is based on the existing authoritative Music
+                    # clock; expiry switches every display back to Advent.
+                    await asyncio.to_thread(self._put_finale_near_expiry, start_ms)
+                    await tv.wait_for_function(
+                        "document.querySelector('.music-finale__return"
+                        " [data-music-countdown-value]')?.textContent"
+                        " ?.startsWith('00:0')", timeout=5000
+                    )
+                    await tv.get_by_text(
+                        "De adventrace is begonnen", exact=False
+                    ).wait_for(timeout=6000)
+                    for page in (a, b):
+                        await page.locator(".music-quiz--phone").wait_for(
+                            state="detached", timeout=6000
+                        )
+                    self.assertEqual(errors, [])
+                finally:
+                    await tv_ctx.close()
+                    await b_ctx.close()
+                    await a_ctx.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_finale_other_team_is_declared_music_champion(self):
+        self._finish_music_with_winner("b")
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                a_ctx, a = await self._team_page(browser, "a")
+                b_ctx, b = await self._team_page(browser, "b")
+                tv_ctx = await browser.new_context(
+                    viewport={"width": 1920, "height": 1080}
+                )
+                tv = await tv_ctx.new_page()
+                try:
+                    await tv.goto(f"{self.live_server_url}/overview/")
+                    await tv.get_by_text("Team B wint!", exact=True).wait_for()
+                    await b.get_by_text(
+                        "Jullie winnen de Muziek Quiz!", exact=True
+                    ).wait_for()
+                    await a.get_by_text(
+                        "Team B wint de Muziek Quiz!", exact=True
+                    ).wait_for()
+                    self.assertEqual(
+                        await a.locator(".music-finale-confetti i").count(), 0
+                    )
+                    self.assertEqual(
+                        await b.locator(".music-finale-confetti i").count(), 26
+                    )
+                    self.assertEqual(
+                        await tv.locator(
+                            ".public-music-scores strong"
+                        ).all_inner_texts(),
+                        ["5", "6"],
+                    )
+                finally:
+                    await tv_ctx.close()
+                    await b_ctx.close()
+                    await a_ctx.close()
                     await browser.close()
 
         asyncio.run(check())

@@ -9,13 +9,14 @@
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue42-team-ui.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue74-team-advent.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/issue77-music.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/issue82-challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze-attack.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/endgame-celebration.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/feedback-timing.css' %}">
-  <link rel="stylesheet" href="{% static 'quiz/issue82-challenge.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'quiz/endgame-celebration.js' %}"></script>
   <script defer src="{% static 'quiz/music-ui.js' %}"></script>
@@ -62,6 +63,7 @@
       <span class="freeze-ice__snow freeze-ice__snow--three">✳</span>
     </div>
   </div>
+  <div id="music-finale-confetti" class="music-finale-confetti" aria-hidden="true"></div>
   <div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true"></div>
   <div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--idle" aria-hidden="true"></div>
   <div id="reverse-purchase" class="reverse-purchase reverse-purchase--idle" aria-hidden="true"></div>

@@ -1,6 +1,17 @@
 {% load quiz_format %}
-<section class="status-card public-status{% if not state.music and not state.challenge and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
-  {% if state.challenge %}
+<section class="status-card public-status{% if state.music %} public-status--music{% endif %}{% if not state.music and not state.challenge and state.global_state != 'READY' %} public-status--advent{% endif %}" aria-live="polite" data-run-id="{{ state.run_id|default:'' }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}">
+  {% if state.music %}
+  <header class="public-advent-header public-music-header">
+    <p class="public-advent-event">Kerstavond 2026<span>Twee teams. Eén avontuur.</span></p>
+    <div class="public-brand">
+      <span class="public-brand__ornament" aria-hidden="true">✦</span>
+      <h1 class="public-brand__name">Quizzmass</h1>
+      <p class="public-brand__subtitle">DE KERST ESCAPE ROOM</p>
+    </div>
+    <p class="game-clock"><span>Adventtijd · tijdelijk stil</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
+  </header>
+  <p class="public-music-phase">{% if state.music.phase == 'gathering' %}Teams verzamelen{% elif state.music.phase == 'question' %}De Muziek Quiz is begonnen{% else %}De Muziek Quiz is afgerond{% endif %}</p>
+  {% elif state.challenge %}
   <header class="challenge-tv-header">
     <p class="challenge-tv-header__occasion">Kerstavond 2026<span>Twee teams. Eén avontuur.</span></p>
     <div class="challenge-tv-header__brand">
@@ -10,11 +21,8 @@
     </div>
     <p class="challenge-tv-header__clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
   </header>
-  {% elif state.music or state.global_state == 'READY' %}
-  <header class="public-brand">
-    <span class="eyebrow">Kerst Escape Room</span>
-    <h1 class="public-brand__name">Quizzmass</h1>
-  </header>
+  {% elif state.global_state == 'READY' %}
+  <header class="public-brand"><span class="eyebrow">Kerst Escape Room</span><h1 class="public-brand__name">Quizzmass</h1></header>
   {% else %}
   <header class="public-advent-header">
     <p class="public-advent-event">Kerstavond 2026<span>Twee teams. Eén avontuur.</span></p>
@@ -27,32 +35,48 @@
   </header>
   {% endif %}
   {% if state.music %}
-    <div class="music-stage">
-      <p class="eyebrow">Muziek Quiz</p>
-      {% if state.music.phase == 'gathering' %}
-        <div class="music-gathering music-gathering--public">
-          <span class="music-gathering__note" aria-hidden="true">♫</span>
-          <h1>Maak je klaar!</h1>
-          <p class="music-gathering__lead">De Muziek Quiz begint zo</p>
-          <p>Verzamel je team en ga klaarstaan.</p>
-          <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span></time>
-          {% if state.global_state == 'PAUSED' %}<p class="music-paused-message">Gepauzeerd · de tijd staat stil</p>{% endif %}
-        </div>
-      {% elif state.music.phase == 'question' %}
-        <h1>Vraag {{ state.music.question_number }} van {{ state.music.question_total }}</h1>
-        <h2>{{ state.music.title }}</h2>
-        <p>{{ state.music.body }}</p>
-        <div class="music-player-progress" data-music-player-progress><progress aria-label="Voortgang Muziek Quiz" max="180000" value="{{ state.music.question_elapsed_ms }}">{% widthratio state.music.question_elapsed_ms 180000 100 %}%</progress></div>
-      {% else %}
-        <h1>Eindstand Muziek Quiz</h1>
-        <p>De Adventquiz gaat verder over {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconden.</p>
-      {% endif %}
-      {% include 'quiz/_music_progress.html' with music=state.music %}
-      <div class="music-scores public-music-scores">
-        {% for score in state.music.scores %}<article><span>Team {{ score.team_id|upper }}</span><strong>{{ score.score }}</strong></article>{% endfor %}
+    <div class="music-stage music-stage--midnight music-stage--{{ state.music.phase }}"{% if state.music.phase == 'final_results' and music_winner_team_id %} data-music-finale-winner="{{ music_winner_team_id }}" data-music-finale-run="{{ state.run_id }}"{% endif %}>
+      <div class="music-stage__vinyl" aria-hidden="true">
+        <div class="music-stage__disc"></div>
+        <p>Het lied staat centraal</p>
       </div>
-      {% if state.music.previous_winner_team_id %}<p class="music-winner">Laatste punt: Team {{ state.music.previous_winner_team_id|upper }}</p>{% endif %}
+      <div class="music-stage__content">
+        {% if state.music.phase == 'gathering' %}
+          <p class="music-stage__kicker">Muziek Quiz · Voorbereiding</p>
+          <h1>Maak je klaar!</h1>
+          <p>De Muziek Quiz begint zo. Verzamel je team en ga klaarstaan.</p>
+          <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span></time>
+          {% if state.global_state == 'PAUSED' %}<p class="music-paused-message">Gepauzeerd · de tijd staat stil</p>{% endif %}
+        {% elif state.music.phase == 'question' %}
+          <p class="music-stage__kicker">Muziek Quiz · Vraag {{ state.music.question_number }} van {{ state.music.question_total }}</p>
+          <h1>Herken het lied</h1>
+          <h2>{{ state.music.title }}</h2>
+          <p class="music-stage__question">{{ state.music.body }}</p>
+          <div class="music-player-progress" data-music-player-progress data-question-elapsed-ms="{{ state.music.question_elapsed_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}" role="img" aria-label="Illustratieve tijdsbalk van drie minuten, geen tijdslimiet voor de vraag"><span class="music-player-progress__fill" aria-hidden="true"></span></div>
+        {% else %}
+          <p class="music-stage__kicker">Muziek Quiz · Eindstand</p>
+          <div class="music-finale__seal" aria-hidden="true">✦</div>
+          <p class="music-finale__eyebrow">Winnaar Muziek Quiz</p>
+          {% if music_winner_team_id %}
+            <h1 class="music-finale__winner">Team {{ music_winner_team_id|upper }} wint!</h1>
+            <p class="music-finale__message">Elf liedjes. Eén kampioen. Gefeliciteerd!</p>
+          {% else %}
+            <h1 class="music-finale__winner">Muziek Quiz voltooid!</h1>
+          {% endif %}
+          <div class="music-finale__return">
+            <span class="music-finale__return-label">De Adventquiz gaat verder over</span>
+            <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.final_results_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>00:00</span></time>
+            <span class="music-finale__return-note">De Adventklok staat tijdens de Muziek Quiz stil.</span>
+          </div>
+        {% endif %}
+        {% include 'quiz/_music_progress.html' with music=state.music %}
+        <div class="music-scores public-music-scores">
+          {% for score in state.music.scores %}<article><span>Team {{ score.team_id|upper }}</span><strong>{{ score.score }}</strong></article>{% endfor %}
+        </div>
+        {% if state.music.phase == 'question' and state.music.previous_winner_team_id %}<p class="music-winner">Laatste punt: Team {{ state.music.previous_winner_team_id|upper }}</p>{% endif %}
+      </div>
     </div>
+    <p class="public-music-footer"><span aria-hidden="true">✧</span> Elf vragen. Eén gezamenlijk podium. <span aria-hidden="true">✧</span></p>
   {% elif state.challenge %}
     <section class="challenge-overview challenge-overview--{{ state.challenge.phase }}" aria-label="Kerstuitdaging op TV">
       <p class="challenge-overview__live"><span aria-hidden="true">●</span> Een kerstuitdaging is begonnen</p>
