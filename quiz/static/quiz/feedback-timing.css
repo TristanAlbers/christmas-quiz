@@ -1,10 +1,10 @@
 :root {
   --incorrect-feedback-duration: 2.75s;
   --transient-feedback-duration: 3s;
-  --freeze-sequence-duration: 4s;
-  --freeze-launch-duration: 2.75s;
-  --freeze-sequence-first-stage-duration: 1.7s;
-  --freeze-sequence-second-stage-duration: 2.3s;
+  --freeze-sequence-duration: 4.6s;
+  --freeze-launch-duration: 1.8s;
+  --freeze-sequence-first-stage-duration: 1.8s;
+  --freeze-sequence-second-stage-duration: 2.8s;
 }
 
 /* Keep answer feedback readable without making the quiz feel sluggish. */
@@ -25,13 +25,10 @@
   animation-duration: var(--transient-feedback-duration);
 }
 
-/*
- * A normal Freeze is one readable scene. A reflected/received Freeze is a two-stage
- * sequence: launch/suspense first, then the result. The authoritative server state
- * is already committed while these presentation stages are running.
- */
+/* Both phones show launch then outcome within 4.6 seconds. Server Freeze
+ * timing and authoritative state remain unchanged. */
 .gameplay-event {
-  --event-duration: var(--transient-feedback-duration);
+  --event-duration: var(--freeze-sequence-duration);
 }
 
 .gameplay-event--attacker-reversed,
@@ -40,7 +37,7 @@
   --event-duration: var(--freeze-sequence-duration);
 }
 
-.gameplay-event--attacker .gameplay-event__stage--attack {
+.gameplay-event__stage--attack {
   animation-duration: var(--freeze-launch-duration);
 }
 
@@ -227,12 +224,8 @@
     animation: gameplay-event-lifecycle var(--event-duration) steps(1, end) forwards !important;
   }
 
-  .gameplay-event--attacker .gameplay-event__stage--attack {
+  .gameplay-event__stage--attack {
     animation: gameplay-static-first var(--freeze-launch-duration) steps(1, end) both !important;
-  }
-
-  .gameplay-event--attacker-reversed .gameplay-event__stage--attack {
-    animation: gameplay-static-first var(--freeze-sequence-first-stage-duration) steps(1, end) both !important;
   }
 
   .gameplay-event__stage--impact,
