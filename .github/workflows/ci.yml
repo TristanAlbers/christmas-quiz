@@ -109,6 +109,7 @@ jobs:
               tests.browser.test_phase4_views
               tests.browser.test_issue31_freeze
               tests.browser.test_issue76_frozen_phone
+              tests.browser.test_issue78_pause
               tests.browser.test_issue43_public_overview
               tests.browser.test_issue73_midnight_tv
 
@@ -120,7 +121,7 @@ jobs:
         run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Create screenshot directory
-        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-77 artifacts/ui-82 artifacts/ui-76 artifacts/ui-75 artifacts/ui-83
+        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-77 artifacts/ui-82 artifacts/ui-76 artifacts/ui-78 artifacts/ui-75 artifacts/ui-83
 
       - name: Run browser shard
         run: >-
@@ -132,6 +133,7 @@ jobs:
           -v "${{ github.workspace }}/artifacts/ui-73:/tmp/ui73"
           -v "${{ github.workspace }}/artifacts/ui-83:/tmp/ui83"
           -v "${{ github.workspace }}/artifacts/ui-76:/tmp/ui76"
+          -v "${{ github.workspace }}/artifacts/ui-78:/tmp/ui78"
           -v "${{ github.workspace }}/artifacts/ui-77:/tmp/ui77"
           -v "${{ github.workspace }}/artifacts/ui-82:/tmp/ui82"
           -e UI72_SCREENSHOT_DIR=/tmp/ui72
@@ -141,6 +143,7 @@ jobs:
           -e UI73_SCREENSHOT_DIR=/tmp/ui73
           -e UI83_SCREENSHOT_DIR=/tmp/ui83
           -e UI76_SCREENSHOT_DIR=/tmp/ui76
+          -e UI78_SCREENSHOT_DIR=/tmp/ui78
           -e UI77_SCREENSHOT_DIR=/tmp/ui77
           -e UI82_SCREENSHOT_DIR=/tmp/ui82
           -e DJANGO_SETTINGS_MODULE=config.test_settings
@@ -226,6 +229,14 @@ jobs:
           path: artifacts/ui-76/*.png
           if-no-files-found: warn
 
+      - name: Preserve issue 78 real Pause visual checkpoint
+        if: always() && matrix.shard == 'effects-challenge'
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-78
+          path: artifacts/ui-78/*.png
+          if-no-files-found: warn
+
   webkit-reverse:
     name: WebKit Reverse purchase
     runs-on: ubuntu-latest
@@ -237,6 +248,8 @@ jobs:
       DJANGO_DEBUG: "false"
       TEST_DATABASE_PATH: /tmp/christmas-quiz-webkit.sqlite3
       ISSUE31_BROWSER_ENGINE: webkit
+      ISSUE78_BROWSER_ENGINE: webkit
+      UI78_SCREENSHOT_DIR: artifacts/ui-78-webkit
       REVERSE_ANIMATION_SCREENSHOT_DIR: artifacts/ui-75-webkit
 
     steps:
@@ -253,11 +266,26 @@ jobs:
           python -m pip install -r requirements.lock -r requirements-dev.lock
           python -m playwright install --with-deps webkit
 
+      - name: Prepare Pause screenshots
+        run: mkdir -p artifacts/ui-78-webkit
+
       - name: Build production-style static manifest
         run: python manage.py collectstatic --noinput
 
-      - name: Test real Reverse purchase and rejection in WebKit
-        run: python manage.py test tests.browser.test_issue31_reverse --verbosity 2
+      - name: Test Reverse and Pause on WebKit
+        run: >-
+          python manage.py test
+          tests.browser.test_issue31_reverse
+          tests.browser.test_issue78_pause
+          --verbosity 2
+
+      - name: Save WebKit Pause screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-78-webkit
+          path: artifacts/ui-78-webkit/*.png
+          if-no-files-found: warn
 
       - name: Save WebKit purchase animation screenshot
         if: always()

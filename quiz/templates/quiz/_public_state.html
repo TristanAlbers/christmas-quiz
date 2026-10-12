@@ -142,5 +142,17 @@
     <p class="public-advent-footer"><span aria-hidden="true">✧</span> Elke deur brengt jullie dichter bij kerst. <span aria-hidden="true">✧</span></p>
     {% endif %}
   {% endif %}
+  {% if state.global_state == 'PAUSED' %}
+    <div class="pause-veil pause-veil--tv" role="status" aria-label="Spel gepauzeerd">
+      <div class="pause-veil__content">
+        <span class="pause-veil__emblem" aria-hidden="true"></span>
+        <p class="pause-veil__kicker">EVEN EEN MOMENT</p>
+        <h2>Spel gepauzeerd</h2>
+        <p class="pause-veil__description">{% if state.music %}De Muziek Quiz staat stil. Muziek en voortgang hervatten op hetzelfde moment.{% elif state.challenge %}De kerstuitdaging is onderbroken. Beide teams beginnen tegelijk weer.{% else %}De adventrace wacht op de Game Master.{% endif %}</p>
+        <p class="pause-veil__time" aria-label="Speeltijd staat stil"><span class="pause-veil__clock-icon" aria-hidden="true"></span>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</p>
+        <p class="pause-veil__foot">Voortgang en timers blijven bewaard · Hervat via Game Master</p>
+      </div>
+    </div>
+  {% endif %}
 </section>
 {% if replace_audio %}{% include 'quiz/_public_audio.html' with oob=True %}{% endif %}

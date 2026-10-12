@@ -54,7 +54,7 @@
           <span>Jullie spelen verder — de huidige puzzel blijft actief.</span>
         </aside>
       {% endif %}
-      {% if not state.music and state.global_state == 'PAUSED' %}<div class="interruption-message"><h2>Spel gepauzeerd</h2><p>{% if state.challenge and state.challenge.status == 'active' %}De actieve uitdaging en de bijbehorende start- en antwoordstatus blijven bewaard.{% else %}Jullie exacte puzzelstatus en effecttimers blijven bewaard.{% endif %}</p></div>{% endif %}
+      {# Issue #78 approved gold Pause overlay replaces textual interruption. #}
       {% if state.music and state.music.phase == 'gathering' %}<div class="music-gathering-status"><strong>{% if state.global_state == 'PAUSED' %}Muziek Quiz gepauzeerd{% else %}De Muziek Quiz begint zo{% endif %}</strong><time class="music-countdown music-countdown--team" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span></time></div>{% endif %}
       {% if state.challenge and state.challenge.status == 'active' %}
         <aside class="challenge-status challenge-status--active" role="region" aria-label="Uitdagingstatus"><span class="challenge-status__icon" aria-hidden="true">★</span><div><p class="eyebrow">{% if state.challenge.phase == 'starting' %}Uitdaging begint zo{% else %}Uitdaging bezig{% endif %}</p><strong>{% if state.challenge.role == 'initiator' %}Jullie zijn de uitdaging gestart{% else %}Het andere team heeft jullie uitgedaagd{% endif %}</strong>{% if state.challenge.phase == 'starting' %}<p>Verzamel je team. De gezamenlijke puzzel verschijnt voor beide teams zodra de afteltijd voorbij is.</p>{% else %}<p>Jullie adventpuzzel blijft bewaard terwijl beide teams de gezamenlijke uitdaging oplossen.</p>{% endif %}</div></aside>
@@ -70,6 +70,19 @@
       <p class="team-ready__intro">Jullie kerstavontuur staat klaar. Verzamel je team en maak je gereed om de 25 adventdeurtjes te openen.</p>
       <div class="team-ready__status"><span class="team-ready__light" aria-hidden="true"></span><p><strong>Wachten op de Game Master</strong><span>Wachten tot de Game Master het spel start. De quiz verschijnt hier vanzelf.</span></p></div>
     </section>
+  {% endif %}
+  {% if state.global_state == 'PAUSED' %}
+    <div class="pause-veil pause-veil--team{% if state.team_state == 'FREEZE' and not state.music %} pause-veil--frozen{% endif %}" role="status" aria-label="Spel gepauzeerd" data-pause-state>
+      <div class="pause-veil__silhouette" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="pause-veil__content">
+        <span class="pause-veil__emblem" aria-hidden="true"></span>
+        <p class="pause-veil__kicker">QUIZZMASS · {% if state.music %}MUZIEK QUIZ{% elif state.challenge and state.challenge.status == 'active' %}KERSTUITDAGING{% else %}TEAM {{ viewer_team_id|upper }}{% endif %}</p>
+        <h2>Spel gepauzeerd</h2>
+        <p class="pause-veil__description">{% if state.music %}De Muziek Quiz staat stil. Na hervatten gaan jullie verder.{% elif state.challenge and state.challenge.status == 'active' %}De uitdaging gaat verder zodra de Game Master hervat.{% elif state.team_state == 'FREEZE' %}Jullie zijn nog bevroren. Ook de Freeze-timer staat stil.{% else %}De puzzel wacht op de Game Master.{% endif %}</p>
+        <p class="pause-veil__time" aria-label="Speeltijd staat stil"><span class="pause-veil__clock-icon" aria-hidden="true"></span>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</p>
+        <p class="pause-veil__foot">Je kunt tijdelijk niets insturen of kopen.<span>Je voortgang blijft bewaard.</span></p>
+      </div>
+    </div>
   {% endif %}
 </div>
 {% if feedback %}<p id="action-feedback" class="feedback" role="status" hx-swap-oob="outerHTML">{{ feedback|dutch_feedback }}</p>{% endif %}
