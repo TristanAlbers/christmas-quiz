@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="{% static 'quiz/issue75-shop.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue77-music.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue82-challenge.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/pause.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
@@ -132,6 +133,20 @@
             : 'De bevriezing is voorbij. Jullie kunnen weer spelen.';
         }
       }
+    }
+
+    function syncPausedSurface() {
+      const paused = Boolean(document.querySelector('#game-status .pause-veil--team'));
+      // A stale form from the previous poll must never stay keyboard-operable.
+      for (const id of ['team-actions', 'question-pane']) {
+        const pane = document.getElementById(id);
+        if (!pane) continue;
+        pane.inert = paused;
+        if (paused) pane.setAttribute('aria-hidden', 'true');
+        else pane.removeAttribute('aria-hidden');
+      }
+      const shop = document.getElementById('team-shop-dialog');
+      if (paused && shop?.open) shop.close();
     }
 
     function syncPuzzleActionAvailability() {
@@ -326,6 +341,9 @@
       if (event.detail.target.id === 'team-actions') {
         syncShopResources();
       }
+      if (event.detail.target.id === 'team-actions' || event.detail.target.id === 'question-pane') {
+        syncPausedSurface();
+      }
       if (event.detail.target.id === 'action-feedback') {
         armActionFeedbackTimer();
       }
@@ -336,6 +354,7 @@
     document.body.addEventListener('htmx:afterSwap', function (event) {
       if (event.detail.target.id === 'game-status') {
         syncFrozenSurface();
+        syncPausedSurface();
         syncTransientChallengeResult(challengeWasActiveBeforeSwap);
         challengeWasActiveBeforeSwap = false;
       }
@@ -349,6 +368,7 @@
     syncPuzzleActionAvailability();
     syncShopResources();
     syncFrozenSurface();
+    syncPausedSurface();
     syncTransientChallengeResult(false);
     armActionFeedbackTimer();
   </script>
