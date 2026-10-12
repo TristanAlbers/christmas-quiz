@@ -188,6 +188,40 @@
       }
     }
 
+    // The server emits #gameplay-event exactly once per new event id. The film
+    // never decides Freeze state; it only makes the 4.6s sequence unskippable
+    // (including keyboard activation of controls behind the takeover).
+    let gameplayFilmTimer = null;
+    function startGameplayFilm() {
+      const film = document.getElementById('gameplay-event');
+      if (!film || film.classList.contains('gameplay-event--idle')) return;
+      const shell = document.querySelector('.app-shell');
+      const previouslyFocused = document.activeElement;
+      const restoreAnswer = previouslyFocused?.id === 'answer-input'
+        ? previouslyFocused : null;
+      let selection = null;
+      if (restoreAnswer) {
+        selection = [restoreAnswer.selectionStart, restoreAnswer.selectionEnd];
+      }
+      if (shell) shell.inert = true;
+      document.body.classList.add('gameplay-film-active');
+      window.clearTimeout(gameplayFilmTimer);
+      gameplayFilmTimer = window.setTimeout(function () {
+        // A second, different authoritative event would get its own film.
+        if (document.getElementById('gameplay-event') !== film) return;
+        if (shell) shell.inert = false;
+        document.body.classList.remove('gameplay-film-active');
+        // Restore a protected team's existing node, text and caret, never a
+        // removed frozen input or a stale field after a gameplay transition.
+        if (restoreAnswer?.isConnected && !document.querySelector('.freeze-message')) {
+          restoreAnswer.focus({preventScroll: true});
+          if (selection && selection.every(Number.isInteger)) {
+            restoreAnswer.setSelectionRange(selection[0], selection[1]);
+          }
+        }
+      }, 4600);
+    }
+
     let challengeResultTimer = null;
     let activeChallengeResultKey = null;
     let activeChallengeResultExpiresAt = 0;
@@ -294,6 +328,9 @@
       }
       if (event.detail.target.id === 'action-feedback') {
         armActionFeedbackTimer();
+      }
+      if (event.detail.target.id === 'gameplay-event') {
+        startGameplayFilm();
       }
     });
     document.body.addEventListener('htmx:afterSwap', function (event) {
