@@ -15,6 +15,44 @@
     });
   }
 
+  // Music score winner comes from the server; do not confuse with Advent first-finisher.
+  // This overlay is mounted outside HTMX swap targets to survive 500ms polling.
+  const finaleOverlay = document.getElementById("music-finale-confetti");
+  let lastFinaleKey = null;
+  function maybeCelebrateMusic() {
+    if (!finaleOverlay) return;
+    const marker = document.querySelector("[data-music-finale-winner]");
+    if (!marker || !marker.dataset.musicFinaleWinner) return;
+    const surface = (document.body.dataset.teamId || "tv").toLowerCase();
+    const key = "quizzmas:music-finale:" + marker.dataset.musicFinaleRun + ":" + surface;
+    if (lastFinaleKey === key) return;
+    try {
+      if (window.sessionStorage.getItem(key) === "seen") {
+        lastFinaleKey = key;
+        return;
+      }
+      window.sessionStorage.setItem(key, "seen");
+    } catch (_error) {
+      // In-memory guard still prevents repeats within the page.
+    }
+    lastFinaleKey = key;
+    if (surface !== "tv" && surface !== marker.dataset.musicFinaleWinner) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    finaleOverlay.replaceChildren();
+    const colors = ["#ebcb87", "#fff0c2", "#a53746", "#69977d"];
+    for (let i = 0; i < 46; i += 1) {
+      const piece = document.createElement("i");
+      piece.style.setProperty("--left", ((i * 31) % 99) + "%");
+      piece.style.setProperty("--drift", (((i * 23) % 17) - 8) + "vw");
+      piece.style.setProperty("--color", colors[i % colors.length]);
+      piece.style.setProperty("--delay", ((i % 9) * 0.07) + "s");
+      piece.style.setProperty("--duration", (3.2 + (i % 5) * 0.2) + "s");
+      finaleOverlay.appendChild(piece);
+    }
+    window.setTimeout(() => finaleOverlay.replaceChildren(), 4900);
+  }
+  document.addEventListener("DOMContentLoaded", maybeCelebrateMusic);
+  document.body.addEventListener("htmx:afterSettle", maybeCelebrateMusic);
   document.addEventListener("DOMContentLoaded", () => formatCountdown(document));
   document.body.addEventListener("htmx:afterSwap", (event) => {
     formatCountdown(event.detail.target);

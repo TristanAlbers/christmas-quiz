@@ -8,7 +8,7 @@
       <h1 class="public-brand__name">Quizzmass</h1>
       <p class="public-brand__subtitle">DE KERST ESCAPE ROOM</p>
     </div>
-    <p class="game-clock"><span>Speeltijd</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
+    <p class="game-clock"><span>Adventtijd · tijdelijk stil</span><strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></p>
   </header>
   <p class="public-music-phase">{% if state.music.phase == 'gathering' %}Teams verzamelen{% elif state.music.phase == 'question' %}De Muziek Quiz is begonnen{% else %}De Muziek Quiz is afgerond{% endif %}</p>
   {% elif state.challenge or state.global_state == 'READY' %}
@@ -25,7 +25,7 @@
   </header>
   {% endif %}
   {% if state.music %}
-    <div class="music-stage music-stage--midnight music-stage--{{ state.music.phase }}">
+    <div class="music-stage music-stage--midnight music-stage--{{ state.music.phase }}"{% if state.music.phase == 'final_results' and music_winner_team_id %} data-music-finale-winner="{{ music_winner_team_id }}" data-music-finale-run="{{ state.run_id }}"{% endif %}>
       <div class="music-stage__vinyl" aria-hidden="true">
         <div class="music-stage__disc"></div>
         <p>Het lied staat centraal</p>
@@ -44,9 +44,20 @@
           <p class="music-stage__question">{{ state.music.body }}</p>
           <div class="music-player-progress" data-music-player-progress role="img" aria-label="Decoratieve muziekspeler, geen werkelijke afspeelvoortgang"><span class="music-player-progress__fill" aria-hidden="true"></span></div>
         {% else %}
-          <p class="music-stage__kicker">Muziek Quiz · Afgerond</p>
-          <h1>Eindstand Muziek Quiz</h1>
-          <p>De Adventquiz gaat verder over {% widthratio state.music.final_results_remaining_ms 1000 1 %} seconden.</p>
+          <p class="music-stage__kicker">Muziek Quiz · Eindstand</p>
+          <div class="music-finale__seal" aria-hidden="true">✦</div>
+          <p class="music-finale__eyebrow">Winnaar Muziek Quiz</p>
+          {% if music_winner_team_id %}
+            <h1 class="music-finale__winner">Team {{ music_winner_team_id|upper }} wint!</h1>
+            <p class="music-finale__message">Elf liedjes. Eén kampioen. Gefeliciteerd!</p>
+          {% else %}
+            <h1 class="music-finale__winner">Muziek Quiz voltooid!</h1>
+          {% endif %}
+          <div class="music-finale__return">
+            <span class="music-finale__return-label">De Adventquiz gaat verder over</span>
+            <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.final_results_remaining_ms }}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>00:00</span></time>
+            <span class="music-finale__return-note">De Adventklok staat tijdens de Muziek Quiz stil.</span>
+          </div>
         {% endif %}
         {% include 'quiz/_music_progress.html' with music=state.music %}
         <div class="music-scores public-music-scores">

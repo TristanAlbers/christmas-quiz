@@ -117,6 +117,17 @@ def _team_event_context(presentation):
     return str(event.id) if event is not None else ""
 
 
+def _music_final_winner(state):
+    """Music champion derived only from the authoritative final score projection."""
+    music = state.music
+    if music is None or music.phase != "final_results" or len(music.scores) != 2:
+        return None
+    left, right = music.scores
+    if left.score == right.score:
+        return None
+    return left.team_id if left.score > right.score else right.team_id
+
+
 def _team_context(
     state,
     *,
@@ -148,6 +159,7 @@ def _team_context(
         "opponent_freeze_active": presentation.opponent_freeze_active,
         "presentation_event": presentation_event,
         "viewer_team_id": viewer_team_id,
+        "music_winner_team_id": _music_final_winner(state),
         "request_id": str(uuid.uuid4()),
         "purchase_request_id": str(uuid.uuid4()),
         "use_request_id": str(uuid.uuid4()),
@@ -282,6 +294,7 @@ def _public_context(state, *, replace_audio=False):
         "first_finisher_team_id": state.first_finisher_team_id,
         "gameplay_elapsed_ms": state.gameplay_elapsed_ms,
         "audio_context": _public_audio_context(state),
+        "music_winner_team_id": _music_final_winner(state),
         "replace_audio": replace_audio,
     }
 

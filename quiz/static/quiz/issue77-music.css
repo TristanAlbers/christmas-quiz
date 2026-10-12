@@ -528,3 +528,145 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
     font-size: clamp(1.85rem, 8.4vw, 2.3rem);
   }
 }
+
+/* #77: the existing authoritative gathering status must match the dark Music shell. */
+.game-page--team:has(.music-quiz--phone) .music-gathering-status {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 1rem 0 .65rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #a78755;
+  border-radius: .3rem;
+  background: linear-gradient(120deg, #193a30, #0a2822);
+  color: #f6e5bf;
+  box-shadow: inset 0 0 0 1px #2d5541;
+}
+.game-page--team:has(.music-quiz--phone) .music-gathering-status > strong {
+  color: #f6dfad;
+  font: normal clamp(1rem, 2.3vw, 1.2rem)/1.35 Georgia, serif;
+}
+.game-page--team:has(.music-quiz--phone) .music-gathering-status .music-countdown {
+  margin: 0;
+  color: #f9e4b0;
+  font: 700 clamp(2.6rem, 8vw, 3.6rem)/1 system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 370px) {
+  .game-page--team:has(.music-quiz--phone) .music-gathering-status {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: .5rem;
+    text-align: center;
+  }
+}
+/* Dedicated final-results hierarchy: music champion is never the Advent champion. */
+.music-stage--midnight.music-stage--final_results {
+  border-color: #d2a966;
+  background: radial-gradient(circle at 72% 26%, #7e642c28, transparent 42%),
+              linear-gradient(140deg, #17362a, #091c19);
+}
+.music-stage--final_results .music-stage__content { align-items: stretch; gap: .6rem; }
+.music-stage--final_results .music-finale__eyebrow,
+.music-quiz--phone--final .music-finale__eyebrow {
+  margin: 0;
+  color: #e9c783;
+  font: 700 clamp(.8rem, 1.1vw, 1.1rem) system-ui, sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.music-stage--final_results .music-finale__winner {
+  margin: 0;
+  color: #ffedc4;
+  font: normal clamp(2.7rem, 4.2vw, 4.8rem)/1.08 Georgia, serif;
+  letter-spacing: -.035em;
+}
+.music-stage--final_results .music-finale__message {
+  margin: 0;
+  color: #e7d7b6;
+  font: normal clamp(.95rem, 1.3vw, 1.3rem)/1.45 system-ui, sans-serif;
+}
+.music-finale__seal {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 1px solid #dbb979;
+  border-radius: 50%;
+  background: #69502b44;
+  color: #ffdf98;
+  font: normal 2rem Georgia, serif;
+}
+.music-finale__return {
+  display: grid;
+  justify-items: center;
+  gap: .3rem;
+  padding: .8rem 1.2rem;
+  border: 1px solid #a78755;
+  background: #071d18;
+  text-align: center;
+}
+.music-finale__return-label {
+  color: #e5d5b5;
+  font: normal clamp(.9rem, 1.15vw, 1.1rem)/1.35 system-ui, sans-serif;
+}
+.music-stage--midnight .music-finale__return .music-countdown,
+.music-quiz--phone--final .music-finale__return .music-countdown {
+  margin: .1rem 0;
+  color: #ffe5a6;
+  font: 700 clamp(3rem, 4.4vw, 5rem)/1 system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.music-finale__return-note {
+  color: #c7bda9;
+  font: normal .83rem/1.45 system-ui, sans-serif;
+}
+.music-quiz--phone--final {
+  justify-items: center;
+  gap: .9rem;
+  padding: 1.55rem 1rem;
+  text-align: center;
+  border-color: #c4a06b;
+}
+.music-quiz--phone--final .music-finale__eyebrow { font-size: .78rem; }
+.music-quiz--phone--final h2 { font-size: clamp(2rem, 8vw, 2.8rem); text-wrap: balance; }
+.music-quiz--phone--final .music-finale__message {
+  margin: 0;
+  max-width: 30ch;
+  color: #e6d5b2;
+  font: normal 1rem/1.5 system-ui, sans-serif;
+}
+.music-quiz--phone--final .music-progress,
+.music-quiz--phone--final .music-finale__return { width: 100%; }
+.music-quiz--phone--final .music-finale__return { padding: 1rem .5rem; gap: .45rem; }
+.music-quiz--phone--final .music-finale__return .music-countdown {
+  font-size: clamp(3rem, 12vw, 4.6rem);
+}
+.music-quiz--phone--final .music-finale__seal { margin: .2rem auto 0; }
+.music-quiz--phone--final .music-finale__return-note {
+  margin: 0;
+  color: #d5c7a8;
+  font-size: .85rem;
+}
+.music-finale-confetti { position: fixed; inset: 0; z-index: 160; overflow: hidden; pointer-events: none; }
+.music-finale-confetti i {
+  position: absolute;
+  top: -3rem;
+  left: var(--left);
+  width: .7rem;
+  height: 1.25rem;
+  background: var(--color);
+  border-radius: .12rem;
+  opacity: 0;
+  animation: music-finale-fall var(--duration) var(--delay) ease-out both;
+}
+@keyframes music-finale-fall {
+  0% { transform: translate3d(0, -2rem, 0) rotate(0); opacity: 0; }
+  7% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { transform: translate3d(var(--drift), 108vh, 0) rotate(540deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .music-finale-confetti i { animation: none; display: none; }
+}

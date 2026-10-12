@@ -1,7 +1,7 @@
 <div id="question-pane" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
   <input id="view-context" type="hidden" name="view_context" value="{{ view_context }}">
   {% if state.music %}
-    <section class="music-quiz--phone" aria-label="Muziek Quiz">
+    <section class="music-quiz--phone{% if state.music.phase == 'final_results' %} music-quiz--phone--final{% endif %}" aria-label="Muziek Quiz"{% if state.music.phase == 'final_results' and music_winner_team_id %} data-music-finale-winner="{{ music_winner_team_id }}" data-music-finale-run="{{ state.run_id }}"{% endif %}>
       <p class="music-quiz--phone__kicker">Muziek Quiz</p>
       {% if state.music.phase == 'gathering' %}
         <h2>Maak je klaar voor de Muziek Quiz</h2>
@@ -30,9 +30,23 @@
           <p class="music-paused-message">De Muziek Quiz is gepauzeerd. Na hervatten kun je weer antwoorden.</p>
         {% endif %}
       {% else %}
-        <h2>Eindstand Muziek Quiz</h2>
+        <span class="music-finale__seal" aria-hidden="true">✦</span>
+        <p class="music-finale__eyebrow">Eindstand Muziek Quiz</p>
+        {% if music_winner_team_id == viewer_team_id %}
+          <h2>Jullie winnen de Muziek Quiz!</h2>
+          <p class="music-finale__message">Gefeliciteerd! Jullie hebben de meeste liedjes herkend.</p>
+        {% elif music_winner_team_id %}
+          <h2>Team {{ music_winner_team_id|upper }} wint de Muziek Quiz!</h2>
+          <p class="music-finale__message">Goed gespeeld! De Adventrace gaat zo verder.</p>
+        {% else %}
+          <h2>De Muziek Quiz is afgerond!</h2>
+        {% endif %}
         {% include 'quiz/_music_progress.html' with music=state.music %}
-        <p>De eindstand staat op het grote scherm. De Adventquiz gaat automatisch verder.</p>
+        <div class="music-finale__return">
+          <span class="music-finale__return-label">Adventquiz gaat verder over</span>
+          <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.final_results_remaining_ms }}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>00:00</span></time>
+          <p class="music-finale__return-note">De Adventklok staat ondertussen stil.</p>
+        </div>
       {% endif %}
     </section>
     <p class="music-quiz--phone__note">De score en muziekbediening staan op de TV.</p>
