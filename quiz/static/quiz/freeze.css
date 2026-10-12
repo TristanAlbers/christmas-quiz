@@ -1,20 +1,29 @@
-#game-status:has(.state-panel-freeze) {
+/* Issue #76: Quizzmass ice spell.
+   All decoration is non-sensitive and mounted outside the 500ms HTMX status swap. */
+body:has(.freeze-message) { overflow: hidden; }
+
+#game-status:has(.freeze-message) {
   position: fixed;
   z-index: 80;
   inset: 0;
   box-sizing: border-box;
+  display: block;
+  padding: max(1.25rem, env(safe-area-inset-top))
+    max(.8rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(.8rem, env(safe-area-inset-left));
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
-  padding: max(1.25rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
-  background: transparent;
   pointer-events: auto;
+  background: transparent;
 }
-
 .state-panel-freeze {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  width: 100%;
   min-height: 100%;
   border: 0;
   border-radius: 0;
@@ -22,71 +31,335 @@
   box-shadow: none;
 }
 
-.state-panel-freeze > .freeze-message {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  width: min(30rem, 100%);
-  margin-block: auto;
-  margin-inline: 0;
-  padding: clamp(1.25rem, 5vw, 2rem);
-  border: 1px solid rgba(188, 238, 255, .96);
-  border-radius: 1rem;
-  background: rgba(232, 249, 255, .96);
-  box-shadow: 0 1rem 3rem rgba(4, 55, 88, .35);
-  text-align: center;
-}
-.freeze-message h2 { color: #07577c; font-size: clamp(1.8rem, 8vw, 3rem); }
-.freeze-message__icon {
-  margin: 0;
-  color: #168cb5;
-  font-size: clamp(2.4rem, 12vw, 4.5rem);
-  line-height: 1;
-  text-shadow: 0 .2rem .8rem rgba(28, 145, 185, .3);
-}
-
-.freeze-surface {
+.freeze-backdrop {
   position: fixed;
-  z-index: 70;
+  z-index: 75;
   inset: 0;
+  isolation: isolate;
   overflow: hidden;
-  border: 0;
-  background:
-    radial-gradient(circle at 50% 45%, rgba(220, 247, 255, .36), rgba(24, 116, 157, .67) 72%),
-    repeating-linear-gradient(125deg, rgba(255,255,255,.16) 0 .12rem, transparent .12rem 1.7rem);
-  box-shadow: inset 0 0 clamp(2rem, 14vw, 8rem) #d7f6ff, inset 0 0 1.2rem rgba(255,255,255,.92);
   pointer-events: auto;
+  background:
+    radial-gradient(ellipse 78% 52% at 50% 47%, #275a70 0, #123a4f 48%, transparent 100%),
+    radial-gradient(ellipse 60% 46% at 12% 2%, #326d78 0, transparent 90%),
+    linear-gradient(158deg, #061c2d 0%, #0c3040 52%, #081d2c 100%);
 }
-
-.freeze-surface::before,
-.freeze-surface::after {
+.freeze-backdrop[hidden] { display: none; }
+/* Stable full-viewport frost pseudos maintain the original Freeze geometry
+   guarantees without recreating any nodes during 500ms status polling. */
+.freeze-surface::before, .freeze-surface::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle, rgba(255,255,255,.92) 0 .15rem, transparent .19rem) 0 0 / 4.2rem 4.2rem;
-  opacity: .55;
-  animation: frozen-haze 7s linear infinite;
+  pointer-events: none;
+}
+.freeze-surface::before {
+  background:
+    radial-gradient(ellipse 35% 55% at 0% 50%, #a0f3ff20, transparent),
+    radial-gradient(ellipse 35% 55% at 100% 50%, #a0f3ff1c, transparent);
 }
 .freeze-surface::after {
-  background-size: 6.7rem 6.7rem;
-  animation-duration: 11s;
-  animation-direction: reverse;
+  background:
+    linear-gradient(90deg, #d6fcff17, transparent 13%, transparent 87%, #d6fcff17),
+    linear-gradient(#e7ffff12, transparent 12%, transparent 88%, #e7ffff12);
 }
-.freeze-surface__crystal {
+
+/* The obscured view is an inert skeleton: no private puzzle, hint, or media. */
+.freeze-ghost {
   position: absolute;
-  color: rgba(236, 251, 255, .82);
-  font-size: clamp(5rem, 28vw, 15rem);
-  filter: drop-shadow(0 0 1rem rgba(255,255,255,.65));
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  padding: 1.4rem 1rem;
+  opacity: .12;
+  filter: blur(12px);
+  background: #174d4b;
+  color: #e2d4ac;
 }
-.freeze-surface__crystal--one { top: -3rem; left: -2rem; transform: rotate(-18deg); }
-.freeze-surface__crystal--two { right: -2rem; bottom: -3rem; transform: rotate(16deg); }
-.freeze-surface__crystal--three { top: 28%; right: -3rem; font-size: clamp(3rem, 17vw, 9rem); }
+.freeze-ghost__header {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid #e1cb92;
+  font: 1.2rem Georgia, serif;
+}
+.freeze-ghost__header span:last-child { font: .875rem system-ui, sans-serif; }
+.freeze-ghost__resources {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.25rem 1rem;
+  border: 1px solid #c9ac71;
+  background: #50634e;
+  font-size: 1rem;
+}
+.freeze-ghost__paper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  height: 35svh;
+  padding: 2rem 1.5rem;
+  background: #baa98a;
+}
+.freeze-ghost__title, .freeze-ghost__line {
+  display: block;
+  width: 82%;
+  height: 1.2rem;
+  background: #6b7066;
+}
+.freeze-ghost__title { height: 1.65rem; width: 70%; }
+.freeze-ghost__line--short { width: 54%; }
+.freeze-ghost__paper strong { margin: auto; color: #314638; font-size: 1.1rem; }
+.freeze-ghost__bar { height: 3rem; background: #8b4451; }
 
-@keyframes frozen-haze {
-  to { transform: translate3d(2rem, 4.2rem, 0); }
+/* Frost appears at the edges; the center stays clear for large, legible copy. */
+.freeze-ice {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid #e5ffff66;
+  background:
+    radial-gradient(ellipse 37% 43% at -9% 12%, #b5f6ff9a 0, transparent 100%),
+    radial-gradient(ellipse 34% 50% at 113% 91%, #aeeaff8c 0, transparent 100%),
+    radial-gradient(ellipse 55% 28% at 47% -12%, #82d6e383 0, transparent 100%),
+    radial-gradient(ellipse 50% 22% at 45% 111%, #5baab881 0, transparent 100%),
+    linear-gradient(128deg, #d6ffff12 0%, transparent 28%, transparent 75%, #b4f8ff10 100%);
+  box-shadow: inset 0 0 3rem #bcefff33, inset 0 0 .7rem #ddfaff48;
+}
+.freeze-ice::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  background:
+    repeating-conic-gradient(from 15deg at 6% 13%, transparent 0 16deg, #c8f8ff4d 16.3deg 16.7deg, transparent 17deg 41deg),
+    repeating-conic-gradient(from 12deg at 102% 93%, transparent 0 20deg, #d9fbff59 20.2deg 20.6deg, transparent 21deg 44deg);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 26%, #000 76%);
+  mask-image: radial-gradient(ellipse at center, transparent 26%, #000 76%);
+  animation: freeze-crystal-bloom 1.35s cubic-bezier(.19, 1, .22, 1) both;
+}
+.freeze-ice::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 13px solid #a3e9f424;
+  border-radius: 35% 35% 15% 15% / 4% 4% 3% 3%;
+  box-shadow: inset 0 0 1.7rem #d1faff41;
+  animation: freeze-border-seal 1.45s ease-out both;
+}
+.freeze-ice__ridge {
+  position: absolute;
+  top: -8%;
+  right: -20%;
+  width: 60%;
+  height: 32%;
+  border-bottom: 2px solid #d8faff45;
+  transform: rotate(-32deg);
+}
+.freeze-ice__snow {
+  position: absolute;
+  color: #e6faff;
+  filter: drop-shadow(0 0 .65rem #b9efffc5);
+  opacity: .75;
+  animation: freeze-snow-land 1.9s ease-out both;
+}
+.freeze-ice__snow--one { top: 14%; left: 7%; font-size: 2.5rem; }
+.freeze-ice__snow--two { right: 5%; bottom: 10%; font-size: 3.5rem; animation-delay: .18s; }
+.freeze-ice__snow--three { top: 33%; right: 4%; font-size: 1.6rem; animation-delay: .32s; }
+
+@keyframes freeze-crystal-bloom {
+  0% { transform: scale(1.7); opacity: 0; filter: blur(8px); }
+  40% { opacity: 1; }
+  100% { transform: scale(1); opacity: .85; filter: blur(0); }
+}
+@keyframes freeze-border-seal {
+  from { opacity: 0; box-shadow: inset 0 0 6rem #ddfaffaa; }
+  to { opacity: 1; box-shadow: inset 0 0 1.7rem #d1faff41; }
+}
+@keyframes freeze-snow-land {
+  0% { transform: translateY(-2.5rem) rotate(-35deg) scale(1.5); opacity: 0; }
+  100% { transform: translateY(0) rotate(10deg) scale(1); opacity: .75; }
 }
 
+/* The message is a winter celebration, not a rectangular system alert. */
+.state-panel-freeze > .freeze-message {
+  position: relative;
+  z-index: 81;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  flex: 0 1 auto;
+  width: min(100%, 29rem);
+  min-width: 0;
+  margin: auto;
+  padding: .5rem .45rem 1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #f5fcfa;
+  text-align: center;
+  text-shadow: 0 .125rem .8rem #061b2d6b;
+}
+.freeze-message__brand {
+  margin: 0 0 1.45rem;
+  padding: .55rem 1.2rem;
+  border: 1px solid #eed49d78;
+  border-radius: 10rem;
+  background: #081e2c63;
+  color: #f3d8a2;
+  font-family: Georgia, serif;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: .125em;
+  line-height: 1.35;
+}
+.freeze-message__brand span { color: #fff1c4; }
+.freeze-message__crest {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(8.6rem, 37vw, 10.7rem);
+  height: clamp(8.6rem, 37vw, 10.7rem);
+  box-sizing: border-box;
+  margin-bottom: 1.4rem;
+  border: 2px solid #e8d4a3e3;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 23%, #eaffffc9 0%, #91d7e473 16%, #327c9ba3 47%, #0a344e 79%),
+    #183d56;
+  box-shadow:
+    0 0 0 7px #d3f7ff23,
+    0 0 0 9px #e6d29e66,
+    0 0 4rem #7de6ff6c,
+    inset 0 0 1.4rem #f6feff5c,
+    inset 0 -.6rem 1.2rem #09263e;
+}
+.freeze-message__crest::before, .freeze-message__crest::after {
+  content: "✦";
+  position: absolute;
+  color: #f7dda5;
+  font: 1.45rem Georgia, serif;
+  text-shadow: 0 0 .8rem #ffdca2;
+}
+.freeze-message__crest::before { top: -.75rem; }
+.freeze-message__crest::after { bottom: -.9rem; }
+.freeze-message__icon {
+  display: block;
+  color: #f0ffff;
+  font-family: Georgia, serif;
+  font-size: clamp(6.2rem, 26vw, 7.8rem);
+  font-weight: 400;
+  line-height: 1;
+  text-shadow: 0 0 .55rem #d5fcff, 0 0 2rem #6ce1ff;
+}
+.freeze-message__crest-star {
+  position: absolute;
+  top: 47%;
+  color: #f9e4bb;
+  font-size: 1.7rem;
+  line-height: 1;
+}
+.freeze-message__crest-star--left { left: -1.3rem; }
+.freeze-message__crest-star--right { right: -1.3rem; }
+.freeze-message__eyebrow {
+  margin: 0 0 .35rem;
+  color: #f5dba8;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: .095em;
+  line-height: 1.4;
+}
+.freeze-message h2 {
+  margin: .05rem 0 .7rem;
+  padding: 0;
+  color: #fffef5;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.75rem, 11vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.13;
+  text-shadow: 0 .2rem 0 #0e4b5b, 0 0 1.75rem #abf2ffe0;
+}
+.freeze-message h2 span { color: #f0d298; }
+.freeze-message__description {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  margin: 0 0 1.5rem;
+  color: #effcff;
+  font-size: 1.095rem;
+  line-height: 1.48;
+}
+.freeze-message__description strong {
+  color: #fff9ec;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.freeze-message__clock {
+  box-sizing: border-box;
+  width: min(100%, 19.5rem);
+  padding: .85rem .9rem .8rem;
+  border: 1.5px solid #e6d2a4c7;
+  border-radius: 1.1rem;
+  background: linear-gradient(150deg, #113e55e6, #092535e6);
+  box-shadow: 0 .75rem 2.2rem #031b2a93, inset 0 0 1.5rem #81ddf921;
+}
+.freeze-message__clock-label {
+  margin: 0;
+  color: #f2d7a3;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: .09em;
+  line-height: 1.3;
+}
+.freeze-message .freeze-timer {
+  margin: .2rem 0 .12rem;
+  color: #fff8df;
+  font-family: Georgia, serif;
+  font-size: clamp(3.5rem, 16vw, 4.5rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .015em;
+  line-height: 1.14;
+  text-shadow: 0 0 1.1rem #d1f7ff7a;
+}
+.freeze-message__clock-foot {
+  margin: .22rem 0 0;
+  color: #c4e7ee;
+  font-size: .94rem;
+  font-weight: 600;
+  letter-spacing: .055em;
+  line-height: 1.35;
+}
+.freeze-backdrop--instant .freeze-ice::before,
+.freeze-backdrop--instant .freeze-ice::after,
+.freeze-backdrop--instant .freeze-ice__snow { animation: none; }
+
+/* Short landscape displays and large text must scroll instead of clipping
+   the authoritative countdown below the visible area. */
+@media (max-height: 400px) {
+  .state-panel-freeze { justify-content: flex-start; }
+  .state-panel-freeze > .freeze-message {
+    margin: 0 auto;
+    padding-bottom: 1rem;
+  }
+  .freeze-message__clock {
+    position: sticky;
+    bottom: .25rem;
+    z-index: 1;
+  }
+}
+@media (max-height: 740px) {
+  .freeze-message__brand { margin-bottom: .7rem; }
+  .freeze-message__crest { width: 7.8rem; height: 7.8rem; margin-bottom: .75rem; }
+  .freeze-message__icon { font-size: 5.9rem; }
+  .freeze-message__description { margin-bottom: .75rem; }
+  .freeze-message__clock { padding-block: .5rem; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .freeze-surface::before,
-  .freeze-surface::after { animation: none; }
+  .freeze-ice::before, .freeze-ice::after, .freeze-ice__snow {
+    animation: none !important;
+  }
 }

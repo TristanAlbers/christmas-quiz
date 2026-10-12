@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="{% static 'quiz/app.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue42-team-ui.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/issue74-team-advent.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/issue77-music.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/issue82-challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/challenge.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/freeze.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/incorrect-answer.css' %}">
@@ -18,6 +20,7 @@
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'quiz/endgame-celebration.js' %}"></script>
   <script defer src="{% static 'quiz/music-ui.js' %}"></script>
+  <script defer src="{% static 'quiz/challenge-countdown.js' %}"></script>
 </head>
 <body class="game-page game-page--team" data-endgame-surface="team" data-team-id="{{ team_name|lower }}">
   <main class="app-shell">
@@ -40,6 +43,27 @@
       <p id="action-feedback" class="feedback" role="status"></p>
     </section>
   </main>
+  {# This inert ghost contains no puzzle, hint, points or media. It stays mounted through 500ms polls. #}
+  <div id="freeze-backdrop" class="freeze-backdrop" data-active="0" hidden aria-hidden="true">
+    <div class="freeze-ghost">
+      <div class="freeze-ghost__header"><span>Quizzmass ✦</span><span>◷ --:--:--</span></div>
+      <div class="freeze-ghost__resources"><b>TEAM {{ team_name }}</b><b>PUNTEN</b></div>
+      <div class="freeze-ghost__paper">
+        <span class="freeze-ghost__title"></span>
+        <span class="freeze-ghost__line"></span>
+        <span class="freeze-ghost__line freeze-ghost__line--short"></span>
+        <strong>PUZZEL VERBORGEN</strong>
+      </div>
+      <div class="freeze-ghost__bar"></div>
+    </div>
+    <div class="freeze-ice">
+      <span class="freeze-ice__ridge"></span>
+      <span class="freeze-ice__snow freeze-ice__snow--one">✳</span>
+      <span class="freeze-ice__snow freeze-ice__snow--two">✳</span>
+      <span class="freeze-ice__snow freeze-ice__snow--three">✳</span>
+    </div>
+  </div>
+  <div id="music-finale-confetti" class="music-finale-confetti" aria-hidden="true"></div>
   <div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true"></div>
   <div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--idle" aria-hidden="true"></div>
   <div id="reverse-purchase" class="reverse-purchase reverse-purchase--idle" aria-hidden="true"></div>
@@ -81,6 +105,32 @@
       if (!feedback) return;
       feedback.textContent = message;
       armActionFeedbackTimer();
+    }
+
+    function syncFrozenSurface() {
+      const backdrop = document.getElementById('freeze-backdrop');
+      if (!backdrop) return;
+      const frozen = Boolean(document.querySelector('#game-status .freeze-message'));
+      const wasFrozen = backdrop.dataset.active === '1';
+      // A refreshed frozen page shows its settled state; only a new Freeze
+      // transition plays the short crystal-forming animation.
+      if (backdrop.dataset.initialized !== '1') {
+        backdrop.classList.toggle('freeze-backdrop--instant', frozen);
+        backdrop.dataset.initialized = '1';
+      } else if (frozen && !wasFrozen) {
+        backdrop.classList.remove('freeze-backdrop--instant');
+      }
+      backdrop.hidden = !frozen;
+      backdrop.classList.toggle('freeze-surface', frozen);
+      backdrop.dataset.active = frozen ? '1' : '0';
+      if (wasFrozen !== frozen) {
+        const announcement = document.getElementById('game-announcement');
+        if (announcement) {
+          announcement.textContent = frozen
+            ? 'Jullie team is bevroren. De puzzel is tijdelijk verborgen.'
+            : 'De bevriezing is voorbij. Jullie kunnen weer spelen.';
+        }
+      }
     }
 
     function syncPuzzleActionAvailability() {
@@ -215,6 +265,7 @@
     });
     document.body.addEventListener('htmx:afterSwap', function (event) {
       if (event.detail.target.id === 'game-status') {
+        syncFrozenSurface();
         syncTransientChallengeResult(challengeWasActiveBeforeSwap);
         challengeWasActiveBeforeSwap = false;
       }
@@ -226,6 +277,7 @@
     });
 
     syncPuzzleActionAvailability();
+    syncFrozenSurface();
     syncTransientChallengeResult(false);
     armActionFeedbackTimer();
   </script>

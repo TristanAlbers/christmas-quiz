@@ -39,7 +39,7 @@ from quiz.models import (
 from quiz.web.views import _question_context, _team_actions_context
 
 NOW = datetime(2026, 12, 24, 18, 0, tzinfo=timezone.utc)
-GRACE_END = NOW + timedelta(seconds=15)
+GRACE_END = NOW + timedelta(seconds=30)
 
 
 class PhaseSixApplicationTests(TestCase):
@@ -115,14 +115,14 @@ class PhaseSixApplicationTests(TestCase):
         self.assertEqual(b_starting.challenge.role, "challenged")
         self.assertEqual(a_starting.challenge.phase, "starting")
         self.assertIsNone(a_starting.challenge.question)
-        self.assertEqual(a_starting.challenge.grace_remaining_ms, 15_000)
+        self.assertEqual(a_starting.challenge.grace_remaining_ms, 30_000)
         public_starting = get_public_state(now=NOW)
         self.assertEqual(public_starting.challenge.phase, "starting")
         self.assertIsNone(public_starting.challenge.title)
         self.assertIsNone(public_starting.challenge.body)
 
         with self.assertRaises(ApplicationError) as early:
-            self.answer(self.b, challenge, "rudolph", now=NOW + timedelta(seconds=14))
+            self.answer(self.b, challenge, "rudolph", now=NOW + timedelta(seconds=29))
         self.assertEqual(early.exception.code, "challenge_starting")
         self.assertFalse(ChallengeAttempt.objects.exists())
 
@@ -184,7 +184,7 @@ class PhaseSixApplicationTests(TestCase):
         self.assertNotEqual(first.question_id, second.question_id)
         self.assertEqual(Challenge.objects.filter(run_id=self.run_id).count(), 2)
 
-        second_active = second_start + timedelta(seconds=15)
+        second_active = second_start + timedelta(seconds=30)
         b_state = get_team_state(self.b, now=second_active)
         self.assertEqual(b_state.challenge.question.id, "challenge-b-five-gifts")
         public_second = get_public_state(now=second_active)
@@ -204,7 +204,7 @@ class PhaseSixApplicationTests(TestCase):
         self.assertEqual(result.outcome, "won")
         b_row = TeamRun.objects.get(run_id=self.run_id, team_id="b")
         self.assertEqual(b_row.activity_state, "FREEZE")
-        self.assertEqual(b_row.freeze_started_gameplay_ms, 15_000)
+        self.assertEqual(b_row.freeze_started_gameplay_ms, 30_000)
         self.assertTrue(b_row.reverse_active)
         self.assertEqual(result.state.challenge.winner_team_id, "a")
         self.assertTrue(result.state.challenge.freeze_applied)
@@ -221,7 +221,7 @@ class PhaseSixApplicationTests(TestCase):
         self.assertEqual(paused.global_state, "PAUSED")
         self.assertEqual(paused.challenge.status, "active")
         self.assertEqual(paused.challenge.phase, "starting")
-        self.assertEqual(paused.challenge.grace_remaining_ms, 12_000)
+        self.assertEqual(paused.challenge.grace_remaining_ms, 27_000)
         with self.assertRaises(ApplicationError) as rejected:
             self.answer(self.a, challenge, "rudolph", now=NOW + timedelta(minutes=2))
         self.assertEqual(rejected.exception.code, "disallowed_state")
@@ -234,8 +234,8 @@ class PhaseSixApplicationTests(TestCase):
         )
         resumed = get_team_state(self.a, now=resume_time)
         self.assertEqual(resumed.team_state, "CHALLENGE")
-        self.assertEqual(resumed.challenge.grace_remaining_ms, 12_000)
-        active = get_team_state(self.a, now=resume_time + timedelta(seconds=12))
+        self.assertEqual(resumed.challenge.grace_remaining_ms, 27_000)
+        active = get_team_state(self.a, now=resume_time + timedelta(seconds=27))
         self.assertEqual(active.challenge.phase, "active")
 
     def test_admin_and_public_monitoring_fields(self):
@@ -252,7 +252,7 @@ class PhaseSixApplicationTests(TestCase):
         self.assertIsNotNone(public.challenge)
         self.assertEqual(public.challenge.initiator_team_id, "a")
         self.assertEqual(public.challenge.challenged_team_id, "b")
-        self.assertEqual(public.challenge.grace_remaining_ms, 15_000)
+        self.assertEqual(public.challenge.grace_remaining_ms, 30_000)
 
     def test_routes_reject_grace_answers_then_keep_wrong_answer_context(self):
         client = Client()
@@ -280,7 +280,7 @@ class PhaseSixApplicationTests(TestCase):
         self.assertContains(response, "challenge starting", status_code=409)
 
         Run.objects.filter(pk=self.run_id).update(
-            gameplay_elapsed_ms=15_000,
+            gameplay_elapsed_ms=30_000,
             advent_clock_anchor=None,
         )
         state = get_team_state(self.a, now=NOW)

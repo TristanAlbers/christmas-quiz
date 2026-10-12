@@ -1,60 +1,77 @@
 <div id="question-pane" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
   <input id="view-context" type="hidden" name="view_context" value="{{ view_context }}">
   {% if state.music %}
-    {% include 'quiz/_music_progress.html' with music=state.music %}
-    {% if state.music.phase == 'gathering' %}
-      <section class="music-gathering music-gathering--team" aria-labelledby="music-gathering-title">
-        <span class="music-gathering__note" aria-hidden="true">♫</span>
-        <p class="eyebrow">Muziek Quiz</p>
-        <h2 id="music-gathering-title">Maak je klaar voor de Muziek Quiz</h2>
-        <p>Verzamel je team. Vraag 1 verschijnt zodra de voorbereiding voorbij is.</p>
+    <section class="music-quiz--phone{% if state.music.phase == 'final_results' %} music-quiz--phone--final{% endif %}" aria-label="Muziek Quiz"{% if state.music.phase == 'final_results' and music_winner_team_id %} data-music-finale-winner="{{ music_winner_team_id }}" data-music-finale-run="{{ state.run_id }}"{% endif %}>
+      <p class="music-quiz--phone__kicker">Muziek Quiz</p>
+      {% if state.music.phase == 'gathering' %}
+        <h2>Maak je klaar voor de Muziek Quiz</h2>
+        {% include 'quiz/_music_progress.html' with music=state.music %}
+        <p>Verzamel je team. De eerste vraag verschijnt na de voorbereiding.</p>
         {% if state.global_state == 'PAUSED' %}<p class="music-paused-message">Gepauzeerd · de tijd staat stil</p>{% endif %}
-      </section>
-    {% elif state.music.phase == 'question' %}
-      <h2>{{ state.music.title }}</h2>
-      <p>{{ state.music.body }}</p>
-      {% if state.global_state == 'MUSIC_QUIZ' %}
-        <form method="post" action="{% url 'team_music_answer' %}"
-              hx-post="{% url 'team_music_answer' %}" hx-trigger="submit"
-              hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
-              hx-target="#game-status" hx-swap="innerHTML">
-          {% csrf_token %}
-          <input type="hidden" name="run_id" value="{{ state.run_id }}">
-          <input type="hidden" name="question_id" value="{{ state.music.question_id }}">
-          <input type="hidden" name="request_id" value="{{ music_request_id }}">
-          <label for="music-answer-input">Antwoord</label>
-          <input id="music-answer-input" name="answer" autocomplete="off" required>
-          <button type="submit">Antwoord insturen</button>
-        </form>
+      {% elif state.music.phase == 'question' %}
+        <h2>Herken het lied</h2>
+        {% include 'quiz/_music_progress.html' with music=state.music %}
+        <p class="music-quiz--phone__question">{{ state.music.body }}</p>
+        {% if state.music.title %}<p class="music-quiz--phone__title">{{ state.music.title }}</p>{% endif %}
+        {% if state.global_state == 'MUSIC_QUIZ' %}
+          <form class="music-quiz--phone__form" method="post" action="{% url 'team_music_answer' %}"
+                hx-post="{% url 'team_music_answer' %}" hx-trigger="submit"
+                hx-sync="#live-game:replace" hx-disabled-elt="find button[type='submit']"
+                hx-target="#game-status" hx-swap="innerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="run_id" value="{{ state.run_id }}">
+            <input type="hidden" name="question_id" value="{{ state.music.question_id }}">
+            <input type="hidden" name="request_id" value="{{ music_request_id }}">
+            <label for="music-answer-input">Jullie antwoord</label>
+            <input id="music-answer-input" name="answer" autocomplete="off" placeholder="Titel van het lied" required>
+            <button type="submit">Antwoord insturen</button>
+          </form>
+        {% else %}
+          <p class="music-paused-message">De Muziek Quiz is gepauzeerd. Na hervatten kun je weer antwoorden.</p>
+        {% endif %}
       {% else %}
-        <p>De Muziek Quiz is gepauzeerd. Na hervatten kun je weer antwoorden.</p>
+        <span class="music-finale__seal" aria-hidden="true">✦</span>
+        <p class="music-finale__eyebrow">Eindstand Muziek Quiz</p>
+        {% if music_winner_team_id == viewer_team_id %}
+          <h2>Jullie winnen de Muziek Quiz!</h2>
+          <p class="music-finale__message">Gefeliciteerd! Jullie hebben de meeste liedjes herkend.</p>
+        {% elif music_winner_team_id %}
+          <h2>Team {{ music_winner_team_id|upper }} wint de Muziek Quiz!</h2>
+          <p class="music-finale__message">Goed gespeeld! De Adventrace gaat zo verder.</p>
+        {% else %}
+          <h2>De Muziek Quiz is afgerond!</h2>
+        {% endif %}
+        {% include 'quiz/_music_progress.html' with music=state.music %}
+        <div class="music-finale__return">
+          <span class="music-finale__return-label">Adventquiz gaat verder over</span>
+          <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.final_results_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>00:00</span></time>
+          <p class="music-finale__return-note">De Adventklok staat ondertussen stil.</p>
+        </div>
       {% endif %}
-    {% else %}
-      <h2>Eindstand Muziek Quiz</h2>
-      <p>De eindstand staat op het grote scherm. De Adventquiz gaat automatisch verder.</p>
-    {% endif %}
+    </section>
+    <p class="music-quiz--phone__note">De score en muziekbediening staan op de TV.</p>
   {% elif state.challenge and state.challenge.status == 'active' %}
     <section class="challenge-stage challenge-stage--{{ state.challenge.phase }}" aria-labelledby="challenge-question-title">
-      <div class="challenge-stage__header">
-        <div>
-          <p class="eyebrow">{% if state.challenge.phase == 'starting' %}Voorbereiding uitdaging{% else %}Gezamenlijke race{% endif %}</p>
-          <h2 id="challenge-question-title">{% if state.challenge.phase == 'starting' %}Verzamel je team — de uitdaging begint zo{% else %}{{ state.challenge.question.title }}{% endif %}</h2>
-        </div>
-        <span class="challenge-role challenge-role--{{ state.challenge.role }}">
-          {% if state.challenge.role == 'initiator' %}Jullie zijn deze uitdaging gestart{% else %}Jullie zijn uitgedaagd{% endif %}
-        </span>
-      </div>
+      <header class="challenge-stage__header">
+        <p class="challenge-stage__kicker">Uitdaging · Team A tegen Team B</p>
+        <small class="challenge-stage__role">{% if state.challenge.role == 'initiator' %}Jullie zijn deze uitdaging gestart{% else %}Jullie zijn uitgedaagd{% endif %}</small>
+      </header>
       {% if state.challenge.phase == 'starting' %}
-        <p class="challenge-stage__rules">De puzzel blijft verborgen totdat beide teams tijd hebben gehad om te verzamelen. Niemand kan eerder antwoorden.</p>
-        <p class="music-timer challenge-start-timer" data-remaining-ms="{{ state.challenge.grace_remaining_ms }}">
-          {% if state.global_state == 'PAUSED' %}Gepauzeerd met nog {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% else %}Begint over {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% endif %}
-        </p>
+        <div class="challenge-stage__gathering">
+          <h2 id="challenge-question-title">Verzamel je team — de uitdaging begint zo</h2>
+          <time class="challenge-start-timer" data-challenge-countdown data-remaining-ms="{{ state.challenge.grace_remaining_ms }}" aria-live="off">
+            {% if state.global_state == 'PAUSED' %}Gepauzeerd met nog {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% else %}Begint over {% widthratio state.challenge.grace_remaining_ms 1000 1 %} seconden{% endif %}
+          </time>
+        </div>
       {% else %}
-        <p class="challenge-stage__rules">Het eerste juiste antwoord dat de server accepteert wint. Pogingen zijn onbeperkt en zonder straf.</p>
-        <p class="challenge-stage__question">{{ state.challenge.question.body }}</p>
-        {% for media_url in state.challenge.question.media_urls %}
-          <img class="puzzle-image challenge-image" src="{{ media_url }}" alt="Privé-aanwijzing voor de uitdaging">
-        {% endfor %}
+        <article class="challenge-stage__paper">
+          <span>DE PUZZEL</span>
+          <h2 id="challenge-question-title">{{ state.challenge.question.title }}</h2>
+          <p>{{ state.challenge.question.body }}</p>
+          {% for media_url in state.challenge.question.media_urls %}
+            <img class="puzzle-image challenge-image" src="{{ media_url }}" alt="Privé-aanwijzing voor de uitdaging">
+          {% endfor %}
+        </article>
         {% if state.global_state == 'ADVENT_QUIZ' %}
           <form class="answer-form challenge-answer-form" method="post" action="{% url 'team_challenge_answer' %}"
                 hx-post="{% url 'team_challenge_answer' %}" hx-trigger="submit"
@@ -65,21 +82,18 @@
             <input type="hidden" name="challenge_id" value="{{ state.challenge.id }}">
             <input type="hidden" name="question_id" value="{{ state.challenge.question.id }}">
             <input type="hidden" name="request_id" value="{{ challenge_answer_request_id }}">
-            <label for="challenge-answer-input">Antwoord op de uitdaging</label>
-            <input id="challenge-answer-input" name="answer" autocomplete="off" required>
+            <label for="challenge-answer-input">Jullie antwoord</label>
+            <input id="challenge-answer-input" name="answer" autocomplete="off" placeholder="Typ jullie antwoord" required>
             <button class="button-challenge" type="submit">Antwoord insturen</button>
           </form>
+          <small class="challenge-stage__footnote">Eerste juiste antwoord wint.</small>
         {% else %}
-          <div class="challenge-paused" role="status"><strong>Uitdaging gepauzeerd</strong><span>Je kunt weer antwoorden zodra het spel wordt hervat. Tijdens de pauze kan niemand winnen.</span></div>
+          <div class="challenge-paused" role="status"><strong>Uitdaging gepauzeerd</strong><span>Je kunt weer antwoorden zodra het spel wordt hervat.</span></div>
         {% endif %}
       {% endif %}
     </section>
   {% elif state.team_state == 'FREEZE' %}
-    <div class="freeze-surface" aria-hidden="true">
-      <span class="freeze-surface__crystal freeze-surface__crystal--one">❄</span>
-      <span class="freeze-surface__crystal freeze-surface__crystal--two">❆</span>
-      <span class="freeze-surface__crystal freeze-surface__crystal--three">❅</span>
-    </div>
+    {# No real puzzle, hint, media, or actions are rendered while frozen. #}
   {% elif state.question %}
     <section class="team-advent-panel" aria-labelledby="team-advent-title">
       <article class="team-advent-sheet">
