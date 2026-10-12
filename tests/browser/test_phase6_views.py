@@ -225,7 +225,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         "'[data-tv-challenge-key]')?.scrollTop > 80",
                         timeout=10000,
                     )
-                    await self._screenshot(tv_page, "challenge-long-question-tv-1920x1080")
+                    await self._screenshot(
+                        tv_page, "challenge-long-question-tv-1920x1080"
+                    )
                     self.assertEqual(
                         await tv_page.locator(
                             ".challenge-overview__question"
