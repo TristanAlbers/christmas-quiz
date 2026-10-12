@@ -232,6 +232,9 @@ jobs:
           python -m pip install -r requirements.lock -r requirements-dev.lock
           python -m playwright install --with-deps webkit
 
+      - name: Build production-style static manifest
+        run: python manage.py collectstatic --noinput
+
       - name: Test real Reverse purchase and rejection in WebKit
         run: python manage.py test tests.browser.test_issue31_reverse --verbosity 2
 
