@@ -36,7 +36,7 @@ from quiz.models import (
 from quiz.persistence import immediate_transaction
 
 NOW = datetime(2026, 12, 24, 18, 0, tzinfo=datetime_timezone.utc)
-GRACE_END = NOW + timedelta(seconds=15)
+GRACE_END = NOW + timedelta(seconds=30)
 
 
 class PhaseSixProductionCommandRaceTests(TransactionTestCase):
@@ -214,7 +214,7 @@ class PhaseSixProductionCommandRaceTests(TransactionTestCase):
         self.assertEqual(challenge.winner_team_id, "a")
         self.assertTrue(challenge.freeze_applied)
         self.assertEqual(loser.activity_state, "FREEZE")
-        self.assertEqual(loser.freeze_started_gameplay_ms, 15_000)
+        self.assertEqual(loser.freeze_started_gameplay_ms, 30_000)
         correct_attempts = ChallengeAttempt.objects.filter(
             challenge=challenge, is_correct=True
         ).count()
@@ -239,7 +239,7 @@ class PhaseSixProductionCommandRaceTests(TransactionTestCase):
             "won",
         )
         loser.refresh_from_db()
-        self.assertEqual(loser.freeze_started_gameplay_ms, 15_000)
+        self.assertEqual(loser.freeze_started_gameplay_ms, 30_000)
         attempts = ChallengeAttempt.objects.filter(challenge=challenge).count()
         self.assertEqual(attempts, 1)
 
@@ -274,7 +274,7 @@ class PhaseSixProductionCommandRaceTests(TransactionTestCase):
                 second,
                 str(uuid4()),
                 "5",
-                second_start + timedelta(seconds=14),
+                second_start + timedelta(seconds=29),
             ),
             "challenge_starting",
         )
@@ -284,7 +284,7 @@ class PhaseSixProductionCommandRaceTests(TransactionTestCase):
                 second,
                 str(uuid4()),
                 "5",
-                second_start + timedelta(seconds=15),
+                second_start + timedelta(seconds=30),
             ),
             "won",
         )

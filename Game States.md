@@ -61,6 +61,6 @@ end
 |---    |---            |
 |**Ready**| Not able to open advent boxes yet. Before a run exists this is a waiting condition; Start initializes the team's durable run state and moves it to **Puzzle**.|
 |**Puzzle**| Normal quiz progression, advent boxes are interactable, answers can be submitted, powerups can be bought, essentially all functionality is available|
-|**Challenge**| Both teams join the same Challenge puzzle after the server-authoritative 15-second gathering period. The initiator spends its once-per-game opportunity **for free**. No shop or Advent progression is available during the Challenge. The first server-accepted correct answer wins; only an initiator win freezes the challenged team on return to Advent. |
+|**Challenge**| Both teams join the same Challenge puzzle after the server-authoritative 30-second gathering period. The initiator spends its once-per-game opportunity **for free**. No shop or Advent progression is available during the Challenge. The first server-accepted correct answer wins; only an initiator win freezes the challenged team on return to Advent. |
 |**Freeze**| Not able to interact with the game at all, essentially a pause button for a single team. No shop, no advent boxes. After 5 minutes you will return to the **Puzzle** state|
 |**Finished**| This **team** has completed puzzle 25 and cannot perform further gameplay actions. The other team remains playable until it also completes puzzle 25. The Game Master may use only supported administrative recovery/Reset commands. |

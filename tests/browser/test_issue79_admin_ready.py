@@ -225,6 +225,30 @@ class GameMasterReadyBrowserTests(LiveServerTestCase):
                     await page.mouse.up()
                     await page.get_by_role("button", name="Spel pauzeren").wait_for()
                     self.assertEqual(await page.locator("#package-id").count(), 0)
+                    # #84 visual smoke uses the actual authenticated Django
+                    # page, not the standalone Game Master design prototype.
+                    self.assertEqual(
+                        await page.locator(".gm-admin-team-panel").count(), 2
+                    )
+                    self.assertEqual(
+                        await page.locator(".gm-admin-team-panel .advent-door").count(),
+                        50,
+                    )
+                    self.assertEqual(
+                        await page.get_by_role(
+                            "button", name="Hele spel resetten"
+                        ).count(),
+                        1,
+                    )
+                    for width in (1024, 390):
+                        await page.set_viewport_size({"width": width, "height": 900})
+                        await page.wait_for_timeout(80)
+                        self.assertLessEqual(
+                            await page.evaluate("document.documentElement.scrollWidth"),
+                            width + 1,
+                        )
+                        await self._screenshot(page, f"admin-live-issue84-{width}")
+                    await page.set_viewport_size({"width": 390, "height": 844})
                     await self._screenshot(page, "admin-after-start-390")
                     run_id = await asyncio.to_thread(
                         lambda: str(Run.objects.get(active=True).id)

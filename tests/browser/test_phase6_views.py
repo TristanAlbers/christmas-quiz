@@ -55,6 +55,13 @@ class PhaseSixBrowserTests(LiveServerTestCase):
             client.force_login(user)
             self.cookies[name] = client.cookies["sessionid"].value
 
+    async def _screenshot(self, page, name):
+        directory = os.environ.get("UI82_SCREENSHOT_DIR")
+        if directory:
+            output = Path(directory)
+            output.mkdir(parents=True, exist_ok=True)
+            await page.screenshot(path=str(output / f"{name}.png"))
+
     async def _page(self, browser, path, viewport, cookie=None):
         context = await browser.new_context(viewport=viewport)
         if cookie:
@@ -156,6 +163,31 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await tv_page.locator(".public-calendar-grid").count(), 0
                     )
+                    self.assertNotIn("gloeiende rode neus", tv_starting.lower())
+                    self.assertNotIn("rudolph", tv_starting.lower())
+                    for page in (a_page, b_page):
+                        stage_text = await page.locator(".challenge-stage").inner_text()
+                        self.assertNotIn("gloeiende rode neus", stage_text.lower())
+                    # Both phones and the TV must visibly count down from 30
+                    # without replacing the stable phone question pane.
+                    initial_seconds = []
+                    for page in (a_page, b_page, tv_page):
+                        seconds = await page.locator(
+                            "[data-challenge-countdown]"
+                        ).evaluate("el => Number(el.textContent.match(/\\d+/)?.[0])")
+                        self.assertGreaterEqual(seconds, 27)
+                        self.assertLessEqual(seconds, 30)
+                        initial_seconds.append(seconds)
+                    await self._screenshot(tv_page, "challenge-gathering-tv-1920x1080")
+                    await self._screenshot(a_page, "challenge-gathering-phone-390x844")
+                    await a_page.wait_for_timeout(1300)
+                    for page, initial in zip(
+                        (a_page, b_page, tv_page), initial_seconds
+                    ):
+                        seconds = await page.locator(
+                            "[data-challenge-countdown]"
+                        ).evaluate("el => Number(el.textContent.match(/\\d+/)?.[0])")
+                        self.assertLess(seconds, initial)
 
                     await self._finish_grace_period()
                     for page in (a_page, b_page):
@@ -168,6 +200,161 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     tv_live = await tv_page.locator(".challenge-overview").inner_text()
                     self.assertIn("gloeiende rode neus", tv_live)
                     self.assertIn("Het eerste juiste antwoord", tv_live)
+                    self.assertNotIn("rudolph", tv_live.lower())
+                    self.assertNotIn("challenge-a-reindeer", tv_live)
+                    # The test advances the 30-second grace artificially; let the
+                    # genuine short-lived start notification expire before capture.
+                    await a_page.get_by_text(
+                        "De uitdaging begint. Verzamel je team!", exact=True
+                    ).wait_for(state="hidden", timeout=7000)
+                    # Visibility is a geometry requirement: DOM text can be
+                    # present yet hidden by the card's constrained flex box.
+                    body_visibility = await tv_page.locator(
+                        ".challenge-overview__body-scroll p"
+                    ).evaluate("""el => {
+                        const text = el.getBoundingClientRect();
+                        const reader = el.parentElement.getBoundingClientRect();
+                        const card = el.closest(
+                            ".challenge-overview__question"
+                        ).getBoundingClientRect();
+                        return {
+                            height: text.height,
+                            visible: Math.min(text.bottom, reader.bottom, card.bottom)
+                                - Math.max(text.top, reader.top, card.top),
+                        };
+                    }""")
+                    self.assertGreater(body_visibility["height"], 35)
+                    self.assertGreaterEqual(
+                        body_visibility["visible"],
+                        body_visibility["height"] - 2,
+                    )
+                    await self._screenshot(tv_page, "challenge-active-tv-1920x1080")
+                    # Recreate the user's 1731x863 screenshot viewport as
+                    # well as the reference's full-HD TV target.
+                    await tv_page.set_viewport_size(
+                        {"width": 1731, "height": 863}
+                    )
+                    clipped = await tv_page.locator(
+                        ".challenge-overview__body-scroll p"
+                    ).evaluate("""el => {
+                        const p = el.getBoundingClientRect();
+                        const r = el.parentElement.getBoundingClientRect();
+                        return Math.max(0, p.bottom - r.bottom);
+                    }""")
+                    self.assertLessEqual(clipped, 2)
+                    tv_layout = await tv_page.evaluate("""() => {
+                        const rect = selector => document.querySelector(
+                            selector
+                        ).getBoundingClientRect();
+                        return {
+                            liveBottom: rect(".challenge-overview__live").bottom,
+                            stageTop: rect(".challenge-overview__stage").top,
+                            stageBottom: rect(".challenge-overview__stage").bottom,
+                            sealBottom: rect(".challenge-overview__seal").bottom,
+                            footerTop: rect(".challenge-overview__footer").top,
+                        };
+                    }""")
+                    self.assertLessEqual(
+                        tv_layout["liveBottom"], tv_layout["stageTop"]
+                    )
+                    self.assertLess(
+                        tv_layout["sealBottom"], tv_layout["stageBottom"]
+                    )
+                    self.assertLessEqual(
+                        tv_layout["stageBottom"], tv_layout["footerTop"]
+                    )
+                    await self._screenshot(tv_page, "challenge-active-tv-1731x863")
+                    await tv_page.set_viewport_size(
+                        {"width": 1920, "height": 1080}
+                    )
+                    # A longer public question must remain readable on an
+                    # unattended TV even through 500ms HTMX replacements.
+                    # Stress only the rendered public text, not game authority.
+                    long_body = ("Een vraag voor beide teams. " * 90).strip()
+                    await tv_page.evaluate(
+                        """body => {
+                            const render = () => {
+                                const card = document.querySelector(
+                                    "[data-tv-challenge-key]"
+                                );
+                                if (card) card.querySelector("p").textContent = body;
+                            };
+                            window.__longTvQuestion = event => {
+                                if (event.detail.target?.id === "overview-state") {
+                                    render();
+                                }
+                            };
+                            document.body.addEventListener(
+                                "htmx:afterSwap", window.__longTvQuestion
+                            );
+                            render();
+                        }""",
+                        long_body,
+                    )
+                    self.assertGreater(
+                        await tv_page.locator("[data-tv-challenge-key]").evaluate(
+                            "el => el.scrollHeight - el.clientHeight"
+                        ),
+                        300,
+                    )
+                    heading_y = await tv_page.locator(
+                        ".challenge-overview__question h3"
+                    ).evaluate("el => el.getBoundingClientRect().top")
+                    await tv_page.wait_for_function(
+                        "() => document.querySelector("
+                        "'[data-tv-challenge-key]')?.scrollTop > 80",
+                        timeout=10000,
+                    )
+                    # A long title now shares the automatic reading flow
+                    # with the body instead of clipping the latter.
+                    self.assertLess(
+                        await tv_page.locator(
+                            ".challenge-overview__question h3"
+                        ).evaluate("el => el.getBoundingClientRect().top"),
+                        heading_y - 50,
+                    )
+                    card_bottom = await tv_page.locator(
+                        ".challenge-overview__question"
+                    ).evaluate("el => el.getBoundingClientRect().bottom")
+                    seal_top = await tv_page.locator(
+                        ".challenge-overview__seal"
+                    ).evaluate("el => el.getBoundingClientRect().top")
+                    self.assertLess(card_bottom, seal_top)
+                    await self._screenshot(
+                        tv_page, "challenge-long-question-tv-1920x1080"
+                    )
+                    self.assertEqual(
+                        await tv_page.locator(
+                            ".challenge-overview__question"
+                        ).count(),
+                        1,
+                    )
+                    await tv_page.evaluate(
+                        """() => document.body.removeEventListener(
+                            "htmx:afterSwap", window.__longTvQuestion
+                        )"""
+                    )
+                    # Compare computed typography against the approved #74
+                    # Advent phone sizes rather than trusting visual scaling.
+                    for selector, minimum_px in (
+                        (".challenge-stage__paper h2", 28.7),
+                        (".challenge-stage__paper p", 19.0),
+                        (".challenge-answer-form label", 15.0),
+                        ("#challenge-answer-input", 16.0),
+                        (".challenge-answer-form button", 16.0),
+                    ):
+                        rendered_px = await a_page.locator(selector).evaluate(
+                            "el => parseFloat(getComputedStyle(el).fontSize)"
+                        )
+                        self.assertGreaterEqual(
+                            rendered_px, minimum_px, selector
+                        )
+                    self.assertTrue(
+                        await a_page.evaluate(
+                            "document.documentElement.scrollWidth <= innerWidth"
+                        )
+                    )
+                    await self._screenshot(a_page, "challenge-active-phone-390x844")
 
                     answer = a_page.locator("#challenge-answer-input")
                     request_id = a_page.locator(

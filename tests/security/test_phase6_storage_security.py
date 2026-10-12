@@ -185,7 +185,7 @@ class PhaseSixChallengeMediaSecurityTests(TestCase):
                 self.client.force_login(team_user)
                 self.assertEqual(self.client.get(url).status_code, 404)
 
-                Run.objects.filter(pk=run.pk).update(gameplay_elapsed_ms=15_000)
+                Run.objects.filter(pk=run.pk).update(gameplay_elapsed_ms=30_000)
                 revealed = self.client.get(url)
                 self.assertEqual(revealed.status_code, 200)
                 self.assertEqual(

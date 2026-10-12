@@ -179,3 +179,9 @@ display-only ticker may interpolate between snapshots and must respect
 Pause/Resume. The server exclusively determines the Advent-resume
 transition, including after reload or recovery. The TV uses the same
 display-only countdown principle.
+
+## 2026-10-12 — Challenge gathering lasts 30 seconds
+
+The product owner changes the earlier **15-second** Challenge gathering period to **30 seconds**. This is the authoritative grace duration for every Challenge and overrides the 2026-09-25 duration only; all previously approved costs, eligibility, per-initiator puzzles, one-opportunity-per-team rule, first-correct result, Pause/restart recovery, Freeze outcomes, and privacy guarantees are unchanged.
+
+Both team phones and the public TV must visibly count down from the latest server-authoritative remaining time. A display-only tick may interpolate between the existing 500 ms polls, but it cannot reveal the question or enable an answer before the server ends gathering. The active TV shows both the public shared puzzle title **and the full readable question body**; the layout may scroll long shared text automatically without hiding the ordinary question or overlapping other TV content.

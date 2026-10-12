@@ -13,7 +13,7 @@ from .answers import evaluate_answer
 from .phase3 import EffectTeamState, apply_direct_freeze, reconcile_freeze
 from .types import DomainError
 
-CHALLENGE_GRACE_PERIOD_MS = 15_000
+CHALLENGE_GRACE_PERIOD_MS = 30_000
 
 ChallengeEligibilityReason = Literal[
     "opportunity_spent",
