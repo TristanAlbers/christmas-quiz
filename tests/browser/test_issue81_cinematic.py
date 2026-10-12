@@ -233,3 +233,112 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                     await bb.close()
 
         asyncio.run(check())
+
+    def test_open_shop_cannot_cover_reverse_film(self):
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                (ba, ca, a), (bb, cb, b) = await self.open_phones(playwright)
+                try:
+                    await a.get_by_role("button", name="Winkel").click()
+                    await a.get_by_role(
+                        "button", name="Uno Reverse kopen (2)"
+                    ).click()
+                    await a.locator("#team-shop-dialog").wait_for(
+                        state="hidden", timeout=5000
+                    )
+                    # Protected team deliberately leaves a top-layer dialog open.
+                    await a.get_by_role("button", name="Winkel").click()
+                    self.assertTrue(
+                        await a.locator("#team-shop-dialog").evaluate("el => el.open")
+                    )
+                    await b.get_by_role("button", name="Winkel").click()
+                    await b.get_by_role(
+                        "button", name="Andere team bevriezen (3)"
+                    ).click()
+                    saved = a.locator("#gameplay-event.gameplay-event--saved")
+                    await saved.wait_for(state="visible", timeout=6000)
+                    self.assertFalse(
+                        await a.locator("#team-shop-dialog").evaluate("el => el.open")
+                    )
+                    self.assertTrue(await a.evaluate(
+                        "document.body.classList.contains('gameplay-film-active')"
+                    ))
+                    # Poll/OOB team-actions replacements must not reopen the modal.
+                    await a.wait_for_timeout(900)
+                    self.assertFalse(
+                        await a.locator("#team-shop-dialog").evaluate("el => el.open")
+                    )
+                    await saved.wait_for(state="hidden", timeout=7000)
+                    self.assertFalse(
+                        await a.locator("#team-shop-dialog").evaluate("el => el.open")
+                    )
+                    self.assertEqual(await a.locator("#answer-input").count(), 1)
+                finally:
+                    await ca.close()
+                    await ba.close()
+                    await cb.close()
+                    await bb.close()
+
+        asyncio.run(check())
+
+    def test_reduced_motion_delays_outcome_and_speaks_stages_in_order(self):
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                (ba, ca, a), (bb, cb, b) = await self.open_phones(playwright)
+                try:
+                    await b.emulate_media(reduced_motion="reduce")
+                    await b.evaluate("""() => {
+                      window.__filmSpeech = [];
+                      const el = document.getElementById(
+                        'gameplay-film-announcement'
+                      );
+                      new MutationObserver(() => {
+                        window.__filmSpeech.push(el.textContent);
+                      }).observe(el, {childList: true, subtree: true});
+                    }""")
+                    await a.get_by_role("button", name="Winkel").click()
+                    await a.get_by_role(
+                        "button", name="Andere team bevriezen (3)"
+                    ).click()
+                    victim = b.locator("#gameplay-event.gameplay-event--victim")
+                    await victim.wait_for(state="visible", timeout=6000)
+                    self.assertEqual(await victim.get_attribute("aria-hidden"), "true")
+                    self.assertEqual(
+                        await b.locator("#gameplay-film-announcement").get_attribute(
+                            "aria-live"
+                        ),
+                        "assertive",
+                    )
+                    reduced = await victim.locator(
+                        ".gameplay-event__stage--impact"
+                    ).evaluate("""el => {
+                      const effect = el.getAnimations()[0].effect;
+                      return {
+                        delay: effect.getTiming().delay,
+                        fill: effect.getTiming().fill,
+                        initialOpacity: effect.getKeyframes()[0].opacity
+                      };
+                    }""")
+                    self.assertEqual(reduced, {
+                        "delay": 1800,
+                        "fill": "both",
+                        "initialOpacity": "0",
+                    })
+                    await b.wait_for_function(
+                        "window.__filmSpeech.some(t => t.includes('IJSAANVAL!'))",
+                        timeout=6500,
+                    )
+                    spoken = await b.evaluate("window.__filmSpeech")
+                    self.assertTrue(spoken[0].startswith("PAS OP!"))
+                    self.assertTrue(any(t.startswith("IJSAANVAL!") for t in spoken[1:]))
+                finally:
+                    await ca.close()
+                    await ba.close()
+                    await cb.close()
+                    await bb.close()
+
+        asyncio.run(check())
