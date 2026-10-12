@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import asyncio
 
 from tests.browser.issue31_support import Issue31BrowserCase
@@ -35,6 +38,39 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                         "3s",
                     )
                     self.assertFalse(await a.locator("#gameplay-event").is_visible())
+
+                    # The animation must use the same vector arrows as the shop,
+                    # never an OS-dependent Unicode glyph on iOS/Android.
+                    symbol = purchase.locator(".reverse-purchase__symbol")
+                    self.assertEqual((await symbol.inner_text()).strip(), "")
+                    purchase_paths = await symbol.locator("svg path").evaluate_all(
+                        "(paths) => paths.map(p => p.getAttribute('d'))"
+                    )
+                    shop_paths = await a.locator(
+                        ".shop-item--reverse .resource-reverse-card__symbol svg path"
+                    ).evaluate_all(
+                        "(paths) => paths.map(p => p.getAttribute('d'))"
+                    )
+                    self.assertEqual(len(purchase_paths), 2)
+                    self.assertEqual(purchase_paths, shop_paths)
+                    self.assertTrue(await symbol.locator("svg").is_visible())
+                    self.assertEqual(
+                        await symbol.evaluate(
+                            "el => getComputedStyle(el).animationName"
+                        ),
+                        "reverse-purchase-symbol",
+                    )
+                    screenshot_dir = os.environ.get("REVERSE_ANIMATION_SCREENSHOT_DIR")
+                    if screenshot_dir:
+                        Path(screenshot_dir).mkdir(parents=True, exist_ok=True)
+                        await a.wait_for_timeout(1250)
+                        engine = os.environ.get("ISSUE31_BROWSER_ENGINE", "chromium")
+                        await a.screenshot(
+                            path=str(
+                                Path(screenshot_dir)
+                                / f"reverse-purchase-{engine}-390x844.png"
+                            )
+                        )
 
                     await b.locator("[aria-controls='team-shop-dialog']").click()
                     await b.get_by_role(
