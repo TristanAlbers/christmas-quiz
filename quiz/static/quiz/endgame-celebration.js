@@ -13,6 +13,7 @@
   const currentTeam = (document.body.dataset.teamId || "").toLowerCase();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let hideTimer = null;
+  let finalObserved = false;
 
   function marker() {
     return document.querySelector("[data-endgame-state]");
@@ -136,11 +137,23 @@
     const winner = (stateMarker.dataset.endgameWinner || "").trim().toLowerCase();
     const key = storageKey(stateMarker);
     if (stateMarker.dataset.endgameFinal === "true") {
+      // Announce only a live transition, never a historical finish on reload.
+      // The first finisher already heard "Jullie winnen!" when they finished.
+      if (!initial && !finalObserved && surface === "team" &&
+          currentTeam !== winner &&
+          stateMarker.classList.contains("state-panel-finished")) {
+        const announcement = document.getElementById("game-announcement");
+        if (announcement) {
+          announcement.textContent = "Jullie zijn klaar! Alle 25 adventvakjes zijn voltooid.";
+        }
+      }
+      finalObserved = true;
       window.clearTimeout(hideTimer);
       hideCelebration();
       if (winner) remember(key, winner);
       return;
     }
+    finalObserved = false;
     if (!winner) {
       forget(key);
       return;
