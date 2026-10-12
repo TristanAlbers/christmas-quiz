@@ -169,25 +169,35 @@
   border-color: transparent;
   background: transparent;
 }
+/* The shop's miniature card has one centered symbol. Do not inherit the
+   rotated oval and three-row lettering layout of the larger resource card. */
 .shop-dialog--midnight .shop-item__glyph .resource-reverse-card {
-  width: 1.7rem;
-  padding: .11rem;
-  border-width: .11rem;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 1fr;
+  place-items: center;
+  width: 1.9rem;
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  border-width: .12rem;
   border-radius: .3rem;
-  background: radial-gradient(ellipse at center, #fff6d4 0 30%, transparent 31%), linear-gradient(145deg, #e44435, #b72025 65%, #7e131e);
+  background: linear-gradient(145deg, #e44435, #b72025 65%, #7e131e);
+  transform: none;
 }
-.shop-dialog--midnight .shop-item__glyph .resource-reverse-card__brand,
-.shop-dialog--midnight .shop-item__glyph .resource-reverse-card__name {
-  font-size: .22rem;
+.shop-dialog--midnight .shop-item__glyph .resource-reverse-card::before {
+  display: none;
 }
 .shop-dialog--midnight .shop-item__glyph .resource-reverse-card__symbol {
-  width: 1.2rem;
-  height: 1.55rem;
-  border-width: .1rem;
+  box-sizing: border-box;
+  width: 1.28rem;
+  height: 1.6rem;
+  border-width: .09rem;
+  border-radius: 50%;
+  transform: none;
 }
 .shop-dialog--midnight .shop-item__glyph .resource-reverse-card__symbol svg {
-  width: 1.07rem;
-  height: 1.3rem;
+  width: 1rem;
+  height: 1.25rem;
 }
 .shop-dialog--midnight .shop-item__details {
   display: grid;
