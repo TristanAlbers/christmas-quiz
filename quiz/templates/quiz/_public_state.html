@@ -73,10 +73,12 @@
           {% if state.global_state == 'PAUSED' %}<p class="challenge-overview__paused">Gepauzeerd · de tijd staat stil</p>{% endif %}
         {% else %}
           <h2>Dezelfde puzzel. Eén winnaar.</h2>
-          <div class="challenge-overview__question" data-tv-challenge-key="{{ state.run_id }}:{{ state.challenge.challenge_number }}">
+          <div class="challenge-overview__question">
             <span>DE PUZZEL · OOK OP DE TELEFOONS</span>
             <h3>{{ state.challenge.title }}</h3>
-            <p>{{ state.challenge.body }}</p>
+            <div class="challenge-overview__body-scroll" data-tv-challenge-key="{{ state.run_id }}:{{ state.challenge.challenge_number }}">
+              <p>{{ state.challenge.body }}</p>
+            </div>
           </div>
         {% endif %}
         <p class="challenge-overview__seal">Het eerste juiste antwoord wint</p>
