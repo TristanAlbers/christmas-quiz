@@ -196,3 +196,10 @@
   visibility: hidden;
   pointer-events: none;
 }
+
+/* TV operator sound testing stays operable during a paused Music question;
+   Music playback itself remains paused at the authoritative position. */
+.game-page--overview:has(.pause-veil--tv):has(.public-status--music) #overview-audio-player {
+  position: relative;
+  z-index: 901;
+}
