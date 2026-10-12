@@ -115,13 +115,13 @@ class Issue41DutchFirstBrowserTests(LiveServerTestCase):
                     {"width": 768, "height": 1024},
                 )
                 try:
-                    await admin.get_by_role("heading", name="Game Master").wait_for()
+                    await admin.get_by_role("heading", name="De regietafel").wait_for()
                     admin_lang = await admin.locator("html").get_attribute("lang")
                     self.assertEqual(admin_lang, "nl")
                     admin_text = await admin.locator("body").inner_text()
-                    self.assertIn("huidige spelstatus", admin_text.lower())
+                    self.assertIn("lopende spelronde", admin_text.lower())
                     self.assertIn("Adventquiz", admin_text)
-                    self.assertIn("Bediening Team A", admin_text)
+                    self.assertIn("team a bedienen", admin_text.lower())
                     self.assertNotIn("ADVENT_QUIZ", admin_text)
                     self.assertNotIn("PUZZLE", admin_text)
                     self.assertNotIn("Authoritative game state", admin_text)
