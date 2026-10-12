@@ -195,12 +195,51 @@ jobs:
           path: artifacts/ui-79/*.png
           if-no-files-found: warn
 
+  webkit-reverse:
+    name: WebKit Reverse purchase
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DJANGO_SETTINGS_MODULE: config.test_settings
+      DJANGO_SECRET_KEY: ci-only-not-used-in-production
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_DEBUG: "false"
+      TEST_DATABASE_PATH: /tmp/christmas-quiz-webkit.sqlite3
+      ISSUE31_BROWSER_ENGINE: webkit
+      REVERSE_ANIMATION_SCREENSHOT_DIR: artifacts/ui-75-webkit
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies and WebKit
+        run: |
+          python -m pip install -r requirements.lock -r requirements-dev.lock
+          python -m playwright install --with-deps webkit
+
+      - name: Test real Reverse purchase and rejection in WebKit
+        run: python manage.py test tests.browser.test_issue31_reverse --verbosity 2
+
+      - name: Save WebKit purchase animation screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-75-webkit
+          path: artifacts/ui-75-webkit/*.png
+          if-no-files-found: warn
+
   quality-and-tests:
     name: Quality and tests
     if: always()
     needs:
       - fast-tests
       - browser-tests
+      - webkit-reverse
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -209,6 +248,8 @@ jobs:
         env:
           FAST_RESULT: ${{ needs.fast-tests.result }}
           BROWSER_RESULT: ${{ needs.browser-tests.result }}
+          WEBKIT_RESULT: ${{ needs.webkit-reverse.result }}
         run: |
           test "$FAST_RESULT" = "success"
           test "$BROWSER_RESULT" = "success"
+          test "$WEBKIT_RESULT" = "success"
