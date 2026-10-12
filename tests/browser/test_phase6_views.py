@@ -193,6 +193,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     # A longer public question must remain readable on an
                     # unattended TV even through 500ms HTMX replacements.
                     # Stress only the rendered public text, not game authority.
+                    heading_y = await tv_page.locator(
+                        ".challenge-overview__question h3"
+                    ).evaluate("el => el.getBoundingClientRect().top")
                     long_body = ("Een vraag voor beide teams. " * 90).strip()
                     await tv_page.evaluate(
                         """body => {
@@ -224,6 +227,13 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         "() => document.querySelector("
                         "'[data-tv-challenge-key]')?.scrollTop > 80",
                         timeout=10000,
+                    )
+                    self.assertAlmostEqual(
+                        heading_y,
+                        await tv_page.locator(
+                            ".challenge-overview__question h3"
+                        ).evaluate("el => el.getBoundingClientRect().top"),
+                        delta=1,
                     )
                     await self._screenshot(
                         tv_page, "challenge-long-question-tv-1920x1080"
