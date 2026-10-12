@@ -9,11 +9,20 @@
     {% endif %}{% endif %}
     {% if not state.music and state.team_state == 'FREEZE' %}
       <section class="freeze-message" role="group" aria-label="Team {{ viewer_team_id|upper }} is bevroren">
-        <span class="freeze-message__icon" aria-hidden="true">❄</span>
-        <p class="freeze-message__eyebrow">IJSBLOKKADE</p>
-        <h2>BEVROREN</h2>
-        <p class="freeze-message__description"><span>Jullie team is bevroren</span><span>Even wachten tot het ijs smelt.</span></p>
-        <p class="freeze-timer" aria-label="Resterende bevriezingstijd" data-remaining-ms="{{ state.freeze_remaining_ms }}">{{ state.freeze_remaining_ms|remaining_mmss }}</p>
+        <p class="freeze-message__brand">QUIZZMASS <span aria-hidden="true">✦</span> 2026</p>
+        <div class="freeze-message__crest" aria-hidden="true">
+          <span class="freeze-message__crest-star freeze-message__crest-star--left">✧</span>
+          <span class="freeze-message__icon">❄</span>
+          <span class="freeze-message__crest-star freeze-message__crest-star--right">✧</span>
+        </div>
+        <p class="freeze-message__eyebrow">O NEE, EEN IJSSPREUK!</p>
+        <h2>BEVROREN<span aria-hidden="true">!</span></h2>
+        <p class="freeze-message__description"><strong>Jullie team is bevroren</strong><span>Brrr... de kerstmagie komt zo terug.</span></p>
+        <div class="freeze-message__clock">
+          <p class="freeze-message__clock-label">HET IJS SMELT OVER</p>
+          <p class="freeze-timer" aria-label="Resterende bevriezingstijd" data-remaining-ms="{{ state.freeze_remaining_ms }}">{{ state.freeze_remaining_ms|remaining_mmss }}</p>
+          <p class="freeze-message__clock-foot" aria-hidden="true">✦ &nbsp; HOU NOG EVEN VOL &nbsp; ✦</p>
+        </div>
       </section>
     {% else %}
       {% if first_finisher_team_id %}<aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% elif state.team_state == 'FINISHED' %} finish-banner--winner{% else %} finish-banner--runner-up{% endif %}" role="status">{% if state.global_state == 'FINISHED' %}<p class="eyebrow">Race afgerond</p><h2>Team {{ first_finisher_team_id|upper }} was als eerste klaar</h2><p>Beide teams hebben alle 25 adventvakjes voltooid.</p>{% elif state.team_state == 'FINISHED' %}<p class="eyebrow">Winnaar adventrace</p><h2>Jullie hebben de adventrace gewonnen!</h2><p>Het andere team speelt verder totdat ook hun kalender compleet is.</p>{% else %}<p class="eyebrow">Uitslag</p><h2>Team {{ first_finisher_team_id|upper }} heeft de kalender voltooid</h2><p>Ga door: jullie huidige puzzel blijft actief.</p>{% endif %}</aside>{% endif %}
