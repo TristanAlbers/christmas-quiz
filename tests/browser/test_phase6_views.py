@@ -116,6 +116,10 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                 )
                 try:
                     await a_page.get_by_role("button", name="Winkel").click()
+                    # Reproduce the opponent's shop staying open through the
+                    # authoritative Challenge takeover and 500 ms action swap.
+                    await b_page.get_by_role("button", name="Winkel").click()
+                    await b_page.locator("#team-shop-dialog[open]").wait_for()
                     challenge_item = a_page.locator(".shop-item--challenge")
                     challenge_text = await challenge_item.inner_text()
                     self.assertIn("gratis en beschikbaar", challenge_text)
@@ -138,12 +142,21 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     )
                     await start.click()
 
-                    for page in (a_page, b_page):
+                    for page, team_id in ((a_page, "A"), (b_page, "B")):
                         stage = page.locator(".challenge-stage--starting")
                         await stage.wait_for(timeout=5000)
+                        await page.locator("#team-shop-dialog").wait_for(
+                            state="detached", timeout=5000
+                        )
+                        self.assertEqual(
+                            await page.locator(".shop-item").count(), 0
+                        )
                         self.assertEqual(
                             await page.locator("#challenge-answer-input").count(), 0
                         )
+                        status = page.locator(".challenge-status--active strong")
+                        self.assertIn(f"Team {team_id}", await status.inner_text())
+                        self.assertTrue(await status.is_visible())
                     self.assertIn(
                         "Jullie zijn de uitdaging gestart",
                         await a_page.locator(".challenge-status--active").inner_text(),
@@ -385,6 +398,27 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         ),
                         320,
                     )
+                    self.assertGreater(
+                        await phone.evaluate(
+                            "document.documentElement.scrollHeight"
+                        ),
+                        720,
+                    )
+                    clock = phone.locator(".team-advent-meta")
+                    self.assertTrue(await clock.evaluate(
+                        "el => getComputedStyle(el).position === 'absolute'"
+                    ))
+                    self.assertTrue(await clock.evaluate(
+                        "el => el.offsetParent.classList.contains('app-shell')"
+                    ))
+                    clock_before = (await clock.bounding_box())["y"]
+                    await phone.evaluate(
+                        "window.scrollTo(0, document.documentElement.scrollHeight)"
+                    )
+                    await phone.wait_for_function("window.scrollY > 30")
+                    clock_after = (await clock.bounding_box())["y"]
+                    self.assertLess(clock_after, clock_before - 30)
+
                     await phone.reload()
                     await phone.locator("#challenge-answer-input").wait_for(
                         timeout=5000
