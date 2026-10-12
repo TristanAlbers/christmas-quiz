@@ -108,7 +108,7 @@
     function syncFrozenSurface() {
       const backdrop = document.getElementById('freeze-backdrop');
       if (!backdrop) return;
-      const frozen = Boolean(document.querySelector('#game-status .state-panel-freeze'));
+      const frozen = Boolean(document.querySelector('#game-status .freeze-message'));
       const wasFrozen = backdrop.dataset.active === '1';
       // A refreshed frozen page shows its settled state; only a new Freeze
       // transition plays the short crystal-forming animation.
