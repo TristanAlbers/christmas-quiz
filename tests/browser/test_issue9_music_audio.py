@@ -264,8 +264,11 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                     for number in range(2, 12):
                         await asyncio.to_thread(self._answer_music, number)
                     await page.get_by_text(
-                        "Eindstand Muziek Quiz", exact=False
+                        "Winnaar Muziek Quiz", exact=True
                     ).wait_for(timeout=5000)
+                    self.assertEqual(
+                        await page.locator(".music-stage--final_results").count(), 1
+                    )
                     await page.get_by_role("heading", name="Geluid klaar").wait_for(
                         timeout=5000
                     )

@@ -131,6 +131,55 @@ Explicit presentation refinements of older view wording:
 
 Standalone design prototypes are references, **not** production code or permission to hardcode sample values. This UI decision does not authorize a frontend framework migration, game-engine rewrite, new admin powers, or weakening existing tests.
 
+## 2026-10-12 — Music gathering and final results are visually distinct
+
+The approved dark Midnight Advent presentation covers the full Music lifecycle,
+including the gathering countdown and the final-results interstitial. The
+preparation countdown must have strong light-on-dark contrast, not the former
+pastel Advent component colors.
+
+The active Music question remains minimal on team phones under the 2026-09-24
+decision. **Once question 11 is resolved**, the separate phone final-results
+screen may show a prominent Music winner announcement, a celebratory one-shot
+effect for the winning team, and a live countdown until Advent resumes. This
+is distinct from the normal active-question *status area* prohibition on a
+final-results countdown. The other team sees a respectful completion state,
+without falsely being declared the Music winner; phone views do not expose
+Music scores or opponent-private game information.
+
+The TV is the shared scoreboard and must visibly declare the overall Music
+champion from the authoritative accumulated score (not merely the winner of
+question 11), with a legible final score and countdown until Advent returns.
+Any brief confetti must respect reduced motion and must not replay on every
+500ms poll or after reload. The Music champion is **not** the Advent first
+finisher: there are no extra awards, puzzle completions, or rule changes.
+
+Advent's authoritative gameplay clock intentionally stays stopped during
+Music's gathering, questions, and final results, while Music's separate
+authoritative clock governs the transition back. The UI must make this
+distinction explicit. Game Master Pause freezes the Music countdown as well;
+refresh, recovery, and return to Advent remain server-derived.
+
+## 2026-10-12 — Music elapsed-time bar and live return display refinement
+
+On the shared TV, the decorative Music bar begins empty at the start of
+**each new question** and fills slowly across a fixed **three-minute**
+illustrative scale, stopping when full. It represents the authoritative
+question's elapsed Music time, **not** playback position or a question
+deadline. Questions remain open indefinitely until a server-accepted answer
+wins. Game Master Pause stops its movement; refresh and 500ms polling
+reconstruct its position from the authoritative Music clock. The persistent
+TV audio tray is visually centered beneath the Music stage without replacing
+the underlying audio element.
+
+During the separate final-results phase, the phone's visible return clock
+must update continuously even while HTMX preserves the final-results card.
+The existing 500ms team status poll carries fresh server time; a local
+display-only ticker may interpolate between snapshots and must respect
+Pause/Resume. The server exclusively determines the Advent-resume
+transition, including after reload or recovery. The TV uses the same
+display-only countdown principle.
+
 ## 2026-10-12 — Challenge gathering lasts 30 seconds
 
 The product owner changes the earlier **15-second** Challenge gathering period to **30 seconds**. This is the authoritative grace duration for every Challenge and overrides the 2026-09-25 duration only; all previously approved costs, eligibility, per-initiator puzzles, one-opportunity-per-team rule, first-correct result, Pause/restart recovery, Freeze outcomes, and privacy guarantees are unchanged.
