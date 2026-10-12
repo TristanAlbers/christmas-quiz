@@ -224,7 +224,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         self.admin,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role("heading", name="Gepauzeerd").wait_for(
+                    await page.get_by_role("heading", name="Gepauzeerd", exact=True).wait_for(
                         timeout=5000
                     )
                     paused_src = await player.get_attribute("src")
@@ -331,7 +331,7 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         self.admin,
                         RunCommand(str(uuid4()), self.run_id),
                     )
-                    await page.get_by_role("heading", name="Gepauzeerd").wait_for()
+                    await page.get_by_role("heading", name="Gepauzeerd", exact=True).wait_for()
                     await page.get_by_role("button", name="Geluid testen").click()
                     await page.wait_for_timeout(750)
 

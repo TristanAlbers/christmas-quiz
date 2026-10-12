@@ -189,3 +189,10 @@
   .pause-veil--team .pause-veil__description { margin-top: 8px; font-size: 15px; }
   .pause-veil--team .pause-veil__time { margin: 10px 0 8px; padding: 7px 0; font-size: 23px; }
 }
+
+/* In Advent and Challenge the TV sound panel is not part of the paused stage.
+   Music keeps its persistent sound-check controls (and audio element identity). */
+.game-page--overview:has(.pause-veil--tv):not(:has(.public-status--music)) #overview-audio-player {
+  visibility: hidden;
+  pointer-events: none;
+}
