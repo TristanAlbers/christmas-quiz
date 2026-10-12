@@ -7,15 +7,15 @@ body:has(.state-panel-freeze) { overflow: hidden; }
   z-index: 80;
   inset: 0;
   box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   padding: max(1.25rem, env(safe-area-inset-top))
     max(.8rem, env(safe-area-inset-right))
     max(1.25rem, env(safe-area-inset-bottom))
     max(.8rem, env(safe-area-inset-left));
-  overflow: hidden;
-  touch-action: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
   pointer-events: auto;
   background: transparent;
 }
@@ -44,6 +44,24 @@ body:has(.state-panel-freeze) { overflow: hidden; }
     linear-gradient(158deg, #061c2d 0%, #0c3040 52%, #081d2c 100%);
 }
 .freeze-backdrop[hidden] { display: none; }
+/* Stable full-viewport frost pseudos maintain the original Freeze geometry
+   guarantees without recreating any nodes during 500ms status polling. */
+.freeze-surface::before, .freeze-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.freeze-surface::before {
+  background:
+    radial-gradient(ellipse 35% 55% at 0% 50%, #a0f3ff20, transparent),
+    radial-gradient(ellipse 35% 55% at 100% 50%, #a0f3ff1c, transparent);
+}
+.freeze-surface::after {
+  background:
+    linear-gradient(90deg, #d6fcff17, transparent 13%, transparent 87%, #d6fcff17),
+    linear-gradient(#e7ffff12, transparent 12%, transparent 88%, #e7ffff12);
+}
 
 /* The obscured view is an inert skeleton: no private puzzle, hint, or media. */
 .freeze-ghost {
