@@ -229,6 +229,23 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         body_visibility["height"] - 2,
                     )
                     await self._screenshot(tv_page, "challenge-active-tv-1920x1080")
+                    # Recreate the user's 1731x863 screenshot viewport as
+                    # well as the reference's full-HD TV target.
+                    await tv_page.set_viewport_size(
+                        {"width": 1731, "height": 863}
+                    )
+                    clipped = await tv_page.locator(
+                        ".challenge-overview__body-scroll p"
+                    ).evaluate("""el => {
+                        const p = el.getBoundingClientRect();
+                        const r = el.parentElement.getBoundingClientRect();
+                        return Math.max(0, p.bottom - r.bottom);
+                    }""")
+                    self.assertLessEqual(clipped, 2)
+                    await self._screenshot(tv_page, "challenge-active-tv-1731x863")
+                    await tv_page.set_viewport_size(
+                        {"width": 1920, "height": 1080}
+                    )
                     # A longer public question must remain readable on an
                     # unattended TV even through 500ms HTMX replacements.
                     # Stress only the rendered public text, not game authority.
