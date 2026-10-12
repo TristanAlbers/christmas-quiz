@@ -238,6 +238,8 @@ jobs:
       DJANGO_DEBUG: "false"
       TEST_DATABASE_PATH: /tmp/christmas-quiz-webkit.sqlite3
       ISSUE31_BROWSER_ENGINE: webkit
+      ISSUE78_BROWSER_ENGINE: webkit
+      UI78_SCREENSHOT_DIR: artifacts/ui-78-webkit
       REVERSE_ANIMATION_SCREENSHOT_DIR: artifacts/ui-75-webkit
 
     steps:
@@ -254,11 +256,26 @@ jobs:
           python -m pip install -r requirements.lock -r requirements-dev.lock
           python -m playwright install --with-deps webkit
 
+      - name: Prepare Pause screenshots
+        run: mkdir -p artifacts/ui-78-webkit
+
       - name: Build production-style static manifest
         run: python manage.py collectstatic --noinput
 
-      - name: Test real Reverse purchase and rejection in WebKit
-        run: python manage.py test tests.browser.test_issue31_reverse --verbosity 2
+      - name: Test Reverse and Pause on WebKit
+        run: >-
+          python manage.py test
+          tests.browser.test_issue31_reverse
+          tests.browser.test_issue78_pause
+          --verbosity 2
+
+      - name: Save WebKit Pause screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-78-webkit
+          path: artifacts/ui-78-webkit/*.png
+          if-no-files-found: warn
 
       - name: Save WebKit purchase animation screenshot
         if: always()

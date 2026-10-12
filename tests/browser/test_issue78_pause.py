@@ -17,7 +17,11 @@ class Issue78PauseVisualTests(Issue31BrowserCase):
             from playwright.async_api import async_playwright
 
             async with async_playwright() as playwright:
-                browser = await playwright.chromium.launch()
+                # Chromium covers Android-like behavior; WebKit models iOS Safari.
+                engine = os.environ.get("ISSUE78_BROWSER_ENGINE", "chromium")
+                if engine not in {"chromium", "webkit"}:
+                    raise ValueError("Unsupported Pause browser engine")
+                browser = await getattr(playwright, engine).launch()
                 host = urlparse(self.live_server_url).hostname
                 phone_context = await browser.new_context(
                     viewport={"width": 390, "height": 844},
@@ -77,6 +81,11 @@ class Issue78PauseVisualTests(Issue31BrowserCase):
                         ).inner_text(),
                         "Spel gepauzeerd",
                     )
+                    await phone.emulate_media(reduced_motion="reduce")
+                    self.assertTrue(
+                        await phone.locator(".pause-veil--team").is_visible()
+                    )
+                    await phone.emulate_media(reduced_motion="no-preference")
                     stopped_time = await tv.locator(
                         ".pause-veil__time"
                     ).inner_text()
