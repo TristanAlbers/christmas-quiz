@@ -44,7 +44,7 @@
         {% include 'quiz/_music_progress.html' with music=state.music %}
         <div class="music-finale__return">
           <span class="music-finale__return-label">Adventquiz gaat verder over</span>
-          <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.final_results_remaining_ms }}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>00:00</span></time>
+          <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.final_results_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>00:00</span></time>
           <p class="music-finale__return-note">De Adventklok staat ondertussen stil.</p>
         </div>
       {% endif %}

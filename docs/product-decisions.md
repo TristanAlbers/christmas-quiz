@@ -159,3 +159,23 @@ Music's gathering, questions, and final results, while Music's separate
 authoritative clock governs the transition back. The UI must make this
 distinction explicit. Game Master Pause freezes the Music countdown as well;
 refresh, recovery, and return to Advent remain server-derived.
+
+## 2026-10-12 — Music elapsed-time bar and live return display refinement
+
+On the shared TV, the decorative Music bar begins empty at the start of
+**each new question** and fills slowly across a fixed **three-minute**
+illustrative scale, stopping when full. It represents the authoritative
+question's elapsed Music time, **not** playback position or a question
+deadline. Questions remain open indefinitely until a server-accepted answer
+wins. Game Master Pause stops its movement; refresh and 500ms polling
+reconstruct its position from the authoritative Music clock. The persistent
+TV audio tray is visually centered beneath the Music stage without replacing
+the underlying audio element.
+
+During the separate final-results phase, the phone's visible return clock
+must update continuously even while HTMX preserves the final-results card.
+The existing 500ms team status poll carries fresh server time; a local
+display-only ticker may interpolate between snapshots and must respect
+Pause/Resume. The server exclusively determines the Advent-resume
+transition, including after reload or recovery. The TV uses the same
+display-only countdown principle.

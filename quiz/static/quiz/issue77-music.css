@@ -145,7 +145,7 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
   content: "";
   position: absolute;
   top: 50%;
-  left: 40%;
+  left: var(--music-progress, 0%);
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 50%;
@@ -155,7 +155,7 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
 }
 .music-stage--midnight .music-player-progress__fill {
   display: block;
-  width: 40%;
+  width: var(--music-progress, 0%);
   height: 100%;
   background: linear-gradient(90deg, #9c6a48, #e9bf73);
   box-shadow: 0 0 1.5rem #d8a05888;
@@ -215,7 +215,7 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
 }
 .game-page--overview:has(.public-status--music) .music-audio-panel {
   width: min(100% - 3rem, 930px);
-  margin: .55rem 2rem .4rem auto;
+  margin: .55rem auto .4rem;
   padding: .45rem .8rem;
   border: 1px solid #8d6f4b;
   border-radius: .3rem;
@@ -467,7 +467,7 @@ body.game-page--team:has(.music-quiz--phone)::before { display: none; }
     width: min(100% - 1.5rem, 1120px);
     grid-template-columns: minmax(0, 1fr) minmax(0, 370px);
     gap: .7rem;
-    margin: .8rem .75rem .3rem auto;
+    margin: .8rem auto .3rem;
   }
   .game-page--overview:has(.public-status--music) .music-audio-panel__copy > p:last-child {
     font-size: .77rem;

@@ -1,17 +1,62 @@
 (function () {
   "use strict";
 
-  function formatCountdown(root) {
-    (root || document).querySelectorAll("[data-music-countdown]").forEach((clock) => {
-      const output = clock.querySelector("[data-music-countdown-value]");
-      const remainingMs = Number(clock.dataset.remainingMs);
-      if (!output || !Number.isFinite(remainingMs)) return;
+  // Projected Music time remains server-authoritative. A small local
+  // display ticker fills gaps between 500ms polling snapshots; it never
+  // advances a question or decides when Advent restarts.
+  const countdownSnapshots = new WeakMap();
+  const progressSnapshots = new WeakMap();
+  const DECORATIVE_DURATION_MS = 180000;
 
-      const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+  function syncMusicVisuals() {
+    document.querySelectorAll("[data-music-countdown]").forEach((clock) => {
+      // The final phone card deliberately survives ordinary HTMX polls.
+      // Its new authoritative remaining time is in the freshly swapped status.
+      const source = clock.closest(".music-quiz--phone--final")
+        ? document.querySelector("[data-music-final-sync]")
+        : clock;
+      if (!source) return;
+      const remainingMs = Number(source.dataset.remainingMs);
+      if (!Number.isFinite(remainingMs) || remainingMs < 0) return;
+      countdownSnapshots.set(clock, {
+        remainingMs,
+        running: source.dataset.running === "true",
+        observedAt: performance.now(),
+      });
+    });
+    document.querySelectorAll("[data-music-player-progress]").forEach((bar) => {
+      const elapsedMs = Number(bar.dataset.questionElapsedMs);
+      if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return;
+      progressSnapshots.set(bar, {
+        elapsedMs,
+        running: bar.dataset.running === "true",
+        observedAt: performance.now(),
+      });
+    });
+    tickMusicVisuals();
+  }
+
+  function tickMusicVisuals() {
+    const now = performance.now();
+    document.querySelectorAll("[data-music-countdown]").forEach((clock) => {
+      const snapshot = countdownSnapshots.get(clock);
+      const output = clock.querySelector("[data-music-countdown-value]");
+      if (!snapshot || !output) return;
+      const remainingMs = Math.max(0, snapshot.remainingMs -
+        (snapshot.running ? now - snapshot.observedAt : 0));
+      const seconds = Math.ceil(remainingMs / 1000);
       const minutes = Math.floor(seconds / 60);
       const remainder = seconds % 60;
       output.textContent = `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
       clock.dateTime = `PT${seconds}S`;
+    });
+    document.querySelectorAll("[data-music-player-progress]").forEach((bar) => {
+      const snapshot = progressSnapshots.get(bar);
+      if (!snapshot) return;
+      const elapsedMs = snapshot.elapsedMs +
+        (snapshot.running ? now - snapshot.observedAt : 0);
+      const fraction = Math.max(0, Math.min(1, elapsedMs / DECORATIVE_DURATION_MS));
+      bar.style.setProperty("--music-progress", (fraction * 100) + "%");
     });
   }
 
@@ -57,11 +102,8 @@
   }
   document.addEventListener("DOMContentLoaded", maybeCelebrateMusic);
   document.body.addEventListener("htmx:afterSettle", maybeCelebrateMusic);
-  document.addEventListener("DOMContentLoaded", () => formatCountdown(document));
-  document.body.addEventListener("htmx:afterSwap", (event) => {
-    formatCountdown(event.detail.target);
-  });
-  document.body.addEventListener("htmx:oobAfterSwap", (event) => {
-    formatCountdown(event.detail.target);
-  });
+  document.addEventListener("DOMContentLoaded", syncMusicVisuals);
+  document.body.addEventListener("htmx:afterSwap", syncMusicVisuals);
+  document.body.addEventListener("htmx:oobAfterSwap", syncMusicVisuals);
+  window.setInterval(tickMusicVisuals, 100);
 })();

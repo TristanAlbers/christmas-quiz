@@ -35,14 +35,14 @@
           <p class="music-stage__kicker">Muziek Quiz · Voorbereiding</p>
           <h1>Maak je klaar!</h1>
           <p>De Muziek Quiz begint zo. Verzamel je team en ga klaarstaan.</p>
-          <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span></time>
+          <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span></time>
           {% if state.global_state == 'PAUSED' %}<p class="music-paused-message">Gepauzeerd · de tijd staat stil</p>{% endif %}
         {% elif state.music.phase == 'question' %}
           <p class="music-stage__kicker">Muziek Quiz · Vraag {{ state.music.question_number }} van {{ state.music.question_total }}</p>
           <h1>Herken het lied</h1>
           <h2>{{ state.music.title }}</h2>
           <p class="music-stage__question">{{ state.music.body }}</p>
-          <div class="music-player-progress" data-music-player-progress role="img" aria-label="Decoratieve muziekspeler, geen werkelijke afspeelvoortgang"><span class="music-player-progress__fill" aria-hidden="true"></span></div>
+          <div class="music-player-progress" data-music-player-progress data-question-elapsed-ms="{{ state.music.question_elapsed_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}" role="img" aria-label="Illustratieve tijdsbalk van drie minuten, geen tijdslimiet voor de vraag"><span class="music-player-progress__fill" aria-hidden="true"></span></div>
         {% else %}
           <p class="music-stage__kicker">Muziek Quiz · Eindstand</p>
           <div class="music-finale__seal" aria-hidden="true">✦</div>
@@ -55,7 +55,7 @@
           {% endif %}
           <div class="music-finale__return">
             <span class="music-finale__return-label">De Adventquiz gaat verder over</span>
-            <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.final_results_remaining_ms }}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>00:00</span></time>
+            <time class="music-countdown" data-music-countdown data-remaining-ms="{{ state.music.final_results_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>00:00</span></time>
             <span class="music-finale__return-note">De Adventklok staat tijdens de Muziek Quiz stil.</span>
           </div>
         {% endif %}
