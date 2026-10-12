@@ -50,6 +50,15 @@ class Issue76FrozenPhoneBrowserTests(Issue31BrowserCase):
                     self.assertTrue(await page.locator(".freeze-message").is_visible())
                     self.assertTrue(await ice.locator(".freeze-ghost").is_visible())
                     self.assertTrue(await ice.locator(".freeze-ice").is_visible())
+                    for selector, minimum in (
+                        (".freeze-message h2", 44),
+                        (".freeze-message__description strong", 20),
+                        (".freeze-timer", 56),
+                    ):
+                        size = await page.locator(selector).evaluate(
+                            "el => parseFloat(getComputedStyle(el).fontSize)"
+                        )
+                        self.assertGreaterEqual(size, minimum, selector)
                     self.assertEqual(
                         await page.locator(
                             "#question-pane img, #question-pane audio, "
