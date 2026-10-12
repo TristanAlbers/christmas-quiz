@@ -185,6 +185,9 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     # The continuing team's notification must use the Midnight
                     # Advent palette and never cover the entire game with frost.
                     toast = runner_up.locator(".endgame-celebration__card")
+                    self.assertEqual(
+                        await runner_up.get_attribute("aria-hidden"), "false"
+                    )
                     self.assertTrue(await toast.locator(
                         ".endgame-celebration__rudolph"
                     ).is_visible())
