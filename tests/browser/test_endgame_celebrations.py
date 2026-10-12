@@ -182,6 +182,38 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     )
                     await self._shot(team_a, "a-first-winner-phone-keyframe-390.png")
                     await self._shot(tv, "a-first-tv-burst-keyframe-1920.png")
+                    # The continuing team's notification must use the Midnight
+                    # Advent palette and never cover the entire game with frost.
+                    toast = runner_up.locator(".endgame-celebration__card")
+                    self.assertTrue(await toast.locator(
+                        ".endgame-celebration__rudolph"
+                    ).is_visible())
+                    self.assertEqual(
+                        await toast.get_by_text("De race gaat door").count(), 1
+                    )
+                    self.assertIn(
+                        "rgb(32, 68, 56)",
+                        await toast.evaluate(
+                            "el => getComputedStyle(el).backgroundImage"
+                        ),
+                    )
+                    self.assertEqual(
+                        await runner_up.locator(
+                            ".endgame-celebration__veil"
+                        ).evaluate("el => getComputedStyle(el).backgroundColor"),
+                        "rgba(0, 0, 0, 0)",
+                    )
+                    toast_bounds = await toast.bounding_box()
+                    self.assertIsNotNone(toast_bounds)
+                    self.assertLess(toast_bounds["height"], 190)
+                    self.assertEqual(
+                        await runner_up.locator(
+                            ".endgame-confetti__piece"
+                        ).count(), 0
+                    )
+                    await self._shot(
+                        team_b, "a-first-continuing-phone-notice-390.png"
+                    )
 
                     self.assertTrue(
                         await answer.evaluate(
