@@ -169,6 +169,32 @@
     showCelebration(winner);
   }
 
+  // The finished tableau is replaced by 500 ms HTMX status polls. Preserve
+  // its scroll offset so short/landscape phones can read the whole result.
+  let terminalScroll = null;
+  document.body.addEventListener("htmx:beforeSwap", function (event) {
+    if (surface !== "team" || event.detail.target?.id !== "game-status") return;
+    const result = event.detail.target.querySelector(".endgame-team-result");
+    const state = event.detail.target.querySelector("[data-endgame-state]");
+    terminalScroll = result && state ? {
+      runId: state.dataset.endgameRunId,
+      winner: result.classList.contains("endgame-team-result--winner"),
+      top: result.scrollTop,
+    } : null;
+  });
+  document.body.addEventListener("htmx:afterSwap", function (event) {
+    if (surface !== "team" || event.detail.target?.id !== "game-status") return;
+    const previous = terminalScroll;
+    terminalScroll = null;
+    if (!previous) return;
+    const result = event.detail.target.querySelector(".endgame-team-result");
+    const state = event.detail.target.querySelector("[data-endgame-state]");
+    if (result && state && state.dataset.endgameRunId === previous.runId &&
+        result.classList.contains("endgame-team-result--winner") === previous.winner) {
+      result.scrollTop = previous.top;
+    }
+  });
+
   document.addEventListener("DOMContentLoaded", function () { observeEndgame(true); });
   document.body.addEventListener("htmx:afterSettle", function () { observeEndgame(false); });
 }());
