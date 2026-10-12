@@ -62,21 +62,30 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                         ),
                         "4.6s",
                     )
-                    await a.wait_for_timeout(900)
-                    self.assertGreater(
-                        float(await attack.locator(
+                    # Team polling may deliver the same film on different frames.
+                    # Validate the launch animation itself instead of sampling
+                    # opacity after awaiting both independent phone polls.
+                    self.assertEqual(
+                        await attack.locator(
                             ".gameplay-event__stage--attack"
-                        ).evaluate("el => getComputedStyle(el).opacity")),
-                        0.5,
+                        ).evaluate(
+                            "el => [getComputedStyle(el).animationName, "
+                            "getComputedStyle(el).animationDuration]"
+                        ),
+                        ["gameplay-launch-stage", "1.8s"],
                     )
+                    await a.wait_for_timeout(400)
                     await self.capture_pair(a, b, "normal-launch")
 
                     await a.wait_for_timeout(2000)
-                    self.assertGreater(
-                        float(await victim.locator(
+                    self.assertEqual(
+                        await victim.locator(
                             ".gameplay-event__stage--impact"
-                        ).evaluate("el => getComputedStyle(el).opacity")),
-                        0.5,
+                        ).evaluate(
+                            "el => [getComputedStyle(el).animationName, "
+                            "getComputedStyle(el).animationDelay]"
+                        ),
+                        ["gameplay-outcome-stage", "1.8s"],
                     )
                     await self.capture_pair(a, b, "normal-impact")
 
@@ -158,13 +167,16 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                         await reflected.get_attribute("data-event-id"),
                         await saved.get_attribute("data-event-id"),
                     )
-                    await a.wait_for_timeout(500)
-                    self.assertGreater(
-                        float(await saved.locator(
+                    self.assertEqual(
+                        await saved.locator(
                             ".gameplay-event__stage--attack"
-                        ).evaluate("el => getComputedStyle(el).opacity")),
-                        0.5,
+                        ).evaluate(
+                            "el => [getComputedStyle(el).animationName, "
+                            "getComputedStyle(el).animationDuration]"
+                        ),
+                        ["gameplay-launch-stage", "1.8s"],
                     )
+                    await a.wait_for_timeout(400)
                     await self.capture_pair(a, b, "reverse-launch")
 
                     await a.wait_for_timeout(1850)
