@@ -168,8 +168,20 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     for page in (a_page, b_page):
                         stage_text = await page.locator(".challenge-stage").inner_text()
                         self.assertNotIn("gloeiende rode neus", stage_text.lower())
+                    # Both phones and the TV must visibly count down from 30
+                    # without replacing the stable phone question pane.
+                    for page in (a_page, b_page, tv_page):
+                        clock = page.locator("[data-challenge-countdown]")
+                        self.assertIn("30 seconden", await clock.inner_text())
                     await self._screenshot(tv_page, "challenge-gathering-tv-1920x1080")
                     await self._screenshot(a_page, "challenge-gathering-phone-390x844")
+                    await a_page.wait_for_timeout(1300)
+                    for page in (a_page, b_page, tv_page):
+                        seconds = await page.locator(
+                            "[data-challenge-countdown]"
+                        ).evaluate("el => Number(el.textContent.match(/\\d+/)?.[0])")
+                        self.assertGreaterEqual(seconds, 27)
+                        self.assertLess(seconds, 30)
 
                     await self._finish_grace_period()
                     for page in (a_page, b_page):
@@ -184,11 +196,32 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertIn("Het eerste juiste antwoord", tv_live)
                     self.assertNotIn("rudolph", tv_live.lower())
                     self.assertNotIn("challenge-a-reindeer", tv_live)
-                    # The test advances the 15-second grace artificially; let the
+                    # The test advances the 30-second grace artificially; let the
                     # genuine short-lived start notification expire before capture.
                     await a_page.get_by_text(
                         "De uitdaging begint. Verzamel je team!", exact=True
                     ).wait_for(state="hidden", timeout=7000)
+                    # Visibility is a geometry requirement: DOM text can be
+                    # present yet hidden by the card's constrained flex box.
+                    body_visibility = await tv_page.locator(
+                        ".challenge-overview__body-scroll p"
+                    ).evaluate("""el => {
+                        const text = el.getBoundingClientRect();
+                        const reader = el.parentElement.getBoundingClientRect();
+                        const card = el.closest(
+                            ".challenge-overview__question"
+                        ).getBoundingClientRect();
+                        return {
+                            height: text.height,
+                            visible: Math.min(text.bottom, reader.bottom, card.bottom)
+                                - Math.max(text.top, reader.top, card.top),
+                        };
+                    }""")
+                    self.assertGreater(body_visibility["height"], 35)
+                    self.assertGreaterEqual(
+                        body_visibility["visible"],
+                        body_visibility["height"] - 2,
+                    )
                     await self._screenshot(tv_page, "challenge-active-tv-1920x1080")
                     # A longer public question must remain readable on an
                     # unattended TV even through 500ms HTMX replacements.
@@ -228,12 +261,13 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         "'[data-tv-challenge-key]')?.scrollTop > 80",
                         timeout=10000,
                     )
-                    self.assertAlmostEqual(
-                        heading_y,
+                    # A long title now shares the automatic reading flow
+                    # with the body instead of clipping the latter.
+                    self.assertLess(
                         await tv_page.locator(
                             ".challenge-overview__question h3"
                         ).evaluate("el => el.getBoundingClientRect().top"),
-                        delta=1,
+                        heading_y - 50,
                     )
                     await self._screenshot(
                         tv_page, "challenge-long-question-tv-1920x1080"
