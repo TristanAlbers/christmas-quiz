@@ -213,7 +213,7 @@
     let lastGameplayFilmId = null;
     function announceGameplayStage(film, stage) {
       // The visible stages are aria-hidden: only the current stage is spoken.
-      if (document.getElementById('gameplay-event') !== film || !stage) return;
+      if (!film.isConnected || film.dataset.eventId !== lastGameplayFilmId || !stage) return;
       const live = document.getElementById('gameplay-film-announcement');
       if (!live) return;
       const heading = stage.querySelector('strong')?.textContent?.trim();
@@ -221,7 +221,7 @@
       live.textContent = [heading, caption].filter(Boolean).join('. ');
     }
     function startGameplayFilm() {
-      const film = document.getElementById('gameplay-event');
+      const film = document.querySelector('#gameplay-event[data-event-id]');
       if (!film || film.classList.contains('gameplay-event--idle')) return;
       // HTMX OOB swaps and the observer can both report one insertion.
       const eventId = film.dataset.eventId;
@@ -257,7 +257,7 @@
       }
       gameplayFilmTimer = window.setTimeout(function () {
         // A second, different authoritative event would get its own film.
-        if (document.getElementById('gameplay-event') !== film) return;
+        if (!film.isConnected || lastGameplayFilmId !== eventId) return;
         if (shell) shell.inert = false;
         document.body.classList.remove('gameplay-film-active');
         // Restore a protected team's existing node, text and caret, never a
@@ -387,6 +387,7 @@
     });
     document.body.addEventListener('htmx:afterSwap', function (event) {
       if (event.detail.target.id === 'game-status') {
+        startGameplayFilm();
         syncFrozenSurface();
         syncPausedSurface();
         syncTransientChallengeResult(challengeWasActiveBeforeSwap);
@@ -399,14 +400,16 @@
       reopenShop = false;
     });
 
-    // The effect is a direct body child, replaced by the event's OOB swap.
-    // Observing only direct replacements avoids relying on HTMX event targets
-    // and does not touch the polling-stable answer controls.
+    // HTMX may insert an OOB fragment directly or through a swapped parent.
+    // Only react to a new film node, never to ordinary 500ms text updates.
     new MutationObserver(function (changes) {
       if (changes.some(change => Array.from(change.addedNodes).some(
-        node => node.nodeType === 1 && node.id === 'gameplay-event'
+        node => node.nodeType === 1 && (
+          node.id === 'gameplay-event' ||
+          node.querySelector?.('#gameplay-event[data-event-id]')
+        )
       ))) startGameplayFilm();
-    }).observe(document.body, {childList: true});
+    }).observe(document.body, {childList: true, subtree: true});
 
     syncPuzzleActionAvailability();
     syncShopResources();
