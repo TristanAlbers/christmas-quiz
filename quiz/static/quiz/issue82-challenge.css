@@ -155,9 +155,8 @@ body.game-page--overview:has(.challenge-overview) {
   display: flex;
   flex-direction: column;
   width: min(100%, 64vw);
-  min-height: min(27vh, 270px);
-  max-height: 45vh;
-  flex-shrink: 0;
+  height: clamp(190px, 27vh, 270px);
+  flex: 0 0 auto;
   overflow: hidden;
   padding: 1.4vw 2.4vw;
   border: 1px solid #aa864f;
