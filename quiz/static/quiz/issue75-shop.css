@@ -303,9 +303,6 @@
     padding-inline: .32rem;
   }
   .shop-dialog--midnight .shop-item__glyph { width: 2rem; }
-  .shop-dialog--midnight .shop-item__details strong { font-size: .9375rem; }
-  .shop-dialog--midnight .shop-item__details small { font-size: .8125rem; }
-  .shop-dialog--midnight .shop-item__price { font-size: .875rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shop-dialog--midnight button { transition: none; }
