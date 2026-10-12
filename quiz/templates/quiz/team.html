@@ -108,6 +108,14 @@
       if (!backdrop) return;
       const frozen = Boolean(document.querySelector('#game-status .state-panel-freeze'));
       const wasFrozen = backdrop.dataset.active === '1';
+      // A refreshed frozen page shows its settled state; only a new Freeze
+      // transition plays the short crystal-forming animation.
+      if (backdrop.dataset.initialized !== '1') {
+        backdrop.classList.toggle('freeze-backdrop--instant', frozen);
+        backdrop.dataset.initialized = '1';
+      } else if (frozen && !wasFrozen) {
+        backdrop.classList.remove('freeze-backdrop--instant');
+      }
       backdrop.hidden = !frozen;
       backdrop.dataset.active = frozen ? '1' : '0';
       if (wasFrozen !== frozen) {
