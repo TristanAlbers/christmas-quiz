@@ -137,11 +137,23 @@
 }
 
 .reverse-purchase__symbol {
+  display: grid;
+  place-items: center;
+  width: clamp(3.7rem, 16vw, 5.2rem);
+  aspect-ratio: 70 / 84;
   color: #8e263b;
-  font-size: clamp(3.7rem, 16vw, 5.2rem);
-  line-height: 1;
-  text-shadow: 0 .08rem 0 #fff, 0 0 .7rem rgba(255, 255, 255, .85);
   animation: reverse-purchase-symbol 1.25s .15s cubic-bezier(.24, .76, .24, 1) both;
+}
+
+.reverse-purchase__symbol svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 .08rem 0 #fff) drop-shadow(0 0 .35rem rgba(255, 255, 255, .55));
 }
 
 .reverse-purchase__copy {
