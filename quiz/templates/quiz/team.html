@@ -210,6 +210,7 @@
     // (including keyboard activation of controls behind the takeover).
     let gameplayFilmTimer = null;
     let gameplayFilmStageTimer = null;
+    let lastGameplayFilmId = null;
     function announceGameplayStage(film, stage) {
       // The visible stages are aria-hidden: only the current stage is spoken.
       if (document.getElementById('gameplay-event') !== film || !stage) return;
@@ -222,6 +223,10 @@
     function startGameplayFilm() {
       const film = document.getElementById('gameplay-event');
       if (!film || film.classList.contains('gameplay-event--idle')) return;
+      // HTMX OOB swaps and the observer can both report one insertion.
+      const eventId = film.dataset.eventId;
+      if (!eventId || eventId === lastGameplayFilmId) return;
+      lastGameplayFilmId = eventId;
       const shell = document.querySelector('.app-shell');
       const previouslyFocused = document.activeElement;
       const restoreAnswer = previouslyFocused?.matches('input[name="answer"]')
@@ -393,6 +398,15 @@
       if (shop && shop.open) shop.close();
       reopenShop = false;
     });
+
+    // The effect is a direct body child, replaced by the event's OOB swap.
+    // Observing only direct replacements avoids relying on HTMX event targets
+    // and does not touch the polling-stable answer controls.
+    new MutationObserver(function (changes) {
+      if (changes.some(change => Array.from(change.addedNodes).some(
+        node => node.nodeType === 1 && node.id === 'gameplay-event'
+      ))) startGameplayFilm();
+    }).observe(document.body, {childList: true});
 
     syncPuzzleActionAvailability();
     syncShopResources();
