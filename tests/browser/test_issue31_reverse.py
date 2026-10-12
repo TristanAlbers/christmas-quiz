@@ -1,7 +1,6 @@
+import asyncio
 import os
 from pathlib import Path
-
-import asyncio
 
 from tests.browser.issue31_support import Issue31BrowserCase
 
