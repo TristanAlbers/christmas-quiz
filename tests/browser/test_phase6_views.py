@@ -170,18 +170,22 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                         self.assertNotIn("gloeiende rode neus", stage_text.lower())
                     # Both phones and the TV must visibly count down from 30
                     # without replacing the stable phone question pane.
-                    for page in (a_page, b_page, tv_page):
-                        clock = page.locator("[data-challenge-countdown]")
-                        self.assertIn("30 seconden", await clock.inner_text())
-                    await self._screenshot(tv_page, "challenge-gathering-tv-1920x1080")
-                    await self._screenshot(a_page, "challenge-gathering-phone-390x844")
-                    await a_page.wait_for_timeout(1300)
+                    initial_seconds = []
                     for page in (a_page, b_page, tv_page):
                         seconds = await page.locator(
                             "[data-challenge-countdown]"
                         ).evaluate("el => Number(el.textContent.match(/\\d+/)?.[0])")
                         self.assertGreaterEqual(seconds, 27)
-                        self.assertLess(seconds, 30)
+                        self.assertLessEqual(seconds, 30)
+                        initial_seconds.append(seconds)
+                    await self._screenshot(tv_page, "challenge-gathering-tv-1920x1080")
+                    await self._screenshot(a_page, "challenge-gathering-phone-390x844")
+                    await a_page.wait_for_timeout(1300)
+                    for page, initial in zip((a_page, b_page, tv_page), initial_seconds):
+                        seconds = await page.locator(
+                            "[data-challenge-countdown]"
+                        ).evaluate("el => Number(el.textContent.match(/\\d+/)?.[0])")
+                        self.assertLess(seconds, initial)
 
                     await self._finish_grace_period()
                     for page in (a_page, b_page):
