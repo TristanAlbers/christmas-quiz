@@ -335,7 +335,7 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
 }
 .game-page--team:has(.challenge-stage) .challenge-question-phone > span {
   font: 750 .875rem system-ui, sans-serif;
-  color: #725031;
+  color: #192b24;
   letter-spacing: .11em;
 }
 .game-page--team:has(.challenge-stage) .challenge-question-phone h2 {
