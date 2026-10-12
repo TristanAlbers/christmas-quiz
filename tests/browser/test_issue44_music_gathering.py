@@ -451,6 +451,23 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         self.assertEqual(
                             await page.locator("#music-answer-input").count(), 0
                         )
+                    # HTMX preserves the finale pane across polls, but
+                    # a fresh server timing snapshot must animate its clock.
+                    await a.evaluate(
+                        "window.musicPane = document.querySelector('#question-pane')"
+                    )
+                    phone_clock = a.locator(
+                        ".music-finale__return [data-music-countdown-value]"
+                    )
+                    initial = await phone_clock.inner_text()
+                    await a.wait_for_timeout(1450)
+                    self.assertNotEqual(await phone_clock.inner_text(), initial)
+                    self.assertTrue(
+                        await a.evaluate(
+                            "window.musicPane === "
+                            "document.querySelector('#question-pane')"
+                        )
+                    )
                     self.assertEqual(
                         await tv.locator(".music-finale-confetti i").count(), 46
                     )
@@ -501,14 +518,22 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         "document.querySelector('#overview-audio-state')"
                         ".dataset.globalState === 'PAUSED'"
                     )
+                    await a.wait_for_function(
+                        """() => document.querySelector(
+                          '[data-music-final-sync]')?.dataset.running === 'false'"""
+                    )
                     paused = await tv.locator(
                         ".music-finale__return [data-music-countdown-value]"
                     ).inner_text()
+                    paused_phone = await phone_clock.inner_text()
                     await tv.wait_for_timeout(1300)
                     self.assertEqual(
                         await tv.locator(
                             ".music-finale__return [data-music-countdown-value]"
                         ).inner_text(), paused
+                    )
+                    self.assertEqual(
+                        await phone_clock.inner_text(), paused_phone
                     )
                     await asyncio.to_thread(
                         resume_game, self.admin, RunCommand(str(uuid4()), self.run_id)
@@ -516,6 +541,15 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                     await tv.wait_for_function(
                         "document.querySelector('#overview-audio-state')"
                         ".dataset.globalState === 'MUSIC_QUIZ'"
+                    )
+                    await a.wait_for_function(
+                        """() => document.querySelector(
+                          '[data-music-final-sync]')?.dataset.running === 'true'"""
+                    )
+                    before_resume = await phone_clock.inner_text()
+                    await a.wait_for_timeout(1450)
+                    self.assertNotEqual(
+                        await phone_clock.inner_text(), before_resume
                     )
                     # Countdown is based on the existing authoritative Music
                     # clock; expiry switches every display back to Advent.
