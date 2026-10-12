@@ -301,6 +301,17 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     )
                     await tv.locator(".endgame-tv-final").wait_for(timeout=5000)
                     await team_b.locator(".endgame-team-result--complete").wait_for()
+                    await team_b.get_by_role("status").filter(
+                        has_text="Jullie zijn klaar!"
+                    ).first.wait_for(timeout=5000)
+                    self.assertIn(
+                        "Jullie zijn klaar!",
+                        await team_b.locator("#game-announcement").inner_text(),
+                    )
+                    await team_b.reload()
+                    self.assertEqual(
+                        await team_b.locator("#game-announcement").inner_text(), ""
+                    )
                     self.assertEqual(await team_b.locator("#answer-input").count(), 0)
                     self.assertEqual(
                         await tv.locator(
@@ -378,6 +389,10 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await team_b.locator(".answer-form .button-primary").click()
                     await team_b.locator(".endgame-team-result--complete").wait_for(
                         timeout=5000
+                    )
+                    self.assertIn(
+                        "Jullie zijn klaar!",
+                        await team_b.locator("#game-announcement").inner_text(),
                     )
                     await tv.locator(".endgame-tv-final").wait_for(timeout=5000)
                     await team_a.locator(
