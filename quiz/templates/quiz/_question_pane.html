@@ -2,7 +2,7 @@
   <input id="view-context" type="hidden" name="view_context" value="{{ view_context }}">
   {% if state.music %}
     <section class="music-quiz--phone" aria-label="Muziek Quiz">
-      <p class="music-quiz--phone__kicker">Muziek Quiz{% if state.music.phase == 'question' %} · Vraag {{ state.music.question_number }}{% endif %}</p>
+      <p class="music-quiz--phone__kicker">Muziek Quiz</p>
       {% if state.music.phase == 'gathering' %}
         <h2>Maak je klaar voor de Muziek Quiz</h2>
         {% include 'quiz/_music_progress.html' with music=state.music %}

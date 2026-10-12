@@ -151,6 +151,14 @@ class IssueFortyFourMusicGatheringBrowserTests(LiveServerTestCase):
                         self.assertEqual(
                             await team.locator(".music-step--current").inner_text(), "1"
                         )
+                        # Phone progress is communicated only by the tracker;
+                        # the TV owns the separate question-number label.
+                        self.assertEqual(
+                            await team.locator(
+                                ".music-quiz--phone__kicker"
+                            ).inner_text(),
+                            "Muziek Quiz",
+                        )
                     # The V4 player bar is illustration only: the 180s graphic
                     # stays fixed, even as the authoritative question clock changes.
                     bar = tv.locator(".music-player-progress")
