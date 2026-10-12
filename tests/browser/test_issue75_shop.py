@@ -129,6 +129,42 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                     ).count(),
                     1,
                 )
+                # At shop size, the white oval and arrows must stay centered
+                # inside the red card in both owned and purchasable states.
+                self.assertEqual(
+                    await page.locator(
+                        ".shop-item--reverse .resource-reverse-card__brand, "
+                        ".shop-item--reverse .resource-reverse-card__name"
+                    ).count(),
+                    0,
+                )
+                card_layout = await page.evaluate(
+                    """() => {
+                        const card = document.querySelector(
+                            '.shop-item--reverse .resource-reverse-card'
+                        );
+                        const oval = card.querySelector(
+                            '.resource-reverse-card__symbol'
+                        );
+                        const a = card.getBoundingClientRect();
+                        const b = oval.getBoundingClientRect();
+                        return {
+                            centeredX: Math.abs(
+                                (a.left + a.right) / 2 - (b.left + b.right) / 2
+                            ),
+                            centeredY: Math.abs(
+                                (a.top + a.bottom) / 2 - (b.top + b.bottom) / 2
+                            ),
+                            inside: b.left >= a.left && b.right <= a.right
+                                && b.top >= a.top && b.bottom <= a.bottom,
+                            extraOval: getComputedStyle(card, '::before').display
+                        };
+                    }"""
+                )
+                self.assertLessEqual(card_layout["centeredX"], 1)
+                self.assertLessEqual(card_layout["centeredY"], 1)
+                self.assertTrue(card_layout["inside"])
+                self.assertEqual(card_layout["extraOval"], "none")
                 if self.alt_prices:
                     self.assertEqual(
                         await page.locator("form.shop-item--reverse").count(), 1
