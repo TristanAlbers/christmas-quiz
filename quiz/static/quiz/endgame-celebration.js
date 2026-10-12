@@ -122,7 +122,7 @@
     });
     hideTimer = window.setTimeout(
       hideCelebration,
-      result.kind === "runner-up" ? 3200 : 4800
+      result.kind === "runner-up" ? 6000 : 4800
     );
   }
 
