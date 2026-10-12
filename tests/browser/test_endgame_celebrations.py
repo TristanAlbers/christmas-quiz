@@ -328,6 +328,90 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
 
         asyncio.run(check())
 
+    def test_two_normal_final_answers_clear_overlays_and_next_step_effect(self):
+        self._put_both_teams_on_door_25()
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                a_context, team_a = await self._page(
+                    browser, "/team/", {"width": 390, "height": 844}, self.cookies["a"]
+                )
+                b_context, team_b = await self._page(
+                    browser, "/team/", {"width": 390, "height": 844}, self.cookies["b"]
+                )
+                tv_context, tv = await self._page(
+                    browser, "/overview/", {"width": 1920, "height": 1080}
+                )
+                try:
+                    await team_a.locator("#answer-input").fill("north")
+                    await team_a.locator(".answer-form .button-primary").click()
+                    await team_a.locator(".endgame-team-result--winner").wait_for(
+                        timeout=5000
+                    )
+                    self.assertIn(
+                        "Jullie winnen!",
+                        await team_a.locator("#game-announcement").inner_text(),
+                    )
+                    self.assertEqual(
+                        await team_a.locator(
+                            "#door-completion.door-completion--idle"
+                        ).count(), 1
+                    )
+                    self.assertEqual(
+                        await team_a.get_by_text(
+                            "Jullie zijn door naar de volgende stap."
+                        ).count(), 0
+                    )
+                    await team_b.locator(
+                        '#endgame-celebration[data-endgame-result="runner-up"]'
+                        ".endgame-celebration--visible"
+                    ).wait_for(timeout=5000)
+                    await tv.locator(
+                        '#endgame-celebration[data-endgame-result="overview-winner"]'
+                        ".endgame-celebration--visible"
+                    ).wait_for(timeout=5000)
+                    # Finish before the first-winner presentation times out.
+                    await team_b.locator("#answer-input").fill("north")
+                    await team_b.locator(".answer-form .button-primary").click()
+                    await team_b.locator(".endgame-team-result--complete").wait_for(
+                        timeout=5000
+                    )
+                    await tv.locator(".endgame-tv-final").wait_for(timeout=5000)
+                    await team_a.locator(
+                        '.endgame-team-result--winner'
+                    ).get_by_text("Beide teams hebben alle 25").wait_for(
+                        timeout=5000
+                    )
+                    for page in (team_a, team_b, tv):
+                        await page.locator(
+                            "#endgame-celebration.endgame-celebration--visible"
+                        ).wait_for(state="hidden", timeout=2000)
+                    self.assertEqual(
+                        await team_b.locator(
+                            "#door-completion.door-completion--idle"
+                        ).count(), 1
+                    )
+                    self.assertEqual(
+                        await team_b.get_by_text(
+                            "Jullie zijn door naar de volgende stap."
+                        ).count(), 0
+                    )
+                    self.assertEqual(
+                        await tv.locator(
+                            ".endgame-tv-final__team--winner strong"
+                        ).inner_text(), "Team A"
+                    )
+                finally:
+                    await tv_context.close()
+                    await b_context.close()
+                    await a_context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
     def test_b_first_remains_only_winner_after_a_completes(self):
         self._put_both_teams_on_door_25()
 
