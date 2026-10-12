@@ -2,7 +2,6 @@
    The accepted Freeze result is committed before this presentation begins.
    Use flat, centered SVG card geometry: no OS font arrows or 3-D Safari transforms. */
 .gameplay-event {
-  --event-duration: 4.6s;
   position: fixed;
   z-index: 95;
   inset: 0;
