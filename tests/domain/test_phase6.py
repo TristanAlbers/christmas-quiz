@@ -213,8 +213,9 @@ class ChallengeGracePeriodTests(SimpleTestCase):
             challenge_grace_remaining_ms(100_000, 100_000),
             CHALLENGE_GRACE_PERIOD_MS,
         )
-        self.assertEqual(challenge_grace_remaining_ms(100_000, 105_000), 10_000)
-        self.assertEqual(challenge_grace_remaining_ms(100_000, 115_000), 0)
+        self.assertEqual(CHALLENGE_GRACE_PERIOD_MS, 30_000)
+        self.assertEqual(challenge_grace_remaining_ms(100_000, 105_000), 25_000)
+        self.assertEqual(challenge_grace_remaining_ms(100_000, 129_000), 1_000)
         self.assertEqual(challenge_grace_remaining_ms(100_000, 130_000), 0)
 
     def test_grace_period_rejects_invalid_clock_values(self):

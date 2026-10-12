@@ -132,7 +132,7 @@ refresh, disconnect, and restart. Unexpected downtime while the persisted state
 is `ADVENT_QUIZ` counts as gameplay time; downtime while persistently `PAUSED`
 does not. Client countdown values never authorize expiry.
 
-Each team has exactly **one free Challenge opportunity** during normal Advent play. Each initiator has its **own distinct snapshotted Challenge puzzle** (Team A's or Team B's). Both teams receive that **same puzzle within a particular Challenge**, only after a **15-second server-authoritative gathering period**, and may then answer repeatedly without penalty; the first accepted correct answer wins. Challenge initiation never deducts points. If the initiating team
+Each team has exactly **one free Challenge opportunity** during normal Advent play. Each initiator has its **own distinct snapshotted Challenge puzzle** (Team A's or Team B's). Both teams receive that **same puzzle within a particular Challenge**, only after a **30-second server-authoritative gathering period**, and may then answer repeatedly without penalty; the first accepted correct answer wins. Challenge initiation never deducts points. If the initiating team
 wins, the challenged team receives a direct five-minute Freeze. If the
 challenged team wins, neither team is frozen. Challenge never awards points or
 advances Advent progress, and pause/restart preserves an active Challenge.
@@ -167,7 +167,7 @@ unique `id`, `number`, nonempty `title` and `body`, a supported `validator`, and
 optional `audio` (`null` or a safe package-relative path). Music audio is copied
 into the immutable run snapshot just like private puzzle media.
 
-`challenge_puzzles` is an object with **exactly `a` and `b`**, each containing a **distinct** `id`, nonempty `title` and `body`, a supported `validator`, and a `media` list. Each initiator's puzzle has no reward, Hint or fragment fields. `challenge_cost` is a schema-compatibility assertion that **must equal 0**, never a purchasable amount. Challenge media is copied into the run snapshot and served only to authorized participants/admins in the active Challenge; the public TV receives **title/body text only after the 15-second gathering**, not private Challenge media.
+`challenge_puzzles` is an object with **exactly `a` and `b`**, each containing a **distinct** `id`, nonempty `title` and `body`, a supported `validator`, and a `media` list. Each initiator's puzzle has no reward, Hint or fragment fields. `challenge_cost` is a schema-compatibility assertion that **must equal 0**, never a purchasable amount. Challenge media is copied into the run snapshot and served only to authorized participants/admins in the active Challenge; the public TV receives **title/body text only after the 30-second gathering**, not private Challenge media.
 
 The supported validators are:
 

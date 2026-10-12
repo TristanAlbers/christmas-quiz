@@ -2,7 +2,7 @@
 
 > Normative rules for the game-state engine. This document is intended as a **plugin/specification alongside the main application specification**, not as a replacement for it.
 >
-> **Current precedence (2026-10-11):** Later explicit approvals in `docs/product-decisions.md` override the older conflicting descriptions **only where specified**: in particular Challenge is **free**, there is a distinct puzzle per initiating team, both teams answer the same puzzle within a Challenge, a 15-second gathering phase comes first, the public TV may display the shared Challenge question during the active phase, player Skip on puzzle 25 is forbidden, and the Music display rules are refined. Other authoritative gameplay, privacy, clock, recovery and concurrency rules here continue to apply. See `docs/ui/midnight-advent.md` for presentation and `docs/ui/midnight-advent-rollout.md` for the redesign ticket route.
+> **Current precedence (2026-10-11):** Later explicit approvals in `docs/product-decisions.md` override the older conflicting descriptions **only where specified**: in particular Challenge is **free**, there is a distinct puzzle per initiating team, both teams answer the same puzzle within a Challenge, a 30-second gathering phase comes first, the public TV may display the shared Challenge question during the active phase, player Skip on puzzle 25 is forbidden, and the Music display rules are refined. Other authoritative gameplay, privacy, clock, recovery and concurrency rules here continue to apply. See `docs/ui/midnight-advent.md` for presentation and `docs/ui/midnight-advent-rollout.md` for the redesign ticket route.
 
 ## 1. Normative language
 
@@ -213,7 +213,7 @@ Admin removal immediately returns the team to `PUZZLE`; there is no remaining ti
 During a Challenge:
 
 - each initiating team has a **different** package-authored Challenge puzzle; across one Challenge both teams receive the **same selected puzzle**;
-- there is a **15-second server-authoritative gathering phase** before puzzle and answer controls become available; Pause suspends that countdown;
+- there is a **30-second server-authoritative gathering phase** before puzzle and answer controls become available; Pause suspends that countdown;
 - attempts are unlimited;
 - there is no time limit;
 - wrong answers have no penalty;
@@ -494,7 +494,7 @@ Initiation atomically:
 
 1. consumes the **single free opportunity** of the initiator without deducting points;
 2. selects the initiator's **distinct** snapshotted Challenge puzzle and records the Challenge;
-3. begins a **15-second gathering period**, with question/media/answer unavailable until that period expires on the server.
+3. begins a **30-second gathering period**, with question/media/answer unavailable until that period expires on the server.
 
 Both teams then participate in **the same selected Challenge puzzle**. Up to two Challenges can occur in one run, with no reused question identity.
 
@@ -508,9 +508,9 @@ sequenceDiagram
 
     A->>S: Start Challenge
     S->>S: Validate + consume free opportunity + select initiator's question
-    S-->>A: 15-second gathering, question hidden
-    S-->>B: 15-second gathering, question hidden
-    Note over A,B: After 15 active Advent seconds, shared question opens
+    S-->>A: 30-second gathering, question hidden
+    S-->>B: 30-second gathering, question hidden
+    Note over A,B: After 30 active Advent seconds, shared question opens
     A->>S: Answer
     B->>S: Answer
     S->>S: Atomically accept first valid correct answer
@@ -1117,7 +1117,7 @@ Do not make the normal game architecture unnecessarily complicated to optimize f
 - Each team can initiate once.
 - Challenge costs **zero points**; only one opportunity per team is consumed atomically.
 - Each team initiates a different puzzle; each individual Challenge shares one selected puzzle between both teams.
-- The question/answers stay hidden during the **15-second gathering** phase.
+- The question/answers stay hidden during the **30-second gathering** phase.
 - Frozen targets cannot be challenged.
 - Cannot start during Pause/Music Quiz.
 - Same puzzle for both teams.

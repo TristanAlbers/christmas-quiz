@@ -1,12 +1,12 @@
 {% load quiz_format %}
-<div class="team-state-surface state-panel-{{ state.team_state|lower }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}" data-endgame-run-id="{{ state.run_id|default:'' }}">
+<div class="team-state-surface state-panel-{{ state.team_state|lower }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}" data-endgame-run-id="{{ state.run_id|default:'' }}"{% if state.challenge and state.challenge.status == 'active' and state.challenge.phase == 'starting' %} data-challenge-countdown-ms="{{ state.challenge.grace_remaining_ms }}" data-challenge-countdown-paused="{% if state.global_state == 'PAUSED' %}true{% else %}false{% endif %}"{% endif %}>
   {% if state.run_id %}
-    {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' %}{% if not state.challenge or state.challenge.status != 'active' %}
+    {% if state.global_state == 'ADVENT_QUIZ' and state.team_state != 'FINISHED' and state.team_state != 'FREEZE' %}
       <div class="team-advent-meta" aria-label="Speeltijd" aria-live="off">
         <span>Adventrace · Puzzel {{ state.current_number }} van 25</span>
         <span>◷ <strong>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</strong></span>
       </div>
-    {% endif %}{% endif %}
+    {% endif %}
     {% if not state.music and state.team_state == 'FREEZE' %}
       <section class="freeze-message" role="group" aria-label="Team {{ viewer_team_id|upper }} is bevroren">
         <p class="freeze-message__brand">QUIZZMASS <span aria-hidden="true">✦</span> 2026</p>
