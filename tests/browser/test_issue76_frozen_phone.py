@@ -7,8 +7,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 from uuid import uuid4
 
-from quiz.application import admin_freeze, admin_unfreeze
-from quiz.contracts import AdminTeam
+from quiz.application import admin_freeze, admin_unfreeze, pause_game, resume_game
+from quiz.contracts import AdminTeam, RunCommand
 from tests.browser.issue31_support import Issue31BrowserCase
 
 
@@ -114,6 +114,25 @@ class Issue76FrozenPhoneBrowserTests(Issue31BrowserCase):
                     await page.locator(".state-panel-freeze").wait_for(timeout=5000)
                     self.assertTrue(await page.locator("#freeze-backdrop").is_visible())
                     self.assertEqual(await page.locator("#answer-input").count(), 0)
+
+                    # Pause takes visual precedence without thawing or leaking
+                    # the underlying private puzzle; resume restores the lock.
+                    await asyncio.to_thread(
+                        pause_game,
+                        self.admin,
+                        RunCommand(str(uuid4()), self.run_id),
+                    )
+                    await page.get_by_text("Spel gepauzeerd").wait_for(timeout=5000)
+                    await ice.wait_for(state="hidden", timeout=5000)
+                    self.assertEqual(await page.locator(".freeze-message").count(), 0)
+                    self.assertEqual(await page.locator("#answer-input").count(), 0)
+                    await asyncio.to_thread(
+                        resume_game,
+                        self.admin,
+                        RunCommand(str(uuid4()), self.run_id),
+                    )
+                    await ice.wait_for(state="visible", timeout=5000)
+                    await page.locator(".freeze-message").wait_for(timeout=5000)
                     await asyncio.to_thread(
                         admin_unfreeze,
                         self.admin,
