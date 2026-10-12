@@ -408,8 +408,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     self.assertTrue(await clock.evaluate(
                         "el => getComputedStyle(el).position === 'absolute'"
                     ))
+                    self.assertTrue(await clock.is_visible())
                     self.assertTrue(await clock.evaluate(
-                        "el => el.offsetParent.classList.contains('app-shell')"
+                        "el => el.closest('.app-shell') !== null"
                     ))
                     clock_before = (await clock.bounding_box())["y"]
                     await phone.evaluate(
