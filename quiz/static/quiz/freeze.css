@@ -1,8 +1,8 @@
 /* Issue #76: Quizzmass ice spell.
    All decoration is non-sensitive and mounted outside the 500ms HTMX status swap. */
-body:has(.state-panel-freeze) { overflow: hidden; }
+body:has(.freeze-message) { overflow: hidden; }
 
-#game-status:has(.state-panel-freeze) {
+#game-status:has(.freeze-message) {
   position: fixed;
   z-index: 80;
   inset: 0;
