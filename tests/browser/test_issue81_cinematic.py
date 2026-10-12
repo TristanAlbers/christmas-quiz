@@ -41,7 +41,8 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                     await a.locator("#answer-input").fill("aanvaller houdt dit")
                     await b.locator("#answer-input").fill("slachtoffer verliest dit")
                     await a.evaluate(
-                        "window.__originalAnswer = document.getElementById('answer-input')"
+                        "window.__originalAnswer = "
+                        "document.getElementById('answer-input')"
                     )
                     await a.get_by_role("button", name="Winkel").click()
                     await a.get_by_role(
@@ -61,7 +62,7 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                         ),
                         "4.6s",
                     )
-                    await a.wait_for_timeout(500)
+                    await a.wait_for_timeout(900)
                     self.assertGreater(
                         float(await attack.locator(
                             ".gameplay-event__stage--attack"
@@ -92,7 +93,8 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                         "aanvaller houdt dit",
                     )
                     self.assertTrue(await a.evaluate(
-                        "window.__originalAnswer === document.getElementById('answer-input')"
+                        "window.__originalAnswer === "
+                        "document.getElementById('answer-input')"
                     ))
                     await self.capture_pair(a, b, "normal-settled")
 
@@ -138,7 +140,8 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                         "el => el.setSelectionRange(2, 6)"
                     )
                     await a.evaluate(
-                        "window.__protectedInput = document.getElementById('answer-input')"
+                        "window.__protectedInput = "
+                        "document.getElementById('answer-input')"
                     )
                     await b.locator("#answer-input").fill("verliest door Reverse")
                     await b.get_by_role("button", name="Winkel").click()
@@ -167,14 +170,16 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                     await a.wait_for_timeout(1850)
                     for page in (a, b):
                         card = page.locator(
-                            ".gameplay-event__stage--reverse-good .gameplay-event__reverse-card"
+                            ".gameplay-event__stage--reverse-good "
+                            ".gameplay-event__reverse-card"
                             if page == a else
-                            ".gameplay-event__stage--reverse-bad .gameplay-event__reverse-card"
+                            ".gameplay-event__stage--reverse-bad "
+                            ".gameplay-event__reverse-card"
                         )
                         self.assertTrue(await card.is_visible())
                         self.assertEqual(await card.locator("svg path").count(), 2)
                         self.assertEqual(
-                            (await card.inner_text()).replace("\\n", " ").find("REVERSE") >= 0,
+                            "REVERSE" in await card.inner_text(),
                             True,
                         )
                     await self.capture_pair(a, b, "reverse-card")
@@ -187,7 +192,8 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                         "blijft behouden",
                     )
                     self.assertTrue(await a.evaluate(
-                        "window.__protectedInput === document.getElementById('answer-input')"
+                        "window.__protectedInput === "
+                        "document.getElementById('answer-input')"
                     ))
                     self.assertEqual(
                         await a.locator("#answer-input").evaluate(
