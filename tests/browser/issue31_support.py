@@ -57,5 +57,32 @@ class Issue31BrowserCase(LiveServerTestCase):
             [{"name": "sessionid", "value": cookie, "domain": host, "path": "/"}]
         )
         page = await context.new_page()
-        await page.goto(f"{self.live_server_url}/team/")
+        response = await page.goto(f"{self.live_server_url}/team/")
+        if engine == "webkit":
+            try:
+                await page.locator(
+                    "[aria-controls='team-shop-dialog']"
+                ).wait_for(state="attached", timeout=5000)
+            except Exception:
+                # Diagnose a WebKit-only session or rendering discrepancy
+                # rather than misclassifying it as an animation failure.
+                cookies = await context.cookies()
+                print(
+                    "WebKit team preflight:",
+                    "status=", response.status if response else None,
+                    "url=", page.url,
+                    "sessionCookiePresent=", any(
+                        c["name"] == "sessionid" for c in cookies
+                    ),
+                    "body=", (await page.locator("body").inner_text())[:500],
+                )
+                screenshot_dir = os.environ.get(
+                    "REVERSE_ANIMATION_SCREENSHOT_DIR"
+                )
+                if screenshot_dir:
+                    Path(screenshot_dir).mkdir(parents=True, exist_ok=True)
+                    await page.screenshot(
+                        path=str(Path(screenshot_dir) / "webkit-team-preflight.png")
+                    )
+                raise
         return browser, context, page
