@@ -181,7 +181,9 @@ class PhaseSixBrowserTests(LiveServerTestCase):
                     await self._screenshot(tv_page, "challenge-gathering-tv-1920x1080")
                     await self._screenshot(a_page, "challenge-gathering-phone-390x844")
                     await a_page.wait_for_timeout(1300)
-                    for page, initial in zip((a_page, b_page, tv_page), initial_seconds):
+                    for page, initial in zip(
+                        (a_page, b_page, tv_page), initial_seconds
+                    ):
                         seconds = await page.locator(
                             "[data-challenge-countdown]"
                         ).evaluate("el => Number(el.textContent.match(/\\d+/)?.[0])")
