@@ -346,7 +346,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     browser, "/overview/", {"width": 1920, "height": 1080}
                 )
                 try:
-                    await team_a.locator("#answer-input").fill("north")
+                    await team_a.locator("#answer-input").fill("carol")
                     await team_a.locator(".answer-form .button-primary").click()
                     await team_a.locator(".endgame-team-result--winner").wait_for(
                         timeout=5000
