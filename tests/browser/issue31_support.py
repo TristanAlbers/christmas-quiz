@@ -42,8 +42,16 @@ class Issue31BrowserCase(LiveServerTestCase):
         return client.cookies["sessionid"].value
 
     async def page_for(self, playwright, cookie):
-        browser = await playwright.chromium.launch()
-        context = await browser.new_context()
+        # CI exercises the same purchase transition in Chromium and WebKit.
+        engine = os.environ.get("ISSUE31_BROWSER_ENGINE", "chromium")
+        if engine not in {"chromium", "webkit"}:
+            raise ValueError("ISSUE31_BROWSER_ENGINE must be chromium or webkit")
+        browser = await getattr(playwright, engine).launch()
+        context = (
+            await browser.new_context(viewport={"width": 390, "height": 844})
+            if engine == "webkit"
+            else await browser.new_context()
+        )
         host = urlparse(self.live_server_url).hostname
         await context.add_cookies(
             [{"name": "sessionid", "value": cookie, "domain": host, "path": "/"}]
