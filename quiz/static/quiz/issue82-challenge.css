@@ -155,6 +155,7 @@ body.game-page--overview:has(.challenge-overview) {
   width: min(100%, 64vw);
   max-height: 35vh;
   overflow-y: auto;
+  scrollbar-width: none;
   padding: 1.4vw 2.4vw;
   border: 1px solid #aa864f;
   background: linear-gradient(145deg, #16382d, #0a241c);
@@ -335,7 +336,7 @@ body.game-page--team:has(.challenge-stage)::before { display: none; }
   overflow-wrap: anywhere;
 }
 .game-page--team:has(.challenge-stage) .challenge-stage__paper > span {
-  color: #725031;
+  color: #403022;
   font: 750 .875rem system-ui, sans-serif;
   letter-spacing: .12em;
 }
