@@ -436,8 +436,10 @@ body.game-page--overview:has(.public-status--challenge)::before { display: none;
 }
 .game-page--overview .public-challenge-status p { margin: 0; }
 
-/* Compact live identity/clock header, without sacrificing session logout. */
+/* Align the polled clock with the scrolling shell header. The old team
+   state wrapper is a positioning ancestor only outside Challenge mode. */
 .game-page--team:has(.challenge-stage) .app-shell { position: relative; }
+.game-page--team:has(.challenge-stage) .team-state-surface { position: static; }
 .game-page--team:has(.challenge-stage) .page-header {
   min-height: 3.3rem;
   flex-wrap: nowrap;
