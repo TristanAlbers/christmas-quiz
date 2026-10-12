@@ -98,6 +98,12 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                 self.assertEqual(await page.locator(".shop-item").count(), 4)
                 prices = await page.locator(".shop-item__price").all_inner_texts()
                 self.assertEqual(prices, self.expected)
+                self.assertIn(
+                    "Wie als eerste goed antwoordt, wint",
+                    await page.locator(
+                        ".shop-item--challenge .shop-item__details small"
+                    ).first.inner_text(),
+                )
                 # Readable type on a real phone; never squeeze labels into
                 # unreadably small text to fit the shop above the fold.
                 text_sizes = await page.evaluate(
@@ -249,6 +255,29 @@ class Issue75ShopBrowserTests(LiveServerTestCase):
                     (self.screenshot_dir / f"issue75-{label}-metrics.json").write_text(
                         json.dumps(metrics, indent=2)
                     )
+
+                # 320px is a required supported phone width, and must keep
+                # the same minimum readable type as the 390px reference.
+                await page.set_viewport_size({"width": 320, "height": 844})
+                sizes_320 = await page.evaluate(
+                    """() => [
+                        '.shop-item__details strong',
+                        '.shop-item__details small',
+                        '.shop-item__price',
+                        '.shop-item__action button'
+                    ].map(selector => parseFloat(
+                        getComputedStyle(document.querySelector(selector)).fontSize
+                    ))"""
+                )
+                self.assertGreaterEqual(sizes_320[0], 16)
+                self.assertGreaterEqual(sizes_320[1], 14)
+                self.assertGreaterEqual(sizes_320[2], 15)
+                self.assertGreaterEqual(sizes_320[3], 14)
+                self.assertTrue(
+                    await page.evaluate(
+                        "() => document.documentElement.scrollWidth <= innerWidth"
+                    )
+                )
             finally:
                 await context.close()
                 await browser.close()
