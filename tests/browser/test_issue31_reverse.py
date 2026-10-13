@@ -82,7 +82,7 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     await reflected.wait_for(state="visible", timeout=5000)
                     await saved.wait_for(state="visible", timeout=5000)
                     reflected_text = (await reflected.inner_text()).lower()
-                    self.assertIn("freeze gelanceerd", reflected_text)
+                    self.assertIn("freeze verstuurd", reflected_text)
                     self.assertIn("teruggekaatst!", reflected_text)
                     self.assertIn(
                         "Jullie Reverse heeft jullie gered!", await saved.inner_text()
@@ -91,7 +91,7 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                         await reflected.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "4s",
+                        "4.6s",
                     )
                     await b.locator(".state-panel-freeze").wait_for(timeout=5000)
                     self.assertEqual(await b.locator("#answer-input").count(), 0)

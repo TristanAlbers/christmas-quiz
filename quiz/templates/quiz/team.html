@@ -45,6 +45,8 @@
       <p id="action-feedback" class="feedback" role="status"></p>
     </section>
   </main>
+  {# Keep this live region outside the inert shell and the aria-hidden visual film. #}
+  <p id="gameplay-film-announcement" class="visually-hidden" role="status" aria-live="assertive" aria-atomic="true"></p>
   {# This inert ghost contains no puzzle, hint, points or media. It stays mounted through 500ms polls. #}
   <div id="freeze-backdrop" class="freeze-backdrop" data-active="0" hidden aria-hidden="true">
     <div class="freeze-ghost">
@@ -203,6 +205,72 @@
       }
     }
 
+    // The server emits #gameplay-event exactly once per new event id. The film
+    // never decides Freeze state; it only makes the 4.6s sequence unskippable
+    // (including keyboard activation of controls behind the takeover).
+    let gameplayFilmTimer = null;
+    let gameplayFilmStageTimer = null;
+    let lastGameplayFilmId = null;
+    function announceGameplayStage(film, stage) {
+      // The visible stages are aria-hidden: only the current stage is spoken.
+      if (!film.isConnected || film.dataset.eventId !== lastGameplayFilmId || !stage) return;
+      const live = document.getElementById('gameplay-film-announcement');
+      if (!live) return;
+      const heading = stage.querySelector('strong')?.textContent?.trim();
+      const caption = stage.querySelector('.gameplay-event__caption')?.textContent?.trim();
+      live.textContent = [heading, caption].filter(Boolean).join('. ');
+    }
+    function startGameplayFilm() {
+      const film = document.querySelector('#gameplay-event[data-event-id]');
+      if (!film || film.classList.contains('gameplay-event--idle')) return;
+      // HTMX OOB swaps and the observer can both report one insertion.
+      const eventId = film.dataset.eventId;
+      if (!eventId || eventId === lastGameplayFilmId) return;
+      lastGameplayFilmId = eventId;
+      const shell = document.querySelector('.app-shell');
+      const previouslyFocused = document.activeElement;
+      const restoreAnswer = previouslyFocused?.matches('input[name="answer"]')
+        ? previouslyFocused : null;
+      let selection = null;
+      if (restoreAnswer) {
+        selection = [restoreAnswer.selectionStart, restoreAnswer.selectionEnd];
+      }
+      // Native modal dialogs escape inert ancestors and sit above fixed overlays.
+      // Close a protected team's open shop before the first cinematic frame.
+      const shop = document.getElementById('team-shop-dialog');
+      if (shop?.open) shop.close();
+      reopenShop = false;
+      if (shell) shell.inert = true;
+      document.body.classList.add('gameplay-film-active');
+      window.clearTimeout(gameplayFilmTimer);
+      window.clearTimeout(gameplayFilmStageTimer);
+      const attackStage = film.querySelector('.gameplay-event__stage--attack');
+      const outcomeStage = film.querySelector(
+        '.gameplay-event__stage--impact, .gameplay-event__stage--reverse-good, .gameplay-event__stage--reverse-bad'
+      );
+      announceGameplayStage(film, attackStage);
+      if (outcomeStage) {
+        const outcomeDelay = Number.parseFloat(getComputedStyle(outcomeStage).animationDelay) * 1000;
+        gameplayFilmStageTimer = window.setTimeout(function () {
+          announceGameplayStage(film, outcomeStage);
+        }, outcomeDelay);
+      }
+      gameplayFilmTimer = window.setTimeout(function () {
+        // A second, different authoritative event would get its own film.
+        if (!film.isConnected || lastGameplayFilmId !== eventId) return;
+        if (shell) shell.inert = false;
+        document.body.classList.remove('gameplay-film-active');
+        // Restore a protected team's existing node, text and caret, never a
+        // removed frozen input or a stale field after a gameplay transition.
+        if (restoreAnswer?.isConnected && !document.querySelector('.freeze-message')) {
+          restoreAnswer.focus({preventScroll: true});
+          if (selection && selection.every(Number.isInteger)) {
+            restoreAnswer.setSelectionRange(selection[0], selection[1]);
+          }
+        }
+      }, Number.parseFloat(getComputedStyle(film).animationDuration) * 1000);
+    }
+
     let challengeResultTimer = null;
     let activeChallengeResultKey = null;
     let activeChallengeResultExpiresAt = 0;
@@ -297,7 +365,7 @@
     document.body.addEventListener('htmx:oobAfterSwap', function (event) {
       if (event.detail.target.id === 'team-actions' && reopenShop) {
         const shop = document.getElementById('team-shop-dialog');
-        if (shop) shop.showModal();
+        if (shop && !document.body.classList.contains('gameplay-film-active')) shop.showModal();
         reopenShop = false;
       }
       if (event.detail.target.id === 'team-resource-values' || event.detail.target.id === 'question-pane') {
@@ -313,9 +381,13 @@
       if (event.detail.target.id === 'action-feedback') {
         armActionFeedbackTimer();
       }
+      if (event.detail.target.id === 'gameplay-event') {
+        startGameplayFilm();
+      }
     });
     document.body.addEventListener('htmx:afterSwap', function (event) {
       if (event.detail.target.id === 'game-status') {
+        startGameplayFilm();
         syncFrozenSurface();
         syncPausedSurface();
         syncTransientChallengeResult(challengeWasActiveBeforeSwap);
@@ -327,6 +399,17 @@
       if (shop && shop.open) shop.close();
       reopenShop = false;
     });
+
+    // HTMX may insert an OOB fragment directly or through a swapped parent.
+    // Only react to a new film node, never to ordinary 500ms text updates.
+    new MutationObserver(function (changes) {
+      if (changes.some(change => Array.from(change.addedNodes).some(
+        node => node.nodeType === 1 && (
+          node.id === 'gameplay-event' ||
+          node.querySelector?.('#gameplay-event[data-event-id]')
+        )
+      ))) startGameplayFilm();
+    }).observe(document.body, {childList: true, subtree: true});
 
     syncPuzzleActionAvailability();
     syncShopResources();
