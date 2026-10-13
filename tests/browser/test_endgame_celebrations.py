@@ -364,6 +364,13 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     await team_a.locator(".endgame-team-result--winner").wait_for(
                         timeout=5000
                     )
+                    # The tableau arrives at the HTMX swap; the stable live
+                    # region announces the victory after htmx:afterSettle.
+                    await team_a.wait_for_function(
+                        "() => document.getElementById('game-announcement')"
+                        "?.textContent.includes('Jullie winnen!')",
+                        timeout=5000,
+                    )
                     self.assertIn(
                         "Jullie winnen!",
                         await team_a.locator("#game-announcement").inner_text(),
