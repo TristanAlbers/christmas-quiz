@@ -122,7 +122,7 @@ jobs:
         run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Create screenshot directory
-        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-77 artifacts/ui-82 artifacts/ui-76 artifacts/ui-78 artifacts/ui-75 artifacts/ui-81
+        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-77 artifacts/ui-82 artifacts/ui-76 artifacts/ui-78 artifacts/ui-75 artifacts/ui-81 artifacts/ui-83
 
       - name: Run browser shard
         run: >-
@@ -135,6 +135,7 @@ jobs:
           -v "${{ github.workspace }}/artifacts/ui-76:/tmp/ui76"
           -v "${{ github.workspace }}/artifacts/ui-78:/tmp/ui78"
           -v "${{ github.workspace }}/artifacts/ui-81:/tmp/ui81"
+          -v "${{ github.workspace }}/artifacts/ui-83:/tmp/ui83"
           -v "${{ github.workspace }}/artifacts/ui-77:/tmp/ui77"
           -v "${{ github.workspace }}/artifacts/ui-82:/tmp/ui82"
           -e UI72_SCREENSHOT_DIR=/tmp/ui72
@@ -145,6 +146,7 @@ jobs:
           -e UI76_SCREENSHOT_DIR=/tmp/ui76
           -e UI78_SCREENSHOT_DIR=/tmp/ui78
           -e UI81_SCREENSHOT_DIR=/tmp/ui81
+          -e UI83_SCREENSHOT_DIR=/tmp/ui83
           -e UI77_SCREENSHOT_DIR=/tmp/ui77
           -e UI82_SCREENSHOT_DIR=/tmp/ui82
           -e DJANGO_SETTINGS_MODULE=config.test_settings
@@ -188,6 +190,14 @@ jobs:
         with:
           name: midnight-advent-issue-73
           path: artifacts/ui-73/*.png
+          if-no-files-found: warn
+
+      - name: Preserve issue 83 victory screenshots
+        if: always() && matrix.shard == 'effects-challenge'
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-83
+          path: artifacts/ui-83/*.png
           if-no-files-found: warn
 
       - name: Preserve issue 77 real Music screenshots

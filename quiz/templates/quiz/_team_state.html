@@ -1,5 +1,5 @@
 {% load quiz_format %}
-<div class="team-state-surface state-panel-{{ state.team_state|lower }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}" data-endgame-run-id="{{ state.run_id|default:'' }}"{% if state.challenge and state.challenge.status == 'active' and state.challenge.phase == 'starting' %} data-challenge-countdown-ms="{{ state.challenge.grace_remaining_ms }}" data-challenge-countdown-paused="{% if state.global_state == 'PAUSED' %}true{% else %}false{% endif %}"{% endif %}>
+<div class="team-state-surface state-panel-{{ state.team_state|lower }}" data-endgame-state data-endgame-winner="{{ first_finisher_team_id|default:'' }}" data-endgame-run-id="{{ state.run_id|default:'' }}" data-endgame-final="{% if state.global_state == 'FINISHED' %}true{% else %}false{% endif %}"{% if state.challenge and state.challenge.status == 'active' and state.challenge.phase == 'starting' %} data-challenge-countdown-ms="{{ state.challenge.grace_remaining_ms }}" data-challenge-countdown-paused="{% if state.global_state == 'PAUSED' %}true{% else %}false{% endif %}"{% endif %}>
   {% if state.music and state.music.phase == 'final_results' %}
     {# Updated every 500ms even when the stable final-results card is preserved. #}
     <span hidden data-music-final-sync data-remaining-ms="{{ state.music.final_results_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"></span>
@@ -29,8 +29,32 @@
         </div>
       </section>
     {% else %}
-      {% if first_finisher_team_id %}<aside class="finish-banner{% if state.global_state == 'FINISHED' %} finish-banner--final{% elif state.team_state == 'FINISHED' %} finish-banner--winner{% else %} finish-banner--runner-up{% endif %}" role="status">{% if state.global_state == 'FINISHED' %}<p class="eyebrow">Race afgerond</p><h2>Team {{ first_finisher_team_id|upper }} was als eerste klaar</h2><p>Beide teams hebben alle 25 adventvakjes voltooid.</p>{% elif state.team_state == 'FINISHED' %}<p class="eyebrow">Winnaar adventrace</p><h2>Jullie hebben de adventrace gewonnen!</h2><p>Het andere team speelt verder totdat ook hun kalender compleet is.</p>{% else %}<p class="eyebrow">Uitslag</p><h2>Team {{ first_finisher_team_id|upper }} heeft de kalender voltooid</h2><p>Ga door: jullie huidige puzzel blijft actief.</p>{% endif %}</aside>{% endif %}
-      {# The approved gold Pause overlay below replaces the old textual interruption. #}
+      {% if state.team_state == 'FINISHED' and first_finisher_team_id %}
+        <section class="endgame-team-result{% if first_finisher_team_id == viewer_team_id %} endgame-team-result--winner{% else %} endgame-team-result--complete{% endif %}" role="group" aria-label="Adventrace resultaat" aria-live="off" data-persistent-result>
+          <div class="endgame-team-result__inner">
+            <span class="endgame-team-result__sigil" aria-hidden="true">✦</span>
+            {% if first_finisher_team_id == viewer_team_id %}
+              <p class="endgame-team-result__kicker">De eerste 25 deuren zijn geopend</p>
+              <h1>Jullie winnen!</h1>
+              <p class="endgame-team-result__copy">{% if state.global_state == 'FINISHED' %}Beide teams hebben alle 25 adventvakjes voltooid. Jullie bereikten als eerste de finish!{% else %}Jullie hebben als eerste alle 25 adventvakjes voltooid. Het andere team speelt verder.{% endif %}</p>
+              <p class="endgame-team-result__divider" aria-hidden="true">✦ · ✧ · ✦</p>
+              <p class="endgame-team-result__stamp">Team {{ viewer_team_id|upper }} · Winnaar van Quizzmass</p>
+            {% else %}
+              <p class="endgame-team-result__kicker">Alle 25 vakjes geopend</p>
+              <h1>Jullie zijn klaar!</h1>
+              <p class="endgame-team-result__copy">Ook jullie hebben de volledige adventkalender voltooid. Team {{ first_finisher_team_id|upper }} bereikte de finish als eerste.</p>
+              <p class="endgame-team-result__divider" aria-hidden="true">✦ · ✧ · ✦</p>
+              <p class="endgame-team-result__stamp">Team {{ viewer_team_id|upper }} · Adventkalender voltooid</p>
+            {% endif %}
+          </div>
+        </section>
+      {% elif first_finisher_team_id %}
+        <aside class="endgame-continuing-note" role="status">
+          <strong>Team {{ first_finisher_team_id|upper }} is als eerste klaar.</strong>
+          <span>Jullie spelen verder — de huidige puzzel blijft actief.</span>
+        </aside>
+      {% endif %}
+      {# Issue #78 approved gold Pause overlay replaces textual interruption. #}
       {% if state.music and state.music.phase == 'gathering' %}<div class="music-gathering-status"><strong>{% if state.global_state == 'PAUSED' %}Muziek Quiz gepauzeerd{% else %}De Muziek Quiz begint zo{% endif %}</strong><time class="music-countdown music-countdown--team" data-music-countdown data-remaining-ms="{{ state.music.gathering_remaining_ms }}" data-running="{% if state.global_state == 'MUSIC_QUIZ' %}true{% else %}false{% endif %}"><span class="visually-hidden">Nog </span><span data-music-countdown-value>{% widthratio state.music.gathering_remaining_ms 1000 1 %} seconden</span></time></div>{% endif %}
       {% if state.challenge and state.challenge.status == 'active' %}
         <aside class="challenge-status challenge-status--active" role="region" aria-label="Uitdagingstatus"><span class="challenge-status__icon" aria-hidden="true">★</span><div><p class="eyebrow">{% if state.challenge.phase == 'starting' %}Uitdaging begint zo{% else %}Uitdaging bezig{% endif %}</p><strong>{% if state.challenge.role == 'initiator' %}Jullie zijn de uitdaging gestart{% else %}Het andere team heeft jullie uitgedaagd{% endif %}</strong>{% if state.challenge.phase == 'starting' %}<p>Verzamel je team. De gezamenlijke puzzel verschijnt voor beide teams zodra de afteltijd voorbij is.</p>{% else %}<p>Jullie adventpuzzel blijft bewaard terwijl beide teams de gezamenlijke uitdaging oplossen.</p>{% endif %}</div></aside>
@@ -47,23 +71,23 @@
       <div class="team-ready__status"><span class="team-ready__light" aria-hidden="true"></span><p><strong>Wachten op de Game Master</strong><span>Wachten tot de Game Master het spel start. De quiz verschijnt hier vanzelf.</span></p></div>
     </section>
   {% endif %}
-{% if state.global_state == 'PAUSED' %}
-  <div class="pause-veil pause-veil--team{% if state.team_state == 'FREEZE' and not state.music %} pause-veil--frozen{% endif %}" role="status" aria-label="Spel gepauzeerd" data-pause-state>
-    <div class="pause-veil__silhouette" aria-hidden="true"><span></span><span></span><span></span></div>
-    <div class="pause-veil__content">
-      <span class="pause-veil__emblem" aria-hidden="true"></span>
-      <p class="pause-veil__kicker">QUIZZMASS · {% if state.music %}MUZIEK QUIZ{% elif state.challenge and state.challenge.status == 'active' %}KERSTUITDAGING{% else %}TEAM {{ viewer_team_id|upper }}{% endif %}</p>
-      <h2>Spel gepauzeerd</h2>
-      <p class="pause-veil__description">{% if state.music %}De Muziek Quiz staat stil. Na hervatten gaan jullie verder.{% elif state.challenge and state.challenge.status == 'active' %}De uitdaging gaat verder zodra de Game Master hervat.{% elif state.team_state == 'FREEZE' %}Jullie zijn nog bevroren. Ook de Freeze-timer staat stil.{% else %}De puzzel wacht op de Game Master.{% endif %}</p>
-      <p class="pause-veil__time" aria-label="Speeltijd staat stil"><span class="pause-veil__clock-icon" aria-hidden="true"></span>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</p>
-      <p class="pause-veil__foot">Je kunt tijdelijk niets insturen of kopen.<span>Je voortgang blijft bewaard.</span></p>
+  {% if state.global_state == 'PAUSED' %}
+    <div class="pause-veil pause-veil--team{% if state.team_state == 'FREEZE' and not state.music %} pause-veil--frozen{% endif %}" role="status" aria-label="Spel gepauzeerd" data-pause-state>
+      <div class="pause-veil__silhouette" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="pause-veil__content">
+        <span class="pause-veil__emblem" aria-hidden="true"></span>
+        <p class="pause-veil__kicker">QUIZZMASS · {% if state.music %}MUZIEK QUIZ{% elif state.challenge and state.challenge.status == 'active' %}KERSTUITDAGING{% else %}TEAM {{ viewer_team_id|upper }}{% endif %}</p>
+        <h2>Spel gepauzeerd</h2>
+        <p class="pause-veil__description">{% if state.music %}De Muziek Quiz staat stil. Na hervatten gaan jullie verder.{% elif state.challenge and state.challenge.status == 'active' %}De uitdaging gaat verder zodra de Game Master hervat.{% elif state.team_state == 'FREEZE' %}Jullie zijn nog bevroren. Ook de Freeze-timer staat stil.{% else %}De puzzel wacht op de Game Master.{% endif %}</p>
+        <p class="pause-veil__time" aria-label="Speeltijd staat stil"><span class="pause-veil__clock-icon" aria-hidden="true"></span>{{ gameplay_elapsed_ms|elapsed_hhmmss }}</p>
+        <p class="pause-veil__foot">Je kunt tijdelijk niets insturen of kopen.<span>Je voortgang blijft bewaard.</span></p>
+      </div>
     </div>
-  </div>
-{% endif %}
+  {% endif %}
 </div>
 {% if feedback %}<p id="action-feedback" class="feedback" role="status" hx-swap-oob="outerHTML">{{ feedback|dutch_feedback }}</p>{% endif %}
 {% if feedback == 'Incorrect answer. Try again.' %}<div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true" hx-swap-oob="outerHTML"></div><div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--active" aria-hidden="true" hx-swap-oob="outerHTML"><div class="incorrect-answer-effect__card"><span class="incorrect-answer-effect__santa" aria-hidden="true">🎅</span><strong>Nog niet!</strong><span>De kerstman zegt dat dit antwoord niet klopt. Probeer het opnieuw.</span></div></div>{% endif %}
-{% if feedback == 'Correct answer. Puzzle completed.' %}<div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--idle" aria-hidden="true" hx-swap-oob="outerHTML"></div><div id="door-completion" class="door-completion" role="status" aria-label="Puzzel afgerond" hx-swap-oob="outerHTML"><div class="door-completion__sparkles" aria-hidden="true">✦ · ✧ · ✦</div><div class="door-completion__door" aria-hidden="true"><span>✓</span><i></i></div><strong>Puzzel afgerond!</strong><span>Jullie zijn door naar de volgende stap.</span></div>{% endif %}
+{% if feedback == 'Correct answer. Puzzle completed.' %}<div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--idle" aria-hidden="true" hx-swap-oob="outerHTML"></div>{% if state.team_state == 'FINISHED' %}<div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true" hx-swap-oob="outerHTML"></div>{% else %}<div id="door-completion" class="door-completion" role="status" aria-label="Puzzel afgerond" hx-swap-oob="outerHTML"><div class="door-completion__sparkles" aria-hidden="true">✦ · ✧ · ✦</div><div class="door-completion__door" aria-hidden="true"><span>✓</span><i></i></div><strong>Puzzel afgerond!</strong><span>Jullie zijn door naar de volgende stap.</span></div>{% endif %}{% endif %}
 {% if feedback == 'Uno Reverse purchased and armed.' %}<div id="reverse-purchase" class="reverse-purchase" role="status" aria-live="assertive" hx-swap-oob="outerHTML"><div class="reverse-purchase__burst" aria-hidden="true"></div><div class="reverse-purchase__card" aria-hidden="true"><span class="reverse-purchase__label">UNO</span><span class="reverse-purchase__symbol"><svg viewBox="0 0 70 84" fill="none" aria-hidden="true"><path d="M20 28 C20 13 47 9 49 26 L54 26 44 40 34 26 39 26 C37 20 27 23 27 30"/><path d="M50 56 C49 71 22 74 20 57 L15 57 25 44 35 57 30 57 C32 64 43 61 43 54"/></svg></span><span class="reverse-purchase__label reverse-purchase__label--bottom">REVERSE</span></div><div class="reverse-purchase__copy"><p class="eyebrow">Aankoop gelukt</p><strong>Uno Reverse geactiveerd!</strong><span>De volgende inkomende Freeze wordt teruggekaatst.</span></div></div>{% endif %}
 {% if presentation_event %}<input id="event-context" type="hidden" name="event_context" value="{{ event_context }}" hx-swap-oob="outerHTML">{% include 'quiz/_team_event.html' with event=presentation_event %}{% endif %}
 {% if update_resources and state.run_id and not state.music and state.team_state != 'FREEZE' %}{% include 'quiz/_team_resources.html' with oob=True %}{% endif %}

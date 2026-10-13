@@ -13,14 +13,16 @@
   const currentTeam = (document.body.dataset.teamId || "").toLowerCase();
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let hideTimer = null;
+  let finalObserved = false;
+  let directFinalCelebration = false;
 
   function marker() {
     return document.querySelector("[data-endgame-state]");
   }
 
   function storageKey(stateMarker) {
-    const runId = stateMarker.dataset.endgameRunId || "active";
-    const scope = surface === "team" ? currentTeam + ":" + runId : "shared";
+    const runId = stateMarker.dataset.endgameRunId || stateMarker.dataset.runId || "active";
+    const scope = surface === "team" ? currentTeam + ":" + runId : "shared:" + runId;
     return "christmas-quiz:endgame-seen:" + surface + ":" + scope;
   }
 
@@ -55,41 +57,42 @@
     if (surface === "overview") {
       return {
         kind: "overview-winner",
-        icon: "🎉",
-        eyebrow: "Winnaar adventrace",
+        icon: "✦",
+        eyebrow: "De eerste 25 deuren zijn geopend",
         title: "Team " + teamName + " wint!",
-        copy: "Als eerste alle 25 adventvakjes voltooid. Het andere team speelt verder.",
+        copy: "Het andere team speelt verder",
       };
     }
     if (currentTeam === winner) {
       return {
         kind: "winner",
-        icon: "🏆",
+        icon: "✦",
         eyebrow: "Jullie waren als eerste klaar",
-        title: "Jullie winnen de adventrace!",
-        copy: "Vrolijk kerstfeest, kampioenen. Het andere team kan de kalender nog afmaken.",
+        title: "Jullie winnen!",
+        copy: "Jullie hebben als eerste alle 25 adventvakjes voltooid. Het andere team speelt verder.",
       };
     }
     return {
       kind: "runner-up",
-      icon: "🦌",
-      eyebrow: "De race heeft een winnaar",
+      icon: "",
+      eyebrow: "De race gaat door",
       title: "Team " + teamName + " was eerder",
-      copy: "Rudolph kijkt wat beteuterd, maar jullie huidige puzzel is nog actief. Ga door!",
+      copy: "Rudolph kijkt even beteuterd. Jullie puzzel blijft actief — speel verder!",
     };
   }
 
   function addConfetti() {
     if (reducedMotion || !confetti) return;
     confetti.replaceChildren();
-    for (let index = 0; index < 42; index += 1) {
+    const pieceCount = surface === "overview" ? 120 : 88;
+    for (let index = 0; index < pieceCount; index += 1) {
       const piece = document.createElement("i");
       piece.className = "endgame-confetti__piece";
       piece.style.setProperty("--confetti-left", ((index * 37) % 101) + "%");
       piece.style.setProperty("--confetti-drift", (((index * 29) % 17) - 8) + "vw");
       piece.style.setProperty("--confetti-rotate", ((index * 53) % 180) + "deg");
-      piece.style.setProperty("--confetti-delay", ((index % 9) * -0.16) + "s");
-      piece.style.setProperty("--confetti-duration", (2.7 + (index % 7) * 0.18) + "s");
+      piece.style.setProperty("--confetti-delay", (-0.5 - (index % 13) * 0.16) + "s");
+      piece.style.setProperty("--confetti-duration", (3.9 + (index % 7) * 0.19) + "s");
       confetti.appendChild(piece);
     }
   }
@@ -98,9 +101,10 @@
     overlay.classList.remove("endgame-celebration--visible");
     overlay.setAttribute("aria-hidden", "true");
     if (confetti) confetti.replaceChildren();
+    directFinalCelebration = false;
   }
 
-  function showCelebration(winner) {
+  function showCelebration(winner, alreadyFinal = false) {
     const result = resultCopy(winner);
     window.clearTimeout(hideTimer);
     overlay.classList.remove(
@@ -113,32 +117,102 @@
     icon.textContent = result.icon;
     eyebrow.textContent = result.eyebrow;
     title.textContent = result.title;
-    copy.textContent = result.copy;
+    copy.textContent = alreadyFinal
+      ? (surface === "overview"
+        ? "Beide teams zijn klaar. Team " + winner.toUpperCase() + " was als eerste!"
+        : "Beide teams hebben de adventrace voltooid. Jullie waren als eerste!")
+      : result.copy;
     if (result.kind !== "runner-up") addConfetti();
+    if (result.kind === "winner") {
+      const announcement = document.getElementById("game-announcement");
+      if (announcement) announcement.textContent = result.title + " " + copy.textContent;
+    }
     overlay.setAttribute("aria-hidden", "false");
     window.requestAnimationFrame(function () {
       overlay.classList.add("endgame-celebration--visible");
     });
     hideTimer = window.setTimeout(
       hideCelebration,
-      result.kind === "runner-up" ? 3200 : 4800
+      result.kind === "runner-up" ? 6000 : 4800
     );
   }
 
-  function observeEndgame() {
+  function observeEndgame(initial = false) {
     const stateMarker = marker();
     if (!stateMarker) return;
     const winner = (stateMarker.dataset.endgameWinner || "").trim().toLowerCase();
     const key = storageKey(stateMarker);
+    if (stateMarker.dataset.endgameFinal === "true") {
+      const justFinished = !initial && !finalObserved &&
+        (surface !== "team" || stateMarker.classList.contains("state-panel-finished"));
+      // Both completions can land between polls. Preserve one-shot confetti
+      // for the first winner on the phone AND the public TV.
+      const missedWinner = justFinished && winner &&
+        storedValue(key) !== winner &&
+        (surface === "overview" || currentTeam === winner);
+      if (missedWinner) {
+        remember(key, winner);
+        directFinalCelebration = true;
+        showCelebration(winner, true);
+      } else if (!directFinalCelebration) {
+        window.clearTimeout(hideTimer);
+        hideCelebration();
+      }
+      if (justFinished && surface === "team" && !missedWinner) {
+        const announcement = document.getElementById("game-announcement");
+        if (announcement) {
+          announcement.textContent = currentTeam === winner
+            ? "Beide teams zijn klaar! Jullie hebben de adventrace gewonnen."
+            : "Jullie zijn klaar! Alle 25 adventvakjes zijn voltooid.";
+        }
+      }
+      finalObserved = true;
+      if (winner) remember(key, winner);
+      return;
+    }
+    finalObserved = false;
+    directFinalCelebration = false;
     if (!winner) {
       forget(key);
       return;
     }
     if (storedValue(key) === winner) return;
+    // A fresh/reconnected page renders the durable server result but must not
+    // replay the transient celebration for a finish it did not observe.
+    if (initial) {
+      remember(key, winner);
+      return;
+    }
     remember(key, winner);
     showCelebration(winner);
   }
 
-  document.addEventListener("DOMContentLoaded", observeEndgame);
-  document.body.addEventListener("htmx:afterSettle", observeEndgame);
+  // The finished tableau is replaced by 500 ms HTMX status polls. Preserve
+  // its scroll offset so short/landscape phones can read the whole result.
+  let terminalScroll = null;
+  document.body.addEventListener("htmx:beforeSwap", function (event) {
+    if (surface !== "team" || event.detail.target?.id !== "game-status") return;
+    const result = event.detail.target.querySelector(".endgame-team-result");
+    const state = event.detail.target.querySelector("[data-endgame-state]");
+    terminalScroll = result && state ? {
+      runId: state.dataset.endgameRunId,
+      winner: result.classList.contains("endgame-team-result--winner"),
+      top: result.scrollTop,
+    } : null;
+  });
+  document.body.addEventListener("htmx:afterSwap", function (event) {
+    if (surface !== "team" || event.detail.target?.id !== "game-status") return;
+    const previous = terminalScroll;
+    terminalScroll = null;
+    if (!previous) return;
+    const result = event.detail.target.querySelector(".endgame-team-result");
+    const state = event.detail.target.querySelector("[data-endgame-state]");
+    if (result && state && state.dataset.endgameRunId === previous.runId &&
+        result.classList.contains("endgame-team-result--winner") === previous.winner) {
+      result.scrollTop = previous.top;
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", function () { observeEndgame(true); });
+  document.body.addEventListener("htmx:afterSettle", function () { observeEndgame(false); });
 }());
