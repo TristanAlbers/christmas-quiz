@@ -108,6 +108,7 @@ jobs:
               tests.browser.test_phase6_views
               tests.browser.test_phase4_views
               tests.browser.test_issue31_freeze
+              tests.browser.test_issue81_cinematic
               tests.browser.test_issue76_frozen_phone
               tests.browser.test_issue78_pause
               tests.browser.test_issue43_public_overview
@@ -121,7 +122,7 @@ jobs:
         run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Create screenshot directory
-        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-77 artifacts/ui-82 artifacts/ui-76 artifacts/ui-78 artifacts/ui-75 artifacts/ui-83
+        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-77 artifacts/ui-82 artifacts/ui-76 artifacts/ui-78 artifacts/ui-75 artifacts/ui-81 artifacts/ui-83
 
       - name: Run browser shard
         run: >-
@@ -131,9 +132,10 @@ jobs:
           -v "${{ github.workspace }}/artifacts/ui-75:/tmp/ui75"
           -v "${{ github.workspace }}/artifacts/ui-79:/tmp/ui79"
           -v "${{ github.workspace }}/artifacts/ui-73:/tmp/ui73"
-          -v "${{ github.workspace }}/artifacts/ui-83:/tmp/ui83"
           -v "${{ github.workspace }}/artifacts/ui-76:/tmp/ui76"
           -v "${{ github.workspace }}/artifacts/ui-78:/tmp/ui78"
+          -v "${{ github.workspace }}/artifacts/ui-81:/tmp/ui81"
+          -v "${{ github.workspace }}/artifacts/ui-83:/tmp/ui83"
           -v "${{ github.workspace }}/artifacts/ui-77:/tmp/ui77"
           -v "${{ github.workspace }}/artifacts/ui-82:/tmp/ui82"
           -e UI72_SCREENSHOT_DIR=/tmp/ui72
@@ -141,9 +143,10 @@ jobs:
           -e UI75_SCREENSHOT_DIR=/tmp/ui75
           -e UI79_SCREENSHOT_DIR=/tmp/ui79
           -e UI73_SCREENSHOT_DIR=/tmp/ui73
-          -e UI83_SCREENSHOT_DIR=/tmp/ui83
           -e UI76_SCREENSHOT_DIR=/tmp/ui76
           -e UI78_SCREENSHOT_DIR=/tmp/ui78
+          -e UI81_SCREENSHOT_DIR=/tmp/ui81
+          -e UI83_SCREENSHOT_DIR=/tmp/ui83
           -e UI77_SCREENSHOT_DIR=/tmp/ui77
           -e UI82_SCREENSHOT_DIR=/tmp/ui82
           -e DJANGO_SETTINGS_MODULE=config.test_settings
@@ -229,6 +232,14 @@ jobs:
           path: artifacts/ui-76/*.png
           if-no-files-found: warn
 
+      - name: Preserve issue 81 two-phone cinematic screenshots
+        if: always() && matrix.shard == 'effects-challenge'
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-81-chromium
+          path: artifacts/ui-81/*.png
+          if-no-files-found: warn
+
       - name: Preserve issue 78 real Pause visual checkpoint
         if: always() && matrix.shard == 'effects-challenge'
         uses: actions/upload-artifact@v4
@@ -251,6 +262,7 @@ jobs:
       ISSUE78_BROWSER_ENGINE: webkit
       UI78_SCREENSHOT_DIR: artifacts/ui-78-webkit
       REVERSE_ANIMATION_SCREENSHOT_DIR: artifacts/ui-75-webkit
+      UI81_SCREENSHOT_DIR: artifacts/ui-81-webkit
 
     steps:
       - name: Check out repository
@@ -272,11 +284,12 @@ jobs:
       - name: Build production-style static manifest
         run: python manage.py collectstatic --noinput
 
-      - name: Test Reverse and Pause on WebKit
+      - name: Test Reverse, Pause, films and drafts in WebKit
         run: >-
           python manage.py test
           tests.browser.test_issue31_reverse
           tests.browser.test_issue78_pause
+          tests.browser.test_issue81_cinematic
           --verbosity 2
 
       - name: Save WebKit Pause screenshots
@@ -293,6 +306,14 @@ jobs:
         with:
           name: midnight-advent-issue-75-webkit
           path: artifacts/ui-75-webkit/*.png
+          if-no-files-found: warn
+
+      - name: Save WebKit two-phone film screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-advent-issue-81-webkit
+          path: artifacts/ui-81-webkit/*.png
           if-no-files-found: warn
 
   quality-and-tests:

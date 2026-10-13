@@ -639,7 +639,10 @@ def team_action(request, action):
         _team_context(
             state,
             feedback=feedback,
-            replace_pane=True,
+            # Freeze does not change an active attacker's puzzle. Keep the
+            # exact answer input (draft, focus, caret) unless this team was
+            # actually frozen by an authoritative Reverse reflection.
+            replace_pane=(action != "freeze" or state.team_state == "FREEZE"),
             replace_actions=True,
             update_resources=True,
             presentation_event=presentation_event,
