@@ -407,6 +407,11 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     ).get_by_text("Beide teams hebben alle 25").wait_for(
                         timeout=5000
                     )
+                    await team_a.wait_for_function(
+                        "() => document.getElementById('game-announcement')"
+                        "?.textContent.includes('Beide teams zijn klaar!')",
+                        timeout=5000,
+                    )
                     for page in (team_a, team_b, tv):
                         await page.locator(
                             "#endgame-celebration.endgame-celebration--visible"
@@ -445,8 +450,15 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                 context, page = await self._page(
                     browser, "/team/", {"width": 390, "height": 844}, self.cookies["a"]
                 )
+                tv_context, tv = await self._page(
+                    browser, "/overview/", {"width": 1920, "height": 1080}
+                )
                 try:
                     await self._count_shows(page)
+                    await self._count_shows(tv)
+                    tv_poller = tv.locator("#overview-poller")
+                    tv_url = await tv_poller.get_attribute("hx-get")
+                    await tv_poller.evaluate("el => el.remove()")
                     # Prevent the intermediate first-winner state from being
                     # observed: both completions precede one explicit HTMX poll.
                     poller = page.locator("#poller")
@@ -487,6 +499,36 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                     self.assertEqual(
                         await page.evaluate("window.__endgameShows"), 1
                     )
+                    await tv.evaluate(
+                        """url => htmx.ajax('GET', url, {
+                            target: '#overview-state', swap: 'innerHTML'
+                        })""",
+                        tv_url,
+                    )
+                    await tv.locator(".endgame-tv-final").wait_for(timeout=5000)
+                    tv_burst = tv.locator(
+                        '#endgame-celebration[data-endgame-result="overview-winner"]'
+                        ".endgame-celebration--visible"
+                    )
+                    await tv_burst.wait_for(timeout=5000)
+                    self.assertEqual(
+                        await tv_burst.locator(".endgame-confetti__piece").count(),
+                        120,
+                    )
+                    self.assertIn(
+                        "Team A was als eerste",
+                        await tv_burst.locator(
+                            "[data-endgame-copy]"
+                        ).inner_text(),
+                    )
+                    self.assertEqual(
+                        await tv.evaluate("window.__endgameShows"), 1
+                    )
+                    await tv.reload()
+                    await tv.locator(".endgame-tv-final").wait_for()
+                    self.assertFalse(
+                        await tv.locator("#endgame-celebration").is_visible()
+                    )
                     await page.reload()
                     await page.locator(".endgame-team-result--winner").wait_for()
                     self.assertEqual(
@@ -498,6 +540,7 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         ).is_visible()
                     )
                 finally:
+                    await tv_context.close()
                     await context.close()
                     await browser.close()
 

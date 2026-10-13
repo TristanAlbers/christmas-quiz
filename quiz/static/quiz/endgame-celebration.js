@@ -118,7 +118,9 @@
     eyebrow.textContent = result.eyebrow;
     title.textContent = result.title;
     copy.textContent = alreadyFinal
-      ? "Beide teams hebben de adventrace voltooid. Jullie waren als eerste!"
+      ? (surface === "overview"
+        ? "Beide teams zijn klaar. Team " + winner.toUpperCase() + " was als eerste!"
+        : "Beide teams hebben de adventrace voltooid. Jullie waren als eerste!")
       : result.copy;
     if (result.kind !== "runner-up") addConfetti();
     if (result.kind === "winner") {
@@ -141,12 +143,14 @@
     const winner = (stateMarker.dataset.endgameWinner || "").trim().toLowerCase();
     const key = storageKey(stateMarker);
     if (stateMarker.dataset.endgameFinal === "true") {
-      const justFinished = !initial && !finalObserved && surface === "team" &&
-        stateMarker.classList.contains("state-panel-finished");
-      // Both completions can land between polls. Do not lose the first
-      // winner's one-shot celebration when the intermediate state is unseen.
-      if (justFinished && currentTeam === winner &&
-          storedValue(key) !== winner) {
+      const justFinished = !initial && !finalObserved &&
+        (surface !== "team" || stateMarker.classList.contains("state-panel-finished"));
+      // Both completions can land between polls. Preserve one-shot confetti
+      // for the first winner on the phone AND the public TV.
+      const missedWinner = justFinished && winner &&
+        storedValue(key) !== winner &&
+        (surface === "overview" || currentTeam === winner);
+      if (missedWinner) {
         remember(key, winner);
         directFinalCelebration = true;
         showCelebration(winner, true);
@@ -154,10 +158,12 @@
         window.clearTimeout(hideTimer);
         hideCelebration();
       }
-      if (justFinished && currentTeam !== winner) {
+      if (justFinished && surface === "team" && !missedWinner) {
         const announcement = document.getElementById("game-announcement");
         if (announcement) {
-          announcement.textContent = "Jullie zijn klaar! Alle 25 adventvakjes zijn voltooid.";
+          announcement.textContent = currentTeam === winner
+            ? "Beide teams zijn klaar! Jullie hebben de adventrace gewonnen."
+            : "Jullie zijn klaar! Alle 25 adventvakjes zijn voltooid.";
         }
       }
       finalObserved = true;
