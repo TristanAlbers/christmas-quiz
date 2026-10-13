@@ -434,6 +434,75 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
 
         asyncio.run(check())
 
+    def test_direct_final_poll_still_celebrates_first_winner_once(self):
+        self._put_both_teams_on_door_25()
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch()
+                context, page = await self._page(
+                    browser, "/team/", {"width": 390, "height": 844}, self.cookies["a"]
+                )
+                try:
+                    await self._count_shows(page)
+                    # Prevent the intermediate first-winner state from being
+                    # observed: both completions precede one explicit HTMX poll.
+                    poller = page.locator("#poller")
+                    poll_url = await poller.get_attribute("hx-get")
+                    await poller.evaluate("el => el.remove()")
+                    for team, puzzle in (("a", "a-25"), ("b", "b-25")):
+                        await asyncio.to_thread(
+                            force_complete_current,
+                            self.admin,
+                            AdminPuzzle(str(uuid4()), self.run_id, team, puzzle),
+                        )
+                    self.assertEqual(
+                        await page.locator(".endgame-team-result").count(), 0
+                    )
+                    await page.evaluate(
+                        """url => htmx.ajax('GET', url, {
+                            target: '#game-status', swap: 'innerHTML'
+                        })""",
+                        poll_url,
+                    )
+                    await page.locator(
+                        ".endgame-team-result--winner"
+                    ).wait_for(timeout=5000)
+                    await page.locator(
+                        '#endgame-celebration[data-endgame-result="winner"]'
+                        ".endgame-celebration--visible"
+                    ).wait_for(timeout=5000)
+                    self.assertIn(
+                        "Jullie winnen!",
+                        await page.locator("#game-announcement").inner_text(),
+                    )
+                    self.assertIn(
+                        "Beide teams hebben",
+                        await page.locator(
+                            "#endgame-celebration [data-endgame-copy]"
+                        ).inner_text(),
+                    )
+                    self.assertEqual(
+                        await page.evaluate("window.__endgameShows"), 1
+                    )
+                    await page.reload()
+                    await page.locator(".endgame-team-result--winner").wait_for()
+                    self.assertEqual(
+                        await page.locator("#game-announcement").inner_text(), ""
+                    )
+                    self.assertFalse(
+                        await page.locator(
+                            "#endgame-celebration"
+                        ).is_visible()
+                    )
+                finally:
+                    await context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
     def test_b_first_remains_only_winner_after_a_completes(self):
         self._put_both_teams_on_door_25()
 

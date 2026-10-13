@@ -14,6 +14,7 @@
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let hideTimer = null;
   let finalObserved = false;
+  let directFinalCelebration = false;
 
   function marker() {
     return document.querySelector("[data-endgame-state]");
@@ -100,9 +101,10 @@
     overlay.classList.remove("endgame-celebration--visible");
     overlay.setAttribute("aria-hidden", "true");
     if (confetti) confetti.replaceChildren();
+    directFinalCelebration = false;
   }
 
-  function showCelebration(winner) {
+  function showCelebration(winner, alreadyFinal = false) {
     const result = resultCopy(winner);
     window.clearTimeout(hideTimer);
     overlay.classList.remove(
@@ -115,11 +117,13 @@
     icon.textContent = result.icon;
     eyebrow.textContent = result.eyebrow;
     title.textContent = result.title;
-    copy.textContent = result.copy;
+    copy.textContent = alreadyFinal
+      ? "Beide teams hebben de adventrace voltooid. Jullie waren als eerste!"
+      : result.copy;
     if (result.kind !== "runner-up") addConfetti();
     if (result.kind === "winner") {
       const announcement = document.getElementById("game-announcement");
-      if (announcement) announcement.textContent = result.title + " " + result.copy;
+      if (announcement) announcement.textContent = result.title + " " + copy.textContent;
     }
     overlay.setAttribute("aria-hidden", "false");
     window.requestAnimationFrame(function () {
@@ -137,23 +141,31 @@
     const winner = (stateMarker.dataset.endgameWinner || "").trim().toLowerCase();
     const key = storageKey(stateMarker);
     if (stateMarker.dataset.endgameFinal === "true") {
-      // Announce only a live transition, never a historical finish on reload.
-      // The first finisher already heard "Jullie winnen!" when they finished.
-      if (!initial && !finalObserved && surface === "team" &&
-          currentTeam !== winner &&
-          stateMarker.classList.contains("state-panel-finished")) {
+      const justFinished = !initial && !finalObserved && surface === "team" &&
+        stateMarker.classList.contains("state-panel-finished");
+      // Both completions can land between polls. Do not lose the first
+      // winner's one-shot celebration when the intermediate state is unseen.
+      if (justFinished && currentTeam === winner &&
+          storedValue(key) !== winner) {
+        remember(key, winner);
+        directFinalCelebration = true;
+        showCelebration(winner, true);
+      } else if (!directFinalCelebration) {
+        window.clearTimeout(hideTimer);
+        hideCelebration();
+      }
+      if (justFinished && currentTeam !== winner) {
         const announcement = document.getElementById("game-announcement");
         if (announcement) {
           announcement.textContent = "Jullie zijn klaar! Alle 25 adventvakjes zijn voltooid.";
         }
       }
       finalObserved = true;
-      window.clearTimeout(hideTimer);
-      hideCelebration();
       if (winner) remember(key, winner);
       return;
     }
     finalObserved = false;
+    directFinalCelebration = false;
     if (!winner) {
       forget(key);
       return;
