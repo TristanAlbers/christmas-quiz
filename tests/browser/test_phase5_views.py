@@ -252,7 +252,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                         await tv.locator(
                             '.advent-progress[data-team-id="a"] [data-door-number="1"]'
                         ).get_attribute("aria-label"),
-                        "Vakje 1: voltooid",
+                        "Vakje 1: voltooid, chocolade: engel",
                     )
                     self.assertEqual(
                         await tv.locator(
