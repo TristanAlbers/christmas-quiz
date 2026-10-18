@@ -15,6 +15,7 @@ COPY config ./config
 COPY quiz ./quiz
 COPY games ./games
 COPY tests ./tests
+COPY LICENSE.md NOTICE ./
 
 # The build key is discarded with this layer. Runtime requires a configured key.
 RUN DJANGO_SECRET_KEY=build-only-not-used-at-runtime \

@@ -11,3 +11,13 @@ The game rules are governed by
 [christmas-2026-game-rules-state-semantics.md](christmas-2026-game-rules-state-semantics.md),
 followed by [Design.md](Design.md), [Views.md](Views.md), and
 [Game States.md](Game%20States.md). Repository work follows [AGENTS.md](AGENTS.md).
+
+## License
+
+Copyright © 2026 Tristan Albers.
+
+The original Quizzmas software is **source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md)** (SPDX: `PolyForm-Noncommercial-1.0.0`). This is not an OSI-approved open-source license. Use, modification, and distribution are permitted only for purposes authorized by the license; commercial use is not generally licensed.
+
+For commercial use, request a separate written license; see [Commercial licensing](COMMERCIAL-LICENSING.md). The required copyright notice is in [NOTICE](NOTICE).
+
+Third-party components retain their own licenses. In particular, the locally bundled HTMX is under the Zero-Clause BSD (0BSD) license; see [vendor information](quiz/static/quiz/vendor/README.md). The PolyForm license does not relicense third-party components or assets.
