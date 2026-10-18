@@ -566,62 +566,6 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   background: linear-gradient(135deg, #fff0ba, #d5a65b 70%, #a77c44);
 }
 
-@media (min-width: 960px) and (min-aspect-ratio: 14/9) {
-  .game-page--overview .public-overview:has(.public-status--advent) {
-    position: relative;
-    overflow: hidden;
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  #overview-audio-player {
-    position: absolute;
-    z-index: 10;
-    top: clamp(154px, 9.6vw, 194px);
-    right: clamp(22px, 3vw, 62px);
-    display: block;
-    width: auto;
-    max-width: min(30vw, 450px);
-    margin: 0;
-    padding: 5px 8px;
-    border: 1px solid #ae8c4b99;
-    border-radius: 4px;
-    background: #0a2922;
-    box-shadow: 0 5px 18px #0008;
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__ornament { display: none; }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__copy {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__controls button {
-    min-height: 32px;
-    padding: 5px 8px;
-    border-radius: 3px;
-    font-size: clamp(10px, .8vw, 15px);
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__volume {
-    grid-template-columns: auto minmax(55px, 90px);
-    gap: 5px;
-    font-size: clamp(9px, .7vw, 13px);
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__volume input { min-height: 24px; }
-}
-
 /* Permanent panel edge + brass hinge remain visible after flap rotation. */
 .game-page--overview .public-status--advent .advent-door__hinge {
   z-index: 6;

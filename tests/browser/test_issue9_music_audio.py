@@ -162,16 +162,24 @@ class IssueNineMusicAudioBrowserTests(LiveServerTestCase):
                         "document.querySelector('#music-player')"
                     )
 
+                    # Outside Music the TV sound panel is hidden, but its
+                    # underlying element stays mounted for polling stability.
+                    self.assertFalse(
+                        await page.locator("#overview-audio-player").is_visible()
+                    )
+                    await asyncio.to_thread(self._start_music)
+                    await page.get_by_text("Maak je klaar!", exact=True).wait_for(
+                        timeout=5000
+                    )
+                    self.assertTrue(
+                        await page.locator("#overview-audio-player").is_visible()
+                    )
+                    # Sound is unlocked during the Music gathering countdown.
                     await page.get_by_role(
                         "button", name="Geluid inschakelen"
                     ).click()
                     await page.get_by_role("heading", name="Geluid klaar").wait_for()
                     await page.wait_for_timeout(750)
-
-                    await asyncio.to_thread(self._start_music)
-                    await page.get_by_text("Maak je klaar!", exact=True).wait_for(
-                        timeout=5000
-                    )
                     self.assertIsNone(
                         await page.locator("#music-player").get_attribute("src")
                     )

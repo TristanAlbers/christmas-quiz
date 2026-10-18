@@ -215,19 +215,43 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     ).first.evaluate("""door =>
                         getComputedStyle(door, '::before').content !== 'none'
                     """))
-                    clearance = await page.evaluate("""() => {
-                        const clock = document.querySelector('.game-clock strong');
-                        const audio = document.getElementById('overview-audio-player');
-                        return audio.getBoundingClientRect().top -
-                            clock.getBoundingClientRect().bottom;
+                    # #103: Advent no longer offers operator audio controls.
+                    panel = page.locator("#overview-audio-player")
+                    self.assertEqual(await panel.count(), 1)
+                    self.assertFalse(await panel.is_visible())
+                    self.assertFalse(
+                        await page.locator("#music-audio-action").is_visible()
+                    )
+                    self.assertFalse(
+                        await page.locator("#music-audio-volume").is_visible()
+                    )
+                    await page.evaluate("""() => {
+                        window.__issue103Player = document.getElementById(
+                            'music-player'
+                        );
                     }""")
-                    self.assertGreaterEqual(clearance, 24)
+                    gap = await page.evaluate("""() => {
+                        const summary = document.querySelector(
+                            '.public-advent-summary'
+                        ).getBoundingClientRect();
+                        const calendar = document.querySelector(
+                            '.public-calendar-grid'
+                        ).getBoundingClientRect();
+                        return calendar.top - summary.bottom;
+                    }""")
+                    self.assertGreaterEqual(gap, 0)
+                    self.assertLessEqual(gap, 80)
                     await page.wait_for_timeout(1100)
                     self.assertEqual(
                         await page.locator(".advent-door-opening-echo").count(), 0
                     )
                     await self._screenshot(page, "tv-v4-advent-a13-b10-1920x1080")
                     await page.set_viewport_size({"width": 1024, "height": 768})
+                    self.assertFalse(await panel.is_visible())
+                    self.assertTrue(await page.evaluate("""() =>
+                        window.__issue103Player ===
+                            document.getElementById('music-player')
+                    """))
                     self.assertLessEqual(
                         await page.evaluate("document.documentElement.scrollWidth"),
                         1025,

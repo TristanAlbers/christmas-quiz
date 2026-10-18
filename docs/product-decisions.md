@@ -185,3 +185,11 @@ display-only countdown principle.
 The product owner changes the earlier **15-second** Challenge gathering period to **30 seconds**. This is the authoritative grace duration for every Challenge and overrides the 2026-09-25 duration only; all previously approved costs, eligibility, per-initiator puzzles, one-opportunity-per-team rule, first-correct result, Pause/restart recovery, Freeze outcomes, and privacy guarantees are unchanged.
 
 Both team phones and the public TV must visibly count down from the latest server-authoritative remaining time. A display-only tick may interpolate between the existing 500 ms polls, but it cannot reveal the question or enable an answer before the server ends gathering. The active TV shows both the public shared puzzle title **and the full readable question body**; the layout may scroll long shared text automatically without hiding the ordinary question or overlapping other TV content.
+
+## 2026-10-18 — TV audio controls exist only during the Music Quiz takeover (#103)
+
+The owner explicitly **removed the TV sound-enable, sound-check and volume panel from the Advent calendar overview** and other non-Music public TV states (READY, Challenge, non-Music Pause and final/continuing Advent). Do not reserve a blank gap, float the controls over the calendar, or allow keyboard focus on hidden controls. This decision supersedes the earlier issue #103 proposal to anchor the panel beneath the clock and above the calendars.
+
+Retain the existing operator audio controls **inside the Music Quiz TV takeover**, starting in its 60-second gathering/preparation phase, so the operator can click **Geluid inschakelen** and set volume before question 1. Keep the current single persistent HTML audio node and its state outside the 500 ms HTMX-swapped fragment; preserve sound check, native autoplay permission behavior, audio retry/error feedback, Pause/Resume playhead, and question-to-question transitions. There is no change to audio sources, scoring, game states or player-phone controls.
+
+This later, specific placement decision overrides stale TV-audio-panel visibility instructions in earlier descriptions; Music Quiz audio behavior itself remains binding.

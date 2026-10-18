@@ -23,14 +23,16 @@ Example:
 
 ## Operator sound check
 
-Before the Music Quiz begins:
+When the Music Quiz's 60-second gathering countdown appears:
 
-1. Open the public overview on the TV/browser that is connected to the room audio.
-2. Use the **Enable sound** control in the TV sound panel.
-3. Confirm that the short local chime is audible and that the panel reports **Sound ready**.
-4. Set the local volume with the stable volume control if needed.
+1. Keep the public TV overview open on the browser connected to the room audio.
+2. On the **Music Quiz TV screen**, use **Geluid inschakelen** to authorize playback.
+3. Confirm that the short local chime is audible and the panel reports **Geluid klaar**.
+4. Set the room volume using the same Music Quiz control.
 
-The sound permission is browser-page-local. Reloading the overview creates a new player page and can require the operator to enable sound again.
+The TV audio/volume panel is **not shown in READY, Advent, Challenge, non-Music Pause, or final Advent results**. No pre-arming control exists in the normal Advent calendar view. The single audio element is still mounted and stable outside the HTMX-swapped state, even while its controls are hidden.
+
+The permission is browser-page-local. Reloading the overview resets the player page and can require a new click during Music gathering, or the Music question if already active. The normal browser autoplay restriction remains in force.
 
 During Music:
 - **Playing** means the current question track is playing and looping.
