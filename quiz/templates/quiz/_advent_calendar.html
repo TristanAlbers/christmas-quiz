@@ -26,7 +26,7 @@
           <span class="advent-door__reveal" aria-hidden="true">
             {% if door.status == 'completed' %}
               {% with chocolate=door.number|door_chocolate %}
-              <span class="advent-door__chocolate">
+              <span class="advent-door__chocolate{% if chocolate.is_broad %} advent-door__chocolate--broad{% endif %}">
                 <svg class="advent-door__motif" viewBox="{{ chocolate.view_box }}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
                   <image href="{% static chocolate.static_path %}" width="{{ chocolate.width }}" height="{{ chocolate.height }}"/>
                 </svg>

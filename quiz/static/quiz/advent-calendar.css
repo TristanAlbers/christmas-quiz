@@ -177,8 +177,14 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 84%;
+  /* Keep the artwork centred on the opening, with equal clearance on both
+     sides even though the retained open-door edge is only on the left. */
+  width: min(84%, calc(100% - var(--advent-art-clearance, 12px) - var(--advent-art-clearance, 12px)));
   height: 84%;
+}
+
+.advent-door__chocolate--broad {
+  height: 76%;
 }
 
 .advent-door__motif {

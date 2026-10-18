@@ -102,6 +102,7 @@ for _asset in _CHOCOLATES["assets"].values():
         f"{left - 12} {top - 12} {right - left + 24} {bottom - top + 24}"
     )
     _asset["static_path"] = "quiz/chocolates/" + Path(_asset["file"]).name
+    _asset["is_broad"] = Path(_asset["file"]).stem in {"iglo", "trein"}
 
 
 @register.filter

@@ -48,3 +48,36 @@ cycle must then be adapted to the approved fixed/earned-only artwork contract.
    simpler gold door edges. Original PNGs, proportions and mapping match.
 
 Live visual approval is pending. #102 and parent #100 remain open; no merging.
+
+
+## Fullscreen sizing correction — visual approval pending
+
+The initial server checkpoint (`de9e7c5`) let the igloo/train grow from about
+77 px wide at 1920×900 to 116 px at 1920×1080. Clearance from the retained
+open-door edge shrank from 22 px to about 2 px, allowing its shadow to overlap
+the artwork. Checking containment in the whole opening alone missed this.
+
+The correction reserves equal horizontal space on both sides, based on the
+existing open-door edge width plus 12 px. Artwork remains centred on the whole
+opening: it is not shifted right to avoid the hinge. Igloo/train also use a
+76%-height optical box rather than the default 84%, reducing their visual weight
+when the available height controls their size. Original PNGs/viewports and all
+hinges, door layout, state and animation/polling code remain unchanged.
+
+Updated live comparisons (both calendars fully revealed):
+- [Windowed-height viewport, 1920×900](issue-102/full-1920x900.png)
+- [Fullscreen-height viewport, 1920×1080](issue-102/full-1920x1080.png)
+- [Larger fullscreen viewport, 2560×1440](issue-102/full-2560x1440.png)
+
+The partial/full 1920×1080 screenshots above have also been refreshed. Disposable
+Django render smoke covered both progress states at all three sizes: exact
+25-door mappings for both teams, earned-only images, original local asset loads,
+no clipped artwork, equal horizontal/vertical scale and no historical reveal
+echo. Unchanged polling preserved calendar identity at 1920×1080.
+
+Measured visible artwork bounds remain centred on each opening within 0.01 px
+in both axes. Minimum clearance from the open-door edge across all 50 chocolates
+is 13 px at both 1920px-wide sizes and at least 13.5 px at 2560×1440. Igloo/train
+clearance is 25.5 px at 1920×900, 13 px at 1920×1080 and 13.6 px at 2560×1440.
+The three existing calendar presentation checks also passed. Final verification
+and reviews still await explicit user visual confirmation.
