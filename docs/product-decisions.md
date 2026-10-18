@@ -197,7 +197,11 @@ locally bundled PNG. Use the original approved bytes and proportional, optically
 centred artwork, including intact wings, antlers and lights.
 
 Only authoritative completed doors reveal chocolates, without visible subject
-names or retained numbers. Closed-door numbers, hinges and progression remain.
+names or retained numbers. Each earned subject has a non-visible accessible
+label on its completed door; current/future door labels disclose no subject.
+The Game Master calendar also shows earned artwork in its compact completed
+slots rather than a closed brown flap. Closed-door numbers, existing hinges
+and progression remain.
 Door 25's Santa is not required to solve puzzle 25: the necessary clues are
 already earned before answering. This changes presentation/clue meaning only;
 scoring, answers, canonical completion, game rules and privacy boundaries do not
@@ -210,3 +214,11 @@ The supplied concepts and previews are approved design references, not productio
 code or authoritative state. Design approval does not substitute for explicit
 approval of the live Django partial/full overview at 1920×1080. Preserve 500 ms
 polling, one-shot reveal, reduced motion and refresh/reconnect recovery.
+
+## 2026-10-18 — TV audio controls exist only during the Music Quiz takeover (#103)
+
+The owner explicitly **removed the TV sound-enable, sound-check and volume panel from the Advent calendar overview** and other non-Music public TV states (READY, Challenge, non-Music Pause and final/continuing Advent). Do not reserve a blank gap, float the controls over the calendar, or allow keyboard focus on hidden controls. This decision supersedes the earlier issue #103 proposal to anchor the panel beneath the clock and above the calendars.
+
+Retain the existing operator audio controls **inside the Music Quiz TV takeover**, starting in its 60-second gathering/preparation phase, so the operator can click **Geluid inschakelen** and set volume before question 1. Keep the current single persistent HTML audio node and its state outside the 500 ms HTMX-swapped fragment; preserve sound check, native autoplay permission behavior, audio retry/error feedback, Pause/Resume playhead, and question-to-question transitions. There is no change to audio sources, scoring, game states or player-phone controls.
+
+This later, specific placement decision overrides stale TV-audio-panel visibility instructions in earlier descriptions; Music Quiz audio behavior itself remains binding.

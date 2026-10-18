@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
@@ -39,6 +40,8 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
 
         user = get_user_model().objects.create_user("issue73-tv-admin")
         AccountRole.objects.create(user=user, role="admin")
+        self.client.force_login(user)
+        self.admin_cookie = self.client.cookies["sessionid"].value
         self.admin = Actor(user.pk, "admin")
         self.run_id = start_game(
             self.admin, StartGame(str(uuid4()), "christmas-2026-demo")
@@ -229,19 +232,43 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     ).first.evaluate("""door =>
                         getComputedStyle(door, '::before').content !== 'none'
                     """))
-                    clearance = await page.evaluate("""() => {
-                        const clock = document.querySelector('.game-clock strong');
-                        const audio = document.getElementById('overview-audio-player');
-                        return audio.getBoundingClientRect().top -
-                            clock.getBoundingClientRect().bottom;
+                    # #103: Advent no longer offers operator audio controls.
+                    panel = page.locator("#overview-audio-player")
+                    self.assertEqual(await panel.count(), 1)
+                    self.assertFalse(await panel.is_visible())
+                    self.assertFalse(
+                        await page.locator("#music-audio-action").is_visible()
+                    )
+                    self.assertFalse(
+                        await page.locator("#music-audio-volume").is_visible()
+                    )
+                    await page.evaluate("""() => {
+                        window.__issue103Player = document.getElementById(
+                            'music-player'
+                        );
                     }""")
-                    self.assertGreaterEqual(clearance, 24)
+                    gap = await page.evaluate("""() => {
+                        const summary = document.querySelector(
+                            '.public-advent-summary'
+                        ).getBoundingClientRect();
+                        const calendar = document.querySelector(
+                            '.public-calendar-grid'
+                        ).getBoundingClientRect();
+                        return calendar.top - summary.bottom;
+                    }""")
+                    self.assertGreaterEqual(gap, 0)
+                    self.assertLessEqual(gap, 80)
                     await page.wait_for_timeout(1100)
                     self.assertEqual(
                         await page.locator(".advent-door-opening-echo").count(), 0
                     )
                     await self._screenshot(page, "tv-v4-advent-a13-b10-1920x1080")
                     await page.set_viewport_size({"width": 1024, "height": 768})
+                    self.assertFalse(await panel.is_visible())
+                    self.assertTrue(await page.evaluate("""() =>
+                        window.__issue103Player ===
+                            document.getElementById('music-player')
+                    """))
                     self.assertLessEqual(
                         await page.evaluate("document.documentElement.scrollWidth"),
                         1025,
@@ -523,6 +550,79 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                                 self.assertLess(shape["centreX"], 1)
                                 self.assertLess(shape["centreY"], 1)
                                 self.assertGreaterEqual(shape["clearance"], 10)
+                finally:
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_game_master_shows_earned_clues_with_accessible_names(self):
+        self._representative_progress()
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await getattr(playwright, self.browser_engine).launch()
+                context = await browser.new_context()
+                await context.add_cookies([{
+                    "name": "sessionid", "value": self.admin_cookie,
+                    "domain": urlparse(self.live_server_url).hostname, "path": "/",
+                }])
+                page = await context.new_page()
+                try:
+                    await page.goto(f"{self.live_server_url}/admin-game/")
+                    for width, height in ((1024, 768), (390, 844)):
+                        await page.set_viewport_size({"width": width, "height": height})
+                        for team_id, count in (("a", 13), ("b", 10)):
+                            cabinet = page.locator(
+                                f'.gm-admin-team-panel[data-team="{team_id}"] '
+                                '.advent-progress'
+                            )
+                            self.assertEqual(
+                                await cabinet.locator(".advent-door").count(), 25
+                            )
+                            completed = cabinet.locator(".advent-door--completed")
+                            self.assertEqual(await completed.count(), count)
+                            self.assertTrue(await completed.evaluate_all(
+                                """doors => doors.every(door => {
+                                    const reveal = door.querySelector(
+                                        '.advent-door__reveal');
+                                    const image = door.querySelector('svg');
+                                    const box = image.getBoundingClientRect();
+                                    const flap = door.querySelector(
+                                        '.advent-door__flap');
+                                    return getComputedStyle(reveal).display
+                                        !== 'none' && getComputedStyle(flap).visibility
+                                        === 'hidden' &&
+                                        box.width > 0 && box.height > 0;
+                                })"""
+                            ))
+                            subjects = await completed.locator(
+                                '.advent-door__motif image'
+                            ).evaluate_all(
+                                "els => els.map(e => e.getAttribute('href')"
+                                ".split('/').pop().split('.')[0])"
+                            )
+                            self.assertEqual(subjects, [
+                                entry["subject"]
+                                for entry in self.manifest["mapping"][:count]
+                            ])
+                            self.assertIn(
+                                "chocolade: engel",
+                                await completed.first.aria_snapshot(),
+                            )
+                            closed = cabinet.locator(
+                                '.advent-door:not(.advent-door--completed)'
+                            )
+                            self.assertEqual(await closed.locator('image').count(), 0)
+                            self.assertEqual(
+                                await closed.locator('.advent-door__number').count(),
+                                25 - count,
+                            )
+                            labels = await closed.evaluate_all(
+                                "els => els.map(e => e.getAttribute('aria-label'))"
+                            )
+                            self.assertTrue(all('chocolade' not in x for x in labels))
                 finally:
                     await browser.close()
 

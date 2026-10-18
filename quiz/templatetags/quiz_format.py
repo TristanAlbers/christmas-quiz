@@ -95,14 +95,15 @@ def dutch_feedback(value):
 _CHOCOLATES = json.loads(
     (Path(__file__).resolve().parent.parent / "chocolate_manifest.json").read_text()
 )
-for _asset in _CHOCOLATES["assets"].values():
+for _subject, _asset in _CHOCOLATES["assets"].items():
     left, top, right, bottom = _asset["visible_bounds_alpha_gt_16"]
     # Match the handoff viewport: trim transparent margins with 12px breathing room.
     _asset["view_box"] = (
         f"{left - 12} {top - 12} {right - left + 24} {bottom - top + 24}"
     )
     _asset["static_path"] = "quiz/chocolates/" + Path(_asset["file"]).name
-    _asset["is_broad"] = Path(_asset["file"]).stem in {"iglo", "trein"}
+    _asset["is_broad"] = _subject in {"iglo", "trein"}
+    _asset["label"] = "dennenboom" if _subject == "denneboom" else _subject
 
 
 @register.filter

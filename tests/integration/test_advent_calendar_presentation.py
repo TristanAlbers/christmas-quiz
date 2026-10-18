@@ -29,6 +29,9 @@ class AdventCalendarPresentationTests(SimpleTestCase):
         self.assertEqual(html.count("advent-door__chocolate"), 1)
         self.assertIn(static("quiz/chocolates/engel.png"), html)
         self.assertNotIn(static("quiz/chocolates/muzieknoot.png"), html)
+        self.assertIn('aria-label="Vakje 1: voltooid, chocolade: engel"', html)
+        self.assertNotIn("chocolade: muzieknoot", html)
+        self.assertNotIn("chocolade: kerstbal", html)
         self.assertNotIn('>1</span>', html)
         self.assertIn('>2</span>', html)
         self.assertIn('>3</span>', html)
@@ -128,7 +131,13 @@ class AdventCalendarPresentationTests(SimpleTestCase):
                         html.count('class="advent-door__number"'),
                         25 - completed,
                     )
-                    # The clue subjects are artwork, never visible labels.
+                    for number, subject in enumerate(subjects[:completed], 1):
+                        label = "dennenboom" if subject == "denneboom" else subject
+                        self.assertIn(
+                            f'aria-label="Vakje {number}: voltooid, '
+                            f'chocolade: {label}"', html,
+                        )
+                    # The clue subjects are accessible names, not visible text.
                     self.assertNotRegex(
                         html, r">\s*(?:" + "|".join(set(subjects)) + r")\s*<"
                     )

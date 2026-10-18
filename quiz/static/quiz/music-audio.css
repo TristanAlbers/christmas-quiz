@@ -2,6 +2,12 @@
   display: none;
 }
 
+/* #103: TV sound/volume controls belong only to the Music Quiz takeover.
+   The single audio element remains mounted between all 500ms HTMX polls. */
+.game-page--overview:not(:has(.public-status--music)) #overview-audio-player {
+  display: none;
+}
+
 .music-audio-panel {
   position: relative;
   display: grid;
