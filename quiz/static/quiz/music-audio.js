@@ -33,11 +33,11 @@
     const controls = panel.getBoundingClientRect();
     panel.style.setProperty(
       "--advent-audio-top",
-      `${Math.round(target.top - host.top + (target.height - controls.height) / 2)}px`
+      `${Math.round(target.top - host.top - surface.clientTop + (target.height - controls.height) / 2)}px`
     );
     panel.style.setProperty(
       "--advent-audio-right",
-      `${Math.round(host.right - target.right)}px`
+      `${Math.round(host.right - target.right - (parseFloat(window.getComputedStyle(surface).borderRightWidth) || 0))}px`
     );
   }
 

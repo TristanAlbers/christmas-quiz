@@ -219,10 +219,14 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                         metrics = await page.evaluate("""() => {
                             const clock = document.querySelector('.game-clock strong')
                                 .getBoundingClientRect();
-                            const audio = document.getElementById('overview-audio-player')
-                                .getBoundingClientRect();
-                            const calendar = document.querySelector('.public-calendar-grid')
-                                .getBoundingClientRect();
+                            const audioEl = document.getElementById(
+                                'overview-audio-player'
+                            );
+                            const audio = audioEl.getBoundingClientRect();
+                            const calendarEl = document.querySelector(
+                                '.public-calendar-grid'
+                            );
+                            const calendar = calendarEl.getBoundingClientRect();
                             const slot = document.getElementById('advent-audio-slot')
                                 .getBoundingClientRect();
                             return {
@@ -230,7 +234,8 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                                 aboveCalendar: calendar.top - audio.bottom,
                                 alignedRight: Math.abs(audio.right - slot.right),
                                 alignedMiddle: Math.abs(
-                                    (audio.top + audio.bottom - slot.top - slot.bottom) / 2
+                                    (audio.top + audio.bottom - slot.top
+                                        - slot.bottom) / 2
                                 ),
                             };
                         }""")
