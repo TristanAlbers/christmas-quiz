@@ -2,7 +2,8 @@
 
 Branch: `feat/102-shaped-chocolate-clues` from main
 `37bebd2ee9d870bc3ffef4d0e3fe46caf2acb611`. Visual checkpoint pushed at the user’s request for server testing.
-Live implementation approval and final verification remain pending.
+The user explicitly approved the live implementation, including the fullscreen
+sizing correction, on 2026-10-18. Final verification/review status is below.
 
 - [Approved actual-asset layout reference](issue-102/approved-all-open-reference.png)
 - [Real Django overview: A 13/25, B 10/25](issue-102/partial-1920x1080.png)
@@ -81,3 +82,26 @@ is 13 px at both 1920px-wide sizes and at least 13.5 px at 2560×1440. Igloo/tra
 clearance is 25.5 px at 1920×900, 13 px at 1920×1080 and 13.6 px at 2560×1440.
 The three existing calendar presentation checks also passed. Final verification
 and reviews still await explicit user visual confirmation.
+
+
+## Approved live implementation — final verification
+
+On 2026-10-18 the user approved the corrected live implementation and authorized
+completion. Earlier pending-approval notes above describe historical checkpoints.
+
+Focused Chromium verification passed: 9 tests covering all 25 mapped doors,
+11 original PNG hashes, repeated asset identity, both teams, earned-only
+rendering, canonical answer/Skip/admin completion, a real reset/new run,
+one-shot animation across polls, refresh recovery, public Freeze/privacy,
+reduced motion and artwork geometry at 1024×768, 1280×720, 1920×900,
+1920×1080 and 2560×1440. Changed Python passes Ruff. All three focused calendar browser tests also passed locally in WebKit,
+including reveal/reload, reduced motion/privacy and all five overview sizes.
+The existing WebKit CI job now includes those calendar tests.
+
+The draft CI failures at the prior visual checkpoint were diagnosed: changed
+integration-test import ordering and obsolete 25-decorative-motif assertions
+are corrected; an unrelated frozen-phone font-measurement failure passed
+focused reproduction without changing that screen or test.
+
+Required CI and exact-pair Ponytail/Codex review evidence are recorded on PR #104.
+The PR remains draft until the required gates pass; no merge is authorized.

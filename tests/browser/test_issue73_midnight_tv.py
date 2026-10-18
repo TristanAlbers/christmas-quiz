@@ -1,6 +1,7 @@
 """Issue #73: real Django/HTMX TV Advent V4, one-shot doors and public privacy."""
 
 import asyncio
+import json
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -24,6 +25,12 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
     def setUp(self):
         if not os.environ.get("TEST_DATABASE_PATH"):
             self.skipTest("requires disposable file-backed TEST_DATABASE_PATH")
+        self.browser_engine = os.environ.get("ISSUE73_BROWSER_ENGINE", "chromium")
+        self.assertIn(self.browser_engine, {"chromium", "webkit"})
+        self.manifest = json.loads(
+            (Path(__file__).resolve().parents[2] / "quiz/chocolate_manifest.json")
+            .read_text()
+        )
         self.snapshots = TemporaryDirectory()
         self.addCleanup(self.snapshots.cleanup)
         scope = override_settings(QUIZ_SNAPSHOT_ROOT=Path(self.snapshots.name))
@@ -69,7 +76,7 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
             from playwright.async_api import async_playwright
 
             async with async_playwright() as playwright:
-                browser = await playwright.chromium.launch()
+                browser = await getattr(playwright, self.browser_engine).launch()
                 context = await browser.new_context(
                     viewport={"width": 1920, "height": 1080}
                 )
@@ -93,22 +100,29 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                             await cabinet.locator(".advent-door--current").count(), 1
                         )
                         self.assertEqual(
-                            await cabinet.locator(".advent-door__motif").count(), 25
+                            await cabinet.locator(".advent-door__motif").count(),
+                            completed,
                         )
                         self.assertEqual(
-                            await cabinet.locator(
-                                ".advent-door__chocolate[data-motif]"
-                            ).count(), 25
+                            await cabinet.locator(".advent-door__chocolate").count(),
+                            completed,
                         )
-                        self.assertEqual(
-                            len(await cabinet.locator(
-                                ".advent-door__chocolate"
-                            ).evaluate_all(
-                                "els => [...new Set(els.slice(0,11)"
-                                ".map(e => e.dataset.motif))]"
-                            )),
-                            11,
+                        subjects = await cabinet.locator(
+                            ".advent-door__motif image"
+                        ).evaluate_all(
+                            "els => els.map(e => e.getAttribute('href')"
+                            ".split('/').pop().split('.')[0])"
                         )
+                        self.assertEqual(subjects, [
+                            entry["subject"]
+                            for entry in self.manifest["mapping"][:completed]
+                        ])
+                        self.assertEqual(await cabinet.locator(
+                            ".advent-door:not(.advent-door--completed) image"
+                        ).count(), 0)
+                        self.assertEqual(await cabinet.locator(
+                            ".advent-door--completed .advent-door__number"
+                        ).count(), 0)
                     self.assertEqual(
                         (await page.locator(".game-clock strong").inner_text())[:5],
                         "01:24",
@@ -364,7 +378,7 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
             from playwright.async_api import async_playwright
 
             async with async_playwright() as playwright:
-                browser = await playwright.chromium.launch()
+                browser = await getattr(playwright, self.browser_engine).launch()
                 context = await browser.new_context(
                     viewport={"width": 1920, "height": 1080},
                     reduced_motion="reduce",
@@ -428,6 +442,88 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     )
                 finally:
                     await context.close()
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_full_artwork_centres_clear_of_doors_at_overview_sizes(self):
+        # Deliberately omit winner history to inspect every earned chocolate
+        # beneath the separately tested production final-victory stage.
+        PuzzleProgress.objects.filter(run_id=self.run_id).update(
+            completed=True, reward_awarded=True, completion_route="admin_force",
+        )
+        TeamRun.objects.filter(run_id=self.run_id).update(
+            current_number=25, activity_state="FINISHED",
+        )
+        Run.objects.filter(pk=self.run_id).update(global_state="FINISHED")
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser = await getattr(playwright, self.browser_engine).launch()
+                page = await browser.new_page()
+                try:
+                    await page.goto(f"{self.live_server_url}/overview/")
+                    images = await page.locator(
+                        ".advent-door__motif image"
+                    ).evaluate_all("els => els.map(e => e.getAttribute('href'))")
+                    self.assertEqual(len(images), 50)
+                    self.assertEqual(len(set(images)), 11)
+                    self.assertEqual(images[:25], images[25:])
+                    # Exercise the actual locally served image bytes, not just
+                    # valid-looking URLs in an unloaded SVG image element.
+                    await page.evaluate("""async urls => Promise.all(
+                        [...new Set(urls)].map(url => new Promise((resolve, reject) => {
+                            const image = new Image();
+                            image.onload = () => resolve(image.naturalWidth);
+                            image.onerror = () => reject(new Error(url));
+                            image.src = url;
+                        }))
+                    )""", images)
+                    self.assertEqual(await page.locator(
+                        ".advent-door__number"
+                    ).count(), 0)
+                    for width, height in (
+                        (1024, 768), (1280, 720), (1920, 900),
+                        (1920, 1080), (2560, 1440),
+                    ):
+                        await page.set_viewport_size({"width": width, "height": height})
+                        geometry = await page.locator(
+                            ".advent-door--completed"
+                        ).evaluate_all("""(doors, assets) => doors.map(door => {
+                            const svg = door.querySelector('svg');
+                            const matrix = svg.getScreenCTM();
+                            const subject = svg.querySelector('image')
+                                .getAttribute('href').split('/').pop().split('.')[0];
+                            const [l,t,r,b] =
+                                assets[subject].visible_bounds_alpha_gt_16;
+                            const a = new DOMPoint(l,t).matrixTransform(matrix);
+                            const z = new DOMPoint(r,b).matrixTransform(matrix);
+                            const well = door.querySelector('.advent-door__reveal')
+                                .getBoundingClientRect();
+                            const edge = getComputedStyle(door, '::before');
+                            const edgeRight = door.getBoundingClientRect().left +
+                                parseFloat(edge.left) + parseFloat(edge.width) +
+                                parseFloat(edge.borderLeftWidth) +
+                                parseFloat(edge.borderRightWidth);
+                            return {
+                                subject, clearance: a.x - edgeRight,
+                                centreX: Math.abs((a.x+z.x-well.left-well.right)/2),
+                                centreY: Math.abs((a.y+z.y-well.top-well.bottom)/2),
+                                inside: a.x >= well.left && z.x <= well.right &&
+                                    a.y >= well.top && z.y <= well.bottom,
+                                proportional: Math.abs(matrix.a-matrix.d) < .00001
+                            };
+                        })""", self.manifest["assets"])
+                        for shape in geometry:
+                            with self.subTest(size=(width, height), shape=shape):
+                                self.assertTrue(shape["inside"])
+                                self.assertTrue(shape["proportional"])
+                                self.assertLess(shape["centreX"], 1)
+                                self.assertLess(shape["centreY"], 1)
+                                self.assertGreaterEqual(shape["clearance"], 10)
+                finally:
                     await browser.close()
 
         asyncio.run(check())
