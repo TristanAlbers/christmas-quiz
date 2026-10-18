@@ -215,19 +215,50 @@ class MidnightAdventTVBrowserTests(LiveServerTestCase):
                     ).first.evaluate("""door =>
                         getComputedStyle(door, '::before').content !== 'none'
                     """))
-                    clearance = await page.evaluate("""() => {
-                        const clock = document.querySelector('.game-clock strong');
-                        const audio = document.getElementById('overview-audio-player');
-                        return audio.getBoundingClientRect().top -
-                            clock.getBoundingClientRect().bottom;
+                    async def assert_audio_location():
+                        metrics = await page.evaluate("""() => {
+                            const clock = document.querySelector('.game-clock strong')
+                                .getBoundingClientRect();
+                            const audio = document.getElementById('overview-audio-player')
+                                .getBoundingClientRect();
+                            const calendar = document.querySelector('.public-calendar-grid')
+                                .getBoundingClientRect();
+                            const slot = document.getElementById('advent-audio-slot')
+                                .getBoundingClientRect();
+                            return {
+                                belowClock: audio.top - clock.bottom,
+                                aboveCalendar: calendar.top - audio.bottom,
+                                alignedRight: Math.abs(audio.right - slot.right),
+                                alignedMiddle: Math.abs(
+                                    (audio.top + audio.bottom - slot.top - slot.bottom) / 2
+                                ),
+                            };
+                        }""")
+                        self.assertGreaterEqual(metrics["belowClock"], 0)
+                        self.assertGreaterEqual(metrics["aboveCalendar"], 0)
+                        self.assertLessEqual(metrics["alignedRight"], 10)
+                        self.assertLessEqual(metrics["alignedMiddle"], 3)
+
+                    await assert_audio_location()
+                    await page.evaluate("""() => {
+                        window.__tvAudio = document.getElementById('music-player');
+                        window.__tvAudioPanel = document.getElementById(
+                            'overview-audio-player'
+                        );
                     }""")
-                    self.assertGreaterEqual(clearance, 24)
                     await page.wait_for_timeout(1100)
+                    self.assertTrue(await page.evaluate("""() =>
+                        window.__tvAudio === document.getElementById('music-player')
+                        && window.__tvAudioPanel === document.getElementById(
+                            'overview-audio-player'
+                        )
+                    """))
                     self.assertEqual(
                         await page.locator(".advent-door-opening-echo").count(), 0
                     )
                     await self._screenshot(page, "tv-v4-advent-a13-b10-1920x1080")
                     await page.set_viewport_size({"width": 1024, "height": 768})
+                    await assert_audio_location()
                     self.assertLessEqual(
                         await page.evaluate("document.documentElement.scrollWidth"),
                         1025,

@@ -549,7 +549,19 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
 }
 
 /* Fit Advent TV to the physical 16:9 display without remounting audio.
-   The persistent Music player remains a functional, focusable control. */
+   The persistent Music player remains a functional, focusable control.
+   #103: reserve a row below the timer and above the calendars. */
+.game-page--overview .public-status--advent .public-advent-audio-slot {
+  display: none;
+}
+@media (min-width: 701px) {
+  .game-page--overview .public-status--advent .public-advent-audio-slot {
+    display: block;
+    flex: 0 0 auto;
+    min-height: 44px;
+    margin: 0 1cqw;
+  }
+}
 .game-page--overview .public-status--advent .advent-progress__board {
   position: static;
 }
@@ -566,20 +578,20 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   background: linear-gradient(135deg, #fff0ba, #d5a65b 70%, #a77c44);
 }
 
-@media (min-width: 960px) and (min-aspect-ratio: 14/9) {
+@media (min-width: 701px) {
   .game-page--overview .public-overview:has(.public-status--advent) {
     position: relative;
-    overflow: hidden;
   }
   .game-page--overview .public-overview:has(.public-status--advent)
   #overview-audio-player {
     position: absolute;
     z-index: 10;
-    top: clamp(154px, 9.6vw, 194px);
-    right: clamp(22px, 3vw, 62px);
+    /* Derived from the in-flow Advent slot, not viewport-specific offsets. */
+    top: var(--advent-audio-top, 0px);
+    right: var(--advent-audio-right, 0px);
     display: block;
     width: auto;
-    max-width: min(30vw, 450px);
+    max-width: min(46vw, 450px);
     margin: 0;
     padding: 5px 8px;
     border: 1px solid #ae8c4b99;

@@ -22,6 +22,25 @@
 
   player.volume = Number(volume.value);
 
+  // The player must stay outside the 500ms HTMX fragment. Align the
+  // persistent controls with the real reserved row in the Advent layout.
+  function positionAdventAudio() {
+    const slot = document.getElementById("advent-audio-slot");
+    const surface = panel.closest(".public-overview");
+    if (!slot || !surface || window.getComputedStyle(slot).display === "none") return;
+    const target = slot.getBoundingClientRect();
+    const host = surface.getBoundingClientRect();
+    const controls = panel.getBoundingClientRect();
+    panel.style.setProperty(
+      "--advent-audio-top",
+      `${Math.round(target.top - host.top + (target.height - controls.height) / 2)}px`
+    );
+    panel.style.setProperty(
+      "--advent-audio-right",
+      `${Math.round(host.right - target.right)}px`
+    );
+  }
+
   function currentState() {
     const node = document.getElementById("overview-audio-state");
     if (!node) return { globalState: "", phase: "", questionNumber: "", audioUrl: "", runId: "" };
@@ -279,7 +298,12 @@
 
   const observer = new MutationObserver(() => syncState());
   observer.observe(liveOverview, { childList: true, subtree: true });
-  liveOverview.addEventListener("htmx:afterSettle", () => syncState());
+  liveOverview.addEventListener("htmx:afterSettle", () => {
+    syncState();
+    positionAdventAudio();
+  });
   liveOverview.addEventListener("htmx:oobAfterSwap", () => syncState());
+  window.addEventListener("resize", positionAdventAudio);
   syncState(true);
+  positionAdventAudio();
 })();
