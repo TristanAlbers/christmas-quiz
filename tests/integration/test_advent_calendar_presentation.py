@@ -1,7 +1,11 @@
+import hashlib
+import json
+import re
 from pathlib import Path
 
 from django.contrib.staticfiles import finders
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from django.test import SimpleTestCase
 
 
@@ -22,7 +26,15 @@ class AdventCalendarPresentationTests(SimpleTestCase):
             {"progress": progress, "team_id": "a"},
         )
 
-        self.assertEqual(html.count("advent-door__chocolate"), 3)
+        self.assertEqual(html.count("advent-door__chocolate"), 1)
+        self.assertIn(static("quiz/chocolates/engel.png"), html)
+        self.assertNotIn(static("quiz/chocolates/muzieknoot.png"), html)
+        self.assertIn('aria-label="Vakje 1: voltooid, chocolade: engel"', html)
+        self.assertNotIn("chocolade: muzieknoot", html)
+        self.assertNotIn("chocolade: kerstbal", html)
+        self.assertNotIn('>1</span>', html)
+        self.assertIn('>2</span>', html)
+        self.assertIn('>3</span>', html)
         self.assertIn("advent-door--completed", html)
         self.assertIn("advent-door--current", html)
         self.assertIn("advent-door--future", html)
@@ -66,3 +78,66 @@ class AdventCalendarPresentationTests(SimpleTestCase):
         self.assertIn("#267055", stylesheet)
         self.assertIn("#d6a133", stylesheet)
         self.assertIn("@media (prefers-reduced-motion: reduce)", stylesheet)
+
+    def test_exact_mapping_original_assets_and_team_game_consistency(self):
+        # Independent approved expectation: do not derive it from production data.
+        subjects = (
+            "engel muzieknoot kerstbal muzieknoot elf iglo elf trein rendier "
+            "engel kerstbal denneboom engel sneeuwpop denneboom engel "
+            "muzieknoot elf lampjes engel rendier denneboom elf rendier kerstman"
+        ).split()
+        manifest = json.loads(
+            (Path(__file__).resolve().parents[2] / "quiz/chocolate_manifest.json")
+            .read_text()
+        )
+        self.assertEqual(
+            [(entry["door"], entry["subject"]) for entry in manifest["mapping"]],
+            list(enumerate(subjects, 1)),
+        )
+        self.assertEqual(len(manifest["assets"]), 11)
+        for subject, asset in manifest["assets"].items():
+            with self.subTest(subject=subject):
+                path = finders.find(f"quiz/chocolates/{subject}.png")
+                self.assertIsNotNone(path)
+                self.assertEqual(
+                    hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+                    asset["sha256"],
+                )
+        expected = [static(f"quiz/chocolates/{name}.png") for name in subjects]
+        self.assertEqual(len(set(expected)), 11)
+        for team_id in ("a", "b"):
+            for completed in (0, 24, 25):
+                with self.subTest(team=team_id, completed=completed):
+                    progress = {
+                        "completed_count": completed,
+                        "is_finished": completed == 25,
+                        "doors": [
+                            {"number": n, "status": (
+                                "completed" if n <= completed else
+                                "current" if n == completed + 1 else "future"
+                            )}
+                            for n in range(1, 26)
+                        ],
+                    }
+                    html = render_to_string(
+                        "quiz/_advent_calendar.html",
+                        {"progress": progress, "team_id": team_id},
+                    )
+                    self.assertEqual(
+                        re.findall(r'<image href="([^"]+)"', html),
+                        expected[:completed],
+                    )
+                    self.assertEqual(
+                        html.count('class="advent-door__number"'),
+                        25 - completed,
+                    )
+                    for number, subject in enumerate(subjects[:completed], 1):
+                        label = "dennenboom" if subject == "denneboom" else subject
+                        self.assertIn(
+                            f'aria-label="Vakje {number}: voltooid, '
+                            f'chocolade: {label}"', html,
+                        )
+                    # The clue subjects are accessible names, not visible text.
+                    self.assertNotRegex(
+                        html, r">\s*(?:" + "|".join(set(subjects)) + r")\s*<"
+                    )

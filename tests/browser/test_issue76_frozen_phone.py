@@ -55,8 +55,12 @@ class Issue76FrozenPhoneBrowserTests(Issue31BrowserCase):
                         (".freeze-message__description strong", 20),
                         (".freeze-timer", 56),
                     ):
-                        size = await page.locator(selector).evaluate(
-                            "el => parseFloat(getComputedStyle(el).fontSize)"
+                        # Resolve and measure in one browser task. A normal poll
+                        # may detach a read-only message after locator resolution.
+                        size = await page.evaluate(
+                            "selector => parseFloat(getComputedStyle("
+                            "document.querySelector(selector)).fontSize)",
+                            selector,
                         )
                         self.assertGreaterEqual(size, minimum, selector)
                     self.assertEqual(

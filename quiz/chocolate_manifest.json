@@ -1,0 +1,310 @@
+{
+  "version": 1,
+  "status": "design-approved; asset-preparation handoff; not live application integration",
+  "mapping": [
+    {
+      "door": 1,
+      "subject": "engel",
+      "file": "assets/engel.png"
+    },
+    {
+      "door": 2,
+      "subject": "muzieknoot",
+      "file": "assets/muzieknoot.png"
+    },
+    {
+      "door": 3,
+      "subject": "kerstbal",
+      "file": "assets/kerstbal.png"
+    },
+    {
+      "door": 4,
+      "subject": "muzieknoot",
+      "file": "assets/muzieknoot.png"
+    },
+    {
+      "door": 5,
+      "subject": "elf",
+      "file": "assets/elf.png"
+    },
+    {
+      "door": 6,
+      "subject": "iglo",
+      "file": "assets/iglo.png"
+    },
+    {
+      "door": 7,
+      "subject": "elf",
+      "file": "assets/elf.png"
+    },
+    {
+      "door": 8,
+      "subject": "trein",
+      "file": "assets/trein.png"
+    },
+    {
+      "door": 9,
+      "subject": "rendier",
+      "file": "assets/rendier.png"
+    },
+    {
+      "door": 10,
+      "subject": "engel",
+      "file": "assets/engel.png"
+    },
+    {
+      "door": 11,
+      "subject": "kerstbal",
+      "file": "assets/kerstbal.png"
+    },
+    {
+      "door": 12,
+      "subject": "denneboom",
+      "file": "assets/denneboom.png"
+    },
+    {
+      "door": 13,
+      "subject": "engel",
+      "file": "assets/engel.png"
+    },
+    {
+      "door": 14,
+      "subject": "sneeuwpop",
+      "file": "assets/sneeuwpop.png"
+    },
+    {
+      "door": 15,
+      "subject": "denneboom",
+      "file": "assets/denneboom.png"
+    },
+    {
+      "door": 16,
+      "subject": "engel",
+      "file": "assets/engel.png"
+    },
+    {
+      "door": 17,
+      "subject": "muzieknoot",
+      "file": "assets/muzieknoot.png"
+    },
+    {
+      "door": 18,
+      "subject": "elf",
+      "file": "assets/elf.png"
+    },
+    {
+      "door": 19,
+      "subject": "lampjes",
+      "file": "assets/lampjes.png"
+    },
+    {
+      "door": 20,
+      "subject": "engel",
+      "file": "assets/engel.png"
+    },
+    {
+      "door": 21,
+      "subject": "rendier",
+      "file": "assets/rendier.png"
+    },
+    {
+      "door": 22,
+      "subject": "denneboom",
+      "file": "assets/denneboom.png"
+    },
+    {
+      "door": 23,
+      "subject": "elf",
+      "file": "assets/elf.png"
+    },
+    {
+      "door": 24,
+      "subject": "rendier",
+      "file": "assets/rendier.png"
+    },
+    {
+      "door": 25,
+      "subject": "kerstman",
+      "file": "assets/kerstman.png"
+    }
+  ],
+  "assets": {
+    "engel": {
+      "file": "assets/engel.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "8d134ac2041a8c48827fcd5d5d4b40a2dbe2e758c6f014f523bfd3aa7c2c7b3c",
+      "visible_bounds_alpha_gt_16": [
+        79,
+        54,
+        1192,
+        1225
+      ],
+      "transparent_pixel_fraction": 0.4556,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    },
+    "muzieknoot": {
+      "file": "assets/muzieknoot.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "3d6cfed513124f1da8fcf82abfb6a2f8e4552d56224d15f320262fabc188746f",
+      "visible_bounds_alpha_gt_16": [
+        259,
+        135,
+        1089,
+        1174
+      ],
+      "transparent_pixel_fraction": 0.7668,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    },
+    "kerstbal": {
+      "file": "assets/kerstbal.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "90b5ee82d0909a9dcc89f3cdc644df12f9e72093cdee1659baf39ceae7b6a969",
+      "visible_bounds_alpha_gt_16": [
+        157,
+        69,
+        1093,
+        1223
+      ],
+      "transparent_pixel_fraction": 0.5429,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    },
+    "elf": {
+      "file": "assets/elf.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "9ed61aea11b8438bbd2c07da5e35716f2a80d017fb7161dfa06ec5733acf6623",
+      "visible_bounds_alpha_gt_16": [
+        277,
+        67,
+        1020,
+        1204
+      ],
+      "transparent_pixel_fraction": 0.6273,
+      "maximum_canvas_edge_alpha": 0,
+      "strong_green_visible_pixels": 0
+    },
+    "iglo": {
+      "file": "assets/iglo.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "a18b0a4e3039e3535c92e20152f0739a4b5b317ba1663d267689e91879095568",
+      "visible_bounds_alpha_gt_16": [
+        67,
+        186,
+        1187,
+        1023
+      ],
+      "transparent_pixel_fraction": 0.5328,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    },
+    "trein": {
+      "file": "assets/trein.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "2a4cacad422b2f945f9edaea6b0f390d5a45e2227d29055e521835c098bb24d4",
+      "visible_bounds_alpha_gt_16": [
+        60,
+        242,
+        1182,
+        1081
+      ],
+      "transparent_pixel_fraction": 0.5423,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    },
+    "rendier": {
+      "file": "assets/rendier.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "05987c13013f5ac0af48874f6fef2d538148cf36d0dfd2eb187784b375032d33",
+      "visible_bounds_alpha_gt_16": [
+        64,
+        89,
+        1192,
+        1128
+      ],
+      "transparent_pixel_fraction": 0.6174,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    },
+    "denneboom": {
+      "file": "assets/denneboom.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "6290721af4cd139f87e46ae364a9b5411c5dc0bb5fd9a0ec000004e394a2fd1e",
+      "visible_bounds_alpha_gt_16": [
+        196,
+        107,
+        1058,
+        1129
+      ],
+      "transparent_pixel_fraction": 0.6958,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    },
+    "sneeuwpop": {
+      "file": "assets/sneeuwpop.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "97a4e4e830088138e8c3512b64c8ce451370a911f1ed3570a3fa105542c54bbe",
+      "visible_bounds_alpha_gt_16": [
+        262,
+        68,
+        1046,
+        1204
+      ],
+      "transparent_pixel_fraction": 0.5907,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    },
+    "lampjes": {
+      "file": "assets/lampjes.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "14229bbfcfbbc69dab7f5fbe8c3d6b023af4c7b55b31156170778af010739791",
+      "visible_bounds_alpha_gt_16": [
+        52,
+        398,
+        1203,
+        916
+      ],
+      "transparent_pixel_fraction": 0.832,
+      "maximum_canvas_edge_alpha": 0,
+      "strong_green_visible_pixels": 0
+    },
+    "kerstman": {
+      "file": "assets/kerstman.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "sha256": "81cebe7498d3d5987b78624d9ab69c05c035b409fbef6f8abdba5ac94977110d",
+      "visible_bounds_alpha_gt_16": [
+        210,
+        74,
+        1047,
+        1185
+      ],
+      "transparent_pixel_fraction": 0.5765,
+      "maximum_canvas_edge_alpha": 1,
+      "strong_green_visible_pixels": 0
+    }
+  },
+  "final_puzzle_note": "Door 25 kerstman is not needed to solve puzzle 25."
+}
