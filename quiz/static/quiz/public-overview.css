@@ -549,19 +549,7 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
 }
 
 /* Fit Advent TV to the physical 16:9 display without remounting audio.
-   The persistent Music player remains a functional, focusable control.
-   #103: reserve a row below the timer and above the calendars. */
-.game-page--overview .public-status--advent .public-advent-audio-slot {
-  display: none;
-}
-@media (min-width: 701px) {
-  .game-page--overview .public-status--advent .public-advent-audio-slot {
-    display: block;
-    flex: 0 0 auto;
-    min-height: 44px;
-    margin: 0 1cqw;
-  }
-}
+   The persistent Music player remains a functional, focusable control. */
 .game-page--overview .public-status--advent .advent-progress__board {
   position: static;
 }
@@ -576,62 +564,6 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
 .game-page--overview .public-status--advent
 .advent-door.advent-door--current .advent-door__flap {
   background: linear-gradient(135deg, #fff0ba, #d5a65b 70%, #a77c44);
-}
-
-@media (min-width: 701px) {
-  .game-page--overview .public-overview:has(.public-status--advent) {
-    position: relative;
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  #overview-audio-player {
-    position: absolute;
-    z-index: 10;
-    /* Derived from the in-flow Advent slot, not viewport-specific offsets. */
-    top: var(--advent-audio-top, 0px);
-    right: var(--advent-audio-right, 0px);
-    display: block;
-    width: auto;
-    max-width: min(46vw, 450px);
-    margin: 0;
-    padding: 5px 8px;
-    border: 1px solid #ae8c4b99;
-    border-radius: 4px;
-    background: #0a2922;
-    box-shadow: 0 5px 18px #0008;
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__ornament { display: none; }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__copy {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__controls button {
-    min-height: 32px;
-    padding: 5px 8px;
-    border-radius: 3px;
-    font-size: clamp(10px, .8vw, 15px);
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__volume {
-    grid-template-columns: auto minmax(55px, 90px);
-    gap: 5px;
-    font-size: clamp(9px, .7vw, 13px);
-  }
-  .game-page--overview .public-overview:has(.public-status--advent)
-  .music-audio-panel__volume input { min-height: 24px; }
 }
 
 /* Permanent panel edge + brass hinge remain visible after flap rotation. */

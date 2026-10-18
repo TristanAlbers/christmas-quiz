@@ -115,8 +115,6 @@
     <div class="public-advent-summary">
       <p class="public-overview-phase">{% if state.global_state == 'FINISHED' %}De adventrace is afgerond{% elif state.global_state == 'PAUSED' %}Spel gepauzeerd{% else %}De adventrace is begonnen{% endif %}</p>
     </div>
-    {# Reserve space in the Advent layout without remounting the TV audio controls on each poll. #}
-    <div id="advent-audio-slot" class="public-advent-audio-slot" aria-hidden="true"></div>
     <div class="public-calendar-grid">
       {% for team in teams %}{% include 'quiz/_advent_calendar.html' with progress=team.advent_progress team_id=team.team_id is_frozen=team.is_frozen winner_team_id=first_finisher_team_id %}{% endfor %}
     </div>
