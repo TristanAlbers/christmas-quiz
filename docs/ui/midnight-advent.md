@@ -48,8 +48,9 @@ All ordinary player/operator copy is **Dutch-first**; use **Team A** and **Team 
 
 ### Advent cabinet and chocolate
 - Exactly 25 numbered doors per team on public TV and Game Master; **no persistent 25-door grid on the team Puzzle View**.
-- Completed doors visibly hinge/open to reveal a **small rectangular chocolate**, with one centered low-relief/embossed festive motif. Preserve a recognizable Dutch chocolate Advent calendar.
-- Motifs: Christmas bauble, mistletoe, bell, Rudolph head, gingerbread person, stocking, ice skate, Christmas tree, candy cane, snowman, present. Repeat a deterministic sequence over 25 doors; no collectible reward or private puzzle information is encoded by the motif.
+- Completed doors visibly hinge/open to reveal the **approved shaped milk-chocolate clues**, superseding the original rectangular embossed decorative tiles (product decision 2026-10-18; #101/#102). No visible names or retained numbers on completed doors.
+- Use the 11 original transparent PNGs in `quiz/static/quiz/chocolates/` and the exact fixed mapping in `quiz/chocolate_manifest.json`, identical for both teams/across games. Repeated subjects reuse one file. Proportional viewports account for transparent margins with breathing room; wide lights and tall figures must remain intact and recognisable at TV size.
+- Only server-completed doors render clue artwork. These are earned final-puzzle clues; door 25's Santa is not needed to answer the finale. No new gallery/zoom/phone collection is introduced. Use the #101 handoff concepts and previews as references, never as production state/code.
 - Current and future states remain distinguishable from completed, with readable numerals and accurate progress. Door opening is a **one-shot transition** when authoritative completed count advances, not every 500ms poll or every reload. On fresh load, completed doors render open without an animation storm.
 - TV-level Freeze adds readable frost to the affected calendar **without replacing the calendar or hiding progress**. Only the public frozen boolean is exposed.
 

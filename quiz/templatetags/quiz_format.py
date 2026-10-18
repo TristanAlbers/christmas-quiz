@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from django import template
 
 register = template.Library()
@@ -86,3 +89,23 @@ def challenge_label(value):
 def dutch_feedback(value):
     """Translate application feedback at the presentation boundary."""
     return FEEDBACK_LABELS.get(str(value), str(value))
+
+
+# Fixed approved clue artwork, independent of team and game configuration.
+_CHOCOLATES = json.loads(
+    (Path(__file__).resolve().parent.parent / "chocolate_manifest.json").read_text()
+)
+for _asset in _CHOCOLATES["assets"].values():
+    left, top, right, bottom = _asset["visible_bounds_alpha_gt_16"]
+    # Match the handoff viewport: trim transparent margins with 12px breathing room.
+    _asset["view_box"] = (
+        f"{left - 12} {top - 12} {right - left + 24} {bottom - top + 24}"
+    )
+    _asset["static_path"] = "quiz/chocolates/" + Path(_asset["file"]).name
+
+
+@register.filter
+def door_chocolate(number):
+    """Look up an earned door's approved artwork; never infer a cycling motif."""
+    entry = _CHOCOLATES["mapping"][number - 1]
+    return _CHOCOLATES["assets"][entry["subject"]]

@@ -3,6 +3,7 @@ from pathlib import Path
 from django.contrib.staticfiles import finders
 from django.template.loader import render_to_string
 from django.test import SimpleTestCase
+from django.templatetags.static import static
 
 
 class AdventCalendarPresentationTests(SimpleTestCase):
@@ -22,7 +23,12 @@ class AdventCalendarPresentationTests(SimpleTestCase):
             {"progress": progress, "team_id": "a"},
         )
 
-        self.assertEqual(html.count("advent-door__chocolate"), 3)
+        self.assertEqual(html.count("advent-door__chocolate"), 1)
+        self.assertIn(static("quiz/chocolates/engel.png"), html)
+        self.assertNotIn(static("quiz/chocolates/muzieknoot.png"), html)
+        self.assertNotIn('>1</span>', html)
+        self.assertIn('>2</span>', html)
+        self.assertIn('>3</span>', html)
         self.assertIn("advent-door--completed", html)
         self.assertIn("advent-door--current", html)
         self.assertIn("advent-door--future", html)
