@@ -124,7 +124,7 @@ Explicit presentation refinements of older view wording:
 - On normal team phones, **Hint and Skip may sit side by side** when legible, rather than being vertically stacked; preserve contextual token/cost/disabled semantics and the no-Skip-on-puzzle-25 rule.
 - A first-finishing team's brief confetti is followed by a **persistent, non-interactive winner tableau**. The other team continues, the TV retains an unobtrusive winner marker, and global `FINISHED` still requires both teams to complete puzzle 25.
 - Global Pause has a distinct clear **gold/amber suspended** treatment for TV and teams, with no active player commands and correct preserved underlying mode/timers; a player Freeze retains the separate blue icy treatment, with **no private puzzle/hint/media rendered under ice**.
-- Completed doors on public/admin Advent calendars **open to reveal small rectangular embossed Christmas-themed chocolates**; the decorative motif has no game-rule meaning.
+- Completed doors open to reveal Christmas chocolates. **The 2026-10-18 shaped-chocolate clue decision below supersedes the original rectangular, decorative-only treatment.**
 - Armed Uno Reverse is conspicuous as a **red Reverse-style card**; purchase merely arms it, and a qualifying Freeze reflection gets a major event animation. The shop visibly shows **server-derived** costs and availability for Hint, Reverse, Freeze, and the free Challenge.
 - The approved Music Quiz TV aesthetic is retained; Challenge phones keep only necessary shared puzzle and answer controls, and the shared Challenge question appears on TV only after its authoritative grace period.
 - No invented team names: label teams **Team A** and **Team B**. Runtime remains Dutch-first. All new presentation effects support reduced motion and polling-stable interaction.
@@ -185,6 +185,35 @@ display-only countdown principle.
 The product owner changes the earlier **15-second** Challenge gathering period to **30 seconds**. This is the authoritative grace duration for every Challenge and overrides the 2026-09-25 duration only; all previously approved costs, eligibility, per-initiator puzzles, one-opportunity-per-team rule, first-correct result, Pause/restart recovery, Freeze outcomes, and privacy guarantees are unchanged.
 
 Both team phones and the public TV must visibly count down from the latest server-authoritative remaining time. A display-only tick may interpolate between the existing 500 ms polls, but it cannot reveal the question or enable an answer before the server ends gathering. The active TV shows both the public shared puzzle title **and the full readable question body**; the layout may scroll long shared text automatically without hiding the ordinary question or overlapping other TV content.
+
+
+## 2026-10-18 — approved shaped-chocolate puzzle clues (#100–#102)
+
+The approved #101 handoff replaces the rectangular decorative tiles with 11
+shaped milk-chocolate subjects. These are public, earned clues for the final
+puzzle, identical for both teams and across games. The fixed 25-door mapping
+is recorded in `quiz/chocolate_manifest.json`; repeated subjects reuse the same
+locally bundled PNG. Use the original approved bytes and proportional, optically
+centred artwork, including intact wings, antlers and lights.
+
+Only authoritative completed doors reveal chocolates, without visible subject
+names or retained numbers. Each earned subject has a non-visible accessible
+label on its completed door; current/future door labels disclose no subject.
+The Game Master calendar also shows earned artwork in its compact completed
+slots rather than a closed brown flap. Closed-door numbers, existing hinges
+and progression remain.
+Door 25's Santa is not required to solve puzzle 25: the necessary clues are
+already earned before answering. This changes presentation/clue meaning only;
+scoring, answers, canonical completion, game rules and privacy boundaries do not
+change. No collection, gallery or zoom view is added. Existing surfaces that
+render chocolates use this mapping; the team phone remains focused on its puzzle.
+
+Reference: `quizzmas-chocolate-handoff-v1.zip`, SHA-256
+`2c45c7f1d32bd740262869333117ffda80de52eb5ac1fef63e7eed8c7fa377ac`.
+The supplied concepts and previews are approved design references, not production
+code or authoritative state. Design approval does not substitute for explicit
+approval of the live Django partial/full overview at 1920×1080. Preserve 500 ms
+polling, one-shot reveal, reduced motion and refresh/reconnect recovery.
 
 ## 2026-10-18 — TV audio controls exist only during the Music Quiz takeover (#103)
 

@@ -260,6 +260,7 @@ jobs:
       TEST_DATABASE_PATH: /tmp/christmas-quiz-webkit.sqlite3
       ISSUE31_BROWSER_ENGINE: webkit
       ISSUE78_BROWSER_ENGINE: webkit
+      ISSUE73_BROWSER_ENGINE: webkit
       UI78_SCREENSHOT_DIR: artifacts/ui-78-webkit
       REVERSE_ANIMATION_SCREENSHOT_DIR: artifacts/ui-75-webkit
       UI81_SCREENSHOT_DIR: artifacts/ui-81-webkit
@@ -290,6 +291,7 @@ jobs:
           tests.browser.test_issue31_reverse
           tests.browser.test_issue78_pause
           tests.browser.test_issue81_cinematic
+          tests.browser.test_issue73_midnight_tv
           --verbosity 2
 
       - name: Save WebKit Pause screenshots

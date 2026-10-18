@@ -6,6 +6,7 @@ They use separate connections and deliberately hold the first writer slot.
 
 import json
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -14,6 +15,7 @@ from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.db import connections
+from django.templatetags.static import static
 from django.test import TestCase, TransactionTestCase, override_settings
 
 from quiz.application import (
@@ -182,20 +184,37 @@ class PhaseTwoJourneyTests(PhaseTwoSetup, TestCase):
         self.assertEqual(HintReveal.objects.filter(team_id="a").count(), 1)
 
     def test_completion_routes_are_once_only_and_stale_questions_do_not_charge(self):
+        def artwork_urls():
+            response = self.client.get("/overview/")
+            self.assertEqual(response.status_code, 200)
+            # Read only image URLs; no knowledge of private puzzle data is needed.
+            return re.findall(r'<image href="([^"]+)"', response.content.decode())
+
+        angel = static("quiz/chocolates/engel.png")
+        note = static("quiz/chocolates/muzieknoot.png")
+        self.assertEqual(artwork_urls(), [])
+        wrong = submit_answer(
+            self.a, SubmitAnswer(str(uuid4()), self.run_id, "a-1", "wrong")
+        )
+        self.assertEqual(wrong.outcome, "incorrect")
+        self.assertEqual(artwork_urls(), [])
         # Distinct puzzles/teams exercise all three routes through the public API.
         answer = submit_answer(
             self.a, SubmitAnswer(str(uuid4()), self.run_id, "a-1", "red")
         )
         self.assertEqual(answer.outcome, "completed")
+        self.assertEqual(artwork_urls(), [angel])
         skip = TeamPuzzle(str(uuid4()), self.run_id, "a-2")
         self.assertEqual(skip_current(self.a, skip).outcome, "completed")
         self.assertEqual(skip_current(self.a, skip).outcome, "completed")
+        self.assertEqual(artwork_urls(), [angel, note])
         self.assertEqual(
             force_complete_current(
                 self.admin, AdminPuzzle(str(uuid4()), self.run_id, "b", "b-1")
             ).outcome,
             "completed",
         )
+        self.assertEqual(artwork_urls(), [angel, note, angel])
         self.assert_error(
             "stale_question",
             skip_current,
@@ -214,6 +233,17 @@ class PhaseTwoJourneyTests(PhaseTwoSetup, TestCase):
         )
         self.assertEqual(TeamRun.objects.get(run_id=self.run_id, team_id="a").points, 7)
         self.assertEqual(TeamRun.objects.get(run_id=self.run_id, team_id="b").points, 7)
+
+        # A real reset/new game must reuse the same artwork mapping.
+        reset_game(self.admin, self.command())
+        self.run_id = start_game(
+            self.admin, StartGame(str(uuid4()), "christmas-2026-demo")
+        ).run_id
+        self.assertEqual(artwork_urls(), [])
+        force_complete_current(
+            self.admin, AdminPuzzle(str(uuid4()), self.run_id, "a", "a-1")
+        )
+        self.assertEqual(artwork_urls(), [angel])
 
     def test_rejections_roll_back_receipt_event_and_balances(self):
         self.points(-3)

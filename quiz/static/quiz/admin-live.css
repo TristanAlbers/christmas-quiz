@@ -179,7 +179,6 @@
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__snow,
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__board::before,
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__board::after,
-#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__reveal,
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__hinge,
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__knob { display: none; }
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-progress__board {
@@ -188,6 +187,7 @@
 }
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-calendar { gap: .27rem; }
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door {
+  --advent-art-clearance: 4px;
   aspect-ratio: 1.27; min-width: 0;
   border: 1px solid #836b4c; border-radius: 0;
   box-shadow: none; background: #20382f; perspective: none;
@@ -199,13 +199,12 @@
   background: #325747; color: #d1b07b;
 }
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door:nth-child(2n+1) .advent-door__flap { background: #54363e; }
-#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--completed .advent-door__flap {
-  background: linear-gradient(135deg, #95633f, #593b2b) !important;
+/* Completed compact slots show the same earned clue as the public calendar. */
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__reveal {
+  background: #142e24; box-shadow: inset 0 0 .5rem #0005;
 }
-#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--completed .advent-door__number { display: none; }
-#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--completed .advent-door__ornament {
-  display: block; position: static; width: auto; aspect-ratio: auto;
-  border: 0; color: #caa370; font-size: .7rem;
+#live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door--completed .advent-door__flap {
+  visibility: hidden;
 }
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__ornament { display: none; }
 #live-admin:has(.gm-admin-team-panel) .gm-admin-team-panel .advent-door__number {

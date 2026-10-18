@@ -172,44 +172,25 @@
 }
 
 .advent-door__chocolate {
-  display: grid;
-  place-items: center;
-  position: relative;
+  position: absolute;
   z-index: 1;
-  width: 46%;
-  aspect-ratio: .8;
-  border: .08rem solid #3d2018;
-  border-radius: .3rem .3rem .2rem .2rem;
-  background: linear-gradient(145deg, #855137, #5b3022 60%, #402018);
-  box-shadow:
-    inset .12rem .12rem .18rem rgba(255,255,255,.18),
-    inset -.12rem -.12rem .2rem rgba(35,14,9,.35),
-    0 .16rem .25rem rgba(49,24,17,.28);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Keep the artwork centred on the opening, with equal clearance on both
+     sides even though the retained open-door edge is only on the left. */
+  width: min(84%, calc(100% - var(--advent-art-clearance, 12px) - var(--advent-art-clearance, 12px)));
+  height: 84%;
 }
 
-.advent-door__chocolate::before {
-  content: "";
-  position: absolute;
-  inset: 14% 12%;
-  border: 1px solid rgba(202, 142, 90, .7);
-  border-radius: .12rem;
-  box-shadow: inset 0 0 .2rem #2a120e;
+.advent-door__chocolate--broad {
+  height: 76%;
 }
 
 .advent-door__motif {
   display: block;
-  justify-self: center;
-  align-self: center;
-  position: relative;
-  z-index: 1;
-  width: 77%;
-  height: 76%;
-  fill: none;
-  stroke: #ba8157;
-  stroke-width: 2.1;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 1px 0 #24120b) drop-shadow(0 -1px 0 #d09a6b5a);
+  width: 100%;
+  height: 100%;
 }
 
 .advent-door__flap {

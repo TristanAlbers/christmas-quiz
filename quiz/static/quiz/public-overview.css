@@ -405,6 +405,8 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   margin: 0;
 }
 .game-page--overview .public-status--advent .advent-door {
+  --advent-open-edge-width: clamp(6px, .85cqw, 16px);
+  --advent-art-clearance: calc(var(--advent-open-edge-width) + 12px);
   min-height: 0;
   aspect-ratio: auto;
   overflow: visible;
@@ -422,25 +424,6 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   box-shadow: inset 0 0 .6cqw #000b;
 }
 .game-page--overview .public-status--advent .advent-door__reveal::before { content: none; }
-.game-page--overview .public-status--advent .advent-door__chocolate {
-  /* Anchor the chocolate to the opening itself, including during the
-     one-shot echo animation. The previous drop shadow was bottom-heavy. */
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 46%;
-  max-height: 82%;
-  aspect-ratio: .8;
-  border: .1cqw solid #9f6d40;
-  border-radius: 21% 21% 14% 14%;
-  background: linear-gradient(145deg, #754429, #392118 70%, #26160f);
-  box-shadow: inset .13cqw .13cqw .1cqw #af744fbb, 0 0 .36cqw #000b;
-}
-.game-page--overview .public-status--advent .advent-door__chocolate::before {
-  inset: 17% 17%;
-  border-color: #bd8e55;
-}
 .game-page--overview .public-status--advent .advent-door__flap {
   border: 1px solid #ccad7b;
   background: linear-gradient(138deg, #9a3544, #62243a 68%, #4c1a2e);
@@ -584,7 +567,7 @@ body.game-page--overview:has(.public-status--advent)::before { content: none; }
   top: -1px;
   bottom: -1px;
   left: -1px;
-  width: clamp(6px, .85cqw, 16px);
+  width: var(--advent-open-edge-width);
   border: 1px solid #ad8357;
   background: linear-gradient(90deg, #48232d, #8d3543 60%, #381c22);
   box-shadow: inset 1px 0 1px #f2d0ac55, 2px 0 3px #000a;
