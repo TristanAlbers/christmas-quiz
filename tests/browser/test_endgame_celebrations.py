@@ -375,10 +375,8 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         "Jullie winnen!",
                         await team_a.locator("#game-announcement").inner_text(),
                     )
-                    self.assertEqual(
-                        await team_a.locator(
-                            "#door-completion.door-completion--idle"
-                        ).count(), 1
+                    self.assertFalse(
+                        await team_a.locator("#routine-feedback").is_visible()
                     )
                     self.assertEqual(
                         await team_a.get_by_text(
@@ -423,10 +421,8 @@ class EndgameCelebrationBrowserTests(LiveServerTestCase):
                         await page.locator(
                             "#endgame-celebration.endgame-celebration--visible"
                         ).wait_for(state="hidden", timeout=2000)
-                    self.assertEqual(
-                        await team_b.locator(
-                            "#door-completion.door-completion--idle"
-                        ).count(), 1
+                    self.assertFalse(
+                        await team_b.locator("#routine-feedback").is_visible()
                     )
                     self.assertEqual(
                         await team_b.get_by_text(

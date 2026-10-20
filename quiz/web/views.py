@@ -1,7 +1,12 @@
+import json
 import uuid
+from pathlib import Path
+from typing import Literal, TypedDict
 
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.templatetags.static import static
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
@@ -41,7 +46,61 @@ from quiz.contracts import (
     SubmitMusicAnswer,
     TeamPuzzle,
 )
+from quiz.models import AuditEvent, PuzzleProgress, Run
 from quiz.web.team_presentation import get_team_presentation_state
+
+
+class RoutineFeedbackState(TypedDict):
+    globalState: str
+    teamState: str
+    questionId: str | None
+    musicPhase: str | None
+    challengePhase: str | None
+    firstFinisherTeamId: str | None
+    gameplayElapsedMs: int
+
+
+class RoutineFeedbackChocolate(TypedDict):
+    subject: str
+    staticUrl: str
+    width: int
+    height: int
+    viewBox: str
+    isBroad: bool
+
+
+class RoutineFeedbackPuzzle(TypedDict, total=False):
+    id: str
+    number: int
+    nextNumber: int
+    chocolate: RoutineFeedbackChocolate
+
+
+class RoutineFeedbackPayload(TypedDict, total=False):
+    version: Literal[1]
+    eventId: str
+    actionId: str
+    runId: str
+    kind: Literal[
+        "puzzle_solved", "puzzle_skipped", "reverse_purchased", "hint_purchased"
+    ]
+    state: RoutineFeedbackState
+    puzzle: RoutineFeedbackPuzzle
+
+
+_CHOCOLATE_MANIFEST = json.loads(
+    (Path(__file__).resolve().parent.parent / "chocolate_manifest.json").read_text()
+)
+_CHOCOLATE_BY_DOOR = {
+    item["door"]: item for item in _CHOCOLATE_MANIFEST["mapping"]
+}
+
+_ROUTINE_FEEDBACK_ACTIONS = {
+    "answer": ("completed", "puzzle_solved"),
+    "skip": ("completed", "puzzle_skipped"),
+    "purchase_uno_reverse": ("purchased", "reverse_purchased"),
+    "purchase_hint": ("purchased", "hint_purchased"),
+}
 
 ERROR_STATUS = {
     "unauthenticated": 401,
@@ -66,6 +125,139 @@ def _error(exc):
     response = HttpResponse(exc.code.replace("_", " "), status=ERROR_STATUS[exc.code])
     response["Cache-Control"] = "no-store"
     return response
+
+
+def _routine_feedback_was_already_accepted(actor, run_id, request_id, action):
+    """Suppress a sequential retry; the stable event id also handles race retries."""
+    expected = _ROUTINE_FEEDBACK_ACTIONS.get(action)
+    if expected is None:
+        return False
+    try:
+        request_uuid = uuid.UUID(request_id)
+        run_uuid = uuid.UUID(run_id)
+    except (AttributeError, TypeError, ValueError):
+        return False
+    return AuditEvent.objects.filter(
+        run_id=run_uuid,
+        actor_id=actor.user_id,
+        request_id=request_uuid,
+        action=action,
+        result=expected[0],
+    ).exists()
+
+
+def _static_asset_url(path):
+    try:
+        return static(path)
+    except ValueError:
+        # Test/development environments may not have a collected manifest yet.
+        return f"{settings.STATIC_URL.rstrip('/')}/{path}"
+
+
+def _routine_feedback_payload(
+    actor, state, request_id, action
+) -> RoutineFeedbackPayload | None:
+    """Build private presentation data from the committed audit/progress records."""
+    expected = _ROUTINE_FEEDBACK_ACTIONS.get(action)
+    if expected is None or state.run_id is None:
+        return None
+    if (
+        state.global_state != "ADVENT_QUIZ"
+        or state.team_state != "PUZZLE"
+        or state.music is not None
+        or (
+            state.challenge is not None
+            and state.challenge.phase in {"starting", "active"}
+        )
+    ):
+        return None
+    try:
+        request_uuid = uuid.UUID(request_id)
+    except (AttributeError, TypeError, ValueError):
+        return None
+    event = (
+        AuditEvent.objects.filter(
+            run_id=state.run_id,
+            actor_id=actor.user_id,
+            request_id=request_uuid,
+            action=action,
+            result=expected[0],
+        )
+        .only("id", "run_id", "puzzle_id")
+        .first()
+    )
+    if event is None or not Run.objects.filter(pk=event.run_id, active=True).exists():
+        return None
+
+    payload: RoutineFeedbackPayload = {
+        "version": 1,
+        "eventId": f"{event.run_id}:{request_uuid}:{expected[1]}",
+        "actionId": str(request_uuid),
+        "runId": str(event.run_id),
+        "kind": expected[1],
+        "state": {
+            "globalState": state.global_state,
+            "teamState": state.team_state,
+            "questionId": state.question.id if state.question is not None else None,
+            "musicPhase": state.music.phase if state.music is not None else None,
+            "challengePhase": (
+                state.challenge.phase if state.challenge is not None else None
+            ),
+            "firstFinisherTeamId": state.first_finisher_team_id,
+            "gameplayElapsedMs": state.gameplay_elapsed_ms,
+        },
+    }
+    if action not in {"answer", "skip"}:
+        return payload
+
+    progress = (
+        PuzzleProgress.objects.filter(
+            run_id=event.run_id,
+            team_id=actor.team_id,
+            puzzle_id=event.puzzle_id,
+            completed=True,
+        )
+        .only("puzzle_id", "number")
+        .first()
+    )
+    # Final completion has its own authoritative victory presentation.
+    if progress is None or progress.number == 25:
+        return None
+    chocolate = _CHOCOLATE_BY_DOOR[progress.number]
+    chocolate_asset = _CHOCOLATE_MANIFEST["assets"][chocolate["subject"]]
+    left, top, right, bottom = chocolate_asset["visible_bounds_alpha_gt_16"]
+    puzzle: RoutineFeedbackPuzzle = {
+        "id": progress.puzzle_id,
+        "number": progress.number,
+        "chocolate": {
+            "subject": chocolate["subject"],
+            "staticUrl": _static_asset_url(
+                "quiz/chocolates/" + Path(chocolate["file"]).name
+            ),
+            "width": chocolate_asset["width"],
+            "height": chocolate_asset["height"],
+            "viewBox": (
+                f"{left - 12} {top - 12} {right - left + 24} {bottom - top + 24}"
+            ),
+            "isBroad": chocolate["subject"] in {"iglo", "trein"},
+        },
+    }
+    if state.question is not None:
+        puzzle["nextNumber"] = state.question.number
+    payload["puzzle"] = puzzle
+    return payload
+
+
+def _set_after_swap_triggers(response, *, shop_succeeded=False, routine=None):
+    triggers = {}
+    if shop_succeeded:
+        triggers["shopPurchaseSucceeded"] = True
+    if routine is not None:
+        triggers["routineFeedbackConfirmed"] = routine
+    if triggers:
+        response["HX-Trigger-After-Swap"] = json.dumps(
+            triggers, separators=(",", ":")
+        )
 
 
 def _question_context(state):
@@ -369,11 +561,16 @@ def team_state(request):
 def team_answer(request):
     try:
         actor = actor_for_user(request.user)
+        request_id = request.POST.get("request_id", "")
+        run_id = request.POST.get("run_id", "")
+        repeated_success = _routine_feedback_was_already_accepted(
+            actor, run_id, request_id, "answer"
+        )
         result = submit_answer(
             actor,
             SubmitAnswer(
-                request_id=request.POST.get("request_id", ""),
-                run_id=request.POST.get("run_id", ""),
+                request_id=request_id,
+                run_id=run_id,
                 question_id=request.POST.get("question_id", ""),
                 answer=request.POST.get("answer", ""),
             ),
@@ -387,7 +584,7 @@ def team_answer(request):
         if result.outcome == "completed"
         else "Incorrect answer. Try again."
     )
-    return render(
+    response = render(
         request,
         "quiz/_team_state.html",
         _team_context(
@@ -399,6 +596,11 @@ def team_answer(request):
             viewer_team_id=actor.team_id,
         ),
     )
+    routine = None
+    if result.outcome == "completed" and not repeated_success:
+        routine = _routine_feedback_payload(actor, result.state, request_id, "answer")
+    _set_after_swap_triggers(response, routine=routine)
+    return response
 
 
 @never_cache
@@ -579,9 +781,22 @@ def admin_start(request):
 def team_action(request, action):
     try:
         actor = actor_for_user(request.user)
+        request_id = request.POST.get("request_id", "")
+        run_id = request.POST.get("run_id", "")
         base = dict(
-            request_id=request.POST.get("request_id", ""),
-            run_id=request.POST.get("run_id", ""),
+            request_id=request_id,
+            run_id=run_id,
+        )
+        routine_action = {
+            "purchase-hint": "purchase_hint",
+            "skip": "skip",
+            "purchase-reverse": "purchase_uno_reverse",
+        }.get(action)
+        repeated_success = bool(
+            routine_action
+            and _routine_feedback_was_already_accepted(
+                actor, run_id, request_id, routine_action
+            )
         )
         if action == "purchase-hint":
             result = purchase_hint(actor, RunCommand(**base))
@@ -650,8 +865,15 @@ def team_action(request, action):
             presentation=presentation,
         ),
     )
-    if action in {"purchase-hint", "freeze", "purchase-reverse", "challenge"}:
-        response["HX-Trigger-After-Swap"] = "shopPurchaseSucceeded"
+    routine = None
+    if routine_action is not None and not repeated_success:
+        routine = _routine_feedback_payload(actor, state, request_id, routine_action)
+    _set_after_swap_triggers(
+        response,
+        shop_succeeded=action
+        in {"purchase-hint", "freeze", "purchase-reverse", "challenge"},
+        routine=routine,
+    )
     return response
 
 

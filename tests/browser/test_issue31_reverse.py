@@ -21,26 +21,26 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     await a.locator("#team-shop-dialog").wait_for(
                         state="hidden", timeout=5000
                     )
-                    self.assertIn(
-                        "gekocht en geactiveerd",
-                        (await a.locator("#action-feedback").inner_text()).lower(),
+                    purchase = a.locator(
+                        '#routine-feedback[data-kind="reverse_purchased"]'
                     )
-                    purchase = a.locator("#reverse-purchase.reverse-purchase")
                     await purchase.wait_for(state="visible", timeout=5000)
                     purchase_text = (await purchase.inner_text()).lower()
-                    self.assertIn("aankoop gelukt", purchase_text)
-                    self.assertIn("uno reverse geactiveerd!", purchase_text)
+                    self.assertIn("reverse staat klaar", purchase_text)
+                    self.assertIn("volgende freeze", purchase_text)
                     self.assertEqual(
                         await purchase.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "3s",
+                        "3.4s",
                     )
                     self.assertFalse(await a.locator("#gameplay-event").is_visible())
 
                     # The animation must use the same vector arrows as the shop,
                     # never an OS-dependent Unicode glyph on iOS/Android.
-                    symbol = purchase.locator(".reverse-purchase__symbol")
+                    symbol = purchase.locator(
+                        ".routine-feedback__reverse-card span"
+                    )
                     self.assertEqual((await symbol.inner_text()).strip(), "")
                     purchase_paths = await symbol.locator("svg path").evaluate_all(
                         "(paths) => paths.map(p => p.getAttribute('d'))"
@@ -54,10 +54,10 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     self.assertEqual(purchase_paths, shop_paths)
                     self.assertTrue(await symbol.locator("svg").is_visible())
                     self.assertEqual(
-                        await symbol.evaluate(
-                            "el => getComputedStyle(el).animationName"
-                        ),
-                        "reverse-purchase-symbol",
+                        await purchase.locator(
+                            ".routine-feedback__reverse-card"
+                        ).evaluate("el => getComputedStyle(el).animationName"),
+                        "routine-feedback-card",
                     )
                     screenshot_dir = os.environ.get("REVERSE_ANIMATION_SCREENSHOT_DIR")
                     if screenshot_dir:
@@ -98,7 +98,7 @@ class Issue31ReverseBrowserTests(Issue31BrowserCase):
                     self.assertEqual(await a.locator("#answer-input").count(), 1)
                     await a.reload()
                     self.assertFalse(await a.locator("#gameplay-event").is_visible())
-                    self.assertFalse(await a.locator("#reverse-purchase").is_visible())
+                    self.assertFalse(await a.locator("#routine-feedback").is_visible())
                 finally:
                     await ca.close()
                     await ba.close()

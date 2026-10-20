@@ -103,6 +103,7 @@ jobs:
               tests.browser.test_issue31_reverse
           - shard: effects-challenge
             tests: >-
+              tests.browser.test_issue107_midnight_impact
               tests.browser.test_endgame_celebrations
               tests.browser.test_interaction_stability
               tests.browser.test_phase6_views
@@ -122,11 +123,21 @@ jobs:
         run: docker build --target dev --tag $CI_IMAGE .
 
       - name: Create screenshot directory
-        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-77 artifacts/ui-82 artifacts/ui-76 artifacts/ui-78 artifacts/ui-75 artifacts/ui-81 artifacts/ui-83
+        run: install -d -m 0777 artifacts/ui-72 artifacts/ui-79 artifacts/ui-73 artifacts/ui-74 artifacts/ui-77 artifacts/ui-82 artifacts/ui-76 artifacts/ui-78 artifacts/ui-75 artifacts/ui-81 artifacts/ui-83 artifacts/ui-107
+
+      - name: Prepare approved issue 107 motion reference
+        if: matrix.shard == 'effects-challenge'
+        run: |
+          mkdir -p artifacts/ui-107-reference/assets
+          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/a043b1b6078e5a1924a6ec427452a9d7cc3c97b0/midnight-impact-demo.html -o artifacts/ui-107-reference/midnight-impact-demo.html
+          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/a043b1b6078e5a1924a6ec427452a9d7cc3c97b0/assets/reverse-arrows.svg -o artifacts/ui-107-reference/assets/reverse-arrows.svg
+          cp quiz/static/quiz/chocolates/sneeuwpop.png artifacts/ui-107-reference/assets/
 
       - name: Run browser shard
         run: >-
           docker run --rm
+          -v "${{ github.workspace }}/artifacts/ui-107:/tmp/ui107"
+          -v "${{ github.workspace }}/artifacts/ui-107-reference:/tmp/ui107-reference:ro"
           -v "${{ github.workspace }}/artifacts/ui-72:/tmp/ui72"
           -v "${{ github.workspace }}/artifacts/ui-74:/tmp/ui74"
           -v "${{ github.workspace }}/artifacts/ui-75:/tmp/ui75"
@@ -139,6 +150,8 @@ jobs:
           -v "${{ github.workspace }}/artifacts/ui-77:/tmp/ui77"
           -v "${{ github.workspace }}/artifacts/ui-82:/tmp/ui82"
           -e UI72_SCREENSHOT_DIR=/tmp/ui72
+          -e UI107_SCREENSHOT_DIR=/tmp/ui107
+          -e UI107_REFERENCE_HTML=/tmp/ui107-reference/midnight-impact-demo.html
           -e UI74_SCREENSHOT_DIR=/tmp/ui74
           -e UI75_SCREENSHOT_DIR=/tmp/ui75
           -e UI79_SCREENSHOT_DIR=/tmp/ui79
@@ -158,6 +171,14 @@ jobs:
           python manage.py test
           ${{ matrix.tests }}
           --verbosity 2 --timing --durations 20
+
+      - name: Preserve issue 107 Midnight Impact visual checkpoint
+        if: always() && matrix.shard == 'effects-challenge'
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-impact-issue-107-chromium
+          path: artifacts/ui-107/*
+          if-no-files-found: warn
 
       - name: Preserve issue 72 browser screenshots
         if: always() && matrix.shard == 'sync-feedback'
@@ -264,6 +285,9 @@ jobs:
       UI78_SCREENSHOT_DIR: artifacts/ui-78-webkit
       REVERSE_ANIMATION_SCREENSHOT_DIR: artifacts/ui-75-webkit
       UI81_SCREENSHOT_DIR: artifacts/ui-81-webkit
+      UI107_SCREENSHOT_DIR: artifacts/ui-107-webkit
+      ISSUE107_BROWSER_ENGINE: webkit
+      UI107_REFERENCE_HTML: artifacts/ui-107-reference/midnight-impact-demo.html
 
     steps:
       - name: Check out repository
@@ -282,6 +306,13 @@ jobs:
       - name: Prepare Pause screenshots
         run: mkdir -p artifacts/ui-78-webkit
 
+      - name: Prepare approved issue 107 motion reference
+        run: |
+          mkdir -p artifacts/ui-107-reference/assets
+          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/a043b1b6078e5a1924a6ec427452a9d7cc3c97b0/midnight-impact-demo.html -o artifacts/ui-107-reference/midnight-impact-demo.html
+          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/a043b1b6078e5a1924a6ec427452a9d7cc3c97b0/assets/reverse-arrows.svg -o artifacts/ui-107-reference/assets/reverse-arrows.svg
+          cp quiz/static/quiz/chocolates/sneeuwpop.png artifacts/ui-107-reference/assets/
+
       - name: Build production-style static manifest
         run: python manage.py collectstatic --noinput
 
@@ -289,10 +320,19 @@ jobs:
         run: >-
           python manage.py test
           tests.browser.test_issue31_reverse
+          tests.browser.test_issue107_midnight_impact
           tests.browser.test_issue78_pause
           tests.browser.test_issue81_cinematic
           tests.browser.test_issue73_midnight_tv
           --verbosity 2
+
+      - name: Save WebKit Midnight Impact visual checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: midnight-impact-issue-107-webkit
+          path: artifacts/ui-107-webkit/*
+          if-no-files-found: warn
 
       - name: Save WebKit Pause screenshots
         if: always()
