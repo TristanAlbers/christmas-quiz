@@ -12,7 +12,7 @@
     </div>
   {% endif %}
   {% if state.global_state == 'ADVENT_QUIZ' and state.team_state == 'PUZZLE' and state.hint_cost != None %}
-    <dialog id="team-shop-dialog" class="shop-dialog shop-dialog--midnight" aria-labelledby="team-shop-title" aria-describedby="team-shop-description">
+    <dialog id="team-shop-dialog" class="shop-dialog shop-dialog--midnight" aria-labelledby="team-shop-title" aria-describedby="team-shop-description" hx-include="#view-context">
       <section class="shop-card">
         <header class="shop-dialog__header">
           <div><p class="shop-dialog__eyebrow">Jullie voorraadkast</p><h2 id="team-shop-title">De kerstwinkel</h2></div>

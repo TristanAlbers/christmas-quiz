@@ -44,14 +44,19 @@ class MidnightImpactContractTests(TestCase):
             HTTP_HX_REQUEST="true",
         )
 
-    def post_action(self, action, request_id, question_id="a-1"):
+    def post_action(
+        self, action, request_id, question_id="a-1", view_context=None
+    ):
+        data = {
+            "request_id": request_id,
+            "run_id": self.run_id,
+            "question_id": question_id,
+        }
+        if view_context is not None:
+            data["view_context"] = view_context
         return self.client.post(
             reverse("team_action", args=[action]),
-            {
-                "request_id": request_id,
-                "run_id": self.run_id,
-                "question_id": question_id,
-            },
+            data,
             HTTP_HX_REQUEST="true",
         )
 
@@ -164,4 +169,50 @@ class MidnightImpactContractTests(TestCase):
         music = self.post_answer(str(uuid4()), "a-13", "music")
         self.assertEqual(music.status_code, 200)
         self.assertNotIn("HX-Trigger-After-Swap", music.headers)
+
+    @override_settings(
+        STORAGES={
+            "staticfiles": {
+                "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+            }
+        }
+    )
+    def test_shop_purchase_preserves_only_a_matching_question_pane(self):
+        page = self.client.get(reverse("team"))
+        view_context = page.context["view_context"]
+        self.assertContains(
+            page,
+            'id="team-shop-dialog"',
+        )
+        self.assertContains(page, 'hx-include="#view-context"')
+
+        for action, kind in (
+            ("purchase-hint", "hint_purchased"),
+            ("purchase-reverse", "reverse_purchased"),
+        ):
+            with self.subTest(action=action):
+                response = self.post_action(
+                    action, str(uuid4()), view_context=view_context
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertNotContains(response, 'id="question-pane"')
+                self.assertContains(
+                    response,
+                    'id="team-resource-values"',
+                )
+                self.assertEqual(
+                    self.triggers(response)["routineFeedbackConfirmed"]["kind"],
+                    kind,
+                )
+
+    def test_shop_purchase_replaces_pane_for_missing_or_stale_context(self):
+        missing = self.post_action("purchase-hint", str(uuid4()))
+        self.assertEqual(missing.status_code, 200)
+        self.assertContains(missing, 'id="question-pane"')
+
+        stale = self.post_action(
+            "purchase-reverse", str(uuid4()), view_context="stale-view"
+        )
+        self.assertEqual(stale.status_code, 200)
+        self.assertContains(stale, 'id="question-pane"')
 

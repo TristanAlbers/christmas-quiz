@@ -49,17 +49,25 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
         if engine not in {"chromium", "webkit"}:
             raise ValueError("ISSUE107_BROWSER_ENGINE must be chromium or webkit")
         browser = await getattr(playwright, engine).launch()
-        context = await browser.new_context(
+        context_options = dict(
             viewport={"width": 390, "height": 844},
             device_scale_factor=1,
             reduced_motion="reduce",
         )
+        if self.output_dir:
+            raw_video_dir = self.output_dir / ".raw-videos"
+            raw_video_dir.mkdir(parents=True, exist_ok=True)
+            context_options.update(
+                record_video_dir=str(raw_video_dir),
+                record_video_size={"width": 390, "height": 844},
+            )
+        context = await browser.new_context(**context_options)
         host = urlparse(self.live_server_url).hostname
         await context.add_cookies(
             [
                 {
                     "name": "sessionid",
-                "value": session_cookie or self.session_cookie,
+                    "value": session_cookie or self.session_cookie,
                     "domain": host,
                     "path": "/",
                 }
@@ -71,6 +79,18 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
         self.assertEqual(response.status, 200)
         await page.locator(".team-advent-panel").wait_for(timeout=5000)
         return browser, context, page
+
+    async def close_phone(self, context, page, video_name):
+        video = page.video
+        await context.close()
+        if not self.output_dir or video is None:
+            return
+        engine = os.environ.get("ISSUE107_BROWSER_ENGINE", "chromium")
+        target = self.output_dir / f"actual-{video_name}-{engine}-390x844.webm"
+        raw_path = Path(await video.path())
+        await video.save_as(str(target))
+        if raw_path != target:
+            raw_path.unlink(missing_ok=True)
 
     async def capture(self, page, name):
         if self.output_dir:
@@ -86,13 +106,13 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
             return
         reference_path = Path(reference).resolve()
         self.assertTrue(reference_path.is_file())
-        labels = {
-            "solve": "Puzzel opgelost",
-            "reverse": "Reverse kopen",
-            "skip": "Overslaan",
-            "hint": "Hint kopen",
+        references = {
+            "solve": ("Puzzel opgelost", 3500),
+            "reverse": ("Reverse kopen", 3400),
+            "skip": ("Overslaan", 2800),
+            "hint": ("Hint kopen", 2700),
         }
-        for key, label in labels.items():
+        for key, (label, duration_ms) in references.items():
             context = await browser.new_context(
                 viewport={"width": 390, "height": 844},
                 device_scale_factor=1,
@@ -113,9 +133,9 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                       border:0!important;border-radius:0!important;box-shadow:none!important}
                     """
                 )
-                await page.wait_for_timeout(950)
+                await page.wait_for_timeout(round(duration_ms * 0.62))
                 await page.locator(".qm-phone").screenshot(
-                    path=str(self.output_dir / f"reference-{key}-390x844.png")
+                    path=str(self.output_dir / f"reference-{key}-hold-390x844.png")
                 )
             finally:
                 await context.close()
@@ -139,6 +159,13 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                 try:
                     await self.capture_reference(browser)
 
+                    await page.locator("#answer-input").fill(
+                        "Mijn onvoltooide antwoord"
+                    )
+                    await page.evaluate(
+                        "window.__purchaseDraft = "
+                        "document.getElementById('answer-input')"
+                    )
                     await page.get_by_role("button", name="Winkel", exact=False).click()
                     await page.get_by_role("button", name="Hint kopen (1)").click()
                     film = await self.wait_for_film(page, "hint_purchased", "2.7s")
@@ -149,9 +176,17 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                         await film.locator(".routine-feedback__letter").inner_text(),
                         "?",
                     )
-                    await page.wait_for_timeout(950)
+                    await page.wait_for_timeout(round(2700 * 0.62))
                     await self.capture(page, "hint-hold")
                     await film.wait_for(state="hidden", timeout=4000)
+                    self.assertEqual(
+                        await page.locator("#answer-input").input_value(),
+                        "Mijn onvoltooide antwoord",
+                    )
+                    self.assertTrue(await page.evaluate(
+                        "window.__purchaseDraft === "
+                        "document.getElementById('answer-input')"
+                    ))
                     await self.capture(page, "hint-settled")
 
                     await page.get_by_role("button", name="Winkel", exact=False).click()
@@ -169,13 +204,21 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                         ".shop-item--reverse .resource-reverse-card__symbol svg path"
                     ).evaluate_all("paths => paths.map(path => path.getAttribute('d'))")
                     self.assertEqual(purchase_paths, shop_paths)
-                    await page.wait_for_timeout(950)
+                    await page.wait_for_timeout(round(3400 * 0.62))
                     await self.capture(page, "reverse-hold")
                     await film.wait_for(state="hidden", timeout=4500)
-                    self.assertIn(
-                        "Actief",
-                        await page.locator(".resource-card--reverse").inner_text(),
+                    self.assertEqual(
+                        await page.locator("#answer-input").input_value(),
+                        "Mijn onvoltooide antwoord",
                     )
+                    self.assertTrue(await page.evaluate(
+                        "window.__purchaseDraft === "
+                        "document.getElementById('answer-input')"
+                    ))
+                    reverse_text = await page.locator(
+                        ".resource-card--reverse"
+                    ).inner_text()
+                    self.assertIn("ACTIEF", reverse_text.upper())
                     await self.capture(page, "reverse-settled")
 
                     await page.locator("[data-skip-action]").click()
@@ -195,7 +238,7 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                         ).inner_text(),
                         "2",
                     )
-                    await page.wait_for_timeout(950)
+                    await page.wait_for_timeout(round(2800 * 0.62))
                     await self.capture(page, "skip-hold")
                     await film.wait_for(state="hidden", timeout=4000)
                     await self.capture(page, "skip-settled")
@@ -226,7 +269,7 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                         await chocolate.locator("svg").get_attribute("viewBox"),
                         "247 123 854 1063",
                     )
-                    await page.wait_for_timeout(950)
+                    await page.wait_for_timeout(round(3500 * 0.62))
                     await self.capture(page, "solve-hold")
                     await film.wait_for(state="hidden", timeout=4500)
                     await self.capture(page, "solve-settled")
@@ -248,7 +291,7 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                         )
                     )
                 finally:
-                    await context.close()
+                    await self.close_phone(context, page, "all-four-actions")
                     await browser.close()
 
         asyncio.run(check())
@@ -274,7 +317,7 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                         "button", name="Andere team bevriezen (3)"
                     ).click()
                     await page.locator(
-                        "#gameplay-event.gameplay-event--target"
+                        "#gameplay-event.gameplay-event--victim"
                     ).wait_for(state="visible", timeout=5000)
                     await film.wait_for(state="hidden", timeout=1000)
                     self.assertFalse(
@@ -308,15 +351,15 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                             "data-event-id"
                         )
                     )
-                    await page.get_by_role(
-                        "button", name="Winkel", exact=False
-                    ).click()
+                    await page.get_by_role("button", name="Winkel", exact=False).click()
                     await page.get_by_role("button", name="Hint kopen (1)").click()
                     await self.wait_for_film(page, "hint_purchased", "2.7s")
                 finally:
-                    await other_context.close()
+                    await self.close_phone(
+                        other_context, other, "attack-interruption-sender"
+                    )
                     await other_browser.close()
-                    await context.close()
+                    await self.close_phone(context, page, "attack-interruption-victim")
                     await browser.close()
 
         asyncio.run(check())

@@ -848,16 +848,20 @@ def team_action(request, action):
         and request.POST.get("event_context") != _team_event_context(presentation)
     ):
         presentation_event = presentation.event
+    if action in {"purchase-hint", "purchase-reverse"}:
+        replace_pane = request.POST.get("view_context") != _question_context(state)
+    else:
+        replace_pane = action != "freeze" or state.team_state == "FREEZE"
     response = render(
         request,
         "quiz/_team_state.html",
         _team_context(
             state,
             feedback=feedback,
-            # Freeze does not change an active attacker's puzzle. Keep the
-            # exact answer input (draft, focus, caret) unless this team was
-            # actually frozen by an authoritative Reverse reflection.
-            replace_pane=(action != "freeze" or state.team_state == "FREEZE"),
+            # Preserve the exact answer input for a same-puzzle shop purchase
+            # and an unchanged attacker's puzzle. A stale/missing context or
+            # authoritative Reverse reflection still replaces the pane.
+            replace_pane=replace_pane,
             replace_actions=True,
             update_resources=True,
             presentation_event=presentation_event,
