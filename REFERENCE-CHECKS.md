@@ -16,3 +16,7 @@ Not performed:
 - Real Django/HTMX, authoritative receipts, failure responses, interruption races, final victory, reconnect, reduced-motion preference parity, or physical iPhone/Android acceptance. These belong to implementation verification.
 
 The package is a design reference, not a claim that application acceptance tests have passed.
+
+## Envelope refinement
+
+The later user request changes the envelope construction and motion only: contain the paper at rest, open the hinged flap before extraction, and mask the slip behind the front pocket. The real-app GIF and updated browser evidence are produced in draft PR #108; the original package checks above remain historical reference checks. No chocolate or Reverse asset bytes change.

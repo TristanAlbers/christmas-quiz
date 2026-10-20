@@ -10,6 +10,7 @@
   "notes": [
     "Chocolate files are unmodified copies; hashes match the manifest.",
     "The SVG uses the existing original path geometry with explicit stroke styling for standalone rendering.",
-    "Reuse current application card components in production; demo state is illustrative."
+    "Reuse current application card components in production; demo state is illustrative.",
+    "Hint envelope motion refined after user review: contained paper, flap-first opening, masked pocket, then upward extraction. Source bitmap/SVG assets remain unchanged."
   ]
 }

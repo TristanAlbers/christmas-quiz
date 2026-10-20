@@ -29,7 +29,7 @@ The accepted scope change overrides the exploration: remove every fragment refer
 - Game clocks, incoming attacks, and authoritative state continue normally during playback. The presentation lock grants no gameplay protection.
 - All devices play the normal full animation and duration, including devices requesting reduced motion. Do not substitute a static or shortened confirmation for these four animations. This decision is scoped to these four treatments only; do not change other screens or animations.
 
-The focused grilling questions are settled. The user authorised publication as one GitHub ticket with an asset ZIP on 20 October 2026; production implementation has not started.
+The focused grilling questions are settled. The user authorised publication as one GitHub ticket with an asset ZIP on 20 October 2026 and subsequently authorised implementation. Issue #107 is in progress in draft PR #108. The envelope refinement below reflects the later user request; final production visual approval is pending.
 
 ## Included and excluded work
 
@@ -64,7 +64,7 @@ The durations below are production targets taken from the selected exploration. 
 | Puzzle solved | A numbered pine-green Advent door arrives with a short scale-and-rotation impact. A gold ring expands once; a small particle burst disperses. The hinged door opens to reveal the exact same chocolate shown for that door on the game screen. Hold, then recede. | **Goed gevonden!** / **Puzzel opgelost.** | 3.5 s |
 | Reverse purchased | The existing red Reverse-card artwork enters large, rotates into view, and settles at a slight angle. One warm gold burst marks successful purchase. Exit, then show the authoritative armed state in the normal resource rack. | **Reverse staat klaar** / **Je volgende Freeze wordt teruggekaatst.** | 3.4 s |
 | Puzzle skipped | A parchment page for the skipped puzzle turns away, exposing the next puzzle number. Use a softer entrance and restrained gold accents. It is progression feedback, not a correct-answer celebration. | **Een deur verder** / **Puzzel overgeslagen.** | 2.8 s |
-| Hint purchased | A parchment envelope arrives; its flap opens and a hint slip rises into view with a warm light accent. Return to the existing hint presentation. | **Een lichtpuntje** / **Hint gekocht.** | 2.7 s |
+| Hint purchased | A parchment envelope arrives with its paper fully inside. The flap hinges open first; only then does the slip slide upward through the opening, behind the front pocket, with a warm light accent. No paper protrudes below the envelope or intersects the flap. Return to the existing hint presentation. | **Een lichtpuntje** / **Hint gekocht.** | 2.7 s |
 
 ### Meaning and content rules
 
@@ -110,7 +110,7 @@ Keep still-valid input, media, dialog, and control identities stable across poll
 - For a given door, the animation and game screen show the exact same chocolate, with no asset, motif, shape, material, or mapping mismatch.
 - Solving and skipping are visually and verbally distinct; skip never claims the answer was correct.
 - Purchase feedback is distinct from actual attack/reflection effects, which retain their current behaviour.
-- Hint purchase preserves current hint semantics and never leaks or fabricates content.
+- Hint purchase preserves current hint semantics and never leaks or fabricates content. The paper is contained at rest, the flap opens before extraction, and the slip exits through the mouth without bottom protrusion or flap clipping.
 - Failed requests, repeated responses, and ordinary polls produce no false success or replay.
 - Initial load, reconnect, and run reset do not replay old events; later legitimate actions still animate.
 - Polling continues through playback without losing answers, resetting media, or breaking controls.
@@ -121,4 +121,4 @@ Keep still-valid input, media, dialog, and control identities stable across poll
 
 ## Delivery boundary
 
-This document defines the selected direction; it does not claim the repository was inspected or modified. Implementation should be prepared on a separate branch with focused changes and minimal pushes. Present production motion evidence for all four actions before final visual approval. The user authorised creating one implementation issue and publishing this reference package. Production implementation, deployment, merge, and changes to game rules are not part of this handoff task.
+This document defines the selected direction and the later envelope refinement. Implementation is in draft PR #108 on a separate branch. Present production motion evidence for all four actions before final visual approval, including a GIF of the improved envelope opening. The user authorised implementation and reference-package updates. Deployment, merge, and changes to game rules remain outside this authorisation.

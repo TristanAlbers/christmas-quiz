@@ -17,7 +17,7 @@ Extract the ZIP and open `midnight-impact-demo.html` in a browser. It runs offli
 
 The sample is door 14, which maps to **sneeuwpop**. The demo uses that exact image and the same visible-bounds viewport calculation as the application. Production must use the authoritative completed door and the shared mapping for every door, never the hardcoded demo number.
 
-The red card in the demo establishes the motion and materials. Production must reuse its existing approved card component/arrow artwork, including the established iPhone rendering fix. The hint envelope confirms a purchase; the sample token count is illustrative, and consuming a token to reveal a hint remains a separate action.
+The red card in the demo establishes the motion and materials. Production must reuse its existing approved card component/arrow artwork, including the established iPhone rendering fix. The refined hint envelope opens its hinged flap before the contained slip rises through the mouth behind the front pocket; the paper never extends below the envelope or clips through its flap. The hint envelope confirms a purchase; the sample token count is illustrative, and consuming a token to reveal a hint remains a separate action.
 
 ## Confirmed decisions
 
