@@ -218,10 +218,6 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         "incorrect-answer-effect--idle", correct_response
                     )
                     await page.wait_for_function(
-                        """document.querySelector('#action-feedback')?.textContent
-                        === 'Goed antwoord. Puzzel afgerond.'"""
-                    )
-                    await page.wait_for_function(
                         """() => document.getElementById('incorrect-answer-effect')
                         !== window.__secondWrongAnswerEffect"""
                     )
@@ -232,14 +228,14 @@ class IncorrectAnswerFeedbackBrowserTests(LiveServerTestCase):
                         "el => { window.__clearedWrongAnswerEffect = el; }"
                     )
                     completion = page.locator(
-                        "#door-completion:not(.door-completion--idle)"
+                        '#routine-feedback[data-kind="puzzle_solved"]'
                     )
                     await completion.wait_for(state="visible", timeout=5000)
                     self.assertEqual(
                         await completion.evaluate(
                             "el => getComputedStyle(el).animationDuration"
                         ),
-                        "3s",
+                        "3.5s",
                     )
                     self.assertFalse(
                         await page.locator("#incorrect-answer-effect").is_visible()

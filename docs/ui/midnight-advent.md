@@ -70,6 +70,42 @@ All ordinary player/operator copy is **Dutch-first**; use **Team A** and **Team 
 - Stable statuses persist after one-shot effects; reconnect/reload recovers authoritative outcome without replaying old confetti/attack animations.
 - Focus/caret/selection, open dialog, pointer-down/poll/pointer-up, real touch and keyboard interactions survive ordinary 500ms HTMX refreshes when the semantic context is unchanged. Preserve audio element identity and TV Music playhead on pause/resume.
 
+#### Midnight Impact routine feedback (#107)
+
+- A new accepted solve, Skip, Reverse purchase, or Hint purchase may emit a
+  private `HX-Trigger-After-Swap` JSON event named
+  `routineFeedbackConfirmed`. Its typed detail has `version`, stable opaque
+  `eventId`, request `actionId`, `runId`, `kind`, and the server result-state
+  context (`globalState`, `teamState`, current `questionId`, `musicPhase`,
+  `challengePhase`, `firstFinisherTeamId`, and `gameplayElapsedMs`). Clients compare this context
+  with the current authoritative screen before playback so a delayed response
+  cannot cover a newer takeover.
+- `kind` is one of `puzzle_solved`, `puzzle_skipped`, `reverse_purchased`, or
+  `hint_purchased`. Completion events also carry the accepted puzzle `id` and
+  door `number`, the exact manifest-derived chocolate `subject` and
+  `staticUrl`, plus its `width`, `height`, trimmed `viewBox`, and `isBroad`
+  optical-sizing flag. `nextNumber` exists only when a next Advent puzzle
+  exists. Client
+  code must not infer event meaning from English feedback, points, or clicks.
+- Ordinary polls never contain this event. Sequential idempotent receipt
+  retries omit it; concurrent duplicate responses retain the same `eventId`
+  and `actionId`, which the client must deduplicate. Failed actions emit no
+  success event. Run identity provides the reset/new-run boundary.
+- Render each treatment as a non-dismissible full-phone takeover with the copy,
+  object, and timing approved for #107. Puzzle 25, Pause, team Freeze/attack,
+  active Challenge, Music, and final finish suppress routine feedback. A newer
+  authoritative takeover cancels a playing treatment and clears its input/focus
+  lock without queueing or replaying it.
+- Hint purchase uses a layered parchment envelope: fully contained paper at
+  rest, hinged flap opening first, then a slip rising through the mouth behind
+  the front pocket. Keep the lower edge masked and avoid paper/flap
+  intersections throughout the 2.7-second sequence.
+- These four treatments deliberately keep their full motion and duration when
+  `prefers-reduced-motion: reduce` is set: solve 3.5 seconds, Reverse purchase
+  3.4 seconds, Skip 2.8 seconds, and Hint purchase 2.7 seconds. Scope this
+  exception to the routine-feedback component; all other Midnight Advent
+  reduced-motion rules remain unchanged.
+
 ### Global Pause
 - Distinct **gold/amber** presentation (not icy blue); the underlying *safe* game scene is recognizable.
 - Blocks answers and shop/sabotage/Challenge interaction client-side; backend remains the legality authority. Existing content may be shown **only when authorized for the same viewer**. Do not reveal a private puzzle during an underlying team Freeze.

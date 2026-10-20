@@ -140,6 +140,11 @@ class Issue81CinematicBrowserTests(Issue31BrowserCase):
                     await a.locator("#team-shop-dialog").wait_for(
                         state="hidden", timeout=5000
                     )
+                    purchase = a.locator(
+                        '#routine-feedback[data-kind="reverse_purchased"]'
+                    )
+                    await purchase.wait_for(state="visible", timeout=5000)
+                    await purchase.wait_for(state="hidden", timeout=5000)
                     self.assertFalse(
                         await a.locator("#gameplay-event").is_visible()
                     )

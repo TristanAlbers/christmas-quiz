@@ -19,10 +19,12 @@
   <link rel="stylesheet" href="{% static 'quiz/freeze-attack.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/endgame-celebration.css' %}">
   <link rel="stylesheet" href="{% static 'quiz/feedback-timing.css' %}">
+  <link rel="stylesheet" href="{% static 'quiz/midnight-impact.css' %}">
   <script defer src="{% static 'quiz/vendor/htmx.min.js' %}"></script>
   <script defer src="{% static 'quiz/endgame-celebration.js' %}"></script>
   <script defer src="{% static 'quiz/music-ui.js' %}"></script>
   <script defer src="{% static 'quiz/challenge-countdown.js' %}"></script>
+  <script defer src="{% static 'quiz/midnight-impact.js' %}"></script>
 </head>
 <body class="game-page game-page--team" data-endgame-surface="team" data-team-id="{{ team_name|lower }}">
   <main class="app-shell">
@@ -47,6 +49,7 @@
   </main>
   {# Keep this live region outside the inert shell and the aria-hidden visual film. #}
   <p id="gameplay-film-announcement" class="visually-hidden" role="status" aria-live="assertive" aria-atomic="true"></p>
+  <p id="routine-feedback-announcement" class="visually-hidden" role="status" aria-live="assertive" aria-atomic="true"></p>
   {# This inert ghost contains no puzzle, hint, points or media. It stays mounted through 500ms polls. #}
   <div id="freeze-backdrop" class="freeze-backdrop" data-active="0" hidden aria-hidden="true">
     <div class="freeze-ghost">
@@ -68,9 +71,18 @@
     </div>
   </div>
   <div id="music-finale-confetti" class="music-finale-confetti" aria-hidden="true"></div>
-  <div id="door-completion" class="door-completion door-completion--idle" aria-hidden="true"></div>
   <div id="incorrect-answer-effect" class="incorrect-answer-effect incorrect-answer-effect--idle" aria-hidden="true"></div>
-  <div id="reverse-purchase" class="reverse-purchase reverse-purchase--idle" aria-hidden="true"></div>
+  <div id="routine-feedback" class="routine-feedback" hidden aria-hidden="true">
+    <div class="routine-feedback__rays"></div>
+    <div class="routine-feedback__ring"></div>
+    <span class="routine-feedback__eyebrow">Quizzmas · Midnight Advent</span>
+    <div class="routine-feedback__object"></div>
+    <div class="routine-feedback__copy">
+      <h2></h2>
+      <p></p>
+    </div>
+    <div class="routine-feedback__particles"></div>
+  </div>
   <div id="gameplay-event" class="gameplay-event gameplay-event--idle" aria-hidden="true"></div>
   {% include 'quiz/_endgame_celebration.html' %}
   <script>
@@ -211,6 +223,13 @@
     let gameplayFilmTimer = null;
     let gameplayFilmStageTimer = null;
     let lastGameplayFilmId = null;
+    function syncTeamPresentationLock() {
+      const shell = document.querySelector('.app-shell');
+      if (!shell) return;
+      shell.inert = document.body.classList.contains('gameplay-film-active')
+        || document.body.classList.contains('routine-feedback-active');
+    }
+    window.syncTeamPresentationLock = syncTeamPresentationLock;
     function announceGameplayStage(film, stage) {
       // The visible stages are aria-hidden: only the current stage is spoken.
       if (!film.isConnected || film.dataset.eventId !== lastGameplayFilmId || !stage) return;
@@ -240,8 +259,9 @@
       const shop = document.getElementById('team-shop-dialog');
       if (shop?.open) shop.close();
       reopenShop = false;
-      if (shell) shell.inert = true;
       document.body.classList.add('gameplay-film-active');
+      window.cancelRoutineFeedback?.('gameplay-event');
+      syncTeamPresentationLock();
       window.clearTimeout(gameplayFilmTimer);
       window.clearTimeout(gameplayFilmStageTimer);
       const attackStage = film.querySelector('.gameplay-event__stage--attack');
@@ -258,8 +278,8 @@
       gameplayFilmTimer = window.setTimeout(function () {
         // A second, different authoritative event would get its own film.
         if (!film.isConnected || lastGameplayFilmId !== eventId) return;
-        if (shell) shell.inert = false;
         document.body.classList.remove('gameplay-film-active');
+        syncTeamPresentationLock();
         // Restore a protected team's existing node, text and caret, never a
         // removed frozen input or a stale field after a gameplay transition.
         if (restoreAnswer?.isConnected && !document.querySelector('.freeze-message')) {
@@ -344,8 +364,15 @@
       // A server-accepted shop command closes its dialog *before* OOB
       // projections and transient effects arrive. Rejections do not close it.
       const origin = event.detail.elt;
-      const trigger = event.detail.xhr?.getResponseHeader('HX-Trigger-After-Swap');
-      if (origin?.closest('#team-shop-dialog') && trigger === 'shopPurchaseSucceeded') {
+      const triggerHeader = event.detail.xhr?.getResponseHeader('HX-Trigger-After-Swap');
+      let afterSwapTriggers = {};
+      try {
+        afterSwapTriggers = triggerHeader ? JSON.parse(triggerHeader) : {};
+      } catch (_error) {
+        afterSwapTriggers = triggerHeader === 'shopPurchaseSucceeded'
+          ? {shopPurchaseSucceeded: true} : {};
+      }
+      if (origin?.closest('#team-shop-dialog') && afterSwapTriggers.shopPurchaseSucceeded === true) {
         const shop = document.getElementById('team-shop-dialog');
         if (shop?.open) shop.close();
         reopenShop = false;
@@ -417,6 +444,7 @@
     syncPausedSurface();
     syncTransientChallengeResult(false);
     armActionFeedbackTimer();
+    syncTeamPresentationLock();
   </script>
 </body>
 </html>

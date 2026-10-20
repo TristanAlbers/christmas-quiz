@@ -243,7 +243,7 @@ class PhaseFiveBrowserTests(LiveServerTestCase):
                     await team.locator("#answer-input").fill("red")
                     await team.locator(".answer-form .button-primary").click()
                     completion = team.locator(
-                        ".door-completion:not(.door-completion--idle)"
+                        '#routine-feedback[data-kind="puzzle_solved"]'
                     )
                     await completion.wait_for()
                     await tv.locator(".advent-door-opening-echo").wait_for(timeout=5000)

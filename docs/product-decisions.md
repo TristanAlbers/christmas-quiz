@@ -222,3 +222,31 @@ The owner explicitly **removed the TV sound-enable, sound-check and volume panel
 Retain the existing operator audio controls **inside the Music Quiz TV takeover**, starting in its 60-second gathering/preparation phase, so the operator can click **Geluid inschakelen** and set volume before question 1. Keep the current single persistent HTML audio node and its state outside the 500 ms HTMX-swapped fragment; preserve sound check, native autoplay permission behavior, audio retry/error feedback, Pause/Resume playhead, and question-to-question transitions. There is no change to audio sources, scoring, game states or player-phone controls.
 
 This later, specific placement decision overrides stale TV-audio-panel visibility instructions in earlier descriptions; Music Quiz audio behavior itself remains binding.
+
+## 2026-10-20 — Midnight Impact routine team feedback (#107)
+
+The product owner approved four private, full-phone Midnight Impact treatments:
+successful puzzle solve, successful Skip, successful Uno Reverse purchase, and
+successful Hint purchase. Solve and Skip remain visibly and verbally distinct.
+The solve treatment opens the accepted completed door and reuses that door's
+exact asset from `quiz/chocolate_manifest.json`; fragments are absent from all
+four treatments. Puzzle 25 proceeds directly to the existing victory sequence.
+
+The Hint envelope opens like a real letter: the paper starts fully inside the
+envelope, the flap hinges open before extraction begins, and the slip rises
+through the opening behind the front pocket. Paper never protrudes below the
+envelope or intersects the flap. This visual refinement retains the 2.7-second
+purchase-only sequence.
+
+These treatments start only from a new server-confirmed accepted action and use
+its stable run, action/event, and accepted puzzle identity. Polls, initial load,
+reconnect, historical receipts, idempotent retries, and rejected actions do not
+start them. Pause, Freeze/attack, Challenge, Music, victory, reset, logout, and
+other authoritative takeovers cancel or suppress routine feedback without a
+later replay. Game clocks and server state continue during playback.
+
+For these four treatments only, the full approved motion and duration play for
+both values of `prefers-reduced-motion`: solve 3.5 seconds, Reverse purchase 3.4
+seconds, Skip 2.8 seconds, and Hint purchase 2.7 seconds. This narrow later
+decision overrides the general reduced-motion wording for these treatments and
+does not alter reduced-motion behavior anywhere else.
