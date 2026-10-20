@@ -215,4 +215,3 @@ class MidnightImpactContractTests(TestCase):
         )
         self.assertEqual(stale.status_code, 200)
         self.assertContains(stale, 'id="question-pane"')
-

@@ -1,6 +1,5 @@
 import json
 import uuid
-from pathlib import Path
 from typing import Literal, TypedDict
 
 from django.conf import settings
@@ -34,6 +33,7 @@ from quiz.application import (
     use_hint,
 )
 from quiz.auth import actor_for_user
+from quiz.chocolates import get_door_chocolate
 from quiz.contracts import (
     AdminPoints,
     AdminPuzzle,
@@ -87,13 +87,6 @@ class RoutineFeedbackPayload(TypedDict, total=False):
     state: RoutineFeedbackState
     puzzle: RoutineFeedbackPuzzle
 
-
-_CHOCOLATE_MANIFEST = json.loads(
-    (Path(__file__).resolve().parent.parent / "chocolate_manifest.json").read_text()
-)
-_CHOCOLATE_BY_DOOR = {
-    item["door"]: item for item in _CHOCOLATE_MANIFEST["mapping"]
-}
 
 _ROUTINE_FEEDBACK_ACTIONS = {
     "answer": ("completed", "puzzle_solved"),
@@ -223,23 +216,17 @@ def _routine_feedback_payload(
     # Final completion has its own authoritative victory presentation.
     if progress is None or progress.number == 25:
         return None
-    chocolate = _CHOCOLATE_BY_DOOR[progress.number]
-    chocolate_asset = _CHOCOLATE_MANIFEST["assets"][chocolate["subject"]]
-    left, top, right, bottom = chocolate_asset["visible_bounds_alpha_gt_16"]
+    chocolate_subject, chocolate_asset = get_door_chocolate(progress.number)
     puzzle: RoutineFeedbackPuzzle = {
         "id": progress.puzzle_id,
         "number": progress.number,
         "chocolate": {
-            "subject": chocolate["subject"],
-            "staticUrl": _static_asset_url(
-                "quiz/chocolates/" + Path(chocolate["file"]).name
-            ),
+            "subject": chocolate_subject,
+            "staticUrl": _static_asset_url(chocolate_asset["static_path"]),
             "width": chocolate_asset["width"],
             "height": chocolate_asset["height"],
-            "viewBox": (
-                f"{left - 12} {top - 12} {right - left + 24} {bottom - top + 24}"
-            ),
-            "isBroad": chocolate["subject"] in {"iglo", "trein"},
+            "viewBox": chocolate_asset["view_box"],
+            "isBroad": chocolate_asset["is_broad"],
         },
     }
     if state.question is not None:
