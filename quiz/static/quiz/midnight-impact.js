@@ -68,7 +68,7 @@
       || context.globalState !== "ADVENT_QUIZ"
       || context.teamState !== "PUZZLE"
       || Boolean(context.musicPhase)
-      || Boolean(context.challengePhase);
+      || ["starting", "active"].includes(context.challengePhase);
   }
 
   function isCurrent(detail) {
@@ -89,7 +89,10 @@
     const current = currentContext();
     if (!current) return true;
     return contextHasTakeover(current)
-      || document.body.classList.contains("gameplay-film-active");
+      || document.body.classList.contains("gameplay-film-active")
+      || Boolean(document.querySelector(
+        '#endgame-celebration[aria-hidden="false"]'
+      ));
   }
 
   function makeSvg(viewBox) {
@@ -310,6 +313,7 @@
   document.body.addEventListener("htmx:afterSwap", (event) => {
     if (event.detail.target?.id !== "game-status") return;
     const current = currentContext();
+    const sameRun = current?.runId === lastAuthoritativeContext?.runId;
     if (current?.runId !== lastAuthoritativeContext?.runId) {
       interruptionEpoch += 1;
       maxGameplayElapsedMs = current?.gameplayElapsedMs || 0;
@@ -319,11 +323,13 @@
         current?.gameplayElapsedMs || 0,
       );
     }
-    if (
-      current?.runId === lastAuthoritativeContext?.runId
+    const enteredTakeover = sameRun
       && !contextHasTakeover(lastAuthoritativeContext)
-      && contextHasTakeover(current)
-    ) {
+      && contextHasTakeover(current);
+    const firstFinisherAppeared = sameRun
+      && !normalized(lastAuthoritativeContext?.firstFinisherTeamId)
+      && Boolean(normalized(current?.firstFinisherTeamId));
+    if (enteredTakeover || firstFinisherAppeared) {
       interruptionEpoch += 1;
     }
     lastAuthoritativeContext = current;

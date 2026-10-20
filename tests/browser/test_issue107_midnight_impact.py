@@ -9,10 +9,26 @@ from uuid import uuid4
 from django.contrib.auth import get_user_model
 from django.templatetags.static import static
 from django.test import Client, LiveServerTestCase
+from django.urls import reverse
 
-from quiz.application import admin_unfreeze, start_game
-from quiz.contracts import Actor, AdminTeam, StartGame
-from quiz.models import AccountRole, TeamRun
+from quiz.application import (
+    admin_unfreeze,
+    force_complete_current,
+    get_team_state,
+    initiate_challenge,
+    start_game,
+    submit_challenge_answer,
+)
+from quiz.contracts import (
+    Actor,
+    AdminPuzzle,
+    AdminTeam,
+    RunCommand,
+    StartGame,
+    SubmitChallengeAnswer,
+)
+from quiz.domain.phase6 import CHALLENGE_GRACE_PERIOD_MS
+from quiz.models import AccountRole, Challenge, PuzzleProgress, Run, TeamRun
 
 
 class MidnightImpactBrowserTests(LiveServerTestCase):
@@ -27,6 +43,8 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
         AccountRole.objects.create(user=team_user, role="team", team_id="a")
         AccountRole.objects.create(user=opponent_user, role="team", team_id="b")
         self.admin = Actor(admin_user.pk, "admin")
+        self.team = Actor(team_user.pk, "team", "a")
+        self.opponent = Actor(opponent_user.pk, "team", "b")
         self.run_id = start_game(
             self.admin,
             StartGame(str(uuid4()), "christmas-2026-demo"),
@@ -149,6 +167,30 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
         )
         self.assertTrue(await page.locator(".app-shell").evaluate("el => el.inert"))
         return film
+
+    def resolve_challenge_for_opponent(self):
+        initiate_challenge(
+            self.team,
+            RunCommand(str(uuid4()), self.run_id),
+        )
+        challenge = Challenge.objects.get(run_id=self.run_id, status="active")
+        Run.objects.filter(pk=self.run_id).update(
+            gameplay_elapsed_ms=(
+                challenge.started_gameplay_ms + CHALLENGE_GRACE_PERIOD_MS
+            ),
+            advent_clock_anchor=None,
+        )
+        submit_challenge_answer(
+            self.opponent,
+            SubmitChallengeAnswer(
+                str(uuid4()),
+                self.run_id,
+                str(challenge.id),
+                challenge.question_id,
+                "rudolph",
+            ),
+        )
+        self.assertEqual(get_team_state(self.team).team_state, "PUZZLE")
 
     def test_all_four_confirmed_actions_use_one_full_motion_surface(self):
         async def check():
@@ -458,6 +500,160 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                 finally:
                     await self.close_phone(
                         context, page, "hint-purchase-gif-source"
+                    )
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_resolved_challenge_allows_all_four_later_routines(self):
+        self.resolve_challenge_for_opponent()
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser, context, page = await self.open_phone(playwright)
+                try:
+                    surface = page.locator("[data-routine-run-id]")
+                    self.assertEqual(
+                        await surface.get_attribute("data-routine-challenge-phase"),
+                        "resolved",
+                    )
+
+                    await page.get_by_role("button", name="Winkel", exact=False).click()
+                    await page.get_by_role("button", name="Hint kopen (1)").click()
+                    film = await self.wait_for_film(
+                        page, "hint_purchased", "2.7s"
+                    )
+                    await page.evaluate("window.cancelRoutineFeedback('test')")
+                    await film.wait_for(state="hidden")
+
+                    await page.get_by_role("button", name="Winkel", exact=False).click()
+                    await page.get_by_role(
+                        "button", name="Uno Reverse kopen (2)"
+                    ).click()
+                    film = await self.wait_for_film(
+                        page, "reverse_purchased", "3.4s"
+                    )
+                    await page.evaluate("window.cancelRoutineFeedback('test')")
+                    await film.wait_for(state="hidden")
+
+                    await page.locator("[data-skip-action]").click()
+                    film = await self.wait_for_film(
+                        page, "puzzle_skipped", "2.8s"
+                    )
+                    await page.evaluate("window.cancelRoutineFeedback('test')")
+                    await film.wait_for(state="hidden")
+
+                    await page.locator("#answer-input").fill("3")
+                    await page.get_by_role(
+                        "button", name="Antwoord insturen"
+                    ).click()
+                    film = await self.wait_for_film(
+                        page, "puzzle_solved", "3.5s"
+                    )
+                    self.assertEqual(
+                        await film.locator("h2").inner_text(), "Goed gevonden!"
+                    )
+                finally:
+                    await self.close_phone(
+                        context, page, "resolved-challenge-routines"
+                    )
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_first_finisher_response_preempts_routine_then_allows_later_action(self):
+        PuzzleProgress.objects.filter(
+            run_id=self.run_id,
+            team_id="b",
+            number__lt=25,
+        ).update(
+            completed=True,
+            reward_awarded=True,
+            completion_route="admin_force",
+        )
+        TeamRun.objects.filter(run_id=self.run_id, team_id="b").update(
+            current_number=25
+        )
+
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser, context, page = await self.open_phone(playwright)
+                request_held = asyncio.Event()
+                request_release = asyncio.Event()
+
+                async def hold_hint(route):
+                    request_held.set()
+                    await request_release.wait()
+                    await route.continue_()
+
+                await page.route(
+                    f"**{reverse('team_action', args=['purchase-hint'])}",
+                    hold_hint,
+                )
+                try:
+                    await page.get_by_role("button", name="Winkel", exact=False).click()
+                    await page.get_by_role(
+                        "button", name="Uno Reverse kopen (2)"
+                    ).click()
+                    active_film = await self.wait_for_film(
+                        page, "reverse_purchased", "3.4s"
+                    )
+                    # Submit a second routine action while the first film is
+                    # active so the winner transition must cancel one response
+                    # and invalidate the other.
+                    await page.locator(".shop-item--hint").evaluate(
+                        "form => form.requestSubmit()"
+                    )
+                    await asyncio.wait_for(request_held.wait(), 5)
+                    opponent_state = await asyncio.to_thread(
+                        get_team_state, self.opponent
+                    )
+                    await asyncio.to_thread(
+                        force_complete_current,
+                        self.admin,
+                        AdminPuzzle(
+                            str(uuid4()),
+                            self.run_id,
+                            "b",
+                            opponent_state.question.id,
+                        ),
+                    )
+                    request_release.set()
+
+                    celebration = page.locator(
+                        '#endgame-celebration[data-endgame-result="runner-up"]'
+                    )
+                    await celebration.wait_for(state="visible", timeout=5000)
+                    await page.wait_for_timeout(200)
+                    await active_film.wait_for(state="hidden", timeout=1000)
+                    self.assertFalse(
+                        await page.locator("#routine-feedback").is_visible()
+                    )
+                    self.assertFalse(
+                        await page.evaluate(
+                            "document.body.classList.contains("
+                            "'routine-feedback-active')"
+                        )
+                    )
+                    self.assertEqual(
+                        await page.locator(
+                            "[data-routine-run-id]"
+                        ).get_attribute("data-routine-first-finisher"),
+                        "b",
+                    )
+
+                    await celebration.wait_for(state="hidden", timeout=7000)
+                    await page.get_by_role("button", name="Winkel", exact=False).click()
+                    await page.get_by_role("button", name="Hint kopen (1)").click()
+                    await self.wait_for_film(page, "hint_purchased", "2.7s")
+                finally:
+                    request_release.set()
+                    await self.close_phone(
+                        context, page, "first-finisher-preemption"
                     )
                     await browser.close()
 
