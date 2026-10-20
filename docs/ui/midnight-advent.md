@@ -96,6 +96,10 @@ All ordinary player/operator copy is **Dutch-first**; use **Team A** and **Team 
   active Challenge, Music, and final finish suppress routine feedback. A newer
   authoritative takeover cancels a playing treatment and clears its input/focus
   lock without queueing or replaying it.
+- Hint purchase uses a layered parchment envelope: fully contained paper at
+  rest, hinged flap opening first, then a slip rising through the mouth behind
+  the front pocket. Keep the lower edge masked and avoid paper/flap
+  intersections throughout the 2.7-second sequence.
 - These four treatments deliberately keep their full motion and duration when
   `prefers-reduced-motion: reduce` is set: solve 3.5 seconds, Reverse purchase
   3.4 seconds, Skip 2.8 seconds, and Hint purchase 2.7 seconds. Scope this

@@ -253,6 +253,7 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                     )
                     await page.get_by_role("button", name="Antwoord insturen").click()
                     film = await self.wait_for_film(page, "puzzle_solved", "3.5s")
+                    solved_film_text = (await film.inner_text()).lower()
                     self.assertEqual(
                         await film.locator("h2").inner_text(), "Goed gevonden!"
                     )
@@ -284,7 +285,7 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                     self.assertFalse(
                         await page.locator(".app-shell").evaluate("el => el.inert")
                     )
-                    self.assertNotIn("fragment", (await film.inner_text()).lower())
+                    self.assertNotIn("fragment", solved_film_text)
                     self.assertTrue(
                         await page.evaluate(
                             "document.documentElement.scrollWidth <= innerWidth"
@@ -310,6 +311,7 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                     await page.get_by_role("button", name="Hint kopen (1)").click()
                     film = await self.wait_for_film(page, "hint_purchased", "2.7s")
                     event_id = await film.get_attribute("data-event-id")
+                    self.assertIsNotNone(event_id)
                     await other.get_by_role(
                         "button", name="Winkel", exact=False
                     ).click()
@@ -336,9 +338,10 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                         timeout=6000,
                     )
                     self.assertFalse(await film.is_visible())
-                    self.assertNotEqual(
-                        await film.get_attribute("data-event-id"),
-                        event_id,
+                    self.assertIsNone(
+                        await page.locator("#routine-feedback").get_attribute(
+                            "data-event-id"
+                        )
                     )
                     self.assertFalse(
                         await page.locator(".app-shell").evaluate("el => el.inert")
@@ -360,6 +363,102 @@ class MidnightImpactBrowserTests(LiveServerTestCase):
                     )
                     await other_browser.close()
                     await self.close_phone(context, page, "attack-interruption-victim")
+                    await browser.close()
+
+        asyncio.run(check())
+
+    def test_hint_purchase_records_complete_motion_and_contained_letter(self):
+        async def check():
+            from playwright.async_api import async_playwright
+
+            async with async_playwright() as playwright:
+                browser, context, page = await self.open_phone(playwright)
+                try:
+                    await page.get_by_role("button", name="Winkel", exact=False).click()
+                    # Give the eventual GIF a short calm lead-in before purchase.
+                    await page.wait_for_timeout(300)
+                    await page.get_by_role("button", name="Hint kopen (1)").click()
+                    film = await self.wait_for_film(
+                        page, "hint_purchased", "2.7s"
+                    )
+                    rest_geometry = await film.locator(
+                        ".routine-feedback__envelope"
+                    ).evaluate(
+                        """envelope => {
+                            const letter = envelope.querySelector(
+                                '.routine-feedback__letter'
+                            );
+                            const flap = envelope.querySelector(
+                                '.routine-feedback__flap'
+                            );
+                            return {
+                                top: letter.offsetTop,
+                                bottom: letter.offsetTop + letter.offsetHeight,
+                                envelopeHeight: envelope.clientHeight,
+                                letterZ: getComputedStyle(letter).zIndex,
+                                flapZ: getComputedStyle(flap).zIndex,
+                                frontZ: getComputedStyle(envelope, '::after').zIndex,
+                            };
+                        }"""
+                    )
+                    self.assertGreaterEqual(rest_geometry["top"], 0)
+                    self.assertLessEqual(
+                        rest_geometry["bottom"], rest_geometry["envelopeHeight"]
+                    )
+                    self.assertLess(
+                        int(rest_geometry["letterZ"]), int(rest_geometry["frontZ"])
+                    )
+                    self.assertGreater(
+                        int(rest_geometry["flapZ"]), int(rest_geometry["letterZ"])
+                    )
+
+                    # At the hold, the paper has risen only after the flap opened
+                    # and remains inside the animation object's upper boundary.
+                    await page.wait_for_timeout(round(2700 * 0.66))
+                    open_geometry = await film.evaluate(
+                        """film => {
+                            const rect = selector => film.querySelector(selector)
+                                .getBoundingClientRect();
+                            const object = rect('.routine-feedback__object');
+                            const envelope = rect('.routine-feedback__envelope');
+                            const letter = rect('.routine-feedback__letter');
+                            const flap = film.querySelector(
+                                '.routine-feedback__flap'
+                            );
+                            return {
+                                objectTop: object.top,
+                                envelopeTop: envelope.top,
+                                envelopeBottom: envelope.bottom,
+                                letterTop: letter.top,
+                                letterBottom: letter.bottom,
+                                flapZ: getComputedStyle(flap).zIndex,
+                                letterZ: getComputedStyle(
+                                    film.querySelector('.routine-feedback__letter')
+                                ).zIndex,
+                            };
+                        }"""
+                    )
+                    self.assertGreaterEqual(
+                        open_geometry["letterTop"], open_geometry["objectTop"]
+                    )
+                    self.assertLess(
+                        open_geometry["letterTop"], open_geometry["envelopeTop"]
+                    )
+                    self.assertLess(
+                        open_geometry["letterBottom"],
+                        open_geometry["envelopeBottom"],
+                    )
+                    self.assertLess(
+                        int(open_geometry["flapZ"]),
+                        int(open_geometry["letterZ"]),
+                    )
+                    await film.wait_for(state="hidden", timeout=4000)
+                    # Preserve a short settled tail for straightforward GIF trim.
+                    await page.wait_for_timeout(300)
+                finally:
+                    await self.close_phone(
+                        context, page, "hint-purchase-gif-source"
+                    )
                     await browser.close()
 
         asyncio.run(check())

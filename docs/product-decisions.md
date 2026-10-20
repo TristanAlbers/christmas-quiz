@@ -232,6 +232,12 @@ The solve treatment opens the accepted completed door and reuses that door's
 exact asset from `quiz/chocolate_manifest.json`; fragments are absent from all
 four treatments. Puzzle 25 proceeds directly to the existing victory sequence.
 
+The Hint envelope opens like a real letter: the paper starts fully inside the
+envelope, the flap hinges open before extraction begins, and the slip rises
+through the opening behind the front pocket. Paper never protrudes below the
+envelope or intersects the flap. This visual refinement retains the 2.7-second
+purchase-only sequence.
+
 These treatments start only from a new server-confirmed accepted action and use
 its stable run, action/event, and accepted puzzle identity. Polls, initial load,
 reconnect, historical receipts, idempotent retries, and rejected actions do not

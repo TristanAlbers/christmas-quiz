@@ -129,8 +129,8 @@ jobs:
         if: matrix.shard == 'effects-challenge'
         run: |
           mkdir -p artifacts/ui-107-reference/assets
-          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/a043b1b6078e5a1924a6ec427452a9d7cc3c97b0/midnight-impact-demo.html -o artifacts/ui-107-reference/midnight-impact-demo.html
-          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/a043b1b6078e5a1924a6ec427452a9d7cc3c97b0/assets/reverse-arrows.svg -o artifacts/ui-107-reference/assets/reverse-arrows.svg
+          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/9b2a480b0022c3369a061a3f3d958944df35a3ed/midnight-impact-demo.html -o artifacts/ui-107-reference/midnight-impact-demo.html
+          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/9b2a480b0022c3369a061a3f3d958944df35a3ed/assets/reverse-arrows.svg -o artifacts/ui-107-reference/assets/reverse-arrows.svg
           cp quiz/static/quiz/chocolates/sneeuwpop.png artifacts/ui-107-reference/assets/
 
       - name: Run browser shard
@@ -309,8 +309,8 @@ jobs:
       - name: Prepare approved issue 107 motion reference
         run: |
           mkdir -p artifacts/ui-107-reference/assets
-          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/a043b1b6078e5a1924a6ec427452a9d7cc3c97b0/midnight-impact-demo.html -o artifacts/ui-107-reference/midnight-impact-demo.html
-          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/a043b1b6078e5a1924a6ec427452a9d7cc3c97b0/assets/reverse-arrows.svg -o artifacts/ui-107-reference/assets/reverse-arrows.svg
+          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/9b2a480b0022c3369a061a3f3d958944df35a3ed/midnight-impact-demo.html -o artifacts/ui-107-reference/midnight-impact-demo.html
+          curl -fsSL https://raw.githubusercontent.com/TristanAlbers/christmas-quiz/9b2a480b0022c3369a061a3f3d958944df35a3ed/assets/reverse-arrows.svg -o artifacts/ui-107-reference/assets/reverse-arrows.svg
           cp quiz/static/quiz/chocolates/sneeuwpop.png artifacts/ui-107-reference/assets/
 
       - name: Build production-style static manifest

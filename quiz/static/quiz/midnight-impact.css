@@ -252,6 +252,7 @@
   background: #e6cfa1;
   box-shadow: 0 .75rem 1.25rem rgba(0, 0, 0, .33);
   perspective: 31rem;
+  overflow: visible;
 }
 
 .routine-feedback__envelope::after {
@@ -270,21 +271,24 @@
   inset: 0;
   transform-origin: top;
   clip-path: polygon(0 0, 100% 0, 50% 70%);
-  background: #b99b67;
+  border-top: 1px solid rgba(255, 246, 216, .35);
+  background: linear-gradient(165deg, #d1b481, #b38e55 72%);
   animation: routine-feedback-flap var(--routine-duration) ease both;
 }
 
 .routine-feedback__letter {
   position: absolute;
   z-index: 1;
-  top: .4rem;
+  top: .5rem;
   right: 1rem;
+  bottom: .5rem;
   left: 1rem;
   display: grid;
   place-items: center;
-  height: 7rem;
   border: 1px solid #b3925b;
-  background: #f5e5c4;
+  background:
+    linear-gradient(rgba(180, 141, 80, .13) 1px, transparent 1px) 0 1.3rem / 100% 1.3rem,
+    #f5e5c4;
   color: #8e293d;
   font: 2.8rem Georgia, "Times New Roman", serif;
   animation: routine-feedback-letter var(--routine-duration) ease both;
@@ -344,13 +348,14 @@
 }
 
 @keyframes routine-feedback-flap {
-  0%, 23% { transform: rotateX(0); }
-  42%, 100% { transform: rotateX(180deg); }
+  0%, 20% { z-index: 4; transform: rotateX(0); }
+  38% { z-index: 4; transform: rotateX(180deg); }
+  39%, 100% { z-index: 0; transform: rotateX(180deg); }
 }
 
 @keyframes routine-feedback-letter {
-  0%, 32% { transform: translateY(0); }
-  55%, 100% { transform: translateY(-3.7rem); }
+  0%, 42% { transform: translateY(0); }
+  62%, 100% { transform: translateY(-2.6rem); }
 }
 
 @media (max-height: 650px) {
