@@ -1,6 +1,0 @@
-# Exact Python development dependencies; install on top of requirements.lock.
-greenlet==3.4.0
-playwright==1.63.0
-pyee==13.0.0
-ruff==0.16.8
-typing_extensions==4.15.0

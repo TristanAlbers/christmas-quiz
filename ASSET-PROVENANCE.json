@@ -1,0 +1,15 @@
+{
+  "source_repository": "https://github.com/TristanAlbers/christmas-quiz",
+  "source_commit": "439301a3852512a552acfa0c45036853adf2cef2",
+  "chocolate_source": "quiz/static/quiz/chocolates/",
+  "manifest_source": "quiz/chocolate_manifest.json",
+  "reverse_arrow_source": "quiz/templates/quiz/_team_actions.html",
+  "reference_date": "2026-10-20",
+  "demo_door": 14,
+  "demo_subject": "sneeuwpop",
+  "notes": [
+    "Chocolate files are unmodified copies; hashes match the manifest.",
+    "The SVG uses the existing original path geometry with explicit stroke styling for standalone rendering.",
+    "Reuse current application card components in production; demo state is illustrative."
+  ]
+}
