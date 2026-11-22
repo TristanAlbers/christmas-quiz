@@ -46,7 +46,7 @@ _VERIFIED_SNAPSHOT_CACHE_MAX = 8
 _verified_snapshot_cache = OrderedDict()
 _snapshot_verification_flights = {}
 _snapshot_cache_lock = Lock()
-_SUPPORTED_VALIDATORS = {"text_exact", "text_ignore_spaces", "number_exact"}
+_SUPPORTED_VALIDATORS = ("text_exact", "text_ignore_spaces", "number_exact")
 
 
 def _digest(data):

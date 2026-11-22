@@ -151,6 +151,15 @@ class PhaseSixConfigurationTests(TestCase):
             lambda config: config["challenge_puzzles"]["a"]["validator"].update(
                 type="contains"
             ),
+            lambda config: config["teams"]["a"]["puzzles"][0]["validator"].update(
+                type=[]
+            ),
+            lambda config: config["music_questions"][0]["validator"].update(
+                type={}
+            ),
+            lambda config: config["challenge_puzzles"]["a"]["validator"].update(
+                type=[]
+            ),
             lambda config: config["challenge_puzzles"]["a"].update(
                 media=["../private.png"]
             ),
