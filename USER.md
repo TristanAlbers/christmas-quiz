@@ -174,6 +174,7 @@ The supported validators are:
 | Validator | Comparison |
 | --- | --- |
 | `{"type": "text_exact", "answer": "..."}` | Trims surrounding whitespace and ignores case. Internal whitespace still matters. |
+| `{"type": "text_ignore_spaces", "answer": "..."}` | Ignores case and all whitespace, including spaces between words. |
 | `{"type": "number_exact", "answer": "..."}` | Compares finite decimal values, so `3`, `3.0`, and `+03` are equal. |
 
 For example, this is a valid puzzle entry inside Team A's `puzzles` list:

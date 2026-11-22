@@ -46,6 +46,7 @@ _VERIFIED_SNAPSHOT_CACHE_MAX = 8
 _verified_snapshot_cache = OrderedDict()
 _snapshot_verification_flights = {}
 _snapshot_cache_lock = Lock()
+_SUPPORTED_VALIDATORS = {"text_exact", "text_ignore_spaces", "number_exact"}
 
 
 def _digest(data):
@@ -133,7 +134,7 @@ def _validate_challenge_puzzle(puzzle, team_id, referenced):
     validator = puzzle["validator"]
     if not isinstance(validator, dict) or set(validator) != {"type", "answer"}:
         raise InvalidPackage("Invalid Challenge validator")
-    if validator["type"] not in ("text_exact", "number_exact"):
+    if validator["type"] not in _SUPPORTED_VALIDATORS:
         raise InvalidPackage("Unknown Challenge validator")
     if not isinstance(validator["answer"], str) or not validator["answer"].strip():
         raise InvalidPackage("Challenge validator answer must be nonempty text")
@@ -264,7 +265,7 @@ def _validate(config, package_id):
             validator = puzzle["validator"]
             if not isinstance(validator, dict) or set(validator) != {"type", "answer"}:
                 raise InvalidPackage("Invalid validator")
-            if validator["type"] not in ("text_exact", "number_exact"):
+            if validator["type"] not in _SUPPORTED_VALIDATORS:
                 raise InvalidPackage("Unknown validator")
             if (
                 not isinstance(validator["answer"], str)
@@ -325,7 +326,7 @@ def _validate(config, package_id):
             validator = question["validator"]
             if not isinstance(validator, dict) or set(validator) != {"type", "answer"}:
                 raise InvalidPackage("Invalid Music validator")
-            if validator["type"] not in ("text_exact", "number_exact"):
+            if validator["type"] not in _SUPPORTED_VALIDATORS:
                 raise InvalidPackage("Unknown Music validator")
             if (
                 not isinstance(validator["answer"], str)
