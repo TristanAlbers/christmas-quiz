@@ -341,20 +341,13 @@
   margin: .42rem 0 0;
 }
 .team-advent-panel .puzzle-image {
-  display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   max-height: min(42svh, 22rem);
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  background: #89978d;
-  box-shadow: none;
-  object-fit: contain;
+  margin: 0 auto;
 }
 .team-advent-panel .puzzle-image-figure {
   margin: 0;
-  border: 1px solid #ab986d;
-  background: #263d32;
 }
 .team-advent-panel .puzzle-audio-card {
   display: grid;
