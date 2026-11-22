@@ -124,6 +124,25 @@ class PhaseSixConfigurationTests(TestCase):
             self.assertEqual(pinned_a.read_bytes(), b"challenge-media-a")
             self.assertEqual(pinned_b.read_bytes(), b"challenge-media-b")
 
+    def test_v6_accepts_text_ignore_spaces_for_all_question_types(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            games = root / "games"
+            config = phase6_config()
+            config["teams"]["a"]["puzzles"][24]["validator"]["type"] = (
+                "text_ignore_spaces"
+            )
+            config["music_questions"][0]["validator"]["type"] = "text_ignore_spaces"
+            config["challenge_puzzles"]["a"]["validator"]["type"] = (
+                "text_ignore_spaces"
+            )
+            write_package(games, config)
+            with override_settings(
+                QUIZ_GAMES_ROOT=games,
+                QUIZ_SNAPSHOT_ROOT=root / "snapshots",
+            ):
+                stage_snapshot("phase6")
+
     def test_v6_rejects_nonzero_cost_invalid_questions_and_media(self):
         mutations = (
             lambda config: config.update(challenge_cost=1),
@@ -131,6 +150,15 @@ class PhaseSixConfigurationTests(TestCase):
             lambda config: config["challenge_puzzles"]["a"].update(id="not valid"),
             lambda config: config["challenge_puzzles"]["a"]["validator"].update(
                 type="contains"
+            ),
+            lambda config: config["teams"]["a"]["puzzles"][0]["validator"].update(
+                type=[]
+            ),
+            lambda config: config["music_questions"][0]["validator"].update(
+                type={}
+            ),
+            lambda config: config["challenge_puzzles"]["a"]["validator"].update(
+                type=[]
             ),
             lambda config: config["challenge_puzzles"]["a"].update(
                 media=["../private.png"]

@@ -11,6 +11,23 @@ class AnswerValidatorTests(SimpleTestCase):
         self.assertFalse(evaluate_answer("text_exact", "North Star", "North  Star"))
         self.assertFalse(evaluate_answer("text_exact", "North Star", "Star North"))
 
+    def test_text_ignore_spaces_accepts_internal_whitespace(self):
+        expected = "De rendieren trekken de slee"
+        for submitted in (
+            "De rendieren trekken de slee",
+            "derendierentrekkendeslee",
+            " DE  RENDIEREN\tTREKKEN\nDE SLEE ",
+        ):
+            with self.subTest(submitted=submitted):
+                self.assertTrue(
+                    evaluate_answer("text_ignore_spaces", expected, submitted)
+                )
+        self.assertFalse(
+            evaluate_answer(
+                "text_ignore_spaces", expected, "De rendieren trekken een slee"
+            )
+        )
+
     def test_text_exact_unicode_casefold(self):
         self.assertTrue(evaluate_answer("text_exact", "Straße", "STRASSE"))
 
@@ -26,6 +43,7 @@ class AnswerValidatorTests(SimpleTestCase):
         invalid_validators = (
             ("regex", "x"),
             ("text_exact", " "),
+            ("text_ignore_spaces", " "),
             ("number_exact", "NaN"),
         )
         for kind, expected in invalid_validators:

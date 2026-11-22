@@ -9,16 +9,21 @@ def evaluate_answer(validator_type: str, expected: str, submitted: str) -> bool:
     """Check one answer without state or side effects.
 
     ``text_exact`` ignores surrounding whitespace and case; internal whitespace
-    remains significant. ``number_exact`` compares finite decimal values, so
+    remains significant. ``text_ignore_spaces`` also ignores internal whitespace.
+    ``number_exact`` compares finite decimal values, so
     forms such as ``2``, ``2.0`` and ``+02`` represent the same answer.
     Invalid user input is an incorrect attempt, not a configuration failure.
     """
     if not isinstance(expected, str) or not isinstance(submitted, str):
         raise DomainError("invalid_input")
 
-    if validator_type == "text_exact":
+    if validator_type in ("text_exact", "text_ignore_spaces"):
         if not expected.strip():
             raise DomainError("invalid_input")
+        if validator_type == "text_ignore_spaces":
+            return "".join(submitted.casefold().split()) == "".join(
+                expected.casefold().split()
+            )
         return submitted.strip().casefold() == expected.strip().casefold()
 
     if validator_type == "number_exact":
